@@ -129,7 +129,8 @@ class TestIterator(object):
     def test__page_iter_increment(self):
         iterator = PageIteratorImpl(None, None)
         page = page_iterator.Page(
-            iterator, ("item",), page_iterator._item_to_value_identity)
+            iterator, ("item",), page_iterator._item_to_value_identity
+        )
         iterator._next_page = mock.Mock(side_effect=[page, None])
 
         assert iterator.num_results == 0
@@ -159,9 +160,11 @@ class TestIterator(object):
         # Make pages from mock responses
         parent = mock.sentinel.parent
         page1 = page_iterator.Page(
-            parent, (item1, item2), page_iterator._item_to_value_identity)
+            parent, (item1, item2), page_iterator._item_to_value_identity
+        )
         page2 = page_iterator.Page(
-            parent, (item3,), page_iterator._item_to_value_identity)
+            parent, (item3,), page_iterator._item_to_value_identity
+        )
 
         iterator = PageIteratorImpl(None, None)
         iterator._next_page = mock.Mock(side_effect=[page1, page2, None])

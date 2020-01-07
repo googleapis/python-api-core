@@ -33,7 +33,7 @@ def test_constructor_options():
         api_core_version="3",
         gapic_version="4",
         client_library_version="5",
-        user_agent="6"
+        user_agent="6",
     )
 
     assert info.python_version == "1"
