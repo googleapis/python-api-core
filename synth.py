@@ -26,5 +26,3 @@ common = gcp.CommonTemplates()
 # ----------------------------------------------------------------------------
 templated_files = common.py_library(cov_level=100)
 s.move(templated_files, excludes=["noxfile.py", ".flake8", ".coveragerc", "setup.cfg"])
-
-s.shell.run(["nox", "-s", "blacken"], hide_output=False)
