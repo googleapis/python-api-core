@@ -87,7 +87,7 @@ class PollingFutureImplWithPoll(PollingFutureImpl):
         self.poll_count = 0
         self.event = threading.Event()
 
-    def done(self):
+    def done(self, retry=polling.DEFAULT_RETRY):
         self.poll_count += 1
         self.event.wait()
         self.set_result(42)
@@ -108,7 +108,7 @@ def test_result_with_polling():
 
 
 class PollingFutureImplTimeout(PollingFutureImplWithPoll):
-    def done(self):
+    def done(self, retry=polling.DEFAULT_RETRY):
         time.sleep(1)
         return False
 
@@ -130,7 +130,7 @@ class PollingFutureImplTransient(PollingFutureImplWithPoll):
         super(PollingFutureImplTransient, self).__init__()
         self._errors = errors
 
-    def done(self):
+    def done(self, retry=polling.DEFAULT_RETRY):
         if self._errors:
             error, self._errors = self._errors[0], self._errors[1:]
             raise error("testing")
