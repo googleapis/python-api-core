@@ -454,7 +454,7 @@ def from_grpc_error(rpc_exc):
         GoogleAPICallError: An instance of the appropriate subclass of
             :class:`GoogleAPICallError`.
     """
-    if isinstance(rpc_exc, grpc.Call):
+    if isinstance(rpc_exc, grpc.RpcError):
         return from_grpc_status(
             rpc_exc.code(), rpc_exc.details(), errors=(rpc_exc,), response=rpc_exc
         )

@@ -86,7 +86,7 @@ def _determine_timeout(default_timeout, specified_timeout, retry):
         return specified_timeout
 
 
-class _GapicCallable(object):
+class GapicCallable(object):
     """Callable that applies retry, timeout, and metadata logic.
 
     Args:
@@ -236,7 +236,7 @@ def wrap_method(
         user_agent_metadata = None
 
     return general_helpers.wraps(func)(
-        _GapicCallable(
+        GapicCallable(
             func, default_retry, default_timeout, metadata=user_agent_metadata
         )
     )

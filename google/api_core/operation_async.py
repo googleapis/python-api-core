@@ -37,21 +37,17 @@ Or asynchronously using callbacks and :meth:`Operation.add_done_callback`:
 """
 
 import functools
-import sys
 import threading
 
 from google.api_core import exceptions
 from google.api_core import protobuf_helpers
-from google.api_core.future import polling
+from google.api_core.future import async_future
 from google.longrunning import operations_pb2
 from google.protobuf import json_format
 from google.rpc import code_pb2
 
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
-    from google.api_core.operation_async import AsyncOperation
 
-
-class Operation(polling.PollingFuture):
+class AsyncOperation(async_future.AsyncFuture):
     """A Future for interacting with a Google API Long-Running Operation.
 
     Args:
@@ -78,9 +74,9 @@ class Operation(polling.PollingFuture):
         cancel,
         result_type,
         metadata_type=None,
-        retry=polling.DEFAULT_RETRY,
+        retry=async_future.DEFAULT_RETRY,
     ):
-        super(Operation, self).__init__(retry=retry)
+        super().__init__(retry=retry)
         self._operation = operation
         self._refresh = refresh
         self._cancel = cancel
@@ -106,7 +102,7 @@ class Operation(polling.PollingFuture):
         )
 
     @classmethod
-    def deserialize(self, payload):
+    def deserialize(cls, payload):
         """Deserialize a ``google.longrunning.Operation`` protocol buffer.
 
         Args:
@@ -119,7 +115,7 @@ class Operation(polling.PollingFuture):
 
     def _set_result_from_operation(self):
         """Set the result or exception from the operation if it is complete."""
-        # This must be done in a lock to prevent the polling thread
+        # This must be done in a lock to prevent the async_future thread
         # and main thread from both executing the completion logic
         # at the same time.
         with self._completion_lock:
@@ -127,7 +123,7 @@ class Operation(polling.PollingFuture):
             # set, do not call set_result/set_exception again.
             # Note: self._result_set is set to True in set_result and
             # set_exception, in case those methods are invoked directly.
-            if not self._operation.done or self._result_set:
+            if not self._operation.done or self._future.done():
                 return
 
             if self._operation.HasField("response"):
@@ -149,7 +145,7 @@ class Operation(polling.PollingFuture):
                 )
                 self.set_exception(exception)
 
-    def _refresh_and_update(self, retry=polling.DEFAULT_RETRY):
+    async def _refresh_and_update(self, retry=async_future.DEFAULT_RETRY):
         """Refresh the operation and update the result if needed.
 
         Args:
@@ -158,10 +154,10 @@ class Operation(polling.PollingFuture):
         # If the currently cached operation is done, no need to make another
         # RPC as it will not change once done.
         if not self._operation.done:
-            self._operation = self._refresh(retry=retry)
+            self._operation = await self._refresh(retry=retry)
             self._set_result_from_operation()
 
-    def done(self, retry=polling.DEFAULT_RETRY):
+    async def done(self, retry=async_future.DEFAULT_RETRY):
         """Checks to see if the operation is complete.
 
         Args:
@@ -170,139 +166,30 @@ class Operation(polling.PollingFuture):
         Returns:
             bool: True if the operation is complete, False otherwise.
         """
-        self._refresh_and_update(retry)
+        await self._refresh_and_update(retry)
         return self._operation.done
 
-    def cancel(self):
+    async def cancel(self):
         """Attempt to cancel the operation.
 
         Returns:
             bool: True if the cancel RPC was made, False if the operation is
                 already complete.
         """
-        if self.done():
+        result = await self.done()
+        if result:
             return False
+        else:
+            await self._cancel()
+            return True
 
-        self._cancel()
-        return True
-
-    def cancelled(self):
+    async def cancelled(self):
         """True if the operation was cancelled."""
-        self._refresh_and_update()
+        await self._refresh_and_update()
         return (
             self._operation.HasField("error")
             and self._operation.error.code == code_pb2.CANCELLED
         )
-
-
-def _refresh_http(api_request, operation_name):
-    """Refresh an operation using a JSON/HTTP client.
-
-    Args:
-        api_request (Callable): A callable used to make an API request. This
-            should generally be
-            :meth:`google.cloud._http.Connection.api_request`.
-        operation_name (str): The name of the operation.
-
-    Returns:
-        google.longrunning.operations_pb2.Operation: The operation.
-    """
-    path = "operations/{}".format(operation_name)
-    api_response = api_request(method="GET", path=path)
-    return json_format.ParseDict(api_response, operations_pb2.Operation())
-
-
-def _cancel_http(api_request, operation_name):
-    """Cancel an operation using a JSON/HTTP client.
-
-    Args:
-        api_request (Callable): A callable used to make an API request. This
-            should generally be
-            :meth:`google.cloud._http.Connection.api_request`.
-        operation_name (str): The name of the operation.
-    """
-    path = "operations/{}:cancel".format(operation_name)
-    api_request(method="POST", path=path)
-
-
-def from_http_json(operation, api_request, result_type, **kwargs):
-    """Create an operation future using a HTTP/JSON client.
-
-    This interacts with the long-running operations `service`_ (specific
-    to a given API) via `HTTP/JSON`_.
-
-    .. _HTTP/JSON: https://cloud.google.com/speech/reference/rest/\
-            v1beta1/operations#Operation
-
-    Args:
-        operation (dict): Operation as a dictionary.
-        api_request (Callable): A callable used to make an API request. This
-            should generally be
-            :meth:`google.cloud._http.Connection.api_request`.
-        result_type (:func:`type`): The protobuf result type.
-        kwargs: Keyword args passed into the :class:`Operation` constructor.
-
-    Returns:
-        ~.api_core.operation.Operation: The operation future to track the given
-            operation.
-    """
-    operation_proto = json_format.ParseDict(operation, operations_pb2.Operation())
-    refresh = functools.partial(_refresh_http, api_request, operation_proto.name)
-    cancel = functools.partial(_cancel_http, api_request, operation_proto.name)
-    return Operation(operation_proto, refresh, cancel, result_type, **kwargs)
-
-
-def _refresh_grpc(operations_stub, operation_name):
-    """Refresh an operation using a gRPC client.
-
-    Args:
-        operations_stub (google.longrunning.operations_pb2.OperationsStub):
-            The gRPC operations stub.
-        operation_name (str): The name of the operation.
-
-    Returns:
-        google.longrunning.operations_pb2.Operation: The operation.
-    """
-    request_pb = operations_pb2.GetOperationRequest(name=operation_name)
-    return operations_stub.GetOperation(request_pb)
-
-
-def _cancel_grpc(operations_stub, operation_name):
-    """Cancel an operation using a gRPC client.
-
-    Args:
-        operations_stub (google.longrunning.operations_pb2.OperationsStub):
-            The gRPC operations stub.
-        operation_name (str): The name of the operation.
-    """
-    request_pb = operations_pb2.CancelOperationRequest(name=operation_name)
-    operations_stub.CancelOperation(request_pb)
-
-
-def from_grpc(operation, operations_stub, result_type, **kwargs):
-    """Create an operation future using a gRPC client.
-
-    This interacts with the long-running operations `service`_ (specific
-    to a given API) via gRPC.
-
-    .. _service: https://github.com/googleapis/googleapis/blob/\
-                 050400df0fdb16f63b63e9dee53819044bffc857/\
-                 google/longrunning/operations.proto#L38
-
-    Args:
-        operation (google.longrunning.operations_pb2.Operation): The operation.
-        operations_stub (google.longrunning.operations_pb2.OperationsStub):
-            The operations stub.
-        result_type (:func:`type`): The protobuf result type.
-        kwargs: Keyword args passed into the :class:`Operation` constructor.
-
-    Returns:
-        ~.api_core.operation.Operation: The operation future to track the given
-            operation.
-    """
-    refresh = functools.partial(_refresh_grpc, operations_stub, operation.name)
-    cancel = functools.partial(_cancel_grpc, operations_stub, operation.name)
-    return Operation(operation, refresh, cancel, result_type, **kwargs)
 
 
 def from_gapic(operation, operations_client, result_type, **kwargs):
@@ -328,4 +215,4 @@ def from_gapic(operation, operations_client, result_type, **kwargs):
     """
     refresh = functools.partial(operations_client.get_operation, operation.name)
     cancel = functools.partial(operations_client.cancel_operation, operation.name)
-    return Operation(operation, refresh, cancel, result_type, **kwargs)
+    return AsyncOperation(operation, refresh, cancel, result_type, **kwargs)

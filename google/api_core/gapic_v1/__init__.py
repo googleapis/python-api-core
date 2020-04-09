@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 from google.api_core.gapic_v1 import client_info
 from google.api_core.gapic_v1 import config
 from google.api_core.gapic_v1 import method
 from google.api_core.gapic_v1 import routing_header
 
-__all__ = ["client_info", "config", "method", "routing_header"]
+if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
+    from google.api_core.gapic_v1 import method_async
+    from google.api_core.gapic_v1 import config_async
+    __all__ = ["client_info", "config", "config_async", "method", "method_async", "routing_header"]
+else:
+    __all__ = ["client_info", "config", "method", "routing_header"]
