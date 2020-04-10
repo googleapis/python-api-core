@@ -18,42 +18,35 @@ This is used by gapic clients to provide common error mapping, retry, timeout,
 pagination, and long-running operations to gRPC methods.
 """
 
-import sys
+from google.api_core import general_helpers, grpc_helpers_async
+from google.api_core.gapic_v1 import client_info, method
+from google.api_core.gapic_v1.method import (DEFAULT, USE_DEFAULT_METADATA,
+                                             GapicCallable)
+from grpc.experimental import aio
 
-from google.api_core.gapic_v1 import method
-from google.api_core import general_helpers
-from google.api_core import grpc_helpers_async
-from google.api_core.gapic_v1 import client_info
-from google.api_core.gapic_v1.method import GapicCallable, DEFAULT, USE_DEFAULT_METADATA
 
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
-    from grpc.experimental import aio
+def wrap_method(
+    func,
+    default_retry=None,
+    default_timeout=None,
+    client_info=client_info.DEFAULT_CLIENT_INFO,
+):
+    """Wrap an async RPC method with common behavior.
 
-    def wrap_method(
-        func,
-        default_retry=None,
-        default_timeout=None,
-        client_info=client_info.DEFAULT_CLIENT_INFO,
-    ):
-        """Wrap an async RPC method with common behavior.
+    Returns:
+        Callable: A new callable that takes optional ``retry`` and ``timeout``
+            arguments and applies the common error mapping, retry, timeout,
+            and metadata behavior to the low-level RPC method.
+    """
+    func = grpc_helpers_async.wrap_errors(func)
 
-        Returns:
-            Callable: A new callable that takes optional ``retry`` and ``timeout``
-                arguments and applies the common error mapping, retry, timeout,
-                and metadata behavior to the low-level RPC method.
-        """
-        func = grpc_helpers_async.wrap_errors(func)
+    if client_info is not None:
+        user_agent_metadata = [client_info.to_grpc_metadata()]
+    else:
+        user_agent_metadata = None
 
-        if client_info is not None:
-            user_agent_metadata = [client_info.to_grpc_metadata()]
-        else:
-            user_agent_metadata = None
-
-        return general_helpers.wraps(func)(
-            GapicCallable(
-                func, default_retry, default_timeout, metadata=user_agent_metadata
-            )
+    return general_helpers.wraps(func)(
+        GapicCallable(
+            func, default_retry, default_timeout, metadata=user_agent_metadata
         )
-
-else:
-    raise RuntimeError('gRPC AsyncIO supports Python 3.6+, please upgrade Python to use it.')
+    )
