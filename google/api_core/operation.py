@@ -37,7 +37,6 @@ Or asynchronously using callbacks and :meth:`Operation.add_done_callback`:
 """
 
 import functools
-import sys
 import threading
 
 from google.api_core import exceptions
@@ -46,9 +45,6 @@ from google.api_core.future import polling
 from google.longrunning import operations_pb2
 from google.protobuf import json_format
 from google.rpc import code_pb2
-
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
-    from google.api_core.operation_async import AsyncOperation  # noqa: F401
 
 
 class Operation(polling.PollingFuture):
