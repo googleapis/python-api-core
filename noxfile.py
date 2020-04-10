@@ -15,6 +15,7 @@
 from __future__ import absolute_import
 import os
 import shutil
+import sys
 
 # https://github.com/google/importlab/issues/25
 import nox  # pytype: disable=import-error
@@ -32,44 +33,45 @@ def default(session):
     session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
     session.install("-e", ".")
 
-    # Run py.test against the unit tests.
-    session.run(
-        "py.test",
-        "--quiet",
-        "--cov=google.api_core",
-        "--cov=tests.unit",
-        "--cov-append",
-        "--cov-config=.coveragerc",
-        "--cov-report=",
-        "--cov-fail-under=0",
-        os.path.join("tests", "unit"),
-        *session.posargs
-    )
+    # Inject AsyncIO content, if version >= 3.6.
+    if sys.version_info[0]>=3 and sys.version_info[1]>=6:
+        session.install(
+            "asyncmock",
+            "git+https://github.com/pytest-dev/pytest-asyncio.git")
+        # TODO(lidiz) Remove the daily build install once new API got released.
+        session.install(
+            "--pre", "--upgrade", "--force-reinstall",
+            "--extra-index-url", "https://packages.grpc.io/archive/2020/04/3dca4a321326dfbf6e3656b6d5fc29cf5f4b6f95-76408568-daeb-49cd-b869-be2fd4066e8f/python",
+            "grpcio")
 
-
-def run_asyncio_unit_tests(session):
-    """Run AsyncIO unit test session."""
-
-    # Install all test dependencies, then install this package in-place.
-    session.install(
-        "mock", "pytest",
-        "git+https://github.com/pytest-dev/pytest-asyncio.git", "asyncmock",
-        "pytest-cov", "grpcio >= 1.0.2")
-    session.install("-e", ".")
-
-    # Run py.test against the unit tests.
-    session.run(
-        "py.test",
-        "--quiet",
-        "--cov=google.api_core",
-        "--cov=tests.asyncio",
-        "--cov-append",
-        "--cov-config=.coveragerc",
-        "--cov-report=",
-        "--cov-fail-under=0",
-        os.path.join("tests", "asyncio"),
-        *session.posargs
-    )
+        session.run(
+            "py.test",
+            "--quiet",
+            "--cov=google.api_core",
+            "--cov=tests.unit",
+            "--cov=tests.asyncio",
+            "--cov-append",
+            "--cov-config=.coveragerc",
+            "--cov-report=",
+            "--cov-fail-under=0",
+            os.path.join("tests", "unit"),
+            os.path.join("tests", "asyncio"),
+            *session.posargs
+        )
+    else:
+        # Run py.test against the unit tests.
+        session.run(
+            "py.test",
+            "--quiet",
+            "--cov=google.api_core",
+            "--cov=tests.unit",
+            "--cov-append",
+            "--cov-config=.coveragerc",
+            "--cov-report=",
+            "--cov-fail-under=0",
+            os.path.join("tests", "unit"),
+            *session.posargs
+        )
 
 
 @nox.session(python=["2.7", "3.5", "3.6", "3.7", "3.8"])
@@ -86,12 +88,6 @@ def unit_grpc_gcp(session):
     session.install("grpcio-gcp")
 
     default(session)
-
-
-@nox.session(python=["3.6", "3.7", "3.8"])
-def unit_asyncio(session):
-    """Run the unit test suite."""
-    run_asyncio_unit_tests(session)
 
 
 @nox.session(python="3.6")

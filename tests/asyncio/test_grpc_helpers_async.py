@@ -243,25 +243,6 @@ async def test_wrap_stream_errors_write():
     assert exc_info.value.response == grpc_error
 
 
-@pytest.mark.asyncio
-async def test_wrap_stream_errors_read():
-    grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
-
-    mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
-    mock_call.read = mock.AsyncMock(side_effect=grpc_error)
-    multicallable = mock.Mock(return_value=mock_call)
-
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
-
-    wrapped_call = await wrapped_callable(1, 2, three="four")
-    multicallable.assert_called_once_with(1, 2, three="four")
-    assert mock_call.wait_for_connection.call_count == 1
-
-    with pytest.raises(exceptions.InvalidArgument) as exc_info:
-        await wrapped_call.read()
-    assert exc_info.value.response == grpc_error
-
-
 @mock.patch("google.api_core.grpc_helpers_async._wrap_unary_errors")
 def test_wrap_errors_non_streaming(wrap_unary_errors):
     callable_ = mock.create_autospec(aio.UnaryUnaryMultiCallable)
