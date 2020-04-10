@@ -14,25 +14,20 @@
 
 import datetime
 
-import mock
-import pytest
+from google.api_core import (exceptions, gapic_v1, grpc_helpers_async,
+                             retry_async, timeout)
 from grpc.experimental import aio
 
-from google.api_core import exceptions
-from google.api_core import retry_async
-from google.api_core import timeout
-from google.api_core import grpc_helpers_async
-import google.api_core.gapic_v1.client_info
-import google.api_core.gapic_v1.method
-import google.api_core.page_iterator
+import mock
+import pytest
 
 
 def _utcnow_monotonic():
-    curr_value = datetime.datetime.min
+    current_time = datetime.datetime.min
     delta = datetime.timedelta(seconds=0.5)
     while True:
-        yield curr_value
-        curr_value += delta
+        yield current_time
+        current_time += delta
 
 
 @pytest.mark.asyncio
@@ -40,7 +35,7 @@ async def test_wrap_method_basic():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall(42)
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(method)
+    wrapped_method = gapic_v1.method_async.wrap_method(method)
 
     result = await wrapped_method(1, 2, meep="moop")
 
@@ -50,7 +45,7 @@ async def test_wrap_method_basic():
     # Check that the default client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
     assert len(metadata) == 1
-    client_info = google.api_core.gapic_v1.client_info.DEFAULT_CLIENT_INFO
+    client_info = gapic_v1.client_info.DEFAULT_CLIENT_INFO
     user_agent_metadata = client_info.to_grpc_metadata()
     assert user_agent_metadata in metadata
 
@@ -60,7 +55,7 @@ async def test_wrap_method_with_no_client_info():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, client_info=None
     )
 
@@ -71,7 +66,7 @@ async def test_wrap_method_with_no_client_info():
 
 @pytest.mark.asyncio
 async def test_wrap_method_with_custom_client_info():
-    client_info = google.api_core.gapic_v1.client_info.ClientInfo(
+    client_info = gapic_v1.client_info.ClientInfo(
         python_version=1,
         grpc_version=2,
         api_core_version=3,
@@ -81,7 +76,7 @@ async def test_wrap_method_with_custom_client_info():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, client_info=client_info
     )
 
@@ -99,7 +94,7 @@ async def test_invoke_wrapped_method_with_metadata():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(method)
+    wrapped_method = gapic_v1.method_async.wrap_method(method)
 
     await wrapped_method(mock.sentinel.request, metadata=[("a", "b")])
 
@@ -116,7 +111,7 @@ async def test_invoke_wrapped_method_with_metadata_as_none():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(method)
+    wrapped_method = gapic_v1.method_async.wrap_method(method)
 
     await wrapped_method(mock.sentinel.request, metadata=None)
 
@@ -137,7 +132,7 @@ async def test_wrap_method_with_default_retry_and_timeout(unused_sleep):
 
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ConstantTimeout(60)
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, default_retry, default_timeout
     )
 
@@ -159,13 +154,13 @@ async def test_wrap_method_with_default_retry_and_timeout_using_sentinel(unused_
 
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ConstantTimeout(60)
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, default_retry, default_timeout
     )
 
     result = await wrapped_method(
-        retry=google.api_core.gapic_v1.method.DEFAULT,
-        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        retry=gapic_v1.method_async.DEFAULT,
+        timeout=gapic_v1.method_async.DEFAULT,
     )
 
     assert result == 42
@@ -184,7 +179,7 @@ async def test_wrap_method_with_overriding_retry_and_timeout(unused_sleep):
 
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ConstantTimeout(60)
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, default_retry, default_timeout
     )
 
@@ -213,7 +208,7 @@ async def test_wrap_method_with_overriding_retry_deadline(utcnow, unused_sleep):
         
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ExponentialTimeout(deadline=60)
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, default_retry, default_timeout
     )
 
@@ -238,7 +233,7 @@ async def test_wrap_method_with_overriding_timeout_as_a_number():
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ConstantTimeout(60)
-    wrapped_method = google.api_core.gapic_v1.method_async.wrap_method(
+    wrapped_method = gapic_v1.method_async.wrap_method(
         method, default_retry, default_timeout
     )
 
