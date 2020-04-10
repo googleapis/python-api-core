@@ -68,7 +68,7 @@ class _WrappedCall(aio.Call):
         return self._call.cancel()
 
     def add_done_callback(self, callback):
-        self._call.add_done_callback()
+        self._call.add_done_callback(callback)
 
     async def wait_for_connection(self):
         try:
@@ -98,24 +98,20 @@ class _WrappedStreamResponseMixin(_WrappedCall):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-    def __aiter__(self):
-        if not self._wrapped_async_generator:
-            async_generator = self._call.__aiter__()
-            async def async_generator_wrapper():
-                try:
-                    async for response in async_generator:
-                        yield response
-                except grpc.RpcError as rpc_error:
-                    raise exceptions.from_grpc_error(rpc_error) from rpc_error
-            
-            self._wrapped_async_generator = async_generator_wrapper()
-        return self._wrapped_async_generator
-    
-    async def wait_for_connection(self):
+    async def _wrapped_aiter(self):
         try:
-            await self._call.wait_for_connection()
+            # NOTE(lidiz) coverage doesn't understand the exception raised from
+            # __anext__ method. It is covered by test case:
+            #     test_wrap_stream_errors_aiter_non_rpc_error
+            async for response in self._call:  # pragma: no branch
+                yield response
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
+
+    def __aiter__(self):
+        if not self._wrapped_async_generator:
+            self._wrapped_async_generator = self._wrapped_aiter()
+        return self._wrapped_async_generator
 
 
 class _WrappedStreamRequestMixin(_WrappedCall):
@@ -171,14 +167,18 @@ def _wrap_stream_errors(callable_):
     @functools.wraps(callable_)
     async def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
-        await call.wait_for_connection()
 
         if isinstance(call, aio.UnaryStreamCall):
-            return _WrappedUnaryStreamCall().with_call(call)
+            call = _WrappedUnaryStreamCall().with_call(call)
         elif isinstance(call, aio.StreamUnaryCall):
-            return _WrappedStreamUnaryCall().with_call(call)
+            call = _WrappedStreamUnaryCall().with_call(call)
         elif isinstance(call, aio.StreamStreamCall):
-            return _WrappedStreamStreamCall().with_call(call)
+            call = _WrappedStreamStreamCall().with_call(call)
+        else:
+            raise TypeError('Unexpected type of call %s' % type(call))
+
+        await call.wait_for_connection()
+        return call
 
     return error_remapped_callable
 
@@ -233,7 +233,7 @@ def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, 
 
 
 class FakeUnaryUnaryCall(_WrappedUnaryUnaryCall):
-    """Fake class for unary-unary RPCs.
+    """Fake implementation for unary-unary RPCs.
 
     It is a dummy object for response message. Supply the intended response
     upon the initialization, and the coroutine will return the exact response
