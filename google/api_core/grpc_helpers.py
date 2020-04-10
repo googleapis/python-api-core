@@ -15,7 +15,6 @@
 """Helpers for :mod:`grpc`."""
 
 import collections
-import sys
 
 import grpc
 import six

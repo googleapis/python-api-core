@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import asyncio
-import time
 
 import mock
 import pytest
@@ -54,6 +53,7 @@ async def test_set_result():
 
     assert await future.result() == 1
     callback_called = asyncio.Event()
+
     def callback(unused_future):
         callback_called.set()
 
@@ -73,6 +73,7 @@ async def test_set_exception():
         await future.result()
 
     callback_called = asyncio.Event()
+
     def callback(unused_future):
         callback_called.set()
 
@@ -87,6 +88,7 @@ async def test_invoke_callback_exception():
 
     # This should not raise, despite the callback causing an exception.
     callback_called = asyncio.Event()
+
     def callback(unused_future):
         callback_called.set()
         raise ValueError()
@@ -187,8 +189,10 @@ async def test_callback_concurrency():
     future = AsyncFutureWithPoll()
 
     callback_called = asyncio.Event()
+
     def callback(unused_future):
         callback_called.set()
+
     future.add_done_callback(callback)
 
     # Give the thread a second to poll
@@ -204,10 +208,12 @@ async def test_double_callback_concurrency():
     future = AsyncFutureWithPoll()
 
     callback_called = asyncio.Event()
+
     def callback(unused_future):
         callback_called.set()
-    
+
     callback_called2 = asyncio.Event()
+
     def callback2(unused_future):
         callback_called2.set()
 

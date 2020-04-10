@@ -18,9 +18,8 @@ method to tell the client library how to deal with retries and timeouts.
 """
 
 from google.api_core import retry_async
-from google.api_core import timeout
-from google.api_core.gapic_v1.config import MethodConfig
 from google.api_core.gapic_v1 import config
+from google.api_core.gapic_v1.config import MethodConfig  # noqa: F401
 
 
 def parse_method_configs(interface_config):

@@ -22,10 +22,10 @@ import asyncio
 import functools
 
 import grpc
-from google.api_core import exceptions, grpc_helpers
-from google.api_core.grpc_helpers import _simplify_method_name
-
 from grpc.experimental import aio
+
+from google.api_core import exceptions, grpc_helpers
+
 
 # TODO(lidiz) Support gRPC GCP wrapper
 HAS_GRPC_GCP = False
@@ -33,6 +33,8 @@ HAS_GRPC_GCP = False
 # NOTE(lidiz) Alternatively, we can hack "__getattribute__" to perform
 # automatic patching for us. But that means the overhead of creating an
 # extra Python function spreads to every single send and receive.
+
+
 class _WrappedCall(aio.Call):
 
     def __init__(self):

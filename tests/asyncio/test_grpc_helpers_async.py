@@ -13,16 +13,13 @@
 # limitations under the License.
 
 import grpc
+from grpc.experimental import aio
 import mock
 import pytest
-from grpc.experimental import aio
 
 from google.api_core import exceptions
 from google.api_core import grpc_helpers_async
 import google.auth.credentials
-from google.longrunning import operations_pb2
-
-from grpc.experimental import aio
 
 
 class RpcErrorImpl(grpc.RpcError, grpc.Call):
@@ -144,7 +141,7 @@ async def test_wrap_stream_errors_raised():
 
     wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
 
-    with pytest.raises(exceptions.InvalidArgument) as exc_info:
+    with pytest.raises(exceptions.InvalidArgument):
         await wrapped_callable()
     assert mock_call.wait_for_connection.call_count == 1
 

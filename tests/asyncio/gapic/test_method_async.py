@@ -14,12 +14,12 @@
 
 import datetime
 
-from google.api_core import (exceptions, gapic_v1, grpc_helpers_async,
-                             retry_async, timeout)
 from grpc.experimental import aio
-
 import mock
 import pytest
+
+from google.api_core import (exceptions, gapic_v1, grpc_helpers_async,
+                             retry_async, timeout)
 
 
 def _utcnow_monotonic():
@@ -205,7 +205,7 @@ async def test_wrap_method_with_overriding_retry_deadline(utcnow, unused_sleep):
     method = mock.Mock(
         spec=aio.UnaryUnaryMultiCallable,
         side_effect=([exceptions.InternalServerError(None)] * 4) + [fake_call])
-        
+
     default_retry = retry_async.AsyncRetry()
     default_timeout = timeout.ExponentialTimeout(deadline=60)
     wrapped_method = gapic_v1.method_async.wrap_method(

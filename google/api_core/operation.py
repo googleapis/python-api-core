@@ -48,7 +48,7 @@ from google.protobuf import json_format
 from google.rpc import code_pb2
 
 if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
-    from google.api_core.operation_async import AsyncOperation
+    from google.api_core.operation_async import AsyncOperation  # noqa: F401
 
 
 class Operation(polling.PollingFuture):

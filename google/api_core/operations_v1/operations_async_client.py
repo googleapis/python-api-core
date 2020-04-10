@@ -23,8 +23,8 @@
 """
 
 import functools
+
 from google.api_core import gapic_v1, page_iterator_async
-from google.api_core.gapic_v1 import method_async
 from google.api_core.operations_v1 import operations_client_config
 from google.longrunning import operations_pb2
 

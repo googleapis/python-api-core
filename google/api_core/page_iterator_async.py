@@ -69,7 +69,6 @@ a request)::
 
 import abc
 
-import six
 from google.api_core.page_iterator import Page
 
 

@@ -15,13 +15,10 @@
 """AsyncIO implementation of the abstract base Future class."""
 
 import asyncio
-import abc
-import concurrent.futures
 
 from google.api_core import exceptions
 from google.api_core import retry
 from google.api_core import retry_async
-from google.api_core.future import _helpers
 from google.api_core.future import base
 
 

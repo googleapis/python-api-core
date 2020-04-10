@@ -19,7 +19,7 @@ import sys
 from google.api_core.operations_v1.operations_client import OperationsClient
 
 if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
-    from google.api_core.operations_v1.operations_async_client import OperationsAsyncClient
+    from google.api_core.operations_v1.operations_async_client import OperationsAsyncClient  # noqa: F401
     __all__ = ["OperationsClient", "OperationsAsyncClient"]
 else:
     __all__ = ["OperationsClient"]

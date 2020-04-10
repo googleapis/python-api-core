@@ -54,17 +54,11 @@ a ``retry`` parameter that allows you to configure the behavior:
 import asyncio
 import datetime
 import functools
-import inspect
 import logging
-import random
-import time
 
-import six
-
-from google.api_core import datetime_helpers
-from google.api_core import exceptions
-from google.api_core import general_helpers
-from google.api_core.retry import if_transient_error, if_exception_type, exponential_sleep_generator
+from google.api_core import datetime_helpers, exceptions
+from google.api_core.retry import (exponential_sleep_generator,  # noqa: F401
+                                   if_exception_type, if_transient_error)
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
