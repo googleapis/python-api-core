@@ -27,7 +27,6 @@ from google.api_core.future import base
 
 class _OperationNotComplete(Exception):
     """Private exception used for polling via retry."""
-
     pass
 
 
@@ -41,7 +40,7 @@ DEFAULT_RETRY = retry_async.AsyncRetry(predicate=RETRY_PREDICATE)
 
 
 class AsyncFuture(base.Future):
-    """A Future that needs to poll some service to check its status.
+    """A Future that polls peer service to self-update.
 
     The :meth:`done` method should be implemented by subclasses. The polling
     behavior will repeatedly call ``done`` until it returns True.
@@ -86,7 +85,7 @@ class AsyncFuture(base.Future):
         return not result
 
     async def _blocking_poll(self, timeout=None):
-        """Poll and wait for the Future to be resolved.
+        """Poll and await for the Future to be resolved.
 
         Args:
             timeout (int):
@@ -106,7 +105,7 @@ class AsyncFuture(base.Future):
             )
 
     async def result(self, timeout=None):
-        """Get the result of the operation, blocking if necessary.
+        """Get the result of the operation.
 
         Args:
             timeout (int):
@@ -124,7 +123,7 @@ class AsyncFuture(base.Future):
         return self._future.result()
 
     async def exception(self, timeout=None):
-        """Get the exception from the operation, blocking if necessary.
+        """Get the exception from the operation.
 
         Args:
             timeout (int): How long to wait for the operation to complete.
