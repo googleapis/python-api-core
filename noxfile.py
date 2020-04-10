@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 import os
+import packaging
 import shutil
 import sys
 
@@ -34,7 +35,7 @@ def default(session):
     session.install("-e", ".")
 
     # Inject AsyncIO content, if version >= 3.6.
-    if sys.version_info[0]>=3 and sys.version_info[1]>=6:
+    if packaging.version(session.python) >= packaging.version('3.6'):
         session.install(
             "asyncmock",
             "git+https://github.com/pytest-dev/pytest-asyncio.git")
