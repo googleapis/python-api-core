@@ -22,7 +22,6 @@ from google.api_core import general_helpers, grpc_helpers_async
 from google.api_core.gapic_v1 import client_info, method
 from google.api_core.gapic_v1.method import (DEFAULT, USE_DEFAULT_METADATA,
                                              GapicCallable)
-from grpc.experimental import aio
 
 
 def wrap_method(
