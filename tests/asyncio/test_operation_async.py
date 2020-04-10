@@ -151,8 +151,9 @@ async def test_exception():
     assert expected_exception.message in "{!r}".format(exception)
 
 
+@mock.patch("asyncio.sleep", autospec=True)
 @pytest.mark.asyncio
-async def test_unexpected_result():
+async def test_unexpected_result(unused_sleep):
     responses = [
         make_operation_proto(),
         # Second operation response is done, but has not error or response.

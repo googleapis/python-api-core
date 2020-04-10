@@ -125,7 +125,7 @@ async def test_result_with_polling():
 class AsyncFutureTimeout(AsyncFutureWithPoll):
 
     async def done(self):
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.2)
         return False
 
 
@@ -133,14 +133,21 @@ class AsyncFutureTimeout(AsyncFutureWithPoll):
 async def test_result_timeout():
     future = AsyncFutureTimeout()
     with pytest.raises(asyncio.TimeoutError):
-        await future.result(timeout=1)
+        await future.result(timeout=0.2)
 
 
 @pytest.mark.asyncio
 async def test_exception_timeout():
     future = AsyncFutureTimeout()
     with pytest.raises(asyncio.TimeoutError):
-        await future.exception(timeout=1)
+        await future.exception(timeout=0.2)
+
+
+@pytest.mark.asyncio
+async def test_result_timeout_with_retry():
+    future = AsyncFutureTimeout()
+    with pytest.raises(asyncio.TimeoutError):
+        await future.exception(timeout=0.4)
 
 
 class AsyncFutureTransient(AsyncFutureWithPoll):
@@ -157,8 +164,9 @@ class AsyncFutureTransient(AsyncFutureWithPoll):
         return True
 
 
+@mock.patch("asyncio.sleep", autospec=True)
 @pytest.mark.asyncio
-async def test_result_transient_error():
+async def test_result_transient_error(unused_sleep):
     future = AsyncFutureTransient(
         (
             exceptions.TooManyRequests,
