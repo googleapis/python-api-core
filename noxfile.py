@@ -35,7 +35,7 @@ def default(session):
     session.install("-e", ".")
 
     # Inject AsyncIO content, if version >= 3.6.
-    if version(session.python) >= version('3.6'):
+    if version.Version(session.python) >= version.Version('3.6'):
         session.install(
             "asyncmock",
             "git+https://github.com/pytest-dev/pytest-asyncio.git")
