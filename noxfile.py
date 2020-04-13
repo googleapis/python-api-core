@@ -31,7 +31,7 @@ def default(session):
     run the tests.
     """
     # Install all test dependencies, then install this package in-place.
-    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
+    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2", "packaging")
     session.install("-e", ".")
 
     # Inject AsyncIO content, if version >= 3.6.
