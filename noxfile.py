@@ -14,12 +14,23 @@
 
 from __future__ import absolute_import
 import os
-from packaging import version
 import shutil
 import sys
 
 # https://github.com/google/importlab/issues/25
 import nox  # pytype: disable=import-error
+
+_MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
+
+
+def _greater_or_equal_than_36(version_string):
+    tokens = version_string.split('.')
+    for i, token in enumerate(tokens):
+        try:
+            tokens[i] = int(token)
+        except ValueError:
+            pass
+    return tokens >= [3, 6]
 
 
 def default(session):
@@ -31,11 +42,11 @@ def default(session):
     run the tests.
     """
     # Install all test dependencies, then install this package in-place.
-    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2", "packaging")
+    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
     session.install("-e", ".")
 
     # Inject AsyncIO content, if version >= 3.6.
-    if version.Version(session.python) >= version.Version('3.6'):
+    if _greater_or_equal_than_36(session.python):
         session.install(
             "asyncmock",
             "git+https://github.com/pytest-dev/pytest-asyncio.git")
