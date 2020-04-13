@@ -24,4 +24,4 @@ if sys.version_info[0] >= 3 and sys.version_info[1] >= 6:
     from google.api_core.gapic_v1 import config_async  # noqa: F401
     __all__ = ["client_info", "config", "config_async", "method", "method_async", "routing_header"]
 else:
-    __all__ = ["client_info", "config", "method", "routing_header"]
+    __all__ = ["client_info", "config", "method", "routing_header"]  # pragma: NO COVER

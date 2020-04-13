@@ -46,6 +46,8 @@ def default(session):
             "grpcio")
 
         session.run(
+            "python",
+            "-m",
             "py.test",
             "--quiet",
             "--cov=google.api_core",
@@ -62,6 +64,8 @@ def default(session):
     else:
         # Run py.test against the unit tests.
         session.run(
+            "python",
+            "-m",
             "py.test",
             "--quiet",
             "--cov=google.api_core",
