@@ -42,7 +42,7 @@ You can also pass a dictionary.
     client = ImageAnnotatorClient(
         client_options={
             "api_endpoint": "foo.googleapis.com",
-            client_cert_source : get_client_cert
+            "client_cert_source" : get_client_cert
         })
 
 
