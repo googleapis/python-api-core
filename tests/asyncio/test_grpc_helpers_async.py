@@ -362,3 +362,11 @@ def test_create_channel_without_grpc_gcp(grpc_secure_channel):
     grpc_helpers_async.create_channel(target, credentials=credentials, scopes=scopes)
     grpc_secure_channel.assert_called()
     credentials.with_scopes.assert_called_once_with(scopes)
+
+
+@pytest.mark.asyncio
+async def test_fake_stream_unary_call():
+    fake_call = grpc_helpers_async.FakeStreamUnaryCall()
+    await fake_call.wait_for_connection()
+    response = await fake_call
+    assert fake_call.response == response
