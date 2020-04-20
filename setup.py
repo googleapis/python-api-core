@@ -22,7 +22,7 @@ import setuptools
 
 name = "google-api-core"
 description = "Google API client core library"
-version = "1.16.0"
+version = "1.17.0"
 # Should be one of:
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
@@ -31,7 +31,7 @@ release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
     "googleapis-common-protos >= 1.6.0, < 2.0dev",
     "protobuf >= 3.4.0",
-    "google-auth >= 0.4.0, < 2.0dev",
+    "google-auth >= 1.14.0, < 2.0dev",
     "requests >= 2.18.0, < 3.0.0dev",
     "setuptools >= 34.0.0",
     "six >= 1.10.0",
