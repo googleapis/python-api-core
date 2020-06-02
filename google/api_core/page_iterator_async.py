@@ -269,10 +269,10 @@ class AsyncGRPCIterator(AsyncIterator):
         if self.page_number == 0:
             return True
 
+        # Note: intentionally a falsy check instead of a None check. The RPC
+        # can return an empty string indicating no more pages.
         if self.max_results is not None:
             if self.num_results >= self.max_results:
                 return False
 
-        # Note: intentionally a falsy check instead of a None check. The RPC
-        # can return an empty string indicating no more pages.
         return True if self.next_page_token else False
