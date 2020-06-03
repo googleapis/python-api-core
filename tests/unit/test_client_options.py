@@ -70,7 +70,7 @@ def test_from_dict():
             "api_endpoint": "foo.googleapis.com",
             "client_cert_source": get_client_cert,
             "quota_project": "quote-proj",
-            "credentials_file": "path/to/credentials.json"
+            "credentials_file": "path/to/credentials.json",
         }
     )
 
