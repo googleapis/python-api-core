@@ -28,7 +28,10 @@ def get_client_encrypted_cert():
 def test_constructor():
 
     options = client_options.ClientOptions(
-        api_endpoint="foo.googleapis.com", client_cert_source=get_client_cert
+        api_endpoint="foo.googleapis.com",
+        client_cert_source=get_client_cert,
+        quota_project="quote-proj",
+        credentials_file="path/to/credentials.json",
     )
 
     assert options.api_endpoint == "foo.googleapis.com"

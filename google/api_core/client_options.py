@@ -62,6 +62,9 @@ class ClientOptions(object):
             callback which returns client certificate file path, encrypted private
             key file path, and the passphrase bytes.``client_cert_source`` and
             ``client_encrypted_cert_source`` are mutually exclusive.
+        quota_project (str): An optional project name that a client's
+            quota belongs to.
+        credentials_file (str): An optional path to a file storing credentials.
 
     Raises:
         ValueError: If both ``client_cert_source`` and ``client_encrypted_cert_source``
@@ -73,6 +76,8 @@ class ClientOptions(object):
         api_endpoint=None,
         client_cert_source=None,
         client_encrypted_cert_source=None,
+        quota_project=None,
+        credentials_file=None,
     ):
         if client_cert_source and client_encrypted_cert_source:
             raise ValueError(
@@ -81,6 +86,8 @@ class ClientOptions(object):
         self.api_endpoint = api_endpoint
         self.client_cert_source = client_cert_source
         self.client_encrypted_cert_source = client_encrypted_cert_source
+        self.quota_project = quota_project
+        self.credentials_file = credentials_file
 
     def __repr__(self):
         return "ClientOptions: " + repr(self.__dict__)
