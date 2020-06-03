@@ -36,6 +36,8 @@ def test_constructor():
 
     assert options.api_endpoint == "foo.googleapis.com"
     assert options.client_cert_source() == (b"cert", b"key")
+    assert options.quota_project == "quote-proj"
+    assert options.credentials_file == "path/to/credentials.json"
 
 
 def test_constructor_with_encrypted_cert_source():
@@ -64,12 +66,19 @@ def test_constructor_with_both_cert_sources():
 
 def test_from_dict():
     options = client_options.from_dict(
-        {"api_endpoint": "foo.googleapis.com", "client_cert_source": get_client_cert}
+        {
+            "api_endpoint": "foo.googleapis.com",
+            "client_cert_source": get_client_cert,
+            "quota_project": "quote-proj",
+            "credentials_file": "path/to/credentials.json"
+        }
     )
 
     assert options.api_endpoint == "foo.googleapis.com"
-    # assert options.client_cert_source == get_client_cert
     assert options.client_cert_source() == (b"cert", b"key")
+    assert options.quota_project == "quote-proj"
+    assert options.credentials_file == "path/to/credentials.json"
+
 
 
 def test_from_dict_bad_argument():
