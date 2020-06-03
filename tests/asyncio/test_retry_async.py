@@ -1,4 +1,4 @@
-# Copyright 2017 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,83 +13,52 @@
 # limitations under the License.
 
 import datetime
-import itertools
 import re
 
 import mock
 import pytest
 
 from google.api_core import exceptions
-from google.api_core import retry
+from google.api_core import retry_async
 
 
-def test_if_exception_type():
-    predicate = retry.if_exception_type(ValueError)
-
-    assert predicate(ValueError())
-    assert not predicate(TypeError())
-
-
-def test_if_exception_type_multiple():
-    predicate = retry.if_exception_type(ValueError, TypeError)
-
-    assert predicate(ValueError())
-    assert predicate(TypeError())
-    assert not predicate(RuntimeError())
-
-
-def test_if_transient_error():
-    assert retry.if_transient_error(exceptions.InternalServerError(""))
-    assert retry.if_transient_error(exceptions.TooManyRequests(""))
-    assert retry.if_transient_error(exceptions.ServiceUnavailable(""))
-    assert not retry.if_transient_error(exceptions.InvalidArgument(""))
-
-
-# Make uniform return half of its maximum, which will be the calculated
-# sleep time.
-@mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n / 2.0)
-def test_exponential_sleep_generator_base_2(uniform):
-    gen = retry.exponential_sleep_generator(1, 60, multiplier=2)
-
-    result = list(itertools.islice(gen, 8))
-    assert result == [1, 2, 4, 8, 16, 32, 60, 60]
-
-
-@mock.patch("time.sleep", autospec=True)
+@mock.patch("asyncio.sleep", autospec=True)
 @mock.patch(
     "google.api_core.datetime_helpers.utcnow",
     return_value=datetime.datetime.min,
     autospec=True,
 )
-def test_retry_target_success(utcnow, sleep):
-    predicate = retry.if_exception_type(ValueError)
+@pytest.mark.asyncio
+async def test_retry_target_success(utcnow, sleep):
+    predicate = retry_async.if_exception_type(ValueError)
     call_count = [0]
 
-    def target():
+    async def target():
         call_count[0] += 1
         if call_count[0] < 3:
             raise ValueError()
         return 42
 
-    result = retry.retry_target(target, predicate, range(10), None)
+    result = await retry_async.retry_target(target, predicate, range(10), None)
 
     assert result == 42
     assert call_count[0] == 3
     sleep.assert_has_calls([mock.call(0), mock.call(1)])
 
 
-@mock.patch("time.sleep", autospec=True)
+@mock.patch("asyncio.sleep", autospec=True)
 @mock.patch(
     "google.api_core.datetime_helpers.utcnow",
     return_value=datetime.datetime.min,
     autospec=True,
 )
-def test_retry_target_w_on_error(utcnow, sleep):
-    predicate = retry.if_exception_type(ValueError)
+@pytest.mark.asyncio
+async def test_retry_target_w_on_error(utcnow, sleep):
+    predicate = retry_async.if_exception_type(ValueError)
     call_count = {"target": 0}
     to_raise = ValueError()
 
-    def target():
+    async def target():
         call_count["target"] += 1
         if call_count["target"] < 3:
             raise to_raise
@@ -97,7 +66,7 @@ def test_retry_target_w_on_error(utcnow, sleep):
 
     on_error = mock.Mock()
 
-    result = retry.retry_target(target, predicate, range(10), None, on_error=on_error)
+    result = await retry_async.retry_target(target, predicate, range(10), None, on_error=on_error)
 
     assert result == 42
     assert call_count["target"] == 3
@@ -106,28 +75,30 @@ def test_retry_target_w_on_error(utcnow, sleep):
     sleep.assert_has_calls([mock.call(0), mock.call(1)])
 
 
-@mock.patch("time.sleep", autospec=True)
+@mock.patch("asyncio.sleep", autospec=True)
 @mock.patch(
     "google.api_core.datetime_helpers.utcnow",
     return_value=datetime.datetime.min,
     autospec=True,
 )
-def test_retry_target_non_retryable_error(utcnow, sleep):
-    predicate = retry.if_exception_type(ValueError)
+@pytest.mark.asyncio
+async def test_retry_target_non_retryable_error(utcnow, sleep):
+    predicate = retry_async.if_exception_type(ValueError)
     exception = TypeError()
     target = mock.Mock(side_effect=exception)
 
     with pytest.raises(TypeError) as exc_info:
-        retry.retry_target(target, predicate, range(10), None)
+        await retry_async.retry_target(target, predicate, range(10), None)
 
     assert exc_info.value == exception
     sleep.assert_not_called()
 
 
-@mock.patch("time.sleep", autospec=True)
+@mock.patch("asyncio.sleep", autospec=True)
 @mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
-def test_retry_target_deadline_exceeded(utcnow, sleep):
-    predicate = retry.if_exception_type(ValueError)
+@pytest.mark.asyncio
+async def test_retry_target_deadline_exceeded(utcnow, sleep):
+    predicate = retry_async.if_exception_type(ValueError)
     exception = ValueError("meep")
     target = mock.Mock(side_effect=exception)
     # Setup the timeline so that the first call takes 5 seconds but the second
@@ -140,7 +111,7 @@ def test_retry_target_deadline_exceeded(utcnow, sleep):
     ]
 
     with pytest.raises(exceptions.RetryError) as exc_info:
-        retry.retry_target(target, predicate, range(10), deadline=10)
+        await retry_async.retry_target(target, predicate, range(10), deadline=10)
 
     assert exc_info.value.cause == exception
     assert exc_info.match("Deadline of 10.0s exceeded")
@@ -148,26 +119,27 @@ def test_retry_target_deadline_exceeded(utcnow, sleep):
     assert target.call_count == 2
 
 
-def test_retry_target_bad_sleep_generator():
+@pytest.mark.asyncio
+async def test_retry_target_bad_sleep_generator():
     with pytest.raises(ValueError, match="Sleep generator"):
-        retry.retry_target(mock.sentinel.target, mock.sentinel.predicate, [], None)
+        await retry_async.retry_target(mock.sentinel.target, mock.sentinel.predicate, [], None)
 
 
-class TestRetry(object):
+class TestAsyncRetry:
+
     def test_constructor_defaults(self):
-        retry_ = retry.Retry()
-        assert retry_._predicate == retry.if_transient_error
+        retry_ = retry_async.AsyncRetry()
+        assert retry_._predicate == retry_async.if_transient_error
         assert retry_._initial == 1
         assert retry_._maximum == 60
         assert retry_._multiplier == 2
         assert retry_._deadline == 120
         assert retry_._on_error is None
-        assert retry_.deadline == 120
 
     def test_constructor_options(self):
         _some_function = mock.Mock()
 
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -183,7 +155,7 @@ class TestRetry(object):
         assert retry_._on_error is _some_function
 
     def test_with_deadline(self):
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -203,7 +175,7 @@ class TestRetry(object):
         assert new_retry._on_error is retry_._on_error
 
     def test_with_predicate(self):
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -223,7 +195,7 @@ class TestRetry(object):
         assert new_retry._on_error is retry_._on_error
 
     def test_with_delay_noop(self):
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -238,7 +210,7 @@ class TestRetry(object):
         assert new_retry._multiplier == retry_._multiplier
 
     def test_with_delay(self):
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -263,7 +235,7 @@ class TestRetry(object):
 
         # Explicitly set all attributes as changed Retry defaults should not
         # cause this test to start failing.
-        retry_ = retry.Retry(
+        retry_ = retry_async.AsyncRetry(
             predicate=if_exception_type,
             initial=1.0,
             maximum=60.0,
@@ -273,24 +245,25 @@ class TestRetry(object):
         )
         assert re.match(
             (
-                r"<Retry predicate=<function.*?if_exception_type.*?>, "
+                r"<AsyncRetry predicate=<function.*?if_exception_type.*?>, "
                 r"initial=1.0, maximum=60.0, multiplier=2.0, deadline=120.0, "
                 r"on_error=None>"
             ),
             str(retry_),
         )
 
-    @mock.patch("time.sleep", autospec=True)
-    def test___call___and_execute_success(self, sleep):
-        retry_ = retry.Retry()
-        target = mock.Mock(spec=["__call__"], return_value=42)
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___and_execute_success(self, sleep):
+        retry_ = retry_async.AsyncRetry()
+        target = mock.AsyncMock(spec=["__call__"], return_value=42)
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
         decorated = retry_(target)
         target.assert_not_called()
 
-        result = decorated("meep")
+        result = await decorated("meep")
 
         assert result == 42
         target.assert_called_once_with("meep")
@@ -298,20 +271,21 @@ class TestRetry(object):
 
     # Make uniform return half of its maximum, which is the calculated sleep time.
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n / 2.0)
-    @mock.patch("time.sleep", autospec=True)
-    def test___call___and_execute_retry(self, sleep, uniform):
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___and_execute_retry(self, sleep, uniform):
 
         on_error = mock.Mock(spec=["__call__"], side_effect=[None])
-        retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
+        retry_ = retry_async.AsyncRetry(predicate=retry_async.if_exception_type(ValueError))
 
-        target = mock.Mock(spec=["__call__"], side_effect=[ValueError(), 42])
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[ValueError(), 42])
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
         decorated = retry_(target, on_error=on_error)
         target.assert_not_called()
 
-        result = decorated("meep")
+        result = await decorated("meep")
 
         assert result == 42
         assert target.call_count == 2
@@ -321,12 +295,13 @@ class TestRetry(object):
 
     # Make uniform return half of its maximum, which is the calculated sleep time.
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n / 2.0)
-    @mock.patch("time.sleep", autospec=True)
-    def test___call___and_execute_retry_hitting_deadline(self, sleep, uniform):
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___and_execute_retry_hitting_deadline(self, sleep, uniform):
 
         on_error = mock.Mock(spec=["__call__"], side_effect=[None] * 10)
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError),
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError),
             initial=1.0,
             maximum=1024.0,
             multiplier=2.0,
@@ -338,7 +313,7 @@ class TestRetry(object):
             "google.api_core.datetime_helpers.utcnow", return_value=utcnow
         )
 
-        target = mock.Mock(spec=["__call__"], side_effect=[ValueError()] * 10)
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[ValueError()] * 10)
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
@@ -346,14 +321,14 @@ class TestRetry(object):
         target.assert_not_called()
 
         with utcnow_patcher as patched_utcnow:
-            # Make sure that calls to fake time.sleep() also advance the mocked
+            # Make sure that calls to fake asyncio.sleep() also advance the mocked
             # time clock.
             def increase_time(sleep_delay):
                 patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
             sleep.side_effect = increase_time
 
             with pytest.raises(exceptions.RetryError):
-                decorated("meep")
+                await decorated("meep")
 
         assert target.call_count == 5
         target.assert_has_calls([mock.call("meep")] * 5)
@@ -367,23 +342,24 @@ class TestRetry(object):
         assert last_wait == 2.9   # and not 8.0, because the last delay was shortened
         assert total_wait == 9.9  # the same as the deadline
 
-    @mock.patch("time.sleep", autospec=True)
-    def test___init___without_retry_executed(self, sleep):
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___init___without_retry_executed(self, sleep):
         _some_function = mock.Mock()
 
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError), on_error=_some_function
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError), on_error=_some_function
         )
         # check the proper creation of the class
         assert retry_._on_error is _some_function
 
-        target = mock.Mock(spec=["__call__"], side_effect=[42])
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[42])
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
         wrapped = retry_(target)
 
-        result = wrapped("meep")
+        result = await wrapped("meep")
 
         assert result == 42
         target.assert_called_once_with("meep")
@@ -392,17 +368,18 @@ class TestRetry(object):
 
     # Make uniform return half of its maximum, which is the calculated sleep time.
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n / 2.0)
-    @mock.patch("time.sleep", autospec=True)
-    def test___init___when_retry_is_executed(self, sleep, uniform):
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___init___when_retry_is_executed(self, sleep, uniform):
         _some_function = mock.Mock()
 
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError), on_error=_some_function
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError), on_error=_some_function
         )
         # check the proper creation of the class
         assert retry_._on_error is _some_function
 
-        target = mock.Mock(
+        target = mock.AsyncMock(
             spec=["__call__"], side_effect=[ValueError(), ValueError(), 42]
         )
         # __name__ is needed by functools.partial.
@@ -411,7 +388,7 @@ class TestRetry(object):
         wrapped = retry_(target)
         target.assert_not_called()
 
-        result = wrapped("meep")
+        result = await wrapped("meep")
 
         assert result == 42
         assert target.call_count == 3
