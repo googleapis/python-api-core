@@ -53,18 +53,19 @@ class ClientOptions(object):
     """Client Options used to set options on clients.
 
     Args:
-        api_endpoint (str): The desired API endpoint, e.g., compute.googleapis.com
-        client_cert_source (Callable[[], (bytes, bytes)]): An optional callback
+        api_endpoint (Optional[str]): The desired API endpoint, e.g.,
+            compute.googleapis.com
+        client_cert_source (Optional[Callable[[], (bytes, bytes)]]): A callback
             which returns client certificate bytes and private key bytes both in
             PEM format. ``client_cert_source`` and ``client_encrypted_cert_source``
             are mutually exclusive.
-        client_encrypted_cert_source (Callable[[], (str, str, bytes)]): An optional
-            callback which returns client certificate file path, encrypted private
-            key file path, and the passphrase bytes.``client_cert_source`` and
-            ``client_encrypted_cert_source`` are mutually exclusive.
-        quota_project (str): An optional project name that a client's
+        client_encrypted_cert_source (Optional[Callable[[], (str, str, bytes)]]):
+            A callback which returns client certificate file path, encrypted
+            private key file path, and the passphrase bytes.``client_cert_source``
+            and ``client_encrypted_cert_source`` are mutually exclusive.
+        quota_project (Optional[str]): A project name that a client's
             quota belongs to.
-        credentials_file (str): An optional path to a file storing credentials.
+        credentials_file (Optional[str]): A path to a file storing credentials.
 
     Raises:
         ValueError: If both ``client_cert_source`` and ``client_encrypted_cert_source``
