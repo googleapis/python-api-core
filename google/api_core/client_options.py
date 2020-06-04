@@ -66,6 +66,7 @@ class ClientOptions(object):
         quota_project (Optional[str]): A project name that a client's
             quota belongs to.
         credentials_file (Optional[str]): A path to a file storing credentials.
+        scopes (Optional[Sequence[str]]): OAuth access token override scopes.
 
     Raises:
         ValueError: If both ``client_cert_source`` and ``client_encrypted_cert_source``
@@ -79,6 +80,7 @@ class ClientOptions(object):
         client_encrypted_cert_source=None,
         quota_project=None,
         credentials_file=None,
+        scopes=None,
     ):
         if client_cert_source and client_encrypted_cert_source:
             raise ValueError(
@@ -89,6 +91,7 @@ class ClientOptions(object):
         self.client_encrypted_cert_source = client_encrypted_cert_source
         self.quota_project = quota_project
         self.credentials_file = credentials_file
+        self.scopes = scopes
 
     def __repr__(self):
         return "ClientOptions: " + repr(self.__dict__)
