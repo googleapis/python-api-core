@@ -101,7 +101,7 @@ def from_dict(options):
     """Construct a client options object from a dictionary.
 
     Args:
-        options (dict[str, Any]): A dictionary with client options.
+        options (Dict[str, Any]): A dictionary with client options.
             See the docstring for ClientOptions for details on valid arguments.
     """
 
