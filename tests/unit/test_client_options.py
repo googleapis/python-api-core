@@ -30,7 +30,7 @@ def test_constructor():
     options = client_options.ClientOptions(
         api_endpoint="foo.googleapis.com",
         client_cert_source=get_client_cert,
-        quota_project="quote-proj",
+        quota_project_id="quote-proj",
         credentials_file="path/to/credentials.json",
         scopes=[
             "https://www.googleapis.com/auth/cloud-platform",
@@ -40,7 +40,7 @@ def test_constructor():
 
     assert options.api_endpoint == "foo.googleapis.com"
     assert options.client_cert_source() == (b"cert", b"key")
-    assert options.quota_project == "quote-proj"
+    assert options.quota_project_id == "quote-proj"
     assert options.credentials_file == "path/to/credentials.json"
     assert options.scopes == [
         "https://www.googleapis.com/auth/cloud-platform",
@@ -77,7 +77,7 @@ def test_from_dict():
         {
             "api_endpoint": "foo.googleapis.com",
             "client_cert_source": get_client_cert,
-            "quota_project": "quote-proj",
+            "quota_project_id": "quote-proj",
             "credentials_file": "path/to/credentials.json",
             "scopes": [
                 "https://www.googleapis.com/auth/cloud-platform",
@@ -88,7 +88,7 @@ def test_from_dict():
 
     assert options.api_endpoint == "foo.googleapis.com"
     assert options.client_cert_source() == (b"cert", b"key")
-    assert options.quota_project == "quote-proj"
+    assert options.quota_project_id == "quote-proj"
     assert options.credentials_file == "path/to/credentials.json"
     assert options.scopes == [
         "https://www.googleapis.com/auth/cloud-platform",

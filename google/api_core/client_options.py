@@ -63,7 +63,7 @@ class ClientOptions(object):
             A callback which returns client certificate file path, encrypted
             private key file path, and the passphrase bytes.``client_cert_source``
             and ``client_encrypted_cert_source`` are mutually exclusive.
-        quota_project (Optional[str]): A project name that a client's
+        quota_project_id (Optional[str]): A project name that a client's
             quota belongs to.
         credentials_file (Optional[str]): A path to a file storing credentials.
         scopes (Optional[Sequence[str]]): OAuth access token override scopes.
@@ -78,7 +78,7 @@ class ClientOptions(object):
         api_endpoint=None,
         client_cert_source=None,
         client_encrypted_cert_source=None,
-        quota_project=None,
+        quota_project_id=None,
         credentials_file=None,
         scopes=None,
     ):
@@ -89,7 +89,7 @@ class ClientOptions(object):
         self.api_endpoint = api_endpoint
         self.client_cert_source = client_cert_source
         self.client_encrypted_cert_source = client_encrypted_cert_source
-        self.quota_project = quota_project
+        self.quota_project_id = quota_project_id
         self.credentials_file = credentials_file
         self.scopes = scopes
 
