@@ -80,7 +80,6 @@ def test_from_dict():
     assert options.credentials_file == "path/to/credentials.json"
 
 
-
 def test_from_dict_bad_argument():
     with pytest.raises(ValueError):
         client_options.from_dict(
