@@ -170,13 +170,16 @@ def wrap_errors(callable_):
         return _wrap_unary_errors(callable_)
 
 
-def _create_composite_credentials(credentials=None, scopes=None, ssl_credentials=None):
+def _create_composite_credentials(credentials=None, credentials_file=None, scopes=None, ssl_credentials=None):
     """Create the composite credentials for secure channels.
 
     Args:
         credentials (google.auth.credentials.Credentials): The credentials. If
             not specified, then this function will attempt to ascertain the
             credentials from the environment using :func:`google.auth.default`.
+        credentials_file (str): A file with credentials that can be loaded with
+            :func:`google.auth.load_credentials_from_file`. This argument is
+            mutually exclusive with credentials.
         scopes (Sequence[str]): A optional list of scopes needed for this
             service. These are only used when credentials are not specified and
             are passed to :func:`google.auth.default`.
@@ -185,13 +188,19 @@ def _create_composite_credentials(credentials=None, scopes=None, ssl_credentials
 
     Returns:
         grpc.ChannelCredentials: The composed channel credentials object.
+
+    Raises:
+        ValueError: If both a credentials object and credentials_file are passed.
     """
-    if credentials is None:
-        credentials, _ = google.auth.default(scopes=scopes)
+    if credentials and credentials_file:
+        raise ValueError("'credentials' and 'credentials_file' are mutually exclusive.")
+
+    if credentials_file:
+        credentials, _ = google.auth.load_credentials_from_file(credentials_file, scopes=scopes)
+    elif credentials:
+        credentials = google.auth.credentials.with_scopes_if_required(credentials, scopes)
     else:
-        credentials = google.auth.credentials.with_scopes_if_required(
-            credentials, scopes
-        )
+        credentials, _ = google.auth.default(scopes=scopes)
 
     request = google.auth.transport.requests.Request()
 
@@ -212,7 +221,7 @@ def _create_composite_credentials(credentials=None, scopes=None, ssl_credentials
     )
 
 
-def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, **kwargs):
+def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, credentials_file=None, **kwargs):
     """Create a secure channel with credentials.
 
     Args:
@@ -231,8 +240,14 @@ def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, 
     Returns:
         grpc.Channel: The created channel.
     """
+    if credentials and credentials_file:
+        raise ValueError("'credentials' and 'credentials_file' are mutually exclusive.")
+
     composite_credentials = _create_composite_credentials(
-        credentials, scopes, ssl_credentials
+        credentials=credentials,
+        credentials_file=credentials_file,
+        scopes=scopes,
+        ssl_credentials=ssl_credentials
     )
 
     if HAS_GRPC_GCP:
