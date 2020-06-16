@@ -234,6 +234,9 @@ def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, 
             are passed to :func:`google.auth.default`.
         ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
             credentials. This can be used to specify different certificates.
+        credentials_file (str): A file with credentials that can be loaded with
+            :func:`google.auth.load_credentials_from_file`. This argument is
+            mutually exclusive with credentials.
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
 
