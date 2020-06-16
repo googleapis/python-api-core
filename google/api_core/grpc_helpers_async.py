@@ -226,6 +226,9 @@ def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, 
 
     Returns:
         aio.Channel: The created channel.
+    
+    Raises:
+        ValueError: If both a credentials object and credentials_file are passed.
     """
     if credentials and credentials_file:
         raise ValueError("'credentials' and 'credentials_file' are mutually exclusive.")

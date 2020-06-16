@@ -1,0 +1,114 @@
+rule infer
+  command = /usr/local/google/home/busunkim/github/python-api-core/.nox/pytype/bin/python -m pytype.single --imports_info $imports --module-name $module -V 3.6 -o $out --no-report-errors --nofail --quick $in
+  description = infer $module
+rule check
+  command = /usr/local/google/home/busunkim/github/python-api-core/.nox/pytype/bin/python -m pytype.single --disable pyi-error --imports_info $imports --module-name $module -V 3.6 -o $out --analyze-annotated --nofail --quick $in
+  description = check $module
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/base.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/future/base.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.future.base.imports
+  module = google.api_core.future.base
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/__init__.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/future/__init__.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/base.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.future.__init__.imports
+  module = google.api_core.future.__init__
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/exceptions.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.exceptions.imports
+  module = google.api_core.exceptions
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/bidi.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/bidi.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.bidi.imports
+  module = google.api_core.bidi
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/protobuf_helpers.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/protobuf_helpers.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.protobuf_helpers.imports
+  module = google.api_core.protobuf_helpers
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/datetime_helpers.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/datetime_helpers.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.datetime_helpers.imports
+  module = google.api_core.datetime_helpers
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/general_helpers.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.general_helpers.imports
+  module = google.api_core.general_helpers
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/retry.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/datetime_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.retry.imports
+  module = google.api_core.retry
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/_helpers.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/future/_helpers.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.future._helpers.imports
+  module = google.api_core.future._helpers
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/polling.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/future/polling.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/base.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.future.polling.imports
+  module = google.api_core.future.polling
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operation.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operation.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/protobuf_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/polling.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operation.imports
+  module = google.api_core.operation
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/path_template.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/path_template.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.path_template.imports
+  module = google.api_core.path_template
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/iam.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/iam.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.iam.imports
+  module = google.api_core.iam
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/client_options.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/client_options.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.client_options.imports
+  module = google.api_core.client_options
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/routing_header.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/routing_header.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.routing_header.imports
+  module = google.api_core.gapic_v1.routing_header
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/retry_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/datetime_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.retry_async.imports
+  module = google.api_core.retry_async
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/timeout.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/timeout.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/datetime_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.timeout.imports
+  module = google.api_core.timeout
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/config.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/config.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/timeout.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.config.imports
+  module = google.api_core.gapic_v1.config
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/config_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/config_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry_async.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/config.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.config_async.imports
+  module = google.api_core.gapic_v1.config_async
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/grpc_helpers.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/grpc_helpers.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.grpc_helpers.imports
+  module = google.api_core.grpc_helpers
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/grpc_helpers_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/grpc_helpers_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/grpc_helpers.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.grpc_helpers_async.imports
+  module = google.api_core.grpc_helpers_async
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/client_info.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/client_info.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.client_info.imports
+  module = google.api_core.client_info
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/client_info.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/client_info.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/client_info.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.client_info.imports
+  module = google.api_core.gapic_v1.client_info
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/method.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/method.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/grpc_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/timeout.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/client_info.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.method.imports
+  module = google.api_core.gapic_v1.method
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/method_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/method_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/general_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/grpc_helpers_async.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/client_info.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/method.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.method_async.imports
+  module = google.api_core.gapic_v1.method_async
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/__init__.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/gapic_v1/__init__.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/client_info.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/config.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/method.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/routing_header.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/config_async.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/method_async.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.gapic_v1.__init__.imports
+  module = google.api_core.gapic_v1.__init__
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/page_iterator.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/page_iterator.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.page_iterator.imports
+  module = google.api_core.page_iterator
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_client_config.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operations_v1/operations_client_config.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operations_v1.operations_client_config.imports
+  module = google.api_core.operations_v1.operations_client_config
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_client.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operations_v1/operations_client.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/__init__.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/page_iterator.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_client_config.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operations_v1.operations_client.imports
+  module = google.api_core.operations_v1.operations_client
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/page_iterator_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/page_iterator_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/page_iterator.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.page_iterator_async.imports
+  module = google.api_core.page_iterator_async
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_async_client.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operations_v1/operations_async_client.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/gapic_v1/__init__.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/page_iterator_async.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_client_config.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operations_v1.operations_async_client.imports
+  module = google.api_core.operations_v1.operations_async_client
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/__init__.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operations_v1/__init__.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_client.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operations_v1/operations_async_client.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operations_v1.__init__.imports
+  module = google.api_core.operations_v1.__init__
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/__init__.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/__init__.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.__init__.imports
+  module = google.__init__
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/__init__.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/__init__.py
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.__init__.imports
+  module = google.api_core.__init__
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/async_future.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/future/async_future.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/retry_async.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/base.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.future.async_future.imports
+  module = google.api_core.future.async_future
+build /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/operation_async.pyi: check /usr/local/google/home/busunkim/github/python-api-core/google/api_core/operation_async.py | /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/exceptions.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/protobuf_helpers.pyi /usr/local/google/home/busunkim/github/python-api-core/pytype_output/pyi/google/api_core/future/async_future.pyi
+  imports = /usr/local/google/home/busunkim/github/python-api-core/pytype_output/imports/google.api_core.operation_async.imports
+  module = google.api_core.operation_async

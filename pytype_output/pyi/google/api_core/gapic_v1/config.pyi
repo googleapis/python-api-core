@@ -1,0 +1,36 @@
+# (generated with --quick)
+
+import google.api_core.timeout
+from typing import Any, Callable, Dict, Iterable, Sized, Tuple, Type, TypeVar
+
+MethodConfig = `namedtuple-MethodConfig-retry-timeout`
+
+_MILLIS_PER_SECOND: float
+collections: module
+exceptions: module
+grpc: module
+retry: module
+six: module
+timeout: module
+
+_Tnamedtuple-MethodConfig-retry-timeout = TypeVar('_Tnamedtuple-MethodConfig-retry-timeout', bound=`namedtuple-MethodConfig-retry-timeout`)
+
+class `namedtuple-MethodConfig-retry-timeout`(tuple):
+    __slots__ = ["retry", "timeout"]
+    __dict__: collections.OrderedDict[str, Any]
+    _fields: Tuple[str, str]
+    retry: Any
+    timeout: Any
+    def __getnewargs__(self) -> Tuple[Any, Any]: ...
+    def __getstate__(self) -> None: ...
+    def __init__(self, *args, **kwargs) -> None: ...
+    def __new__(cls: Type[`_Tnamedtuple-MethodConfig-retry-timeout`], retry, timeout) -> `_Tnamedtuple-MethodConfig-retry-timeout`: ...
+    def _asdict(self) -> collections.OrderedDict[str, Any]: ...
+    @classmethod
+    def _make(cls: Type[`_Tnamedtuple-MethodConfig-retry-timeout`], iterable: Iterable, new = ..., len: Callable[[Sized], int] = ...) -> `_Tnamedtuple-MethodConfig-retry-timeout`: ...
+    def _replace(self: `_Tnamedtuple-MethodConfig-retry-timeout`, **kwds) -> `_Tnamedtuple-MethodConfig-retry-timeout`: ...
+
+def _exception_class_for_grpc_status_name(name) -> Any: ...
+def _retry_from_retry_config(retry_params, retry_codes, retry_impl = ...) -> Any: ...
+def _timeout_from_retry_config(retry_params) -> google.api_core.timeout.ExponentialTimeout: ...
+def parse_method_configs(interface_config, retry_impl = ...) -> Dict[Any, `namedtuple-MethodConfig-retry-timeout`]: ...
