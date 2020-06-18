@@ -228,7 +228,7 @@ def create_channel(target, credentials=None, scopes=None, ssl_credentials=None, 
         aio.Channel: The created channel.
 
     Raises:
-        ValueError: If both a credentials object and credentials_file are passed.
+        google.api_core.DuplicateCredentialArgs: If both a credentials object and credentials_file are passed.
     """
 
     composite_credentials = grpc_helpers._create_composite_credentials(
