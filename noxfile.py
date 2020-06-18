@@ -60,9 +60,6 @@ def default(session):
     ]
     pytest_args.extend(session.posargs)
 
-    # TODO(busunkim): Remove once 'load_default_credentials_from_file' is available in google-auth
-    session.install("--force-reinstall", "git+https://github.com/googleapis/google-auth-library-python.git@support-scopes")
-
     # Inject AsyncIO content, if version >= 3.6.
     if _greater_or_equal_than_36(session.python):
         session.install("asyncmock", "pytest-asyncio")

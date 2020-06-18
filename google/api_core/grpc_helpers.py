@@ -199,7 +199,9 @@ def _create_composite_credentials(credentials=None, credentials_file=None, scope
         ValueError: If both a credentials object and credentials_file are passed.
     """
     if credentials and credentials_file:
-        raise ValueError("'credentials' and 'credentials_file' are mutually exclusive.")
+        raise exceptions.DuplicateCredentialArgs(
+            "'credentials' and 'credentials_file' are mutually exclusive."
+        )
 
     if credentials_file:
         credentials, _ = google.auth.load_credentials_from_file(credentials_file, scopes=scopes)

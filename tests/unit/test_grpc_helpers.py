@@ -288,14 +288,12 @@ def test_create_channel_implicit_with_scopes(
 def test_create_channel_explicit_with_duplicate_credentials():
     target = "example.com:443"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(exceptions.DuplicateCredentialArgs):
         grpc_helpers.create_channel(
             target,
             credentials_file="credentials.json",
             credentials=mock.sentinel.credentials
         )
-
-    assert "mutually exclusive" in str(excinfo.value)
 
 
 @mock.patch("grpc.composite_channel_credentials")

@@ -320,7 +320,7 @@ def test_create_channel_implicit_with_scopes(
 def test_create_channel_explicit_with_duplicate_credentials():
     target = "example:443"
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(exceptions.DuplicateCredentialArgs) as excinfo:
         grpc_helpers_async.create_channel(
             target,
             credentials_file="credentials.json",
