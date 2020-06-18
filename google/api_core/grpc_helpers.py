@@ -196,7 +196,7 @@ def _create_composite_credentials(credentials=None, credentials_file=None, scope
         grpc.ChannelCredentials: The composed channel credentials object.
 
     Raises:
-        ValueError: If both a credentials object and credentials_file are passed.
+        google.api_core.DuplicateCredentialArgs: If both a credentials object and credentials_file are passed.
     """
     if credentials and credentials_file:
         raise exceptions.DuplicateCredentialArgs(
