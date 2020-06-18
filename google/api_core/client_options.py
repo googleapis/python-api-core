@@ -28,7 +28,7 @@ You can pass a client options object to a client.
 
     client = ImageAnnotatorClient(client_options=options)
 
-You can also pass a dictionary.
+You can also pass a mapping object.
 
 .. code-block:: python
 
@@ -55,10 +55,10 @@ class ClientOptions(object):
 
 
 def from_dict(options):
-    """Construct a client options object from a dictionary.
+    """Construct a client options object from a mapping object.
 
     Args:
-        options (dict): A dictionary with client options.
+        options (six.moves.collections_abc.Mapping): A mapping object with client options.
     """
 
     client_options = ClientOptions()
