@@ -3,8 +3,8 @@
     {
       "git": {
         "name": ".",
-        "remote": "git@github.com:googleapis/python-api-core",
-        "sha": "8212bb7f54ca08a498faddaca513580a1f890dbd"
+        "remote": "https://github.com/googleapis/python-api-core.git",
+        "sha": "98f03c8dc6f47379bdc8ded8efd24b577e95326d"
       }
     },
     {
