@@ -365,7 +365,7 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
 
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch("grpc.experimental.aio.secure_channel")
-def test_create_channel_explicit_with_scopes(grpc_secure_channel, composite_creds_call):
+def test_create_channel_explicit_with_quota_project(grpc_secure_channel, composite_creds_call):
     target = "example.com:443"
     composite_creds = composite_creds_call.return_value
 
