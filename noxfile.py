@@ -45,6 +45,9 @@ def default(session):
     session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
     session.install("-e", ".")
 
+    # TODO(busunkim): Remove once quota project change is merged
+    session.install("--force-reinstall", "git+https://github.com/googleapis/google-auth-library-python.git@more-quota-project")
+
     pytest_args = [
         "python",
         "-m",
