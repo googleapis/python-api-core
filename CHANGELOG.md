@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+### [1.21.1](https://www.github.com/googleapis/python-api-core/compare/v1.21.0...v1.21.1) (2020-06-30)
+
+
+### Documentation
+
+* change the documentation for using 'six.moves.collections_abc.Mapping' instead of 'dict' in 'client_options.from_dict()' ([#53](https://www.github.com/googleapis/python-api-core/issues/53)) ([c890675](https://www.github.com/googleapis/python-api-core/commit/c890675dc9ebc084f105be81dc81c048f4f599ea))
+
 ## [1.21.0](https://www.github.com/googleapis/python-api-core/compare/v1.20.1...v1.21.0) (2020-06-18)
 
 
