@@ -181,7 +181,8 @@ def _create_composite_credentials(
         credentials_file=None,
         scopes=None,
         ssl_credentials=None,
-        quota_project_id=None):
+        quota_project_id=None
+        ):
     """Create the composite credentials for secure channels.
 
     Args:
