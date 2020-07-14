@@ -213,8 +213,7 @@ def create_channel(
         ssl_credentials=None,
         credentials_file=None,
         quota_project_id=None,
-        **kwargs
-        ):
+        **kwargs):
     """Create an AsyncIO secure channel with credentials.
 
     Args:
