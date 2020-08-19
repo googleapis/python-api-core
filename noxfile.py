@@ -72,13 +72,13 @@ def default(session):
         session.run(*pytest_args)
 
 
-@nox.session(python=["2.7", "3.5", "3.6", "3.7", "3.8"])
+@nox.session(python=["3.5", "3.6", "3.7", "3.8"])
 def unit(session):
     """Run the unit test suite."""
     default(session)
 
 
-@nox.session(python=["2.7", "3.5", "3.6", "3.7", "3.8"])
+@nox.session(python=["3.5", "3.6", "3.7", "3.8"])
 def unit_grpc_gcp(session):
     """Run the unit test suite with grpcio-gcp installed."""
 
@@ -108,7 +108,6 @@ def lint_setup_py(session):
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
-# No 2.7 due to https://github.com/google/importlab/issues/26.
 # No 3.7 because pytype supports up to 3.6 only.
 @nox.session(python="3.6")
 def pytype(session):

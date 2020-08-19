@@ -21,7 +21,7 @@ In order to add a feature:
 - The feature must be documented in both the API and narrative
   documentation.
 
-- The feature must work fully on the following CPython versions:  2.7,
+- The feature must work fully on the following CPython versions:
   3.5, 3.6, 3.7 and 3.8 on both UNIX and Windows.
 
 - The feature must not add unnecessary dependencies (where
@@ -69,7 +69,6 @@ We use `nox <https://nox.readthedocs.io/en/latest/>`__ to instrument our tests.
 
 - To test your changes, run unit tests with ``nox``::
 
-    $ nox -s unit-2.7
     $ nox -s unit-3.7
     $ ...
 
@@ -143,13 +142,11 @@ Running System Tests
 - To run system tests, you can execute::
 
    $ nox -s system-3.7
-   $ nox -s system-2.7
 
   .. note::
 
-      System tests are only configured to run under Python 2.7 and
-      Python 3.7. For expediency, we do not run them in older versions
-      of Python 3.
+      System tests are only configured to run under Python 3.7. For expediency,
+      we do not run them in older versions.
 
   This alone will not run the tests. You'll need to change some local
   auth settings and change some configuration in your project to
@@ -225,8 +222,6 @@ We support:
 Supported versions can be found in our ``noxfile.py`` `config`_.
 
 .. _config: https://github.com/googleapis/python-api-core/blob/master/noxfile.py
-
-Python 2.7 support is deprecated. All code changes should maintain Python 2.7 compatibility until January 1, 2020.
 
 We also explicitly decided to support Python 3 beginning with version
 3.5. Reasons for this include:
