@@ -29,14 +29,14 @@ version = "1.22.3"
 # 'Development Status :: 5 - Production/Stable'
 release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
+    'futures >= 3.2.0; python_version < "3.2"',
+    "google-auth >= 1.21.1, < 2.0dev",
     "googleapis-common-protos >= 1.6.0, < 2.0dev",
     "protobuf >= 3.12.0",
-    "google-auth >= 1.21.1, < 2.0dev",
-    "requests >= 2.18.0, < 3.0.0dev",
-    "setuptools >= 34.0.0",
-    "six >= 1.13.0",
     "pytz",
-    'futures >= 3.2.0; python_version < "3.2"',
+    "requests >= 2.18.0, < 3.0.0dev",
+    "setuptools >= 40.3.0",
+    "six >= 1.13.0",
 ]
 extras = {
     "grpc": "grpcio >= 1.29.0, < 2.0dev",

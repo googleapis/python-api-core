@@ -14,11 +14,14 @@
 
 from __future__ import absolute_import
 import os
+import pathlib
 import shutil
 import sys
 
 # https://github.com/google/importlab/issues/25
 import nox  # pytype: disable=import-error
+
+CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
 _MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
 
@@ -41,9 +44,14 @@ def default(session):
     Python corresponding to the ``nox`` binary the ``PATH`` can
     run the tests.
     """
+    constraints_path = str(
+        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
+    )
+    session.install("pip==20.2")  # for 2020 resolver
+
     # Install all test dependencies, then install this package in-place.
-    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
-    session.install("-e", ".")
+    session.install("--use-feature=2020-resolver", "mock", "pytest", "pytest-cov", "-c", constraints_path)
+    session.install("--use-feature=2020-resolver", "-e", ".[grpc]", "-c", constraints_path)
 
     pytest_args = [
         "python",
@@ -62,7 +70,7 @@ def default(session):
 
     # Inject AsyncIO content, if version >= 3.6.
     if _greater_or_equal_than_36(session.python):
-        session.install("asyncmock", "pytest-asyncio")
+        session.install("asyncmock", "pytest-asyncio", "-c", constraints_path)
 
         pytest_args.append("--cov=tests.asyncio")
         pytest_args.append(os.path.join("tests", "asyncio"))
@@ -81,9 +89,11 @@ def unit(session):
 @nox.session(python=["2.7", "3.5", "3.6", "3.7", "3.8"])
 def unit_grpc_gcp(session):
     """Run the unit test suite with grpcio-gcp installed."""
-
+    constraints_path = str(
+        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
+    )
     # Install grpcio-gcp
-    session.install("grpcio-gcp")
+    session.install("--use-feature=2020-resolver", "grpcio-gcp", "-c", constraints_path)
 
     default(session)
 
@@ -114,7 +124,7 @@ def lint_setup_py(session):
 def pytype(session):
     """Run type-checking."""
     session.install(
-        ".", "grpcio >= 1.8.2", "grpcio-gcp >= 0.2.2", "pytype >= 2019.3.21"
+        ".[grpc,grpcio-gcp]", "pytype >= 2019.3.21",
     )
     session.run("pytype")
 
@@ -135,7 +145,7 @@ def cover(session):
 def docs(session):
     """Build the docs for this library."""
 
-    session.install(".", "grpcio >= 1.8.2", "grpcio-gcp >= 0.2.2")
+    session.install(".[grpc,grpcio-gcp]",)
     session.install("-e", ".")
     session.install("sphinx < 3.0", "alabaster", "recommonmark")
 
