@@ -27,7 +27,7 @@ _MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
 
 
 def _greater_or_equal_than_36(version_string):
-    tokens = version_string.split('.')
+    tokens = version_string.split(".")
     for i, token in enumerate(tokens):
         try:
             tokens[i] = int(token)
@@ -50,8 +50,17 @@ def default(session):
     session.install("pip==20.2")  # for 2020 resolver
 
     # Install all test dependencies, then install this package in-place.
-    session.install("--use-feature=2020-resolver", "mock", "pytest", "pytest-cov", "-c", constraints_path)
-    session.install("--use-feature=2020-resolver", "-e", ".[grpc]", "-c", constraints_path)
+    session.install(
+        "--use-feature=2020-resolver",
+        "mock",
+        "pytest",
+        "pytest-cov",
+        "-c",
+        constraints_path,
+    )
+    session.install(
+        "--use-feature=2020-resolver", "-e", ".[grpc]", "-c", constraints_path
+    )
 
     pytest_args = [
         "python",
