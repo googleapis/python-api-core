@@ -145,6 +145,7 @@ def test_exception():
 
     assert expected_exception.message in "{!r}".format(exception)
 
+
 def test_exception_with_error_code():
     expected_exception = status_pb2.Status(message="meep", code=5)
     responses = [
