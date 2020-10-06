@@ -38,7 +38,7 @@ _GRPC_CODE_TO_EXCEPTION = {}
 # Additional lookup table to map integer status codes to grpc status code
 # grpc does not currently support initializing enums from ints
 # i.e., grpc.StatusCode(5) raises an error
-if grpc is not None:
+if grpc is not None:  # pragma: no branch
     _INT_TO_GRPC_CODE = {}
     for x in grpc.StatusCode:
         _INT_TO_GRPC_CODE[x.value[0]] = x
