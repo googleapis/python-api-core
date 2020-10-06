@@ -452,7 +452,7 @@ def from_grpc_status(status_code, message, **kwargs):
     """
 
     if isinstance(status_code, int):
-        status_code = _INT_TO_GRPC_CODE[status_code]
+        status_code = _INT_TO_GRPC_CODE.get(status_code, status_code)
 
     error_class = exception_class_for_grpc_status(status_code)
     error = error_class(message, **kwargs)
