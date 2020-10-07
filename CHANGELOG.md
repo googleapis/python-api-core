@@ -4,6 +4,110 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+### [1.22.4](https://www.github.com/googleapis/python-api-core/compare/v1.22.3...v1.22.4) (2020-10-05)
+
+
+### Bug Fixes
+
+* use version.py instead of pkg_resources.get_distribution ([#80](https://www.github.com/googleapis/python-api-core/issues/80)) ([d480d97](https://www.github.com/googleapis/python-api-core/commit/d480d97e41cd6705325b3b649360553a83c23f47))
+
+### [1.22.3](https://www.github.com/googleapis/python-api-core/compare/v1.22.2...v1.22.3) (2020-10-02)
+
+
+### Bug Fixes
+
+* **deps:** require six >= 1.13.0 ([#78](https://www.github.com/googleapis/python-api-core/issues/78)) ([a7a8b98](https://www.github.com/googleapis/python-api-core/commit/a7a8b98602a3eb277fdc607ac69f3bcb147f3351)), closes [/github.com/benjaminp/six/blob/c0be8815d13df45b6ae471c4c436cce8c192245d/CHANGES#L30-L31](https://www.github.com/googleapis//github.com/benjaminp/six/blob/c0be8815d13df45b6ae471c4c436cce8c192245d/CHANGES/issues/L30-L31)
+
+### [1.22.2](https://www.github.com/googleapis/python-api-core/compare/v1.22.1...v1.22.2) (2020-09-03)
+
+
+### Bug Fixes
+
+* only add quota project id if supported ([#75](https://www.github.com/googleapis/python-api-core/issues/75)) ([8f8ee78](https://www.github.com/googleapis/python-api-core/commit/8f8ee7879e4f834f3c676e535ffc41b5b9b2de62))
+
+### [1.22.1](https://www.github.com/googleapis/python-api-core/compare/v1.22.0...v1.22.1) (2020-08-12)
+
+
+### Documentation
+
+* fix spelling errors for amount in retry ([#69](https://www.github.com/googleapis/python-api-core/issues/69)) ([7bb713d](https://www.github.com/googleapis/python-api-core/commit/7bb713d13b1fe3cca58263f5e499136a84abc456))
+
+## [1.22.0](https://www.github.com/googleapis/python-api-core/compare/v1.21.0...v1.22.0) (2020-07-21)
+
+
+### Features
+
+* allow quota project to be passed to create_channel ([#58](https://www.github.com/googleapis/python-api-core/issues/58)) ([e2d9a7b](https://www.github.com/googleapis/python-api-core/commit/e2d9a7b209b7dfab300dc848fabbae8f42a2ab19))
+
+
+### Bug Fixes
+
+* _determine_timeout problem handling float type timeout ([#64](https://www.github.com/googleapis/python-api-core/issues/64)) ([2010373](https://www.github.com/googleapis/python-api-core/commit/2010373b27536d1191175624b297a709d70153fa))
+
+
+### Documentation
+
+* change the documentation for using 'six.moves.collections_abc.Mapping' instead of 'dict' in 'client_options.from_dict()' ([#53](https://www.github.com/googleapis/python-api-core/issues/53)) ([c890675](https://www.github.com/googleapis/python-api-core/commit/c890675dc9ebc084f105be81dc81c048f4f599ea))
+
+## [1.21.0](https://www.github.com/googleapis/python-api-core/compare/v1.20.1...v1.21.0) (2020-06-18)
+
+
+### Features
+
+* allow credentials files to be passed for channel creation ([#50](https://www.github.com/googleapis/python-api-core/issues/50)) ([ded92d0](https://www.github.com/googleapis/python-api-core/commit/ded92d0acdcde4295d0e5df05fda0d83783a3991))
+
+### [1.20.1](https://www.github.com/googleapis/python-api-core/compare/v1.20.0...v1.20.1) (2020-06-16)
+
+
+### Bug Fixes
+
+* **dependencies:** increase protobuf version ([#49](https://www.github.com/googleapis/python-api-core/issues/49)) ([1ba6095](https://www.github.com/googleapis/python-api-core/commit/1ba609592968c9d828449b89a3ade3bcaf5edd7f)), closes [#48](https://www.github.com/googleapis/python-api-core/issues/48)
+
+## [1.20.0](https://www.github.com/googleapis/python-api-core/compare/v1.19.1...v1.20.0) (2020-06-09)
+
+
+### Features
+
+* allow disabling response stream pre-fetch ([#30](https://www.github.com/googleapis/python-api-core/issues/30)) ([74e0b0f](https://www.github.com/googleapis/python-api-core/commit/74e0b0f8387207933c120af15b2bb5d175dd8f84)), closes [#25](https://www.github.com/googleapis/python-api-core/issues/25)
+
+### [1.19.1](https://www.github.com/googleapis/python-api-core/compare/v1.19.0...v1.19.1) (2020-06-06)
+
+
+### Bug Fixes
+
+* bump up grpcio minimum version to 1.29.0 ([#41](https://www.github.com/googleapis/python-api-core/issues/41)) ([4b11422](https://www.github.com/googleapis/python-api-core/commit/4b114221b3ae01eee540bedf47381c3b7c214b0c))
+
+## [1.19.0](https://www.github.com/googleapis/python-api-core/compare/v1.18.0...v1.19.0) (2020-06-05)
+
+
+### Features
+
+* **client_options:** add new client options 'quota_project_id', 'scopes', and 'credentials_file' ([a582936](https://www.github.com/googleapis/python-api-core/commit/a58293601d6da90c499d404e634a979a6cae9708))
+
+## [1.18.0](https://www.github.com/googleapis/python-api-core/compare/v1.17.0...v1.18.0) (2020-06-04)
+
+
+### Features
+
+* [CBT-6 helper] Exposing Retry._deadline as a property ([#20](https://www.github.com/googleapis/python-api-core/issues/20)) ([7be1e59](https://www.github.com/googleapis/python-api-core/commit/7be1e59e9d75c112f346d2b76dce3dd60e3584a1))
+* add client_encryped_cert_source to ClientOptions ([#31](https://www.github.com/googleapis/python-api-core/issues/31)) ([e4eaec0](https://www.github.com/googleapis/python-api-core/commit/e4eaec0ff255114138d3715280f86d34d861a6fa))
+* AsyncIO Integration [Part 2] ([#28](https://www.github.com/googleapis/python-api-core/issues/28)) ([dd9b2f3](https://www.github.com/googleapis/python-api-core/commit/dd9b2f38a70e85952cc05552ec8070cdf29ddbb4)), closes [#23](https://www.github.com/googleapis/python-api-core/issues/23)
+* First batch of AIO integration ([#26](https://www.github.com/googleapis/python-api-core/issues/26)) ([a82f289](https://www.github.com/googleapis/python-api-core/commit/a82f2892b8f219b82e120e6ed9f4070869c28be7))
+* third batch of AsyncIO integration ([#29](https://www.github.com/googleapis/python-api-core/issues/29)) ([7d8d580](https://www.github.com/googleapis/python-api-core/commit/7d8d58075a92e93662747d36a2d55b5e9f0943e1))
+
+## [1.17.0](https://www.github.com/googleapis/python-api-core/compare/v1.16.0...v1.17.0) (2020-04-14)
+
+
+### Features
+
+* **api_core:** add retry param into PollingFuture() and it's inheritors ([#9923](https://www.github.com/googleapis/python-api-core/issues/9923)) ([14f1f34](https://www.github.com/googleapis/python-api-core/commit/14f1f34e013c90fed2da2918625083d299fda557)), closes [#6197](https://www.github.com/googleapis/python-api-core/issues/6197)
+* **api-core:** add client_cert_source to ClientOptions ([#17](https://www.github.com/googleapis/python-api-core/issues/17)) ([748c935](https://www.github.com/googleapis/python-api-core/commit/748c935d4cf03a1f04fba9139c3c3150fd694d88))
+
+
+### Bug Fixes
+
+* consume part of StreamingResponseIterator to support failure while under a retry context ([#10206](https://www.github.com/googleapis/python-api-core/issues/10206)) ([2b103b6](https://www.github.com/googleapis/python-api-core/commit/2b103b60ece16a1e1bc98cfda7ec375191a90f75))
+
 ## 1.16.0
 
 01-13-2020 14:19 PST

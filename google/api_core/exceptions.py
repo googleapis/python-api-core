@@ -26,6 +26,7 @@ from six.moves import http_client
 
 try:
     import grpc
+
 except ImportError:  # pragma: NO COVER
     grpc = None
 
@@ -34,9 +35,23 @@ except ImportError:  # pragma: NO COVER
 _HTTP_CODE_TO_EXCEPTION = {}
 _GRPC_CODE_TO_EXCEPTION = {}
 
+# Additional lookup table to map integer status codes to grpc status code
+# grpc does not currently support initializing enums from ints
+# i.e., grpc.StatusCode(5) raises an error
+_INT_TO_GRPC_CODE = {}
+if grpc is not None:  # pragma: no branch
+    for x in grpc.StatusCode:
+        _INT_TO_GRPC_CODE[x.value[0]] = x
+
 
 class GoogleAPIError(Exception):
     """Base class for all exceptions raised by Google API Clients."""
+
+    pass
+
+
+class DuplicateCredentialArgs(GoogleAPIError):
+    """Raised when multiple credentials are passed."""
 
     pass
 
@@ -426,7 +441,7 @@ def from_grpc_status(status_code, message, **kwargs):
     """Create a :class:`GoogleAPICallError` from a :class:`grpc.StatusCode`.
 
     Args:
-        status_code (grpc.StatusCode): The gRPC status code.
+        status_code (Union[grpc.StatusCode, int]): The gRPC status code.
         message (str): The exception message.
         kwargs: Additional arguments passed to the :class:`GoogleAPICallError`
             constructor.
@@ -435,6 +450,10 @@ def from_grpc_status(status_code, message, **kwargs):
         GoogleAPICallError: An instance of the appropriate subclass of
             :class:`GoogleAPICallError`.
     """
+
+    if isinstance(status_code, int):
+        status_code = _INT_TO_GRPC_CODE.get(status_code, status_code)
+
     error_class = exception_class_for_grpc_status(status_code)
     error = error_class(message, **kwargs)
 
@@ -442,6 +461,10 @@ def from_grpc_status(status_code, message, **kwargs):
         error.grpc_status_code = status_code
 
     return error
+
+
+def _is_informative_grpc_error(rpc_exc):
+    return hasattr(rpc_exc, "code") and hasattr(rpc_exc, "details")
 
 
 def from_grpc_error(rpc_exc):
@@ -454,7 +477,9 @@ def from_grpc_error(rpc_exc):
         GoogleAPICallError: An instance of the appropriate subclass of
             :class:`GoogleAPICallError`.
     """
-    if isinstance(rpc_exc, grpc.Call):
+    # NOTE(lidiz) All gRPC error shares the parent class grpc.RpcError.
+    # However, check for grpc.RpcError breaks backward compatibility.
+    if isinstance(rpc_exc, grpc.Call) or _is_informative_grpc_error(rpc_exc):
         return from_grpc_status(
             rpc_exc.code(), rpc_exc.details(), errors=(rpc_exc,), response=rpc_exc
         )

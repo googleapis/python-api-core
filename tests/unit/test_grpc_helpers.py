@@ -80,6 +80,19 @@ def test_wrap_stream_okay():
     assert responses == expected_responses
 
 
+def test_wrap_stream_prefetch_disabled():
+    responses = [1, 2, 3]
+    iter_responses = iter(responses)
+    callable_ = mock.Mock(spec=["__call__"], return_value=iter_responses)
+    callable_._prefetch_first_result_ = False
+
+    wrapped_callable = grpc_helpers._wrap_stream_errors(callable_)
+    wrapped_callable(1, 2, three="four")
+
+    assert list(iter_responses) == responses  # no items should have been pre-fetched
+    callable_.assert_called_once_with(1, 2, three="four")
+
+
 def test_wrap_stream_iterable_iterface():
     response_iter = mock.create_autospec(grpc.Call, instance=True)
     callable_ = mock.Mock(spec=["__call__"], return_value=response_iter)
@@ -272,6 +285,17 @@ def test_create_channel_implicit_with_scopes(
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
+def test_create_channel_explicit_with_duplicate_credentials():
+    target = "example.com:443"
+
+    with pytest.raises(exceptions.DuplicateCredentialArgs):
+        grpc_helpers.create_channel(
+            target,
+            credentials_file="credentials.json",
+            credentials=mock.sentinel.credentials
+        )
+
+
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch("google.auth.credentials.with_scopes_if_required")
 @mock.patch("grpc.secure_channel")
@@ -304,6 +328,79 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
     )
 
     credentials.with_scopes.assert_called_once_with(scopes)
+    assert channel is grpc_secure_channel.return_value
+    if grpc_helpers.HAS_GRPC_GCP:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
+    else:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds)
+
+
+@mock.patch("grpc.composite_channel_credentials")
+@mock.patch("grpc.secure_channel")
+def test_create_channel_explicit_with_quota_project(grpc_secure_channel, composite_creds_call):
+    target = "example.com:443"
+    composite_creds = composite_creds_call.return_value
+
+    credentials = mock.create_autospec(google.auth.credentials.CredentialsWithQuotaProject, instance=True)
+
+    channel = grpc_helpers.create_channel(
+        target,
+        credentials=credentials,
+        quota_project_id="project-foo"
+    )
+
+    credentials.with_quota_project.assert_called_once_with("project-foo")
+
+    assert channel is grpc_secure_channel.return_value
+    if grpc_helpers.HAS_GRPC_GCP:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
+    else:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds)
+
+
+@mock.patch("grpc.composite_channel_credentials")
+@mock.patch("grpc.secure_channel")
+@mock.patch(
+    "google.auth.load_credentials_from_file",
+    return_value=(mock.sentinel.credentials, mock.sentinel.project)
+)
+def test_create_channel_with_credentials_file(load_credentials_from_file, grpc_secure_channel, composite_creds_call):
+    target = "example.com:443"
+
+    credentials_file = "/path/to/credentials/file.json"
+    composite_creds = composite_creds_call.return_value
+
+    channel = grpc_helpers.create_channel(
+        target, credentials_file=credentials_file
+    )
+
+    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None)
+
+    assert channel is grpc_secure_channel.return_value
+    if grpc_helpers.HAS_GRPC_GCP:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
+    else:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds)
+
+
+@mock.patch("grpc.composite_channel_credentials")
+@mock.patch("grpc.secure_channel")
+@mock.patch(
+    "google.auth.load_credentials_from_file",
+    return_value=(mock.sentinel.credentials, mock.sentinel.project)
+)
+def test_create_channel_with_credentials_file_and_scopes(load_credentials_from_file, grpc_secure_channel, composite_creds_call):
+    target = "example.com:443"
+    scopes = ["1", "2"]
+
+    credentials_file = "/path/to/credentials/file.json"
+    composite_creds = composite_creds_call.return_value
+
+    channel = grpc_helpers.create_channel(
+        target, credentials_file=credentials_file, scopes=scopes
+    )
+
+    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes)
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)

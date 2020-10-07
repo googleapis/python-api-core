@@ -62,14 +62,15 @@ def _wrap_unary_errors(callable_):
 
 
 class _StreamingResponseIterator(grpc.Call):
-    def __init__(self, wrapped):
+    def __init__(self, wrapped, prefetch_first_result=True):
         self._wrapped = wrapped
 
         # This iterator is used in a retry context, and returned outside after init.
         # gRPC will not throw an exception until the stream is consumed, so we need
         # to retrieve the first result, in order to fail, in order to trigger a retry.
         try:
-            self._stored_first_result = six.next(self._wrapped)
+            if prefetch_first_result:
+                self._stored_first_result = six.next(self._wrapped)
         except TypeError:
             # It is possible the wrapped method isn't an iterable (a grpc.Call
             # for instance). If this happens don't store the first result.
@@ -141,7 +142,12 @@ def _wrap_stream_errors(callable_):
     def error_remapped_callable(*args, **kwargs):
         try:
             result = callable_(*args, **kwargs)
-            return _StreamingResponseIterator(result)
+            # Auto-fetching the first result causes PubSub client's streaming pull
+            # to hang when re-opening the stream, thus we need examine the hacky
+            # hidden flag to see if pre-fetching is disabled.
+            # https://github.com/googleapis/python-pubsub/issues/93#issuecomment-630762257
+            prefetch_first = getattr(callable_, "_prefetch_first_result_", True)
+            return _StreamingResponseIterator(result, prefetch_first_result=prefetch_first)
         except grpc.RpcError as exc:
             six.raise_from(exceptions.from_grpc_error(exc), exc)
 
@@ -170,33 +176,48 @@ def wrap_errors(callable_):
         return _wrap_unary_errors(callable_)
 
 
-def create_channel(
-    target, credentials=None, scopes=None, ssl_credentials=None, **kwargs
-):
-    """Create a secure channel with credentials.
+def _create_composite_credentials(
+        credentials=None,
+        credentials_file=None,
+        scopes=None,
+        ssl_credentials=None,
+        quota_project_id=None):
+    """Create the composite credentials for secure channels.
 
     Args:
-        target (str): The target service address in the format 'hostname:port'.
         credentials (google.auth.credentials.Credentials): The credentials. If
             not specified, then this function will attempt to ascertain the
             credentials from the environment using :func:`google.auth.default`.
+        credentials_file (str): A file with credentials that can be loaded with
+            :func:`google.auth.load_credentials_from_file`. This argument is
+            mutually exclusive with credentials.
         scopes (Sequence[str]): A optional list of scopes needed for this
             service. These are only used when credentials are not specified and
             are passed to :func:`google.auth.default`.
         ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
             credentials. This can be used to specify different certificates.
-        kwargs: Additional key-word args passed to
-            :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
+        quota_project_id (str): An optional project to use for billing and quota.
 
     Returns:
-        grpc.Channel: The created channel.
+        grpc.ChannelCredentials: The composed channel credentials object.
+
+    Raises:
+        google.api_core.DuplicateCredentialArgs: If both a credentials object and credentials_file are passed.
     """
-    if credentials is None:
-        credentials, _ = google.auth.default(scopes=scopes)
-    else:
-        credentials = google.auth.credentials.with_scopes_if_required(
-            credentials, scopes
+    if credentials and credentials_file:
+        raise exceptions.DuplicateCredentialArgs(
+            "'credentials' and 'credentials_file' are mutually exclusive."
         )
+
+    if credentials_file:
+        credentials, _ = google.auth.load_credentials_from_file(credentials_file, scopes=scopes)
+    elif credentials:
+        credentials = google.auth.credentials.with_scopes_if_required(credentials, scopes)
+    else:
+        credentials, _ = google.auth.default(scopes=scopes)
+
+    if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
+        credentials = credentials.with_quota_project(quota_project_id)
 
     request = google.auth.transport.requests.Request()
 
@@ -212,8 +233,51 @@ def create_channel(
         ssl_credentials = grpc.ssl_channel_credentials()
 
     # Combine the ssl credentials and the authorization credentials.
-    composite_credentials = grpc.composite_channel_credentials(
+    return grpc.composite_channel_credentials(
         ssl_credentials, google_auth_credentials
+    )
+
+
+def create_channel(
+        target,
+        credentials=None,
+        scopes=None,
+        ssl_credentials=None,
+        credentials_file=None,
+        quota_project_id=None,
+        **kwargs):
+    """Create a secure channel with credentials.
+
+    Args:
+        target (str): The target service address in the format 'hostname:port'.
+        credentials (google.auth.credentials.Credentials): The credentials. If
+            not specified, then this function will attempt to ascertain the
+            credentials from the environment using :func:`google.auth.default`.
+        scopes (Sequence[str]): A optional list of scopes needed for this
+            service. These are only used when credentials are not specified and
+            are passed to :func:`google.auth.default`.
+        ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
+            credentials. This can be used to specify different certificates.
+        credentials_file (str): A file with credentials that can be loaded with
+            :func:`google.auth.load_credentials_from_file`. This argument is
+            mutually exclusive with credentials.
+        quota_project_id (str): An optional project to use for billing and quota.
+        kwargs: Additional key-word args passed to
+            :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
+
+    Returns:
+        grpc.Channel: The created channel.
+
+    Raises:
+        google.api_core.DuplicateCredentialArgs: If both a credentials object and credentials_file are passed.
+    """
+
+    composite_credentials = _create_composite_credentials(
+        credentials=credentials,
+        credentials_file=credentials_file,
+        scopes=scopes,
+        ssl_credentials=ssl_credentials,
+        quota_project_id=quota_project_id,
     )
 
     if HAS_GRPC_GCP:

@@ -22,7 +22,7 @@ import setuptools
 
 name = "google-api-core"
 description = "Google API client core library"
-version = "1.16.0"
+
 # Should be one of:
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
@@ -30,16 +30,16 @@ version = "1.16.0"
 release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
     "googleapis-common-protos >= 1.6.0, < 2.0dev",
-    "protobuf >= 3.4.0",
-    "google-auth >= 0.4.0, < 2.0dev",
+    "protobuf >= 3.12.0",
+    "google-auth >= 1.21.1, < 2.0dev",
     "requests >= 2.18.0, < 3.0.0dev",
     "setuptools >= 34.0.0",
-    "six >= 1.10.0",
+    "six >= 1.13.0",
     "pytz",
     'futures >= 3.2.0; python_version < "3.2"',
 ]
 extras = {
-    "grpc": "grpcio >= 1.8.2, < 2.0dev",
+    "grpc": "grpcio >= 1.29.0, < 2.0dev",
     "grpcgcp": "grpcio-gcp >= 0.2.2",
     "grpcio-gcp": "grpcio-gcp >= 0.2.2",
 }
@@ -48,6 +48,12 @@ extras = {
 # Setup boilerplate below this line.
 
 package_root = os.path.abspath(os.path.dirname(__file__))
+
+
+version = {}
+with open(os.path.join(package_root, "google/api_core/version.py")) as fp:
+    exec(fp.read(), version)
+version = version['__version__']
 
 readme_filename = os.path.join(package_root, "README.rst")
 with io.open(readme_filename, encoding="utf-8") as readme_file:
