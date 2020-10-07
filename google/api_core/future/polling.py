@@ -80,7 +80,9 @@ class PollingFuture(base.Future):
 
     def _done_or_raise(self, retry=DEFAULT_RETRY):
         """Check if the future is done and raise if it's not."""
-        if not self.done(retry):
+        kwargs = {} if retry is DEFAULT_RETRY else {"retry": retry}
+
+        if not self.done(**kwargs):
             raise _OperationNotComplete()
 
     def running(self):
@@ -101,7 +103,7 @@ class PollingFuture(base.Future):
         retry_ = self._retry.with_deadline(timeout)
 
         try:
-            retry_(self._done_or_raise)(retry)
+            retry_(self._done_or_raise)(retry=retry)
         except exceptions.RetryError:
             raise concurrent.futures.TimeoutError(
                 "Operation did not complete within the designated " "timeout."

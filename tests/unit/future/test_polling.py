@@ -43,6 +43,8 @@ def test_polling_future_constructor():
     assert not future.cancelled()
     assert future.running()
     assert future.cancel()
+    with mock.patch.object(future, "done", return_value=True):
+        future.result()
 
 
 def test_set_result():
