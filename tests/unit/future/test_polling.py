@@ -201,7 +201,7 @@ class PollingFutureImplWithoutRetry(PollingFutureImpl):
         return True
 
     def result(self):
-        return super().result()
+        return super(PollingFutureImplWithoutRetry, self).result()
 
 
 def test_polling_future_without_retry():
