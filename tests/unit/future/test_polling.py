@@ -19,7 +19,7 @@ import time
 import mock
 import pytest
 
-from google.api_core import exceptions
+from google.api_core import exceptions, retry
 from google.api_core.future import polling
 
 
@@ -194,3 +194,29 @@ def test_double_callback_background_thread():
     assert future.poll_count == 1
     callback.assert_called_once_with(future)
     callback2.assert_called_once_with(future)
+
+
+class PollingFutureImplWithoutRetry(PollingFutureImpl):
+    def done(self):
+        return True
+
+    def result(self):
+        return True
+
+
+def test_polling_future_without_retry():
+    custom_retry = retry.Retry(
+        predicate=retry.if_exception_type(exceptions.TooManyRequests)
+    )
+    future = PollingFutureImplWithoutRetry()
+    assert future.done()
+    assert future.result()
+    assert future.running()
+
+    with mock.patch.object(future, "done") as done_mock:
+        future._done_or_raise()
+        done_mock.assert_called_once_with()
+
+    with mock.patch.object(future, "done") as done_mock:
+        future._done_or_raise(retry=custom_retry)
+        done_mock.assert_called_once_with(retry=custom_retry)
