@@ -201,7 +201,7 @@ class PollingFutureImplWithoutRetry(PollingFutureImpl):
         return True
 
     def result(self):
-        return True
+        return super().result()
 
 
 def test_polling_future_without_retry():
@@ -210,8 +210,8 @@ def test_polling_future_without_retry():
     )
     future = PollingFutureImplWithoutRetry()
     assert future.done()
-    assert future.result()
     assert future.running()
+    assert future.result() is None
 
     with mock.patch.object(future, "done") as done_mock:
         future._done_or_raise()
