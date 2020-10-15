@@ -4,6 +4,15 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+### [1.22.5](https://www.github.com/googleapis/python-api-core/compare/v1.22.4...v1.22.5) (2020-10-15)
+
+
+### Bug Fixes
+
+*  map LRO errors to library exception types ([#86](https://www.github.com/googleapis/python-api-core/issues/86)) ([a855339](https://www.github.com/googleapis/python-api-core/commit/a85533903c57be4809fe76435e298409e0903931)), closes [#15](https://www.github.com/googleapis/python-api-core/issues/15)
+* harden install to use full paths, and windows separators on windows ([#88](https://www.github.com/googleapis/python-api-core/issues/88)) ([db8e636](https://www.github.com/googleapis/python-api-core/commit/db8e636f545a8872f959e3f403cfec30ffed6c34))
+* update out-of-date comment in exceptions.py ([#93](https://www.github.com/googleapis/python-api-core/issues/93)) ([70ebe42](https://www.github.com/googleapis/python-api-core/commit/70ebe42601b3d088b3421233ef7d8245229b7265))
+
 ### [1.22.4](https://www.github.com/googleapis/python-api-core/compare/v1.22.3...v1.22.4) (2020-10-05)
 
 
