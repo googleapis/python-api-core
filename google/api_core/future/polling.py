@@ -103,7 +103,8 @@ class PollingFuture(base.Future):
         retry_ = self._retry.with_deadline(timeout)
 
         try:
-            retry_(self._done_or_raise)(retry=retry)
+            kwargs = {} if retry is DEFAULT_RETRY else {"retry": retry}
+            retry_(self._done_or_raise)(**kwargs)
         except exceptions.RetryError:
             raise concurrent.futures.TimeoutError(
                 "Operation did not complete within the designated " "timeout."
@@ -124,7 +125,8 @@ class PollingFuture(base.Future):
             google.api_core.GoogleAPICallError: If the operation errors or if
                 the timeout is reached before the operation completes.
         """
-        self._blocking_poll(timeout=timeout, retry=retry)
+        kwargs = {} if retry is DEFAULT_RETRY else {"retry": retry}
+        self._blocking_poll(timeout=timeout, **kwargs)
 
         if self._exception is not None:
             # pylint: disable=raising-bad-type

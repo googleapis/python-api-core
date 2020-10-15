@@ -203,6 +203,19 @@ class PollingFutureImplWithoutRetry(PollingFutureImpl):
     def result(self):
         return super(PollingFutureImplWithoutRetry, self).result()
 
+    def _blocking_poll(self, timeout):
+        return super(PollingFutureImplWithoutRetry, self)._blocking_poll(
+            timeout=timeout
+        )
+
+
+class PollingFutureImplWith_done_or_raise(PollingFutureImpl):
+    def done(self):
+        return True
+
+    def _done_or_raise(self):
+        return super(PollingFutureImplWith_done_or_raise, self)._done_or_raise()
+
 
 def test_polling_future_without_retry():
     custom_retry = retry.Retry(
@@ -220,3 +233,10 @@ def test_polling_future_without_retry():
     with mock.patch.object(future, "done") as done_mock:
         future._done_or_raise(retry=custom_retry)
         done_mock.assert_called_once_with(retry=custom_retry)
+
+
+def test_polling_future_with__done_or_raise():
+    future = PollingFutureImplWith_done_or_raise()
+    assert future.done()
+    assert future.running()
+    assert future.result() is None
