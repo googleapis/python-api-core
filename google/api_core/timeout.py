@@ -63,7 +63,8 @@ from google.api_core import general_helpers
 _DEFAULT_INITIAL_TIMEOUT = 5.0  # seconds
 _DEFAULT_MAXIMUM_TIMEOUT = 30.0  # seconds
 _DEFAULT_TIMEOUT_MULTIPLIER = 2.0
-_DEFAULT_OVERALL_TIMEOUT = 60.0  # seconds
+# Same as retry._DEFAULT_DEADLINE
+_DEFAULT_OVERALL_TIMEOUT = 60.0 * 2.0  # seconds
 # If specified, must be in seconds. If none, deadline is not used in the
 # timeout calculation.
 _DEFAULT_DEADLINE = None

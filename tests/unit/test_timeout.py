@@ -145,7 +145,7 @@ class TestExponentialTimeout(object):
 class TestLogicalCallTimeout(object):
     def test_constructor(self):
         timeout_ = timeout.LogicalCallTimeout()
-        assert timeout_._overall_timeout == 60.0
+        assert timeout_._overall_timeout == 120.0
 
     def test_constructor_args(self):
         timeout_ = timeout.LogicalCallTimeout(42.0)
