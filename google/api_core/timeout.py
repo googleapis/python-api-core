@@ -63,6 +63,7 @@ from google.api_core import general_helpers
 _DEFAULT_INITIAL_TIMEOUT = 5.0  # seconds
 _DEFAULT_MAXIMUM_TIMEOUT = 30.0  # seconds
 _DEFAULT_TIMEOUT_MULTIPLIER = 2.0
+_DEFAULT_OVERALL_TIMEOUT = 60.0  # seconds
 # If specified, must be in seconds. If none, deadline is not used in the
 # timeout calculation.
 _DEFAULT_DEADLINE = None
@@ -178,7 +179,7 @@ class ExponentialTimeout(object):
         self._deadline = deadline
 
     def with_deadline(self, deadline):
-        """Return a copy of this teimout with the given deadline.
+        """Return a copy of this timeout with the given deadline.
 
         Args:
             deadline (float): The overall deadline across all invocations.
@@ -220,5 +221,75 @@ class ExponentialTimeout(object):
             "<ExponentialTimeout initial={:.1f}, maximum={:.1f}, "
             "multiplier={:.1f}, deadline={:.1f}>".format(
                 self._initial, self._maximum, self._multiplier, self._deadline
+            )
+        )
+
+
+def _logical_call_timeout_generator(overall_timeout):
+    """A generator that yields logical call timeout values.
+
+    Args:
+        overall_timeout (float): The overall timeout of the logical call.
+            Each attempt uses the time remaining until the deadline, calculated
+            using the overall timeout from the start of the logical call.
+
+    Yields:
+        float: A timeout value.
+    """
+    deadline_datetime = datetime_helpers.utcnow() + datetime.timedelta(
+        seconds=overall_timeout
+    )
+    timeout = overall_timeout
+    while True:
+        yield timeout
+        now = datetime_helpers.utcnow()
+        timeout = float((deadline_datetime - now).seconds)
+
+
+@six.python_2_unicode_compatible
+class LogicalCallTimeout(object):
+    """A decorator that adds a logical call timeout argument.
+
+    If called multiple times, each time this decorator will calculate a new
+    timeout parameter based on the time remaining in the overall timeout.
+
+    For example
+
+    .. code-block:: python
+
+    Args:
+        overall_timeout (float): The overall timeout for the logical call.
+    """
+
+    def __init__(
+        self,
+        overall_timeout=_DEFAULT_OVERALL_TIMEOUT,
+    ):
+        self._overall_timeout = overall_timeout
+
+    def __call__(self, func):
+        """Apply the timeout decorator.
+
+        Args:
+            func (Callable): The function to apply the timeout argument to.
+                This function must accept a timeout keyword argument.
+
+        Returns:
+            Callable: The wrapped function.
+        """
+        timeouts = _logical_call_timeout_generator(self._overall_timeout)
+
+        @general_helpers.wraps(func)
+        def func_with_timeout(*args, **kwargs):
+            """Wrapped function that adds timeout."""
+            kwargs["timeout"] = next(timeouts)
+            return func(*args, **kwargs)
+
+        return func_with_timeout
+
+    def __str__(self):
+        return (
+            "<LogicalCallTimeout overall_timeout={:.1f}>".format(
+                self._overall_timeout
             )
         )

@@ -42,6 +42,19 @@ def test__exponential_timeout_generator_base_deadline(utcnow):
     assert result == [1, 2, 4, 8, 16, 24, 23, 22, 21, 20, 19, 18, 17, 16]
 
 
+@mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
+def test__logical_call_timeout_generator_base_deadline(utcnow):
+    # Make each successive call to utcnow() advance one second.
+    utcnow.side_effect = [
+        datetime.datetime.min + datetime.timedelta(seconds=n) for n in range(15)
+    ]
+
+    gen = timeout._logical_call_timeout_generator(60.0)
+
+    result = list(itertools.islice(gen, 14))
+    assert result == [60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47]
+
+
 class TestConstantTimeout(object):
     def test_constructor(self):
         timeout_ = timeout.ConstantTimeout()
@@ -122,6 +135,49 @@ class TestExponentialTimeout(object):
     def test_apply_passthrough(self):
         target = mock.Mock(spec=["__call__", "__name__"], __name__="target")
         timeout_ = timeout.ExponentialTimeout(42.0, 100, 2)
+        wrapped = timeout_(target)
+
+        wrapped(1, 2, meep="moop")
+
+        target.assert_called_once_with(1, 2, meep="moop", timeout=42.0)
+
+
+class TestLogicalCallTimeout(object):
+    def test_constructor(self):
+        timeout_ = timeout.LogicalCallTimeout()
+        assert timeout_._overall_timeout == 60.0
+
+    def test_constructor_args(self):
+        timeout_ = timeout.LogicalCallTimeout(42.0)
+        assert timeout_._overall_timeout == 42.0
+
+    def test___str__(self):
+        timeout_ = timeout.LogicalCallTimeout(1.0)
+        assert str(timeout_) == "<LogicalCallTimeout overall_timeout=1.0>"
+
+    @mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
+    def test_apply(self, utcnow):
+        # Make each successive call to utcnow() advance one second.
+        utcnow.side_effect = [
+            datetime.datetime.min + datetime.timedelta(seconds=n) for n in range(3)
+        ]
+
+        target = mock.Mock(spec=["__call__", "__name__"], __name__="target")
+        timeout_ = timeout.LogicalCallTimeout(42.0)
+        wrapped = timeout_(target)
+
+        wrapped()
+        target.assert_called_with(timeout=42.0)
+
+        wrapped()
+        target.assert_called_with(timeout=41.0)
+
+        wrapped()
+        target.assert_called_with(timeout=40.0)
+
+    def test_apply_passthrough(self):
+        target = mock.Mock(spec=["__call__", "__name__"], __name__="target")
+        timeout_ = timeout.LogicalCallTimeout(42.0)
         wrapped = timeout_(target)
 
         wrapped(1, 2, meep="moop")
