@@ -4,7 +4,6 @@ mergeCommitAllowed: false
 branchProtectionRules:
 - pattern: master
   isAdminEnforced: true
-  requiredStatusCheckContexts:
   requiredApprovingReviewCount: 1
   requiresCodeOwnerReviews: true
   requiresStrictStatusChecks: true
