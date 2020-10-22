@@ -1,0 +1,17 @@
+rebaseMergeAllowed: true
+squashMergeAllowed: true
+mergeCommitAllowed: false
+branchProtectionRules:
+- pattern: master
+  isAdminEnforced: true
+  requiredStatusCheckContexts:
+  requiredApprovingReviewCount: 1
+  requiresCodeOwnerReviews: true
+  requiresStrictStatusChecks: true
+permissionRules:
+  - team: actools-python
+    permission: admin
+  - team: actools
+    permission: admin
+  - team: yoshi-python
+    permission: push
