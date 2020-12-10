@@ -45,7 +45,7 @@ For a language agnostic overview of authentication on Google Cloud, see `Authent
 
         $ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json"
 
-.. _service account: https://cloud.google.com/storage/docs/authentication#generating-a-private-key
+.. _service account: https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating
 
 Client-Provided Authentication
 ==============================
@@ -142,8 +142,6 @@ Service Accounts
 
 A `service account`_ is stored in a JSON keyfile.
 
-For example, with a JSON keyfile:
-
 .. code:: python
     
     from google.oauth2 import service_account
@@ -207,10 +205,7 @@ Setting up a Service Account
 ----------------------------
 
 If your application is not running on a Google Virtual Machine Environment,
-you need a `Google Developers Service Account`_.
-
-See `Creating a Service Account`_.
-
+you need a Service Account. See `Creating a Service Account`_.
 
 .. _Creating a Service Acount: https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating
 
