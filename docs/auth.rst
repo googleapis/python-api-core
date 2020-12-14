@@ -107,7 +107,7 @@ After creation, you can pass it directly to a :class:`Client <google.cloud.clien
 Google App Engine Standard First Generation Environment
 -------------------------------------------------------
 
-These credentials are used only in the legacy Python 2.7 
+These credentials are used only in the legacy Python 2.7
 `First Generation Standard Environment`_. All other App Engine
 runtimes use Compute Engine credentials.
 
@@ -127,7 +127,7 @@ Google Compute Engine Environment
 
 These credentials are used in Google Virtual Machine Environments.
 This includes most App Engine runtimes, Compute Engine, Cloud
-Functions, and Cloud Run. 
+Functions, and Cloud Run.
 
 To create
 :class:`credentials <google.auth.compute_engine.Credentials>`:
@@ -143,7 +143,7 @@ Service Accounts
 A `service account`_ is stored in a JSON keyfile.
 
 .. code:: python
-    
+
     from google.oauth2 import service_account
 
     credentials = service_account.Credentials.from_service_account_file(
@@ -207,7 +207,7 @@ Setting up a Service Account
 If your application is not running on a Google Virtual Machine Environment,
 you need a Service Account. See `Creating a Service Account`_.
 
-.. _Creating a Service Acount: https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating
+.. _Creating a Service Account: https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating
 
 Using Google Compute Engine
 ---------------------------
@@ -230,5 +230,3 @@ For scopes for specific APIs see `OAuth 2.0 Scopes for Google APIs`_
 
 .. _set up the GCE instance: https://cloud.google.com/compute/docs/authentication#using
 .. _OAuth 2.0 Scopes for Google APIS: https://developers.google.com/identity/protocols/oauth2/scopes
-
-
