@@ -9,7 +9,7 @@
 
 ### Features
 
-* add support for Python 3.9 ([#111](https://www.github.com/googleapis/python-api-core/issues/111)) ([fdbed0f](https://www.github.com/googleapis/python-api-core/commit/fdbed0f0cbae8de21c73338a6817f8aa79cef4c9)), closes [#110](https://www.github.com/googleapis/python-api-core/issues/110)
+* add support for Python 3.9, drop support for Python 3.5 ([#111](https://www.github.com/googleapis/python-api-core/issues/111)) ([fdbed0f](https://www.github.com/googleapis/python-api-core/commit/fdbed0f0cbae8de21c73338a6817f8aa79cef4c9)), closes [#110](https://www.github.com/googleapis/python-api-core/issues/110)
 
 
 ### Documentation
