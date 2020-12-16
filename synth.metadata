@@ -4,7 +4,7 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/python-api-core.git",
-        "sha": "93976931f231da6b42304bd117d8481067c55f6a"
+        "sha": "7a38243c351b228d103eee81fc5ae521ad1c930e"
       }
     },
     {
