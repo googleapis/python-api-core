@@ -179,9 +179,11 @@ def wrap_errors(callable_):
 def _create_composite_credentials(
         credentials=None,
         credentials_file=None,
+        default_scopes=None,
         scopes=None,
         ssl_credentials=None,
-        quota_project_id=None):
+        quota_project_id=None,
+        audience=None):
     """Create the composite credentials for secure channels.
 
     Args:
@@ -191,12 +193,16 @@ def _create_composite_credentials(
         credentials_file (str): A file with credentials that can be loaded with
             :func:`google.auth.load_credentials_from_file`. This argument is
             mutually exclusive with credentials.
+        default_scopes (Sequence[str]): A optional list of scopes needed for this
+            service. These are only used when credentials are not specified and
+            are passed to :func:`google.auth.default`.
         scopes (Sequence[str]): A optional list of scopes needed for this
             service. These are only used when credentials are not specified and
             are passed to :func:`google.auth.default`.
         ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
             credentials. This can be used to specify different certificates.
         quota_project_id (str): An optional project to use for billing and quota.
+        audience (str): The audience needed for authentication.
 
     Returns:
         grpc.ChannelCredentials: The composed channel credentials object.
@@ -209,12 +215,15 @@ def _create_composite_credentials(
             "'credentials' and 'credentials_file' are mutually exclusive."
         )
 
+
     if credentials_file:
-        credentials, _ = google.auth.load_credentials_from_file(credentials_file, scopes=scopes)
+        credentials, _ = google.auth.load_credentials_from_file(credentials_file,
+            scopes=scopes, default_scopes=default_scopes)
     elif credentials:
-        credentials = google.auth.credentials.with_scopes_if_required(credentials, scopes)
+        credentials = google.auth.credentials.with_scopes_if_required(credentials,
+            scopes=scopes, default_scopes=default_scopes)
     else:
-        credentials, _ = google.auth.default(scopes=scopes)
+        credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
 
     if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
         credentials = credentials.with_quota_project(quota_project_id)
@@ -223,7 +232,7 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
     metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-        credentials, request
+        credentials, request, audience=audience,
     )
 
     # Create a set of grpc.CallCredentials using the metadata plugin.
@@ -245,6 +254,8 @@ def create_channel(
         ssl_credentials=None,
         credentials_file=None,
         quota_project_id=None,
+        default_scopes=None,
+        audience=None,
         **kwargs):
     """Create a secure channel with credentials.
 
@@ -253,6 +264,9 @@ def create_channel(
         credentials (google.auth.credentials.Credentials): The credentials. If
             not specified, then this function will attempt to ascertain the
             credentials from the environment using :func:`google.auth.default`.
+        default_scopes (Sequence[str]): A optional list of scopes needed for this
+            service. These are only used when credentials are not specified and
+            are passed to :func:`google.auth.default`.
         scopes (Sequence[str]): A optional list of scopes needed for this
             service. These are only used when credentials are not specified and
             are passed to :func:`google.auth.default`.
@@ -262,6 +276,11 @@ def create_channel(
             :func:`google.auth.load_credentials_from_file`. This argument is
             mutually exclusive with credentials.
         quota_project_id (str): An optional project to use for billing and quota.
+        audience (str): The canonical audience that identfies the service
+            address. This is often the same as the targe. It will differ
+            for example of the target is pubsub.mtls.googleapis.com and the
+            audience is pubsub.googleapis.com
+        
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
 
@@ -275,9 +294,11 @@ def create_channel(
     composite_credentials = _create_composite_credentials(
         credentials=credentials,
         credentials_file=credentials_file,
+        default_scopes=default_scopes,
         scopes=scopes,
         ssl_credentials=ssl_credentials,
         quota_project_id=quota_project_id,
+        audience=audience,
     )
 
     if HAS_GRPC_GCP:
