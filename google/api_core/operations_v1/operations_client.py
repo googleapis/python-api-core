@@ -121,7 +121,8 @@ class OperationsClient(object):
                 unspecified, the the default timeout in the client
                 configuration is used. If ``None``, then the RPC method will
                 not time out.
-            metadata (Optional[Tuple[str, str]]): Additional gRPC metadata.
+            metadata (Optional[List[Tuple[str, str]]]):
+                Additional gRPC metadata.
 
         Returns:
             google.longrunning.operations_pb2.Operation: The state of the
@@ -177,6 +178,8 @@ class OperationsClient(object):
                 unspecified, the the default timeout in the client
                 configuration is used. If ``None``, then the RPC method will
                 not time out.
+            metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
+                metadata.
 
         Returns:
             google.api_core.page_iterator.Iterator: An iterator that yields
@@ -244,7 +247,8 @@ class OperationsClient(object):
                 unspecified, the the default timeout in the client
                 configuration is used. If ``None``, then the RPC method will
                 not time out.
-            metadata (Optional[Tuple[str, str]]): Additional gRPC metadata.
+            metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
+                metadata.
 
         Raises:
             google.api_core.exceptions.MethodNotImplemented: If the server
@@ -289,7 +293,8 @@ class OperationsClient(object):
                 unspecified, the the default timeout in the client
                 configuration is used. If ``None``, then the RPC method will
                 not time out.
-            metadata (Optional[Tuple[str, str]]): Additional gRPC metadata.
+            metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
+                metadata.
 
         Raises:
             google.api_core.exceptions.MethodNotImplemented: If the server

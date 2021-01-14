@@ -302,7 +302,7 @@ def from_grpc(operation, operations_stub, result_type, grpc_metadata=None, **kwa
         operations_stub (google.longrunning.operations_pb2.OperationsStub):
             The operations stub.
         result_type (:func:`type`): The protobuf result type.
-        grpc_metadata (Optional[Tuple[str, str]]): Additional metadata to pass
+        grpc_metadata (Optional[List[Tuple[str, str]]]): Additional metadata to pass
             to the rpc.
         kwargs: Keyword args passed into the :class:`Operation` constructor.
 
@@ -330,7 +330,7 @@ def from_gapic(operation, operations_client, result_type, grpc_metadata=None, **
         operations_client (google.api_core.operations_v1.OperationsClient):
             The operations client.
         result_type (:func:`type`): The protobuf result type.
-        grpc_metadata (Optional[Tuple[str, str]]): Additional metadata to pass
+        grpc_metadata (Optional[List[Tuple[str, str]]]): Additional metadata to pass
             to the rpc.
         kwargs: Keyword args passed into the :class:`Operation` constructor.
 
