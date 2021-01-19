@@ -183,7 +183,8 @@ def _create_composite_credentials(
         scopes=None,
         ssl_credentials=None,
         quota_project_id=None,
-        audience=None):
+        default_host=None
+    ):
     """Create the composite credentials for secure channels.
 
     Args:
@@ -202,7 +203,8 @@ def _create_composite_credentials(
         ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
             credentials. This can be used to specify different certificates.
         quota_project_id (str): An optional project to use for billing and quota.
-        audience (str): The audience needed for authentication.
+        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com"
+            
 
     Returns:
         grpc.ChannelCredentials: The composed channel credentials object.
@@ -232,7 +234,7 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
     metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-        credentials, request, audience=audience,
+        credentials, request, default_host=default_host,
     )
 
     # Create a set of grpc.CallCredentials using the metadata plugin.
@@ -255,7 +257,7 @@ def create_channel(
         credentials_file=None,
         quota_project_id=None,
         default_scopes=None,
-        audience=None,
+        default_host=None,
         **kwargs):
     """Create a secure channel with credentials.
 
@@ -276,11 +278,7 @@ def create_channel(
             :func:`google.auth.load_credentials_from_file`. This argument is
             mutually exclusive with credentials.
         quota_project_id (str): An optional project to use for billing and quota.
-        audience (str): The canonical audience that identfies the service
-            address. This is often the same as the targe. It will differ
-            for example of the target is pubsub.mtls.googleapis.com and the
-            audience is pubsub.googleapis.com
-        
+        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com"
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
 
@@ -298,7 +296,7 @@ def create_channel(
         scopes=scopes,
         ssl_credentials=ssl_credentials,
         quota_project_id=quota_project_id,
-        audience=audience,
+        default_host=default_host,
     )
 
     if HAS_GRPC_GCP:
