@@ -203,8 +203,7 @@ def _create_composite_credentials(
         ssl_credentials (grpc.ChannelCredentials): Optional SSL channel
             credentials. This can be used to specify different certificates.
         quota_project_id (str): An optional project to use for billing and quota.
-        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com"
-            
+        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
 
     Returns:
         grpc.ChannelCredentials: The composed channel credentials object.
@@ -278,7 +277,7 @@ def create_channel(
             :func:`google.auth.load_credentials_from_file`. This argument is
             mutually exclusive with credentials.
         quota_project_id (str): An optional project to use for billing and quota.
-        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com"
+        default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
 

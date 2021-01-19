@@ -273,7 +273,7 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
     channel = grpc_helpers_async.create_channel(target)
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=None)
+    default.assert_called_once_with(scopes=None, default_scopes=None)
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
@@ -292,7 +292,7 @@ def test_create_channel_implicit_with_ssl_creds(
 
     grpc_helpers_async.create_channel(target, ssl_credentials=ssl_creds)
 
-    default.assert_called_once_with(scopes=None)
+    default.assert_called_once_with(scopes=None, default_scopes=None)
     composite_creds_call.assert_called_once_with(ssl_creds, mock.ANY)
     composite_creds = composite_creds_call.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -313,7 +313,7 @@ def test_create_channel_implicit_with_scopes(
     channel = grpc_helpers_async.create_channel(target, scopes=["one", "two"])
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=["one", "two"])
+    default.assert_called_once_with(scopes=["one", "two"], default_scopes=None)
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
@@ -339,7 +339,7 @@ def test_create_channel_explicit(grpc_secure_channel, auth_creds, composite_cred
 
     channel = grpc_helpers_async.create_channel(target, credentials=mock.sentinel.credentials)
 
-    auth_creds.assert_called_once_with(mock.sentinel.credentials, None)
+    auth_creds.assert_called_once_with(mock.sentinel.credentials, scopes=None, default_scopes=None)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
@@ -358,7 +358,7 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
         target, credentials=credentials, scopes=scopes
     )
 
-    credentials.with_scopes.assert_called_once_with(scopes)
+    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
@@ -396,7 +396,7 @@ def test_create_channnel_with_credentials_file(load_credentials_from_file, grpc_
         target, credentials_file=credentials_file
     )
 
-    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None)
+    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None, default_scopes=None)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
@@ -418,7 +418,7 @@ def test_create_channel_with_credentials_file_and_scopes(load_credentials_from_f
         target, credentials_file=credentials_file, scopes=scopes
     )
 
-    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes)
+    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes, default_scopes=None)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
@@ -434,7 +434,7 @@ def test_create_channel_without_grpc_gcp(grpc_secure_channel):
 
     grpc_helpers_async.create_channel(target, credentials=credentials, scopes=scopes)
     grpc_secure_channel.assert_called()
-    credentials.with_scopes.assert_called_once_with(scopes)
+    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
 
 
 @pytest.mark.asyncio
