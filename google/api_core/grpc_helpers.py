@@ -265,9 +265,6 @@ def create_channel(
         credentials (google.auth.credentials.Credentials): The credentials. If
             not specified, then this function will attempt to ascertain the
             credentials from the environment using :func:`google.auth.default`.
-        default_scopes (Sequence[str]): A optional list of scopes needed for this
-            service. These are only used when credentials are not specified and
-            are passed to :func:`google.auth.default`.
         scopes (Sequence[str]): A optional list of scopes needed for this
             service. These are only used when credentials are not specified and
             are passed to :func:`google.auth.default`.
@@ -277,6 +274,8 @@ def create_channel(
             :func:`google.auth.load_credentials_from_file`. This argument is
             mutually exclusive with credentials.
         quota_project_id (str): An optional project to use for billing and quota.
+        default_scopes (Sequence[str]): Default scopes passed by a Google client
+            library. Use 'scopes' for user-defined scopes.
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
