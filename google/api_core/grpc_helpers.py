@@ -183,8 +183,7 @@ def _create_composite_credentials(
         scopes=None,
         ssl_credentials=None,
         quota_project_id=None,
-        default_host=None
-    ):
+        default_host=None):
     """Create the composite credentials for secure channels.
 
     Args:
@@ -216,13 +215,18 @@ def _create_composite_credentials(
             "'credentials' and 'credentials_file' are mutually exclusive."
         )
 
-
     if credentials_file:
-        credentials, _ = google.auth.load_credentials_from_file(credentials_file,
-            scopes=scopes, default_scopes=default_scopes)
+        credentials, _ = google.auth.load_credentials_from_file(
+            credentials_file,
+            scopes=scopes,
+            default_scopes=default_scopes
+        )
     elif credentials:
-        credentials = google.auth.credentials.with_scopes_if_required(credentials,
-            scopes=scopes, default_scopes=default_scopes)
+        credentials = google.auth.credentials.with_scopes_if_required(
+            credentials,
+            scopes=scopes,
+            default_scopes=default_scopes
+        )
     else:
         credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
 

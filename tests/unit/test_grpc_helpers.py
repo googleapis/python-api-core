@@ -239,6 +239,34 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
+@mock.patch("google.auth.transport.grpc.AuthMetadataPlugin")
+@mock.patch(
+    "google.auth.transport.requests.Request",
+    return_value=mock.sentinel.Request
+)
+@mock.patch("grpc.composite_channel_credentials")
+@mock.patch(
+    "google.auth.default",
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
+)
+@mock.patch("grpc.secure_channel")
+def test_create_channel_implicit_with_default_host(grpc_secure_channel, default, composite_creds_call, request, auth_metadata_plugin):
+    target = "example.com:443"
+    default_host = "example.com"
+    composite_creds = composite_creds_call.return_value
+
+    channel = grpc_helpers.create_channel(target, default_host=default_host)
+
+    assert channel is grpc_secure_channel.return_value
+    default.assert_called_once_with(scopes=None, default_scopes=None)
+    auth_metadata_plugin.assert_called_once_with(mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host)
+
+    if grpc_helpers.HAS_GRPC_GCP:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
+    else:
+        grpc_secure_channel.assert_called_once_with(target, composite_creds)
+
+
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
@@ -355,7 +383,7 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
-   
+
 
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch("grpc.secure_channel")
@@ -477,7 +505,6 @@ def test_create_channel_with_credentials_file_and_default_scopes(load_credential
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
-
 
 
 @pytest.mark.skipif(

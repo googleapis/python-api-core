@@ -277,6 +277,30 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
+@mock.patch("google.auth.transport.grpc.AuthMetadataPlugin")
+@mock.patch(
+    "google.auth.transport.requests.Request",
+    return_value=mock.sentinel.Request
+)
+@mock.patch("grpc.composite_channel_credentials")
+@mock.patch(
+    "google.auth.default",
+    return_value=(mock.sentinel.credentials, mock.sentinel.projet),
+)
+@mock.patch("grpc.experimental.aio.secure_channel")
+def test_create_channel_implicit_with_default_host(grpc_secure_channel, default, composite_creds_call, request, auth_metadata_plugin):
+    target = "example.com:443"
+    default_host = "example.com"
+    composite_creds = composite_creds_call.return_value
+
+    channel = grpc_helpers_async.create_channel(target, default_host=default_host)
+
+    assert channel is grpc_secure_channel.return_value
+    default.assert_called_once_with(scopes=None, default_scopes=None)
+    auth_metadata_plugin.assert_called_once_with(mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host)
+    grpc_secure_channel.assert_called_once_with(target, composite_creds)
+
+
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
@@ -400,7 +424,6 @@ def test_create_channel_explicit_default_scopes(grpc_secure_channel, composite_c
     credentials.with_scopes.assert_called_once_with(scopes, default_scopes=default_scopes)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(target, composite_creds)
-
 
 
 @mock.patch("grpc.composite_channel_credentials")
