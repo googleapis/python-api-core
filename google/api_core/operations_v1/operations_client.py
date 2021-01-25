@@ -137,7 +137,7 @@ class OperationsClient(object):
 
         # Add routing header
         metadata = metadata or []
-        metadata = metadata + [gapic_v1.routing_header.to_grpc_metadata({"name": name})]
+        metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         return self._get_operation(request, retry=retry, timeout=timeout, metadata=metadata)
 
@@ -203,7 +203,7 @@ class OperationsClient(object):
 
         # Add routing header
         metadata = metadata or []
-        metadata = metadata + [gapic_v1.routing_header.to_grpc_metadata({"name": name})]
+        metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         # Create the method used to fetch pages
         method = functools.partial(self._list_operations, retry=retry, timeout=timeout, metadata=metadata)
@@ -272,7 +272,7 @@ class OperationsClient(object):
 
         # Add routing header
         metadata = metadata or []
-        metadata = metadata + [gapic_v1.routing_header.to_grpc_metadata({"name": name})]
+        metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         self._cancel_operation(request, retry=retry, timeout=timeout, metadata=metadata)
 
@@ -323,6 +323,6 @@ class OperationsClient(object):
 
         # Add routing header
         metadata = metadata or []
-        metadata = metadata + [gapic_v1.routing_header.to_grpc_metadata({"name": name})]
+        metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         self._delete_operation(request, retry=retry, timeout=timeout, metadata=metadata)
