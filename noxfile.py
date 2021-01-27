@@ -22,6 +22,17 @@ import nox  # pytype: disable=import-error
 
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
+_MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
+
+def _greater_or_equal_than_36(version_string):
+    tokens = version_string.split(".")
+    for i, token in enumerate(tokens):
+        try:
+            tokens[i] = int(token)
+        except ValueError:
+            pass
+    return tokens >= [3, 6]
+
 
 def default(session):
     """Default unit test session.
@@ -36,7 +47,7 @@ def default(session):
     )
 
     # Install all test dependencies, then install this package in-place.
-    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2", "asyncmock", "pytest-asyncio")
+    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
     session.install("-e", ".", "-c", constraints_path)
 
     pytest_args = [
@@ -46,17 +57,24 @@ def default(session):
         "--quiet",
         "--cov=google.api_core",
         "--cov=tests.unit",
-        "--cov=tests.asyncio"
         "--cov-append",
         "--cov-config=.coveragerc",
         "--cov-report=",
         "--cov-fail-under=0",
         os.path.join("tests", "unit"),
-        os.path.join("tests", "asyncio")
     ]
     pytest_args.extend(session.posargs)
-    session.run(*pytest_args)
 
+    # Inject AsyncIO content, if version >= 3.6.
+    if _greater_or_equal_than_36(session.python):
+        session.install("asyncmock", "pytest-asyncio")
+
+        pytest_args.append("--cov=tests.asyncio")
+        pytest_args.append(os.path.join("tests", "asyncio"))
+        session.run(*pytest_args)
+    else:
+        # Run py.test against the unit tests.
+        session.run(*pytest_args)
 
 
 @nox.session(python=["3.6", "3.7", "3.8", "3.9"])
