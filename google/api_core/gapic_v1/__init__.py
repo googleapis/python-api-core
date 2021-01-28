@@ -18,11 +18,7 @@ from google.api_core.gapic_v1 import client_info
 from google.api_core.gapic_v1 import config
 from google.api_core.gapic_v1 import method
 from google.api_core.gapic_v1 import routing_header
+from google.api_core.gapic_v1 import config_async
+from google.api_core.gapic_v1 import method_async
 
-__all__ = ["client_info", "config", "method", "routing_header"]
-
-if sys.version_info >= (3, 6):
-    from google.api_core.gapic_v1 import config_async  # noqa: F401
-    from google.api_core.gapic_v1 import method_async  # noqa: F401
-    __all__.append("config_async")
-    __all__.append("method_async")
+__all__ = ["client_info", "config", "method", "routing_header", "config_async", "method_async"]

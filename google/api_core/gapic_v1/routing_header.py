@@ -37,9 +37,6 @@ def to_routing_header(params):
     Returns:
         str: The routing header string.
     """
-    if sys.version_info[0] < 3:
-        # Python 2 does not have the "safe" parameter for urlencode.
-        return urlencode(params).replace("%2F", "/")
     return urlencode(
         params,
         # Per Google API policy (go/api-url-encoding), / is not encoded.
