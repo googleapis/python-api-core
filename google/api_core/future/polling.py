@@ -65,7 +65,6 @@ class PollingFuture(base.Future):
         self._polling_thread = None
         self._done_callbacks = []
 
-    @abc.abstractmethod
     def done(self, retry=DEFAULT_RETRY):
         """Checks to see if the operation is complete.
 
