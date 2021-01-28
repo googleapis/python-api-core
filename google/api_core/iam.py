@@ -51,14 +51,9 @@ Example usage:
    resource.set_iam_policy(policy)
 """
 
-import collections
+from collections import abc as collections_abc
 import operator
 import warnings
-
-try:
-    from collections import abc as collections_abc
-except ImportError:  # Python 2.7
-    import collections as collections_abc
 
 # Generic IAM roles
 
