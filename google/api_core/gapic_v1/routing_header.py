@@ -20,8 +20,6 @@ requests, especially for services that are regional.
 Generally, these headers are specified as gRPC metadata.
 """
 
-import sys
-
 from six.moves.urllib.parse import urlencode
 
 ROUTING_METADATA_KEY = "x-goog-request-params"

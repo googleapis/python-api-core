@@ -51,10 +51,9 @@ Example usage:
    resource.set_iam_policy(policy)
 """
 
-import collections
+from collections import abc as collections_abc
 import operator
 import warnings
-from collections import abc as collections_abc
 
 # Generic IAM roles
 

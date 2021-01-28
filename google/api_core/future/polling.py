@@ -40,7 +40,7 @@ DEFAULT_RETRY = retry.Retry(predicate=RETRY_PREDICATE)
 
 # pytype incorrectly determines that this class is not abstract
 # and errors on the @abstractmethod annotation on done().
-class PollingFuture(base.Future): # pytype: disable=ignored-abstractmethod
+class PollingFuture(base.Future):  # pytype: disable=ignored-abstractmethod
     """A Future that needs to poll some service to check its status.
 
     The :meth:`done` method should be implemented by subclasses. The polling

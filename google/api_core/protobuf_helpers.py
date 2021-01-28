@@ -15,9 +15,9 @@
 """Helpers for :mod:`protobuf`."""
 
 import collections
+from collections import abc as collections_abc
 import copy
 import inspect
-from collections import abc as collections_abc
 
 from google.protobuf import field_mask_pb2
 from google.protobuf import message
