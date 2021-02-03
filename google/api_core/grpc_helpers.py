@@ -216,19 +216,41 @@ def _create_composite_credentials(
         )
 
     if credentials_file:
-        credentials, _ = google.auth.load_credentials_from_file(
-            credentials_file,
-            scopes=scopes,
-            default_scopes=default_scopes
-        )
+        try:
+            credentials, _ = google.auth.load_credentials_from_file(
+                credentials_file,
+                scopes=scopes,
+                default_scopes=default_scopes
+            )
+        # google-auth < x.x.x does not have `default_scopes`
+        # TODO: remove this try/except once google-auth >= x.x.x is required
+        except TypeError:
+            credentials, _ = google.auth.load_credentials_from_file(
+                credentials_file,
+                scopes=scopes or default_scopes,
+            )
     elif credentials:
-        credentials = google.auth.credentials.with_scopes_if_required(
-            credentials,
-            scopes=scopes,
-            default_scopes=default_scopes
-        )
+        try:
+            credentials = google.auth.credentials.with_scopes_if_required(
+                credentials,
+                scopes=scopes,
+                default_scopes=default_scopes
+            )
+        # google-auth < x.x.x does not have `default_scopes`
+        # TODO: remove this try/except once google-auth >= x.x.x is required
+        except TypeError:
+            credentials = google.auth.credentials.with_scopes_if_required(
+                credentials,
+                scopes=scopes or default_scopes,
+            )
+
     else:
-        credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
+        try:
+            credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
+        # google-auth < x.x.x does not have `default_scopes`
+        # TODO: remove this try/except once google-auth >= x.x.x is required
+        except TypeError: 
+            credentials, _ = google.auth.default(scopes=scopes or default_scopes)
 
     if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
         credentials = credentials.with_quota_project(quota_project_id)
@@ -236,9 +258,17 @@ def _create_composite_credentials(
     request = google.auth.transport.requests.Request()
 
     # Create the metadata plugin for inserting the authorization header.
-    metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-        credentials, request, default_host=default_host,
-    )
+
+    # google-auth < x.x.x does not have `default_host`
+    # TODO: remove this try/except once google-auth >= x.x.x is required
+    try:
+        metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
+            credentials, request, default_host=default_host,
+        )
+    except:
+        metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
+            credentials, request
+        )
 
     # Create a set of grpc.CallCredentials using the metadata plugin.
     google_auth_credentials = grpc.metadata_call_credentials(metadata_plugin)
