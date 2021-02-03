@@ -51,7 +51,7 @@ def default(session):
     session.install("-e", ".", "-c", constraints_path)
 
     # REMOVE ME: Temporarily install google-auth from a branch
-    # session.install("-e", "git+https://github.com/googleapis/google-auth-library-python.git@self-signed-jwt#egg=google-auth")
+    session.install("-e", "git+https://github.com/googleapis/google-auth-library-python.git@self-signed-jwt#egg=google-auth")
 
     pytest_args = [
         "python",
