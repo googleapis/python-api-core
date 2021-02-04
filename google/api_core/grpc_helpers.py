@@ -216,27 +216,26 @@ def _create_composite_credentials(
         )
 
     if credentials_file:
+        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         try:
             credentials, _ = google.auth.load_credentials_from_file(
                 credentials_file,
                 scopes=scopes,
                 default_scopes=default_scopes
             )
-        # google-auth < x.x.x does not have `default_scopes`
-        # TODO: remove this try/except once google-auth >= x.x.x is required
         except TypeError:
             credentials, _ = google.auth.load_credentials_from_file(
                 credentials_file,
                 scopes=scopes or default_scopes,
             )
     elif credentials:
+        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         try:
             credentials = google.auth.credentials.with_scopes_if_required(
                 credentials,
                 scopes=scopes,
                 default_scopes=default_scopes
             )
-        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         except TypeError:
             credentials = google.auth.credentials.with_scopes_if_required(
                 credentials,
@@ -244,10 +243,10 @@ def _create_composite_credentials(
             )
 
     else:
+        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         try:
             credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
-        # TODO: remove this try/except once google-auth >= 1.25.0 is required
-        except TypeError: 
+        except TypeError:
             credentials, _ = google.auth.default(scopes=scopes or default_scopes)
 
     if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
@@ -262,7 +261,7 @@ def _create_composite_credentials(
         metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
             credentials, request, default_host=default_host,
         )
-    except:
+    except TypeError:
         metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
             credentials, request
         )

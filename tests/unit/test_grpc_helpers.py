@@ -14,6 +14,7 @@
 
 import grpc
 import mock
+from packaging import version
 import pkg_resources
 import pytest
 
@@ -223,6 +224,7 @@ def test_wrap_errors_streaming(wrap_stream_errors):
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.projet),
 )
 @mock.patch("grpc.secure_channel")
@@ -233,21 +235,29 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
     channel = grpc_helpers.create_channel(target)
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=None, default_scopes=None)
+
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        default.assert_called_once_with(scopes=None, default_scopes=None)
+    else:
+        default.assert_called_once_with(scopes=None)
+
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
 
-@mock.patch("google.auth.transport.grpc.AuthMetadataPlugin")
+@mock.patch("google.auth.transport.grpc.AuthMetadataPlugin", autospec=True)
 @mock.patch(
     "google.auth.transport.requests.Request",
+    autospec=True,
     return_value=mock.sentinel.Request
 )
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.project),
 )
 @mock.patch("grpc.secure_channel")
@@ -259,9 +269,15 @@ def test_create_channel_implicit_with_default_host(grpc_secure_channel, default,
     channel = grpc_helpers.create_channel(target, default_host=default_host)
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=None, default_scopes=None)
-    auth_metadata_plugin.assert_called_once_with(mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host)
 
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        default.assert_called_once_with(scopes=None, default_scopes=None)
+        auth_metadata_plugin.assert_called_once_with(mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host)
+    else:
+        default.assert_called_once_with(scopes=None)
+        auth_metadata_plugin.assert_called_once_with(mock.sentinel.credentials, mock.sentinel.Request)
+        
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
@@ -271,6 +287,7 @@ def test_create_channel_implicit_with_default_host(grpc_secure_channel, default,
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.projet),
 )
 @mock.patch("grpc.secure_channel")
@@ -283,7 +300,12 @@ def test_create_channel_implicit_with_ssl_creds(
 
     grpc_helpers.create_channel(target, ssl_credentials=ssl_creds)
 
-    default.assert_called_once_with(scopes=None, default_scopes=None)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        default.assert_called_once_with(scopes=None, default_scopes=None)
+    else:
+        default.assert_called_once_with(scopes=None)
+
     composite_creds_call.assert_called_once_with(ssl_creds, mock.ANY)
     composite_creds = composite_creds_call.return_value
     if grpc_helpers.HAS_GRPC_GCP:
@@ -295,6 +317,7 @@ def test_create_channel_implicit_with_ssl_creds(
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.projet),
 )
 @mock.patch("grpc.secure_channel")
@@ -307,7 +330,13 @@ def test_create_channel_implicit_with_scopes(
     channel = grpc_helpers.create_channel(target, scopes=["one", "two"])
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=["one", "two"], default_scopes=None)
+
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        default.assert_called_once_with(scopes=["one", "two"], default_scopes=None)
+    else:
+        default.assert_called_once_with(scopes=["one", "two"])
+
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
@@ -317,6 +346,7 @@ def test_create_channel_implicit_with_scopes(
 @mock.patch("grpc.composite_channel_credentials")
 @mock.patch(
     "google.auth.default",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.projet),
 )
 @mock.patch("grpc.secure_channel")
@@ -329,7 +359,13 @@ def test_create_channel_implicit_with_default_scopes(
     channel = grpc_helpers.create_channel(target, scopes=["one", "two"], default_scopes=["three", "four"])
 
     assert channel is grpc_secure_channel.return_value
-    default.assert_called_once_with(scopes=["one", "two"], default_scopes=["three", "four"])
+
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        default.assert_called_once_with(scopes=["one", "two"], default_scopes=["three", "four"])
+    else:
+        default.assert_called_once_with(scopes=["one", "two"])
+
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
@@ -379,7 +415,7 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
     )
 
     # TODO: remove if/else once google-auth >= 1.25.0 is required
-    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
         credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
     else:
         credentials.with_scopes.assert_called_once_with(scopes)
@@ -407,7 +443,7 @@ def test_create_channel_explicit_default_scopes(grpc_secure_channel, composite_c
     )
 
     # TODO: remove if/else once google-auth >= 1.25.0 is required
-    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
         credentials.with_scopes.assert_called_once_with(scopes, default_scopes=default_scopes)
     else:
         credentials.with_scopes.assert_called_once_with(scopes)
@@ -446,6 +482,7 @@ def test_create_channel_explicit_with_quota_project(grpc_secure_channel, composi
 @mock.patch("grpc.secure_channel")
 @mock.patch(
     "google.auth.load_credentials_from_file",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.project)
 )
 def test_create_channel_with_credentials_file(load_credentials_from_file, grpc_secure_channel, composite_creds_call):
@@ -458,7 +495,11 @@ def test_create_channel_with_credentials_file(load_credentials_from_file, grpc_s
         target, credentials_file=credentials_file
     )
 
-    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None, default_scopes=None)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None, default_scopes=None)
+    else:
+        google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=None)
 
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
@@ -471,6 +512,7 @@ def test_create_channel_with_credentials_file(load_credentials_from_file, grpc_s
 @mock.patch("grpc.secure_channel")
 @mock.patch(
     "google.auth.load_credentials_from_file",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.project)
 )
 def test_create_channel_with_credentials_file_and_scopes(load_credentials_from_file, grpc_secure_channel, composite_creds_call):
@@ -484,7 +526,12 @@ def test_create_channel_with_credentials_file_and_scopes(load_credentials_from_f
         target, credentials_file=credentials_file, scopes=scopes
     )
 
-    google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes, default_scopes=None)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes, default_scopes=None)
+    else:
+        google.auth.load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes)
+
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
@@ -496,6 +543,7 @@ def test_create_channel_with_credentials_file_and_scopes(load_credentials_from_f
 @mock.patch("grpc.secure_channel")
 @mock.patch(
     "google.auth.load_credentials_from_file",
+    autospec=True,
     return_value=(mock.sentinel.credentials, mock.sentinel.project)
 )
 def test_create_channel_with_credentials_file_and_default_scopes(load_credentials_from_file, grpc_secure_channel, composite_creds_call):
@@ -510,7 +558,12 @@ def test_create_channel_with_credentials_file_and_default_scopes(load_credential
         target, credentials_file=credentials_file, scopes=scopes, default_scopes=default_scopes
     )
 
-    load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes, default_scopes=default_scopes)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes, default_scopes=default_scopes)
+    else:
+        load_credentials_from_file.assert_called_once_with(credentials_file, scopes=scopes)
+
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
@@ -531,7 +584,12 @@ def test_create_channel_with_grpc_gcp(grpc_gcp_secure_channel):
 
     grpc_helpers.create_channel(target, credentials=credentials, scopes=scopes)
     grpc_gcp_secure_channel.assert_called()
-    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
+        credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+    else:
+        credentials.with_scopes.assert_called_once_with(scopes)
 
 
 @pytest.mark.skipif(grpc_helpers.HAS_GRPC_GCP, reason="grpc_gcp module not available")
@@ -547,7 +605,7 @@ def test_create_channel_without_grpc_gcp(grpc_secure_channel):
     grpc_secure_channel.assert_called()
 
     # TODO: remove if/else once google-auth >= 1.25.0 is required
-    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+    if version.Version(pkg_resources.get_distribution("google-auth").version) >= version.Version("1.25.0"):
         credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
     else:
         credentials.with_scopes.assert_called_once_with(scopes)
