@@ -14,6 +14,7 @@
 
 import grpc
 import mock
+import pkg_resources
 import pytest
 
 from google.api_core import exceptions
@@ -377,7 +378,12 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
         target, credentials=credentials, scopes=scopes
     )
 
-    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+        credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+    else:
+        credentials.with_scopes.assert_called_once_with(scopes)
+
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
@@ -400,7 +406,12 @@ def test_create_channel_explicit_default_scopes(grpc_secure_channel, composite_c
         target, credentials=credentials, scopes=scopes, default_scopes=default_scopes
     )
 
-    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=default_scopes)
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+        credentials.with_scopes.assert_called_once_with(scopes, default_scopes=default_scopes)
+    else:
+        credentials.with_scopes.assert_called_once_with(scopes)
+
     assert channel is grpc_secure_channel.return_value
     if grpc_helpers.HAS_GRPC_GCP:
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
@@ -534,7 +545,12 @@ def test_create_channel_without_grpc_gcp(grpc_secure_channel):
 
     grpc_helpers.create_channel(target, credentials=credentials, scopes=scopes)
     grpc_secure_channel.assert_called()
-    credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+
+    # TODO: remove if/else once google-auth >= 1.25.0 is required
+    if pkg_resources.get_distribution("google-auth").version >= "1.25.0":
+        credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
+    else:
+        credentials.with_scopes.assert_called_once_with(scopes)
 
 
 class TestChannelStub(object):

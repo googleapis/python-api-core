@@ -236,8 +236,7 @@ def _create_composite_credentials(
                 scopes=scopes,
                 default_scopes=default_scopes
             )
-        # google-auth < x.x.x does not have `default_scopes`
-        # TODO: remove this try/except once google-auth >= x.x.x is required
+        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         except TypeError:
             credentials = google.auth.credentials.with_scopes_if_required(
                 credentials,
@@ -247,8 +246,7 @@ def _create_composite_credentials(
     else:
         try:
             credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
-        # google-auth < x.x.x does not have `default_scopes`
-        # TODO: remove this try/except once google-auth >= x.x.x is required
+        # TODO: remove this try/except once google-auth >= 1.25.0 is required
         except TypeError: 
             credentials, _ = google.auth.default(scopes=scopes or default_scopes)
 
@@ -259,8 +257,7 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
 
-    # google-auth < x.x.x does not have `default_host`
-    # TODO: remove this try/except once google-auth >= x.x.x is required
+    # TODO: remove this try/except once google-auth >= 1.25.0 is required
     try:
         metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
             credentials, request, default_host=default_host,
