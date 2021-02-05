@@ -129,7 +129,9 @@ class _GapicCallable(object):
             retry = self._retry
 
         # Apply all applicable decorators.
-        wrapped_func = _apply_decorators(self._target, [retry, timeout_])
+        #retry decorator no longer in use 
+        # wrapped_func = _apply_decorators(self._target, [retry, timeout_])
+        wrapped_func = _apply_decorators(self._target, [timeout_])
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
