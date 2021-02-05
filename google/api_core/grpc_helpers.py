@@ -17,6 +17,8 @@
 import collections
 
 import grpc
+from packaging import version
+import pkg_resources
 import six
 
 from google.api_core import exceptions
@@ -32,6 +34,20 @@ try:
     HAS_GRPC_GCP = True
 except ImportError:
     HAS_GRPC_GCP = False
+
+try:
+    # google.auth.__version__ was added in 1.26.0
+    _GOOGLE_AUTH_VERSION = google.auth.__version__
+except AttributeError:
+    try:  # try pkg_resources if it is available
+        _GOOGLE_AUTH_VERSION = pkg_resources.get_distribution("google-auth").version
+    except pkg_resources.DistributionNotFound:  # pragma: NO COVER
+        _GOOGLE_AUTH_VERSION = None
+
+if _GOOGLE_AUTH_VERSION is not None and version.parse(_GOOGLE_AUTH_VERSION) >= version.parse("1.25.0"):
+    _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST = True
+else:
+    _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST = False
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
@@ -216,37 +232,37 @@ def _create_composite_credentials(
         )
 
     if credentials_file:
-        # TODO: remove this try/except once google-auth >= 1.25.0 is required
-        try:
+        # TODO: remove this if/else once google-auth >= 1.25.0 is required
+        if _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST:
             credentials, _ = google.auth.load_credentials_from_file(
                 credentials_file,
                 scopes=scopes,
                 default_scopes=default_scopes
             )
-        except TypeError:
+        else:
             credentials, _ = google.auth.load_credentials_from_file(
                 credentials_file,
                 scopes=scopes or default_scopes,
             )
     elif credentials:
-        # TODO: remove this try/except once google-auth >= 1.25.0 is required
-        try:
+        # TODO: remove this if/else once google-auth >= 1.25.0 is required
+        if _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST:
             credentials = google.auth.credentials.with_scopes_if_required(
                 credentials,
                 scopes=scopes,
                 default_scopes=default_scopes
             )
-        except TypeError:
+        else:
             credentials = google.auth.credentials.with_scopes_if_required(
                 credentials,
                 scopes=scopes or default_scopes,
             )
 
     else:
-        # TODO: remove this try/except once google-auth >= 1.25.0 is required
-        try:
+        # TODO: remove this if/else once google-auth >= 1.25.0 is required
+        if _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST:
             credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
-        except TypeError:
+        else:
             credentials, _ = google.auth.default(scopes=scopes or default_scopes)
 
     if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
@@ -256,12 +272,12 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
 
-    # TODO: remove this try/except once google-auth >= 1.25.0 is required
-    try:
+    # TODO: remove this if/else once google-auth >= 1.25.0 is required
+    if _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST:
         metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
             credentials, request, default_host=default_host,
         )
-    except TypeError:
+    else:
         metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
             credentials, request
         )
