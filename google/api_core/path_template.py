@@ -64,7 +64,7 @@ def _expand_variable_match(positional_vars, named_vars, match):
     """Expand a matched variable with its value.
 
     Args:
-        positional_vars (list): A list of positonal variables. This list will
+        positional_vars (list): A list of positional variables. This list will
             be modified.
         named_vars (dict): A dictionary of named variables.
         match (re.Match): A regular expression match.
@@ -193,3 +193,58 @@ def validate(tmpl, path):
     """
     pattern = _generate_pattern_for_template(tmpl) + "$"
     return True if re.match(pattern, path) is not None else False
+
+def transcode(http_options, **request_kwargs):
+    """Transcodes a grpc request pattern into a proper HTTP request following the rules outlined here,
+       https://github.com/googleapis/googleapis/blob/master/google/api/http.proto#L44-L312
+
+        Args:
+            http_options (list(dict)): A list of dicts which consist of these keys,
+                'method'    (str): The http method
+                'uri'       (str): The path template
+                'body'      (str): The body field name (optional)
+                (This is a simplified representation of the proto option `google.api.http`)
+            request_kwargs (dict) : A dict representing the request object
+
+        Returns:
+            dict: The transcoded request with these keys,
+                'method'        (str)   : The http method
+                'uri'           (str)   : The expanded uri
+                'body'          (dict)  : A dict representing the body (optional)
+                'query_params'  (dict)  : A dict mapping query parameter variables and values
+
+        Raises:
+            ValueError: If the request does not match the given template.
+    """
+    request = {}
+    for http_option in http_options:
+
+        # Assign path
+        uri_template = http_option['uri']
+        path_fields = [match.group('name') for match in _VARIABLE_RE.finditer(uri_template)]
+        path_args = {field:request_kwargs.get(field, None) for field in path_fields}
+        leftovers = {k:v for k,v in request_kwargs.items() if k not in path_args}
+        request['uri'] = expand(uri_template, **path_args)
+
+        if not validate(uri_template, request['uri']) or not all(path_args.values()):
+            continue
+
+        # Assign body and query params
+        body = http_option.get('body')
+
+        if body:
+            if body == '*':
+                request['body'] = leftovers
+                request['query_params'] = {}
+            else:
+                try:
+                    request['body'] = leftovers.pop(body)
+                except KeyError:
+                    continue
+                request['query_params'] = leftovers
+        else:
+            request['query_params'] = leftovers
+        request['method'] = http_option['method']
+        return request
+
+    raise ValueError("Request obj does not match any template")
