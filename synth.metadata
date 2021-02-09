@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/python-api-core.git",
-        "sha": "5e8923f541b8482a05ab46554b108a2efcc615a9"
+        "sha": "94c76e0873e5b2f42331d5b1ad286c1e63b61395"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "573f7655311b553a937f9123bee17bf78497db95"
+        "sha": "33366574ffb9e11737b3547eb6f020ecae0536e8"
       }
     }
   ],
