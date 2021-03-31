@@ -246,11 +246,11 @@ class TestRetry(object):
             deadline=4,
             on_error=mock.sentinel.on_error,
         )
-        new_retry = retry_.with_delay(initial=1, maximum=2, multiplier=3)
+        new_retry = retry_.with_delay(initial=5, maximum=6, multiplier=7)
         assert retry_ is not new_retry
-        assert new_retry._initial == 1
-        assert new_retry._maximum == 2
-        assert new_retry._multiplier == 3
+        assert new_retry._initial == 5
+        assert new_retry._maximum == 6
+        assert new_retry._multiplier == 7
 
         # the rest of the attributes should remain the same
         assert new_retry._deadline == retry_._deadline
