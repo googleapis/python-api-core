@@ -44,7 +44,7 @@ except AttributeError:
     except pkg_resources.DistributionNotFound:  # pragma: NO COVER
         _GOOGLE_AUTH_VERSION = None
 
-if _GOOGLE_AUTH_VERSION is not None and version.parse(_GOOGLE_AUTH_VERSION) >= version.parse("1.25.0"):
+if _GOOGLE_AUTH_VERSION is not None and version.parse(_GOOGLE_AUTH_VERSION) <= version.parse("1.25.0"):
     _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST = True
 else:
     _GOOGLE_AUTH_HAS_DEFAULT_SCOPES_AND_DEFAULT_HOST = False
