@@ -236,3 +236,36 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
 
     assert result == 42
     method.assert_called_once_with(timeout=22, metadata=mock.ANY)
+
+
+def test_wrap_method_with_logical_call_timeout():
+    method = mock.Mock(spec=["__call__"], return_value=42)
+    default_retry = retry.Retry()
+    default_timeout = timeout.LogicalCallTimeout(60)
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, default_retry=default_retry, default_timeout=default_timeout
+    )
+
+    result = wrapped_method()
+
+    assert result == 42
+    assert isinstance(wrapped_method._timeout, timeout.LogicalCallTimeout)
+    assert wrapped_method._timeout.overall_timeout == 60
+    method.assert_called_once_with(timeout=60, metadata=mock.ANY)
+
+
+def test_call_method_with_logical_call_timeout():
+    method = mock.Mock(spec=["__call__"], return_value=42)
+    default_retry = retry.Retry()
+    default_timeout = timeout.LogicalCallTimeout(60)
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, default_retry=default_retry, default_timeout=default_timeout
+    )
+
+    timeout_override = timeout.LogicalCallTimeout(100)
+    result = wrapped_method(timeout=timeout_override)
+
+    assert result == 42
+    assert isinstance(wrapped_method._timeout, timeout.LogicalCallTimeout)
+    assert wrapped_method._timeout.overall_timeout == 60
+    method.assert_called_once_with(timeout=100, metadata=mock.ANY)

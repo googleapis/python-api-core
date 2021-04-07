@@ -128,6 +128,10 @@ class _GapicCallable(object):
         if retry is DEFAULT:
             retry = self._retry
 
+        # Use the total logical call timeout to calculate the callable deadline.
+        if isinstance(timeout_, timeout.LogicalCallTimeout):
+            retry = retry.with_deadline(timeout_.overall_timeout)
+
         # Apply all applicable decorators.
         wrapped_func = _apply_decorators(self._target, [retry, timeout_])
 

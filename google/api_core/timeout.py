@@ -254,7 +254,7 @@ class LogicalCallTimeout(object):
     If called multiple times, each time this decorator will calculate a new
     timeout parameter based on the time remaining in the overall timeout.
 
-    For example
+    For example, as a decorator:
 
     .. code-block:: python
 
@@ -262,6 +262,15 @@ class LogicalCallTimeout(object):
 
         @logical_timeout
         def make_api_call(request):
+            ...
+
+    Example as an argument:
+
+    .. code-block:: python
+
+        logical_timeout = LogicalCallTimeout(100)
+
+        def make_api_call(request, timeout=logical_timeout):
             ...
 
     Args:

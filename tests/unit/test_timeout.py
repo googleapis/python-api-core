@@ -155,6 +155,10 @@ class TestLogicalCallTimeout(object):
         timeout_ = timeout.LogicalCallTimeout(1.0)
         assert str(timeout_) == "<LogicalCallTimeout overall_timeout=1.0>"
 
+    def test_accessor(self):
+        timeout_ = timeout.LogicalCallTimeout(42.0)
+        assert timeout_.overall_timeout == 42.0
+
     @mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
     def test_apply(self, utcnow):
         # Make each successive call to utcnow() advance one second.
