@@ -258,6 +258,12 @@ class LogicalCallTimeout(object):
 
     .. code-block:: python
 
+        logical_timeout = LogicalCallTimeout(100)
+
+        @logical_timeout
+        def make_api_call(request):
+            ...
+
     Args:
         overall_timeout (float): The overall timeout for the logical call.
     """
