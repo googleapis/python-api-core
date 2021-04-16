@@ -48,7 +48,7 @@ dependencies = [
     "protobuf >= 3.12.0",
     "google-auth >= 1.21.1, < 2.0dev",
     "requests >= 2.18.0, < 3.0.0dev",
-    "setuptools >= 46.1.0",
+    "setuptools >= 40.3.0",
     "packaging >= 14.3",
     "six >= 1.13.0",
     "pytz",
