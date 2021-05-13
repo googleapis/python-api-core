@@ -24,6 +24,7 @@ CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
 _MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
 
+
 def _greater_or_equal_than_36(version_string):
     tokens = version_string.split(".")
     for i, token in enumerate(tokens):
@@ -115,13 +116,17 @@ def lint_setup_py(session):
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
-# No 2.7 due to https://github.com/google/importlab/issues/26.
-# No 3.7 because pytype supports up to 3.6 only.
-@nox.session(python="3.6")
+@nox.session(python="3.9")
 def pytype(session):
     """Run type-checking."""
     session.install(
-        ".", "grpcio >= 1.8.2", "grpcio-gcp >= 0.2.2", "pytype >= 2019.3.21"
+        ".",
+        "grpcio >= 1.8.2",
+        "grpcio-gcp >= 0.2.2",
+        # Python 3.9 requires 2021.02.23;
+        # https://github.com/google/pytype/issues/918
+        # affects 2021.05.06 and 2021.05.11 (at least)
+        "pytype >= 2021.02.23, < 2021.05.06",
     )
     session.run("pytype")
 
