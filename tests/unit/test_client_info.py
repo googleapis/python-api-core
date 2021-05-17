@@ -71,6 +71,7 @@ def test_to_user_agent_full():
 
     assert user_agent == "app-name/1.0 gl-python/1 grpc/2 gax/3 gapic/4 gccl/5"
 
+
 def test_to_user_agent_rest():
     info = client_info.ClientInfo(
         python_version="1",
