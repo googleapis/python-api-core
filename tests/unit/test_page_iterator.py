@@ -440,7 +440,6 @@ class TestHTTPIterator(object):
     def test_page_size_items(self, page_size, max_results, pages):
         path = "/foo"
         NITEMS = 10
-        page_size = 3
 
         n = [0]  # blast you python 2!
 
