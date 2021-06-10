@@ -202,12 +202,12 @@ class _CallAndFuture(grpc.Call, grpc.Future):
     pass
 
 
-def make_rpc():
+def make_rpc(metadata=None):
     """Makes a mock RPC used to test Bidi classes."""
     call = mock.create_autospec(_CallAndFuture, instance=True)
     rpc = mock.create_autospec(grpc.StreamStreamMultiCallable, instance=True)
 
-    def rpc_side_effect(request, metadata=None):
+    def rpc_side_effect(request, metadata=metadata):
         call.is_active.return_value = True
         call.request = request
         call.metadata = metadata
@@ -265,12 +265,13 @@ class TestBidiRpc(object):
         assert bidi_rpc.call.metadata == mock.sentinel.A
 
     def test_open(self):
-        rpc, call = make_rpc()
-        bidi_rpc = bidi.BidiRpc(rpc)
+        rpc, call = make_rpc(metadata=[(1, 2)])
+        bidi_rpc = bidi.BidiRpc(rpc, metadata=[(3, 4)])
 
         bidi_rpc.open()
 
         assert bidi_rpc.call == call
+        assert bidi_rpc.call.metadata == [(3, 4)]
         assert bidi_rpc.is_active
         call.add_done_callback.assert_called_once_with(bidi_rpc._on_call_done)
 
@@ -282,6 +283,14 @@ class TestBidiRpc(object):
 
         with pytest.raises(ValueError):
             bidi_rpc.open()
+
+    def test_open_use_start_rpc_metadata(self):
+        rpc, _ = make_rpc(metadata=[(1, 2)])
+        bidi_rpc = bidi.BidiRpc(rpc)
+
+        bidi_rpc.open()
+
+        assert bidi_rpc.call.metadata == [(1, 2)]
 
     def test_close(self):
         rpc, call = make_rpc()

@@ -240,7 +240,8 @@ class BidiRpc(object):
             yield. This is useful if an initial request is needed to start the
             stream.
         metadata (Sequence[Tuple(str, str)]): RPC metadata to include in
-            the request.
+            the request. If no metadata is provided, metadata from
+            start_rpc will be used.
     """
 
     def __init__(self, start_rpc, initial_request=None, metadata=None):
@@ -277,7 +278,11 @@ class BidiRpc(object):
         request_generator = _RequestQueueGenerator(
             self._request_queue, initial_request=self._initial_request
         )
-        call = self._start_rpc(iter(request_generator), metadata=self._rpc_metadata)
+        if self._rpc_metadata:
+            call = self._start_rpc(iter(request_generator), metadata=self._rpc_metadata)
+        # use metadata from self._start_rpc if no other metadata is specified
+        else:
+            call = self._start_rpc(iter(request_generator))
 
         request_generator.call = call
 
