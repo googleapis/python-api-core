@@ -14,8 +14,6 @@
 
 """This script is used to synthesize generated parts of this library."""
 
-import re
-
 import synthtool as s
 from synthtool import gcp
 
@@ -24,8 +22,15 @@ common = gcp.CommonTemplates()
 # ----------------------------------------------------------------------------
 # Add templated files
 # ----------------------------------------------------------------------------
+excludes = [
+    "noxfile.py",  # pytype
+    "setup.cfg",  # pytype
+    ".flake8",  # flake8-import-order, layout
+    ".coveragerc",  # layout
+    "CONTRIBUTING.rst",  # no systests
+]
 templated_files = common.py_library(cov_level=100)
-s.move(templated_files, excludes=["noxfile.py", ".flake8", ".coveragerc", "setup.cfg"])
+s.move(templated_files, excludes=excludes)
 
 # Add pytype support
 s.replace(

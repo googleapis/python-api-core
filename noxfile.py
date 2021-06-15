@@ -24,6 +24,7 @@ CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
 _MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
 
+
 def _greater_or_equal_than_36(version_string):
     tokens = version_string.split(".")
     for i, token in enumerate(tokens):
@@ -77,13 +78,13 @@ def default(session):
         session.run(*pytest_args)
 
 
-@nox.session(python=["2.7", "3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.6", "3.7", "3.8", "3.9"])
 def unit(session):
     """Run the unit test suite."""
     default(session)
 
 
-@nox.session(python=["2.7", "3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.6", "3.7", "3.8", "3.9"])
 def unit_grpc_gcp(session):
     """Run the unit test suite with grpcio-gcp installed."""
     constraints_path = str(
