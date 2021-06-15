@@ -138,7 +138,7 @@ def test_from_http_response_bad_json_content():
 def test_from_http_response_json_unicode_content():
     response = make_response(
         json.dumps(
-            {"error": {"message": u"\u2019 message", "errors": ["1", "2"]}}
+            {"error": {"message": "\u2019 message", "errors": ["1", "2"]}}
         ).encode("utf-8")
     )
 
@@ -146,7 +146,7 @@ def test_from_http_response_json_unicode_content():
 
     assert isinstance(exception, exceptions.NotFound)
     assert exception.code == http.client.NOT_FOUND
-    assert exception.message == u"POST https://example.com/: \u2019 message"
+    assert exception.message == "POST https://example.com/: \u2019 message"
     assert exception.errors == ["1", "2"]
 
 
