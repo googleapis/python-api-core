@@ -15,10 +15,10 @@
 """Helpers for :mod:`grpc`."""
 
 import collections
+import functools
 
 import grpc
 import pkg_resources
-import six
 
 from google.api_core import exceptions
 from google.api_core import general_helpers
@@ -61,12 +61,12 @@ def _wrap_unary_errors(callable_):
     """Map errors for Unary-Unary and Stream-Unary gRPC callables."""
     _patch_callable_name(callable_)
 
-    @six.wraps(callable_)
+    @functools.wraps(callable_)
     def error_remapped_callable(*args, **kwargs):
         try:
             return callable_(*args, **kwargs)
         except grpc.RpcError as exc:
-            six.raise_from(exceptions.from_grpc_error(exc), exc)
+            raise exceptions.from_grpc_error(exc) from exc
 
     return error_remapped_callable
 
@@ -80,7 +80,7 @@ class _StreamingResponseIterator(grpc.Call):
         # to retrieve the first result, in order to fail, in order to trigger a retry.
         try:
             if prefetch_first_result:
-                self._stored_first_result = six.next(self._wrapped)
+                self._stored_first_result = next(self._wrapped)
         except TypeError:
             # It is possible the wrapped method isn't an iterable (a grpc.Call
             # for instance). If this happens don't store the first result.
@@ -104,10 +104,10 @@ class _StreamingResponseIterator(grpc.Call):
                 result = self._stored_first_result
                 del self._stored_first_result
                 return result
-            return six.next(self._wrapped)
+            return next(self._wrapped)
         except grpc.RpcError as exc:
             # If the stream has already returned data, we cannot recover here.
-            six.raise_from(exceptions.from_grpc_error(exc), exc)
+            raise exceptions.from_grpc_error(exc) from exc
 
     # Alias needed for Python 2/3 support.
     __next__ = next
@@ -157,9 +157,11 @@ def _wrap_stream_errors(callable_):
             # hidden flag to see if pre-fetching is disabled.
             # https://github.com/googleapis/python-pubsub/issues/93#issuecomment-630762257
             prefetch_first = getattr(callable_, "_prefetch_first_result_", True)
-            return _StreamingResponseIterator(result, prefetch_first_result=prefetch_first)
+            return _StreamingResponseIterator(
+                result, prefetch_first_result=prefetch_first
+            )
         except grpc.RpcError as exc:
-            six.raise_from(exceptions.from_grpc_error(exc), exc)
+            raise exceptions.from_grpc_error(exc) from exc
 
     return error_remapped_callable
 
@@ -187,13 +189,14 @@ def wrap_errors(callable_):
 
 
 def _create_composite_credentials(
-        credentials=None,
-        credentials_file=None,
-        default_scopes=None,
-        scopes=None,
-        ssl_credentials=None,
-        quota_project_id=None,
-        default_host=None):
+    credentials=None,
+    credentials_file=None,
+    default_scopes=None,
+    scopes=None,
+    ssl_credentials=None,
+    quota_project_id=None,
+    default_host=None,
+):
     """Create the composite credentials for secure channels.
 
     Args:
@@ -227,20 +230,20 @@ def _create_composite_credentials(
 
     if credentials_file:
         credentials, _ = google.auth.load_credentials_from_file(
-            credentials_file,
-            scopes=scopes,
-            default_scopes=default_scopes
+            credentials_file, scopes=scopes, default_scopes=default_scopes
         )
     elif credentials:
         credentials = google.auth.credentials.with_scopes_if_required(
-            credentials,
-            scopes=scopes,
-            default_scopes=default_scopes
+            credentials, scopes=scopes, default_scopes=default_scopes
         )
     else:
-        credentials, _ = google.auth.default(scopes=scopes, default_scopes=default_scopes)
+        credentials, _ = google.auth.default(
+            scopes=scopes, default_scopes=default_scopes
+        )
 
-    if quota_project_id and isinstance(credentials, google.auth.credentials.CredentialsWithQuotaProject):
+    if quota_project_id and isinstance(
+        credentials, google.auth.credentials.CredentialsWithQuotaProject
+    ):
         credentials = credentials.with_quota_project(quota_project_id)
 
     request = google.auth.transport.requests.Request()
@@ -257,21 +260,20 @@ def _create_composite_credentials(
         ssl_credentials = grpc.ssl_channel_credentials()
 
     # Combine the ssl credentials and the authorization credentials.
-    return grpc.composite_channel_credentials(
-        ssl_credentials, google_auth_credentials
-    )
+    return grpc.composite_channel_credentials(ssl_credentials, google_auth_credentials)
 
 
 def create_channel(
-        target,
-        credentials=None,
-        scopes=None,
-        ssl_credentials=None,
-        credentials_file=None,
-        quota_project_id=None,
-        default_scopes=None,
-        default_host=None,
-        **kwargs):
+    target,
+    credentials=None,
+    scopes=None,
+    ssl_credentials=None,
+    credentials_file=None,
+    quota_project_id=None,
+    default_scopes=None,
+    default_host=None,
+    **kwargs
+):
     """Create a secure channel with credentials.
 
     Args:

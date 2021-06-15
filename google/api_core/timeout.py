@@ -55,8 +55,6 @@ from __future__ import unicode_literals
 
 import datetime
 
-import six
-
 from google.api_core import datetime_helpers
 from google.api_core import general_helpers
 
@@ -68,7 +66,6 @@ _DEFAULT_TIMEOUT_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = None
 
 
-@six.python_2_unicode_compatible
 class ConstantTimeout(object):
     """A decorator that adds a constant timeout argument.
 
@@ -140,7 +137,6 @@ def _exponential_timeout_generator(initial, maximum, multiplier, deadline):
         timeout = timeout * multiplier
 
 
-@six.python_2_unicode_compatible
 class ExponentialTimeout(object):
     """A decorator that adds an exponentially increasing timeout argument.
 

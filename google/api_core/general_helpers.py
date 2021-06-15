@@ -16,8 +16,6 @@
 
 import functools
 
-import six
-
 
 # functools.partial objects lack several attributes present on real function
 # objects. In Python 2 wraps fails on this so use a restricted set instead.
@@ -28,6 +26,6 @@ def wraps(wrapped):
     """A functools.wraps helper that handles partial objects on Python 2."""
     # https://github.com/google/pytype/issues/322
     if isinstance(wrapped, functools.partial):  # pytype: disable=wrong-arg-types
-        return six.wraps(wrapped, assigned=_PARTIAL_VALID_ASSIGNMENTS)
+        return functools.wraps(wrapped, assigned=_PARTIAL_VALID_ASSIGNMENTS)
     else:
-        return six.wraps(wrapped)
+        return functools.wraps(wrapped)

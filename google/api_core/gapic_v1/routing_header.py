@@ -21,8 +21,7 @@ Generally, these headers are specified as gRPC metadata.
 """
 
 import sys
-
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 ROUTING_METADATA_KEY = "x-goog-request-params"
 

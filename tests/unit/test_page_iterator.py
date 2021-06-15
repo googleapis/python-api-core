@@ -17,7 +17,6 @@ import types
 
 import mock
 import pytest
-import six
 
 from google.api_core import page_iterator
 
@@ -56,17 +55,17 @@ class TestPage(object):
         assert item_to_value.call_count == 0
         assert page.remaining == 100
 
-        assert six.next(page) == 10
+        assert next(page) == 10
         assert item_to_value.call_count == 1
         item_to_value.assert_called_with(parent, 10)
         assert page.remaining == 99
 
-        assert six.next(page) == 11
+        assert next(page) == 11
         assert item_to_value.call_count == 2
         item_to_value.assert_called_with(parent, 11)
         assert page.remaining == 98
 
-        assert six.next(page) == 12
+        assert next(page) == 12
         assert item_to_value.call_count == 3
         item_to_value.assert_called_with(parent, 12)
         assert page.remaining == 97
@@ -150,7 +149,8 @@ class TestIterator(object):
     def test__page_iter_increment(self):
         iterator = PageIteratorImpl(None, None)
         page = page_iterator.Page(
-            iterator, ("item",), page_iterator._item_to_value_identity)
+            iterator, ("item",), page_iterator._item_to_value_identity
+        )
         iterator._next_page = mock.Mock(side_effect=[page, None])
 
         assert iterator.num_results == 0
@@ -180,9 +180,11 @@ class TestIterator(object):
         # Make pages from mock responses
         parent = mock.sentinel.parent
         page1 = page_iterator.Page(
-            parent, (item1, item2), page_iterator._item_to_value_identity)
+            parent, (item1, item2), page_iterator._item_to_value_identity
+        )
         page2 = page_iterator.Page(
-            parent, (item3,), page_iterator._item_to_value_identity)
+            parent, (item3,), page_iterator._item_to_value_identity
+        )
 
         iterator = PageIteratorImpl(None, None)
         iterator._next_page = mock.Mock(side_effect=[page1, page2, None])
@@ -194,17 +196,17 @@ class TestIterator(object):
         # Consume items and check the state of the iterator.
         assert iterator.num_results == 0
 
-        assert six.next(items_iter) == item1
+        assert next(items_iter) == item1
         assert iterator.num_results == 1
 
-        assert six.next(items_iter) == item2
+        assert next(items_iter) == item2
         assert iterator.num_results == 2
 
-        assert six.next(items_iter) == item3
+        assert next(items_iter) == item3
         assert iterator.num_results == 3
 
         with pytest.raises(StopIteration):
-            six.next(items_iter)
+            next(items_iter)
 
     def test___iter__(self):
         iterator = PageIteratorImpl(None, None)
@@ -286,16 +288,16 @@ class TestHTTPIterator(object):
 
         items_iter = iter(iterator)
 
-        val1 = six.next(items_iter)
+        val1 = next(items_iter)
         assert val1 == item1
         assert iterator.num_results == 1
 
-        val2 = six.next(items_iter)
+        val2 = next(items_iter)
         assert val2 == item2
         assert iterator.num_results == 2
 
         with pytest.raises(StopIteration):
-            six.next(items_iter)
+            next(items_iter)
 
         api_request.assert_called_once_with(method="GET", path=path, query_params={})
 
@@ -456,7 +458,8 @@ class TestHTTPIterator(object):
 
     @pytest.mark.parametrize(
         "page_size,max_results,pages",
-        [(3, None, False), (3, 8, False), (3, None, True), (3, 8, True)])
+        [(3, None, False), (3, 8, False), (3, None, True), (3, 8, True)],
+    )
     def test_page_size_items(self, page_size, max_results, pages):
         path = "/foo"
         NITEMS = 10
@@ -467,19 +470,20 @@ class TestHTTPIterator(object):
             assert not args
             query_params = dict(
                 maxResults=(
-                    page_size if max_results is None
-                    else min(page_size, max_results - n[0]))
+                    page_size
+                    if max_results is None
+                    else min(page_size, max_results - n[0])
+                )
             )
             if n[0]:
-                query_params.update(pageToken='test')
-            assert kw == {'method': 'GET', 'path': '/foo',
-                          'query_params': query_params}
-            n_items = min(kw['query_params']['maxResults'], NITEMS - n[0])
+                query_params.update(pageToken="test")
+            assert kw == {"method": "GET", "path": "/foo", "query_params": query_params}
+            n_items = min(kw["query_params"]["maxResults"], NITEMS - n[0])
             items = [dict(name=str(i + n[0])) for i in range(n_items)]
             n[0] += n_items
             result = dict(items=items)
             if n[0] < NITEMS:
-                result.update(nextPageToken='test')
+                result.update(nextPageToken="test")
             return result
 
         iterator = page_iterator.HTTPIterator(
@@ -498,21 +502,20 @@ class TestHTTPIterator(object):
             items_iter = iter(iterator.pages)
             npages = int(math.ceil(float(n_results) / page_size))
             for ipage in range(npages):
-                assert (
-                    list(six.next(items_iter)) == [
-                        dict(name=str(i))
-                        for i in range(ipage * page_size,
-                                       min((ipage + 1) * page_size, n_results),
-                                       )
-                    ])
+                assert list(next(items_iter)) == [
+                    dict(name=str(i))
+                    for i in range(
+                        ipage * page_size, min((ipage + 1) * page_size, n_results),
+                    )
+                ]
         else:
             items_iter = iter(iterator)
             for i in range(n_results):
-                assert six.next(items_iter) == dict(name=str(i))
+                assert next(items_iter) == dict(name=str(i))
                 assert iterator.num_results == i + 1
 
         with pytest.raises(StopIteration):
-            six.next(items_iter)
+            next(items_iter)
 
 
 class TestGRPCIterator(object):
@@ -617,7 +620,7 @@ class GAXPageIterator(object):
         self.page_token = page_token
 
     def next(self):
-        return six.next(self._pages)
+        return next(self._pages)
 
     __next__ = next
 

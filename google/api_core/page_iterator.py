@@ -81,8 +81,6 @@ through it or using :func:`list`::
 
 import abc
 
-import six
-
 
 class Page(object):
     """Single page of results in an iterator.
@@ -129,7 +127,7 @@ class Page(object):
 
     def next(self):
         """Get the next value in the page."""
-        item = six.next(self._item_iter)
+        item = next(self._item_iter)
         result = self._item_to_value(self._parent, item)
         # Since we've successfully got the next value from the
         # iterator, we update the number of remaining.
@@ -147,8 +145,7 @@ def _item_to_value_identity(iterator, item):
     return item
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Iterator(object):
+class Iterator(object, metaclass=abc.ABCMeta):
     """A generic class for iterating through API list responses.
 
     Args:
@@ -484,7 +481,7 @@ class _GAXIterator(Iterator):
                   there are no pages left.
         """
         try:
-            items = six.next(self._gax_page_iter)
+            items = next(self._gax_page_iter)
             page = Page(self, items, self.item_to_value)
             self.next_page_token = self._gax_page_iter.page_token or None
             return page
