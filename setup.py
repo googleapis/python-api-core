@@ -35,7 +35,6 @@ dependencies = [
     "requests >= 2.18.0, < 3.0.0dev",
     "setuptools >= 40.3.0",
     "packaging >= 14.3",
-    "pytz",
     'futures >= 3.2.0; python_version < "3.2"',
 ]
 extras = {
