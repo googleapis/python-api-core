@@ -15,7 +15,10 @@
 import datetime
 
 from grpc.experimental import aio
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import pytest
 
 from google.api_core import (exceptions, gapic_v1, grpc_helpers_async,

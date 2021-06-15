@@ -13,7 +13,10 @@
 # limitations under the License.
 
 from grpc.experimental import aio
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import pytest
 
 from google.api_core import (grpc_helpers_async, operations_v1,

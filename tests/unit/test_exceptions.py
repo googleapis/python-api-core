@@ -15,7 +15,10 @@
 import json
 
 import grpc
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import requests
 from six.moves import http_client
 

@@ -14,7 +14,10 @@
 
 import asyncio
 
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import pytest
 
 from google.api_core import exceptions

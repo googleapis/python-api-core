@@ -17,7 +17,10 @@ import logging
 import threading
 
 import grpc
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import pytest
 from six.moves import queue
 

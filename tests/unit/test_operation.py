@@ -13,7 +13,10 @@
 # limitations under the License.
 
 
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 
 from google.api_core import exceptions
 from google.api_core import operation

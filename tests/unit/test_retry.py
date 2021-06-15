@@ -16,7 +16,10 @@ import datetime
 import itertools
 import re
 
-import mock
+try:
+    from unittest import mock
+except:
+    import mock
 import pytest
 import requests.exceptions
 
