@@ -280,8 +280,7 @@ class RequestRangeNotSatisfiable(ClientError):
 class TooManyRequests(ClientError):
     """Exception mapping a ``429 Too Many Requests`` response."""
 
-    # http.client does not define a constant for this in Python 2.
-    code = 429
+    code = http.client.TOO_MANY_REQUESTS
 
 
 class ResourceExhausted(TooManyRequests):
