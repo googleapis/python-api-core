@@ -92,7 +92,7 @@ class _StreamingResponseIterator(grpc.Call):
         """This iterator is also an iterable that returns itself."""
         return self
 
-    def next(self):
+    def __next__(self):
         """Get the next response from the stream.
 
         Returns:
@@ -107,9 +107,6 @@ class _StreamingResponseIterator(grpc.Call):
         except grpc.RpcError as exc:
             # If the stream has already returned data, we cannot recover here.
             raise exceptions.from_grpc_error(exc) from exc
-
-    # Alias needed for Python 2/3 support.
-    __next__ = next
 
     # grpc.Call & grpc.RpcContext interface
 
