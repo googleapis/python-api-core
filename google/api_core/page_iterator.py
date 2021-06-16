@@ -125,7 +125,7 @@ class Page(object):
         """The :class:`Page` is an iterator of items."""
         return self
 
-    def next(self):
+    def __next__(self):
         """Get the next value in the page."""
         item = next(self._item_iter)
         result = self._item_to_value(self._parent, item)
@@ -133,9 +133,6 @@ class Page(object):
         # iterator, we update the number of remaining.
         self._remaining -= 1
         return result
-
-    # Alias needed for Python 2/3 support.
-    __next__ = next
 
 
 def _item_to_value_identity(iterator, item):
@@ -231,9 +228,6 @@ class Iterator(object, metaclass=abc.ABCMeta):
         if self.__active_iterator is None:
             self.__active_iterator = iter(self)
         return next(self.__active_iterator)
-
-    # Preserve Python 2 compatibility.
-    next = __next__
 
     def _page_iter(self, increment):
         """Generator of pages of API responses.
