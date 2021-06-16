@@ -43,3 +43,5 @@ s.replace(
 .pytype
 """,
 )
+
+s.shell.run(["nox", "-s", "blacken"], hide_output=False)
