@@ -18,7 +18,8 @@ This is used by gapic clients to provide common error mapping, retry, timeout,
 pagination, and long-running operations to gRPC methods.
 """
 
-from google.api_core import general_helpers
+import functools
+
 from google.api_core import grpc_helpers
 from google.api_core import timeout
 from google.api_core.gapic_v1 import client_info
@@ -237,7 +238,7 @@ def wrap_method(
     else:
         user_agent_metadata = None
 
-    return general_helpers.wraps(func)(
+    return functools.wraps(func)(
         _GapicCallable(
             func, default_retry, default_timeout, metadata=user_agent_metadata
         )

@@ -21,7 +21,6 @@ import grpc
 import pkg_resources
 
 from google.api_core import exceptions
-from google.api_core import general_helpers
 import google.auth
 import google.auth.credentials
 import google.auth.transport.grpc
@@ -148,7 +147,7 @@ def _wrap_stream_errors(callable_):
     """
     _patch_callable_name(callable_)
 
-    @general_helpers.wraps(callable_)
+    @functools.wraps(callable_)
     def error_remapped_callable(*args, **kwargs):
         try:
             result = callable_(*args, **kwargs)

@@ -66,7 +66,6 @@ import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-from google.api_core import general_helpers
 from google.auth import exceptions as auth_exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -270,7 +269,7 @@ class Retry(object):
         if self._on_error is not None:
             on_error = self._on_error
 
-        @general_helpers.wraps(func)
+        @functools.wraps(func)
         def retry_wrapped_func(*args, **kwargs):
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
