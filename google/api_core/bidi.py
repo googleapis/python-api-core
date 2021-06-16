@@ -644,6 +644,7 @@ class BackgroundConsumer(object):
                 # Keeping the lock throughout avoids that.
                 # In the future, we could use `Condition.wait_for` if we drop
                 # Python 2.7.
+                # See: https://github.com/googleapis/python-api-core/issues/211
                 with self._wake:
                     while self._paused:
                         _LOGGER.debug("paused, waiting for waking.")
