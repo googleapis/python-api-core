@@ -21,7 +21,7 @@ In order to add a feature:
   documentation.
 
 - The feature must work fully on the following CPython versions:
-  3.6, 3.7, 3.8 and 3.9 on both UNIX and Windows.
+  2.7, 3.6, 3.7, 3.8 and 3.9 on both UNIX and Windows.
 
 - The feature must not add unnecessary dependencies (where
   "unnecessary" is of course subjective, but new dependencies should
@@ -67,14 +67,12 @@ Using ``nox``
 We use `nox <https://nox.readthedocs.io/en/latest/>`__ to instrument our tests.
 
 - To test your changes, run unit tests with ``nox``::
+    $ nox -s unit
 
-    $ nox -s unit-3.8
-    $ ...
+- To run a single unit test::
 
-- Args to pytest can be passed through the nox command separated by a `--`. For
-  example, to run a single test::
+    $ nox -s unit-3.9 -- -k <name of test>
 
-    $ nox -s unit-3.8 -- -k <name of test>
 
   .. note::
 
@@ -134,6 +132,7 @@ Exceptions to PEP8:
   "Function-Under-Test"), which is PEP8-incompliant, but more readable.
   Some also use a local variable, ``MUT`` (short for "Module-Under-Test").
 
+
 *************
 Test Coverage
 *************
@@ -174,11 +173,13 @@ Supported Python Versions
 
 We support:
 
+-  `Python 2.7`_
 -  `Python 3.6`_
 -  `Python 3.7`_
 -  `Python 3.8`_
 -  `Python 3.9`_
 
+.. _Python 2.7: https://docs.python.org/2.7/
 .. _Python 3.6: https://docs.python.org/3.6/
 .. _Python 3.7: https://docs.python.org/3.7/
 .. _Python 3.8: https://docs.python.org/3.8/
@@ -190,8 +191,8 @@ Supported versions can be found in our ``noxfile.py`` `config`_.
 .. _config: https://github.com/googleapis/python-api-core/blob/master/noxfile.py
 
 
-We also explicitly decided to support Python 3 beginning with version
-3.6. Reasons for this include:
+We also explicitly decided to support Python 3 beginning with version 2.7.
+Reasons for this include:
 
 -  Encouraging use of newest versions of Python 3
 -  Taking the lead of `prominent`_ open-source `projects`_
