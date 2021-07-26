@@ -7,14 +7,14 @@
 ### [1.31.1](https://www.github.com/googleapis/python-api-core/compare/v1.31.0...v1.31.1) (2021-07-26)
 
 
-### Features
-
-* add Samples section to CONTRIBUTING.rst ([#229](https://www.github.com/googleapis/python-api-core/issues/229)) ([a12c051](https://www.github.com/googleapis/python-api-core/commit/a12c0516c42918b05415835029717814353b883b))
-
-
 ### Bug Fixes
 
 * add 'requests.exceptions.ChunkedEncodingError' to retryable exceptions ([#237](https://www.github.com/googleapis/python-api-core/issues/237)) ([5e540f2](https://www.github.com/googleapis/python-api-core/commit/5e540f28493cc3e13260458a8d1c6a1abb2ed313))
+
+
+### Documentation
+
+* add Samples section to CONTRIBUTING.rst ([#229](https://www.github.com/googleapis/python-api-core/issues/229)) ([a12c051](https://www.github.com/googleapis/python-api-core/commit/a12c0516c42918b05415835029717814353b883b))
 
 
 ### Miscellaneous Chores
