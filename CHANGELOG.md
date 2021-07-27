@@ -16,11 +16,6 @@
 
 * add Samples section to CONTRIBUTING.rst ([#229](https://www.github.com/googleapis/python-api-core/issues/229)) ([a12c051](https://www.github.com/googleapis/python-api-core/commit/a12c0516c42918b05415835029717814353b883b))
 
-
-### Miscellaneous Chores
-
-* release as 1.31.1 ([#239](https://www.github.com/googleapis/python-api-core/issues/239)) ([47d04cd](https://www.github.com/googleapis/python-api-core/commit/47d04cd0aebcd9f4a26c22a384de489da7b74430))
-
 ## [1.31.0](https://www.github.com/googleapis/python-api-core/compare/v1.30.0...v1.31.0) (2021-07-07)
 
 
