@@ -136,7 +136,6 @@ def lint_setup_py(session):
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
-# No 2.7 due to https://github.com/google/importlab/issues/26.
 # No 3.7 because pytype supports up to 3.6 only.
 @nox.session(python="3.6")
 def pytype(session):
