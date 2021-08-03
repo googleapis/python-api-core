@@ -9,6 +9,18 @@
 
 ### ⚠ BREAKING CHANGES
 
+* drop support for Python 2.7 / 3.5 (#212)
+
+### Bug Fixes
+
+* drop support for Python 2.7 / 3.5 ([#212](https://www.github.com/googleapis/python-api-core/issues/212)) ([a30f004](https://www.github.com/googleapis/python-api-core/commit/a30f004e74f709d46e905dd819c71f43354e9ac9))
+* strip trailing _ from field mask paths ([#228](https://www.github.com/googleapis/python-api-core/issues/228)) ([ff6ef1b](https://www.github.com/googleapis/python-api-core/commit/ff6ef1bd07fa68307b7c82c910416d770e7b3416))
+
+## [2.0.0b1](https://www.github.com/googleapis/python-api-core/compare/v1.31.1...v2.0.0b1) (2021-08-03)
+
+
+### ⚠ BREAKING CHANGES
+
 * drop support for Python 2.7 / 3.5 ([#212](https://www.github.com/googleapis/python-api-core/issues/212)) ([a30f004](https://www.github.com/googleapis/python-api-core/commit/a30f004e74f709d46e905dd819c71f43354e9ac9))
 
 ### Bug Fixes
