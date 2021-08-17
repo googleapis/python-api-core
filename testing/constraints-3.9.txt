@@ -1,2 +1,0 @@
-# Allow prerelease versions of deps
---pre
