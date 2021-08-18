@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.0.0](https://www.github.com/googleapis/python-api-core/compare/v2.0.0-b1...v2.0.0) (2021-08-18)
+
+
+### Bug Fixes
+
+* bump grpcio version to use stable aio API ([#234](https://www.github.com/googleapis/python-api-core/issues/234)) ([bdbf889](https://www.github.com/googleapis/python-api-core/commit/bdbf889210b709d7c1945f2160bcba9161b4dd2e))
+
 ## [2.0.0b1](https://www.github.com/googleapis/python-api-core/compare/v1.31.1...v2.0.0b1) (2021-08-03)
 
 
