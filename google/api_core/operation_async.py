@@ -135,12 +135,11 @@ class AsyncOperation(async_future.AsyncFuture):
                     response=self._operation,
                 )
                 self.set_exception(exception)
-            else:
-                exception = exceptions.GoogleAPICallError(
-                    "Unexpected state: Long-running operation had neither "
-                    "response nor error set."
-                )
-                self.set_exception(exception)
+            elif self._operation.done:
+                # Some APIs set `done: true`, with an empty response.
+                # Set the result to an empty message of the expected
+                # result type.
+                self.set_result(self._result_type())
 
     async def _refresh_and_update(self, retry=async_future.DEFAULT_RETRY):
         """Refresh the operation and update the result if needed.
