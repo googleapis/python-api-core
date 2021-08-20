@@ -139,6 +139,7 @@ class AsyncOperation(async_future.AsyncFuture):
                 # Some APIs set `done: true`, with an empty response.
                 # Set the result to an empty message of the expected
                 # result type.
+                # https://google.aip.dev/151
                 self.set_result(self._result_type())
 
     async def _refresh_and_update(self, retry=async_future.DEFAULT_RETRY):
