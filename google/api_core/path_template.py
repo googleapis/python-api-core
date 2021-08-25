@@ -205,6 +205,7 @@ def transcode(http_options, **request_kwargs):
                 'uri'       (str): The path template
                 'body'      (str): The body field name (optional)
                 (This is a simplified representation of the proto option `google.api.http`)
+
             request_kwargs (dict) : A dict representing the request object
 
         Returns:
