@@ -194,6 +194,7 @@ def validate(tmpl, path):
     pattern = _generate_pattern_for_template(tmpl) + "$"
     return True if re.match(pattern, path) is not None else False
 
+
 def transcode(http_options, **request_kwargs):
     """Transcodes a grpc request pattern into a proper HTTP request following the rules outlined here,
        https://github.com/googleapis/googleapis/blob/master/google/api/http.proto#L44-L312
@@ -220,31 +221,33 @@ def transcode(http_options, **request_kwargs):
     for http_option in http_options:
 
         # Assign path
-        uri_template = http_option['uri']
-        path_fields = [match.group('name') for match in _VARIABLE_RE.finditer(uri_template)]
-        path_args = {field:request_kwargs.get(field, None) for field in path_fields}
-        leftovers = {k:v for k,v in request_kwargs.items() if k not in path_args}
-        answer['uri'] = expand(uri_template, **path_args)
+        uri_template = http_option["uri"]
+        path_fields = [
+            match.group("name") for match in _VARIABLE_RE.finditer(uri_template)
+        ]
+        path_args = {field: request_kwargs.get(field, None) for field in path_fields}
+        leftovers = {k: v for k, v in request_kwargs.items() if k not in path_args}
+        answer["uri"] = expand(uri_template, **path_args)
 
-        if not validate(uri_template, answer['uri']) or not all(path_args.values()):
+        if not validate(uri_template, answer["uri"]) or not all(path_args.values()):
             continue
 
         # Assign body and query params
-        body = http_option.get('body')
+        body = http_option.get("body")
 
         if body:
-            if body == '*':
-                answer['body'] = leftovers
-                answer['query_params'] = {}
+            if body == "*":
+                answer["body"] = leftovers
+                answer["query_params"] = {}
             else:
                 try:
-                    answer['body'] = leftovers.pop(body)
+                    answer["body"] = leftovers.pop(body)
                 except KeyError:
                     continue
-                answer['query_params'] = leftovers
+                answer["query_params"] = leftovers
         else:
-            answer['query_params'] = leftovers
-        answer['method'] = http_option['method']
+            answer["query_params"] = leftovers
+        answer["method"] = http_option["method"]
         return answer
 
     raise ValueError("Request obj does not match any template")

@@ -116,86 +116,137 @@ def test__replace_variable_with_pattern():
 
 
 @pytest.mark.parametrize(
-    'http_options, request_kwargs, expected_result',
+    "http_options, request_kwargs, expected_result",
     [
-        [[['get','/v1/no/template','']],
-        {'foo':'bar'},
-        ['get','/v1/no/template',{},{'foo':'bar'}]],
-
+        [
+            [["get", "/v1/no/template", ""]],
+            {"foo": "bar"},
+            ["get", "/v1/no/template", {}, {"foo": "bar"}],
+        ],
         # Single templates
-        [[['get','/v1/{field}','']],
-        {'field':'parent'},
-        ['get','/v1/parent',{},{}]],
-
-        [[['get','/v1/{field.sub}','']],
-        {'field.sub':'parent', 'foo':'bar'},
-        ['get','/v1/parent',{},{'foo':'bar'}]],
-
+        [
+            [["get", "/v1/{field}", ""]],
+            {"field": "parent"},
+            ["get", "/v1/parent", {}, {}],
+        ],
+        [
+            [["get", "/v1/{field.sub}", ""]],
+            {"field.sub": "parent", "foo": "bar"},
+            ["get", "/v1/parent", {}, {"foo": "bar"}],
+        ],
         # Single segment wildcard
-        [[['get','/v1/{field=*}','']],
-        {'field':'parent'},
-        ['get','/v1/parent',{},{}]],
-
-        [[['get','/v1/{field=a/*/b/*}','']],
-        {'field':'a/parent/b/child','foo':'bar'},
-        ['get','/v1/a/parent/b/child',{},{'foo':'bar'}]],
-
+        [
+            [["get", "/v1/{field=*}", ""]],
+            {"field": "parent"},
+            ["get", "/v1/parent", {}, {}],
+        ],
+        [
+            [["get", "/v1/{field=a/*/b/*}", ""]],
+            {"field": "a/parent/b/child", "foo": "bar"},
+            ["get", "/v1/a/parent/b/child", {}, {"foo": "bar"}],
+        ],
         # Double segment wildcard
-        [[['get','/v1/{field=**}','']],
-        {'field':'parent/p1'},
-        ['get','/v1/parent/p1',{},{}]],
-
-        [[['get','/v1/{field=a/**/b/**}','']],
-        {'field':'a/parent/p1/b/child/c1', 'foo':'bar'},
-        ['get','/v1/a/parent/p1/b/child/c1',{},{'foo':'bar'}]],
-
+        [
+            [["get", "/v1/{field=**}", ""]],
+            {"field": "parent/p1"},
+            ["get", "/v1/parent/p1", {}, {}],
+        ],
+        [
+            [["get", "/v1/{field=a/**/b/**}", ""]],
+            {"field": "a/parent/p1/b/child/c1", "foo": "bar"},
+            ["get", "/v1/a/parent/p1/b/child/c1", {}, {"foo": "bar"}],
+        ],
         # Combined single and double segment wildcard
-        [[['get','/v1/{field=a/*/b/**}','']],
-        {'field':'a/parent/b/child/c1'},
-        ['get','/v1/a/parent/b/child/c1',{},{}]],
-
-        [[['get','/v1/{field=a/**/b/*}/v2/{name}','']],
-        {'field':'a/parent/p1/b/child', 'name':'first', 'foo':'bar'},
-        ['get','/v1/a/parent/p1/b/child/v2/first',{},{'foo':'bar'}]],
-
+        [
+            [["get", "/v1/{field=a/*/b/**}", ""]],
+            {"field": "a/parent/b/child/c1"},
+            ["get", "/v1/a/parent/b/child/c1", {}, {}],
+        ],
+        [
+            [["get", "/v1/{field=a/**/b/*}/v2/{name}", ""]],
+            {"field": "a/parent/p1/b/child", "name": "first", "foo": "bar"},
+            ["get", "/v1/a/parent/p1/b/child/v2/first", {}, {"foo": "bar"}],
+        ],
         # Single field body
-        [[['post','/v1/no/template','data']],
-        {'data':{'id':1, 'info':'some info'},'foo':'bar'},
-        ['post','/v1/no/template',{'id':1, 'info':'some info'},{'foo':'bar'}]],
-
-        [[['post','/v1/{field=a/*}/b/{name=**}','data']],
-        {'field':'a/parent','name':'first/last','data':{'id':1, 'info':'some info'},'foo':'bar'},
-        ['post','/v1/a/parent/b/first/last',{'id':1, 'info':'some info'},{'foo':'bar'}]],
-
+        [
+            [["post", "/v1/no/template", "data"]],
+            {"data": {"id": 1, "info": "some info"}, "foo": "bar"},
+            ["post", "/v1/no/template", {"id": 1, "info": "some info"}, {"foo": "bar"}],
+        ],
+        [
+            [["post", "/v1/{field=a/*}/b/{name=**}", "data"]],
+            {
+                "field": "a/parent",
+                "name": "first/last",
+                "data": {"id": 1, "info": "some info"},
+                "foo": "bar",
+            },
+            [
+                "post",
+                "/v1/a/parent/b/first/last",
+                {"id": 1, "info": "some info"},
+                {"foo": "bar"},
+            ],
+        ],
         # Wildcard body
-        [[['post','/v1/{field=a/*}/b/{name=**}','*']],
-        {'field':'a/parent','name':'first/last','data':{'id':1, 'info':'some info'},'foo':'bar'},
-        ['post','/v1/a/parent/b/first/last',{'data':{'id':1, 'info':'some info'},'foo':'bar'},{}]],
-
+        [
+            [["post", "/v1/{field=a/*}/b/{name=**}", "*"]],
+            {
+                "field": "a/parent",
+                "name": "first/last",
+                "data": {"id": 1, "info": "some info"},
+                "foo": "bar",
+            },
+            [
+                "post",
+                "/v1/a/parent/b/first/last",
+                {"data": {"id": 1, "info": "some info"}, "foo": "bar"},
+                {},
+            ],
+        ],
         # Additional bindings
-        [[['post','/v1/{field=a/*}/b/{name=**}','extra_data'], ['post','/v1/{field=a/*}/b/{name=**}','*']],
-        {'field':'a/parent','name':'first/last','data':{'id':1, 'info':'some info'},'foo':'bar'},
-        ['post','/v1/a/parent/b/first/last',{'data':{'id':1, 'info':'some info'},'foo':'bar'},{}]],
-
-        [[['get','/v1/{field=a/*}/b/{name=**}',''],['get','/v1/{field=a/*}/b/first/last','']],
-        {'field':'a/parent','foo':'bar'},
-        ['get','/v1/a/parent/b/first/last',{},{'foo':'bar'}]],
-    ]
+        [
+            [
+                ["post", "/v1/{field=a/*}/b/{name=**}", "extra_data"],
+                ["post", "/v1/{field=a/*}/b/{name=**}", "*"],
+            ],
+            {
+                "field": "a/parent",
+                "name": "first/last",
+                "data": {"id": 1, "info": "some info"},
+                "foo": "bar",
+            },
+            [
+                "post",
+                "/v1/a/parent/b/first/last",
+                {"data": {"id": 1, "info": "some info"}, "foo": "bar"},
+                {},
+            ],
+        ],
+        [
+            [
+                ["get", "/v1/{field=a/*}/b/{name=**}", ""],
+                ["get", "/v1/{field=a/*}/b/first/last", ""],
+            ],
+            {"field": "a/parent", "foo": "bar"},
+            ["get", "/v1/a/parent/b/first/last", {}, {"foo": "bar"}],
+        ],
+    ],
 )
 def test_transcode(http_options, request_kwargs, expected_result):
     http_options, expected_result = helper_test_transcode(http_options, expected_result)
     result = path_template.transcode(http_options, **request_kwargs)
     assert result == expected_result
-    
+
 
 @pytest.mark.parametrize(
-    'http_options, request_kwargs',
+    "http_options, request_kwargs",
     [
-        [[['get','/v1/{name}','']], {'foo':'bar'}],
-        [[['get','/v1/{name}','']], {'name':'first/last'}],
-        [[['get','/v1/{name=mr/*/*}','']], {'name':'first/last'}],
-        [[['post','/v1/{name}','data']], {'name':'first/last'}],
-    ]
+        [[["get", "/v1/{name}", ""]], {"foo": "bar"}],
+        [[["get", "/v1/{name}", ""]], {"name": "first/last"}],
+        [[["get", "/v1/{name=mr/*/*}", ""]], {"name": "first/last"}],
+        [[["post", "/v1/{name}", "data"]], {"name": "first/last"}],
+    ],
 )
 def test_transcode_fails(http_options, request_kwargs):
     http_options, _ = helper_test_transcode(http_options, range(4))
@@ -206,17 +257,17 @@ def test_transcode_fails(http_options, request_kwargs):
 def helper_test_transcode(http_options_list, expected_result_list):
     http_options = []
     for opt_list in http_options_list:
-        http_option = {'method':opt_list[0], 'uri':opt_list[1]}
+        http_option = {"method": opt_list[0], "uri": opt_list[1]}
         if opt_list[2]:
-            http_option['body'] = opt_list[2]
+            http_option["body"] = opt_list[2]
         http_options.append(http_option)
 
     expected_result = {
-        'method':expected_result_list[0],
-        'uri':expected_result_list[1],
-        'query_params':expected_result_list[3]
+        "method": expected_result_list[0],
+        "uri": expected_result_list[1],
+        "query_params": expected_result_list[3],
     }
-    if (expected_result_list[2]):
-        expected_result['body'] = expected_result_list[2]
+    if expected_result_list[2]:
+        expected_result["body"] = expected_result_list[2]
 
-    return(http_options, expected_result)
+    return (http_options, expected_result)
