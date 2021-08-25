@@ -225,7 +225,7 @@ def transcode(http_options, **request_kwargs):
         path_fields = [
             match.group("name") for match in _VARIABLE_RE.finditer(uri_template)
         ]
-        path_args = {field: request_kwargs.get(field, None) for field in path_fields}
+        path_args = {field: request_kwargs.get(field) for field in path_fields}
         leftovers = {k: v for k, v in request_kwargs.items() if k not in path_args}
         answer["uri"] = expand(uri_template, **path_args)
 
