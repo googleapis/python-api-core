@@ -18,7 +18,7 @@
     https://cloud.google.com/apis/design/design_pattern
     s#long_running_operations
 .. _google/longrunning/operations.proto:
-    https://github.com/googleapis/googleapis/blob/main/google/longrunning
+    https://github.com/googleapis/googleapis/blob/master/google/longrunning
     /operations.proto
 """
 
