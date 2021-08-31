@@ -135,7 +135,7 @@ class AsyncOperation(async_future.AsyncFuture):
                     response=self._operation,
                 )
                 self.set_exception(exception)
-            elif self._operation.done:
+            else:
                 # Some APIs set `done: true`, with an empty response.
                 # Set the result to an empty message of the expected
                 # result type.
