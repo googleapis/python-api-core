@@ -140,7 +140,6 @@ def test_from_dict_bad_argument():
 
 def test_repr():
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
-    print(repr(options))
 
     assert (
         repr(options)
