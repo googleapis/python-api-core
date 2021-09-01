@@ -76,8 +76,8 @@ source_suffix = [".rst", ".md"]
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
-# The master toctree document.
-master_doc = "index"
+# The root toctree document.
+root_doc = "index"
 
 # General information about the project.
 project = "google-api-core"
@@ -110,6 +110,7 @@ language = None
 # directories to ignore when looking for source files.
 exclude_patterns = [
     "_build",
+    "**/.nox/**/*",
     "samples/AUTHORING_GUIDE.md",
     "samples/CONTRIBUTING.md",
     "samples/snippets/README.rst",
@@ -279,7 +280,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
-        master_doc,
+        root_doc,
         "google-api-core.tex",
         "google-api-core Documentation",
         author,
@@ -313,7 +314,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, "google-api-core", "google-api-core Documentation", [author], 1,)
+    (root_doc, "google-api-core", "google-api-core Documentation", [author], 1,)
 ]
 
 # If true, show URL addresses after external links.
@@ -327,7 +328,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "google-api-core",
         "google-api-core Documentation",
         author,
