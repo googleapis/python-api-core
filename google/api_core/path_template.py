@@ -249,18 +249,19 @@ def transcode(http_options, **request_kwargs):
         Raises:
             ValueError: If the request does not match the given template.
     """
-    request = {}
     for http_option in http_options:
-
+        request = {}
+        
         # Assign path
         uri_template = http_option['uri']
         path_fields = [match.group('name') for match in _VARIABLE_RE.finditer(uri_template)]
         path_args = {field: get_field(request_kwargs, field) for field in path_fields}
+        request['uri'] = expand(uri_template, **path_args)
+
+        # Remove fields used in uri path from request
         leftovers = copy.deepcopy(request_kwargs)
         for path_field in path_fields:
             delete_field(leftovers, path_field)
-        # leftovers = {k: v for k,v in request_kwargs.items() if k not in path_args}
-        request['uri'] = expand(uri_template, **path_args)
 
         if not validate(uri_template, request['uri']) or not all(path_args.values()):
             continue

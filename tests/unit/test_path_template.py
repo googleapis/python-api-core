@@ -85,6 +85,57 @@ def test_expanded_failure(tmpl, args, kwargs, exc_match):
 
 
 @pytest.mark.parametrize(
+    'request_obj, field, expected_result',
+    [
+        [{'field': 'stringValue'}, 'field', 'stringValue'],
+        [{'field': 'stringValue'}, 'nosuchfield', None],
+        [{'field': 'stringValue'}, 'field.subfield', None],
+        [{'field': {'subfield': 'stringValue'}}, 'field.subfield', 'stringValue'],
+        [{'field': {'subfield': [1,2,3]}}, 'field.subfield', [1,2,3]],
+        [{'field': {'subfield': 'stringValue'}}, 'field', None],
+        [{'field': {'subfield': 'stringValue'}}, 'field.nosuchfield', None],
+        [
+            {'field': {'subfield': {'subsubfield': 'stringValue'}}},
+            'field.subfield.subsubfield',
+            'stringValue'
+        ],
+    ],
+)
+def test_get_field(request_obj, field, expected_result):
+    result = path_template.get_field(request_obj, field)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    'request_obj, field, expected_result',
+    [
+        [{'field': 'stringValue'}, 'field', {}],
+        [{'field': 'stringValue'}, 'nosuchfield', {'field': 'stringValue'}],
+        [{'field': 'stringValue'}, 'field.subfield', {'field': 'stringValue'}],
+        [{'field': {'subfield': 'stringValue'}}, 'field.subfield', {'field': {}}],
+        [
+            {'field': {'subfield': 'stringValue', 'q': 'w'}, 'e': 'f'},
+            'field.subfield',
+            {'field': {'q': 'w'}, 'e': 'f'}
+        ],
+        [
+            {'field': {'subfield': 'stringValue'}},
+            'field.nosuchfield',
+            {'field': {'subfield': 'stringValue'}}
+        ],
+        [
+            {'field': {'subfield': {'subsubfield': 'stringValue', 'q': 'w'}}},
+            'field.subfield.subsubfield',
+            {'field': {'subfield': {'q': 'w'}}}
+        ],
+    ],
+)
+def test_get_field(request_obj, field, expected_result):
+    path_template.delete_field(request_obj, field)
+    assert request_obj == expected_result
+
+
+@pytest.mark.parametrize(
     "tmpl, path",
     [
         # Single segment template, but multi segment value
