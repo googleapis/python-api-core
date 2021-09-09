@@ -25,6 +25,8 @@ in Google APIs for `resource names`_.
 
 from __future__ import unicode_literals
 
+from collections import deque
+import copy
 import functools
 import re
 
@@ -170,6 +172,37 @@ def _generate_pattern_for_template(tmpl):
     return _VARIABLE_RE.sub(_replace_variable_with_pattern, tmpl)
 
 
+def get_field(request, field):
+    try:
+        parts = field.split('.')
+        value = request
+        for part in parts:
+            if not isinstance(value, dict):
+                return
+            value = value[part]
+        if isinstance(value, dict):
+            return
+        return value
+    except KeyError:
+        return
+
+
+def delete_field(request, field):
+    try:
+        parts = deque(field.split('.'))
+        while len(parts) > 1:
+            if not isinstance(request, dict):
+                return
+            part = parts.popleft()
+            request = request[part]
+        part = parts.popleft()
+        if not isinstance(request, dict):
+            return
+        del request[part]
+    except KeyError:
+        return
+    
+
 def validate(tmpl, path):
     """Validate a path against the path template.
 
@@ -222,8 +255,11 @@ def transcode(http_options, **request_kwargs):
         # Assign path
         uri_template = http_option['uri']
         path_fields = [match.group('name') for match in _VARIABLE_RE.finditer(uri_template)]
-        path_args = {field: request_kwargs.get(field) for field in path_fields}
-        leftovers = {k: v for k,v in request_kwargs.items() if k not in path_args}
+        path_args = {field: get_field(request_kwargs, field) for field in path_fields}
+        leftovers = copy.deepcopy(request_kwargs)
+        for path_field in path_fields:
+            delete_field(leftovers, path_field)
+        # leftovers = {k: v for k,v in request_kwargs.items() if k not in path_args}
         request['uri'] = expand(uri_template, **path_args)
 
         if not validate(uri_template, request['uri']) or not all(path_args.values()):

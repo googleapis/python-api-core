@@ -128,11 +128,33 @@ def test__replace_variable_with_pattern():
         ['get','/v1/parent',{},{}]],
 
         [[['get','/v1/{field.sub}','']],
-        {'field.sub':'parent', 'foo':'bar'},
-        ['get','/v1/parent',{},{'foo':'bar'}]],
+        {'field': {'sub': 'parent'}, 'foo':'bar'},
+        ['get','/v1/parent',{},{'field': {}, 'foo':'bar'}]],
     ]
 )
 def test_transcode_base_case(http_options, request_kwargs, expected_result):
+    http_options, expected_result = helper_test_transcode(http_options, expected_result)
+    result = path_template.transcode(http_options, **request_kwargs)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    'http_options, request_kwargs, expected_result',
+    [
+        [[['get','/v1/{field.subfield}','']],
+        {'field': {'subfield': 'parent'}, 'foo':'bar'},
+        ['get','/v1/parent',{},{'field': {}, 'foo':'bar'}]],
+
+        [[['get','/v1/{field.subfield.subsubfield}','']],
+        {'field': {'subfield': {'subsubfield': 'parent'}}, 'foo':'bar'},
+        ['get','/v1/parent',{},{'field': {'subfield': {}}, 'foo':'bar'}]],
+
+        [[['get','/v1/{field.subfield1}/{field.subfield2}','']],
+        {'field': {'subfield1': 'parent', 'subfield2': 'child'}, 'foo':'bar'},
+        ['get','/v1/parent/child',{},{'field': {}, 'foo':'bar'}]],
+    ]
+)
+def test_transcode_subfields(http_options, request_kwargs, expected_result):
     http_options, expected_result = helper_test_transcode(http_options, expected_result)
     result = path_template.transcode(http_options, **request_kwargs)
     assert result == expected_result
