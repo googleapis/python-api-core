@@ -372,13 +372,16 @@ class _CallableStub(object):
             return response
 
         raise ValueError('Method stub for "{}" has no response.'.format(self._method))
-    
+
     def with_call(self, request, timeout=None, metadata=None, credentials=None):
         call = _MethodCall(request, timeout, metadata, credentials)
 
-        response = self.__call__(request, timeout=timeout, metadata=metadata, credentials=credentials)
+        response = self.__call__(
+            request, timeout=timeout, metadata=metadata, credentials=credentials
+        )
 
         return response, call
+
 
 def _simplify_method_name(method):
     """Simplifies a gRPC method name.
