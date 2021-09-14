@@ -173,34 +173,43 @@ def _generate_pattern_for_template(tmpl):
 
 
 def get_field(request, field):
-    try:
-        parts = field.split('.')
-        value = request
-        for part in parts:
-            if not isinstance(value, dict):
-                return
-            value = value[part]
-        if isinstance(value, dict):
+    """Get the value of a field from a given dictionary.
+
+    Args:
+        request (dict): A dictionary object.
+        field (str): The key to the request in dot notation.
+
+    Returns:
+        The value of the field.
+    """
+    parts = field.split('.')
+    value = request
+    for part in parts:
+        if not isinstance(value, dict):
             return
-        return value
-    except KeyError:
+        value = value.get(part)
+    if isinstance(value, dict):
         return
+    return value
 
 
 def delete_field(request, field):
-    try:
-        parts = deque(field.split('.'))
-        while len(parts) > 1:
-            if not isinstance(request, dict):
-                return
-            part = parts.popleft()
-            request = request[part]
-        part = parts.popleft()
+    """Delete the value of a field from a given dictionary.
+
+    Args:
+        request (dict): A dictionary object.
+        field (str): The key to the request in dot notation.
+    """
+    parts = deque(field.split('.'))
+    while len(parts) > 1:
         if not isinstance(request, dict):
             return
-        del request[part]
-    except KeyError:
+        part = parts.popleft()
+        request = request.get(part)
+    part = parts.popleft()
+    if not isinstance(request, dict):
         return
+    request.pop(part, None)
     
 
 def validate(tmpl, path):
