@@ -133,7 +133,7 @@ def test_get_field(request_obj, field, expected_result):
         ['string', 'field,', 'string'],
     ],
 )
-def test_get_field(request_obj, field, expected_result):
+def test_delete_field(request_obj, field, expected_result):
     path_template.delete_field(request_obj, field)
     assert request_obj == expected_result
 
