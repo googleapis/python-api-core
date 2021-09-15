@@ -130,7 +130,8 @@ def test_get_field(request_obj, field, expected_result):
             'field.subfield.subsubfield',
             {'field': {'subfield': {'q': 'w'}}}
         ],
-        ['string', 'field,', 'string'],
+        ['string', 'field', 'string'],
+        ['string', 'field.subfield', 'string'],
     ],
 )
 def test_delete_field(request_obj, field, expected_result):
