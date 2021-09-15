@@ -182,7 +182,7 @@ def get_field(request, field):
     Returns:
         The value of the field.
     """
-    parts = field.split('.')
+    parts = field.split(".")
     value = request
     for part in parts:
         if not isinstance(value, dict):
@@ -200,7 +200,7 @@ def delete_field(request, field):
         request (dict): A dictionary object.
         field (str): The key to the request in dot notation.
     """
-    parts = deque(field.split('.'))
+    parts = deque(field.split("."))
     while len(parts) > 1:
         if not isinstance(request, dict):
             return
@@ -210,7 +210,7 @@ def delete_field(request, field):
     if not isinstance(request, dict):
         return
     request.pop(part, None)
-    
+
 
 def validate(tmpl, path):
     """Validate a path against the path template.
@@ -235,6 +235,7 @@ def validate(tmpl, path):
     """
     pattern = _generate_pattern_for_template(tmpl) + "$"
     return True if re.match(pattern, path) is not None else False
+
 
 def transcode(http_options, **request_kwargs):
     """Transcodes a grpc request pattern into a proper HTTP request following the rules outlined here,
@@ -261,37 +262,39 @@ def transcode(http_options, **request_kwargs):
     """
     for http_option in http_options:
         request = {}
-        
+
         # Assign path
-        uri_template = http_option['uri']
-        path_fields = [match.group('name') for match in _VARIABLE_RE.finditer(uri_template)]
+        uri_template = http_option["uri"]
+        path_fields = [
+            match.group("name") for match in _VARIABLE_RE.finditer(uri_template)
+        ]
         path_args = {field: get_field(request_kwargs, field) for field in path_fields}
-        request['uri'] = expand(uri_template, **path_args)
+        request["uri"] = expand(uri_template, **path_args)
 
         # Remove fields used in uri path from request
         leftovers = copy.deepcopy(request_kwargs)
         for path_field in path_fields:
             delete_field(leftovers, path_field)
 
-        if not validate(uri_template, request['uri']) or not all(path_args.values()):
+        if not validate(uri_template, request["uri"]) or not all(path_args.values()):
             continue
 
         # Assign body and query params
-        body = http_option.get('body')
+        body = http_option.get("body")
 
         if body:
-            if body == '*':
-                request['body'] = leftovers
-                request['query_params'] = {}
+            if body == "*":
+                request["body"] = leftovers
+                request["query_params"] = {}
             else:
                 try:
-                    request['body'] = leftovers.pop(body)
+                    request["body"] = leftovers.pop(body)
                 except KeyError:
                     continue
-                request['query_params'] = leftovers
+                request["query_params"] = leftovers
         else:
-            request['query_params'] = leftovers
-        request['method'] = http_option['method']
+            request["query_params"] = leftovers
+        request["method"] = http_option["method"]
         return request
 
     raise ValueError("Request obj does not match any template")
