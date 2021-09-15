@@ -90,6 +90,7 @@ def test_expanded_failure(tmpl, args, kwargs, exc_match):
         [{'field': 'stringValue'}, 'field', 'stringValue'],
         [{'field': 'stringValue'}, 'nosuchfield', None],
         [{'field': 'stringValue'}, 'field.subfield', None],
+        [{'field': {'subfield': 'stringValue'}}, 'field', None],
         [{'field': {'subfield': 'stringValue'}}, 'field.subfield', 'stringValue'],
         [{'field': {'subfield': [1,2,3]}}, 'field.subfield', [1,2,3]],
         [{'field': {'subfield': 'stringValue'}}, 'field', None],
@@ -99,6 +100,7 @@ def test_expanded_failure(tmpl, args, kwargs, exc_match):
             'field.subfield.subsubfield',
             'stringValue'
         ],
+        ['string', 'field', None],
     ],
 )
 def test_get_field(request_obj, field, expected_result):
@@ -128,6 +130,7 @@ def test_get_field(request_obj, field, expected_result):
             'field.subfield.subsubfield',
             {'field': {'subfield': {'q': 'w'}}}
         ],
+        ['string', 'field,', 'string'],
     ],
 )
 def test_get_field(request_obj, field, expected_result):
