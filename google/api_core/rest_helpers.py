@@ -18,7 +18,7 @@ import functools
 import operator
 
 
-def flatten_query_params(obj, key_path=[]):
+def flatten_query_params(obj):
     """Flatten a nested dict into a list of (name,value) tuples.
 
     The result is suitable for setting query params on an http request.
@@ -39,7 +39,6 @@ def flatten_query_params(obj, key_path=[]):
 
     Args:
       obj: a nested dictionary (from json), or None
-      key_path: a list of name segments, representing levels above this obj.
 
     Returns: a list of tuples, with each tuple having a (possibly) multi-part name
       and a scalar value.
@@ -52,7 +51,7 @@ def flatten_query_params(obj, key_path=[]):
     if obj is not None and not isinstance(obj, dict):
         raise TypeError("flatten_query_params must be called with dict object")
 
-    return _flatten(obj, key_path=key_path)
+    return _flatten(obj, key_path=[])
 
 
 def _flatten(obj, key_path):
