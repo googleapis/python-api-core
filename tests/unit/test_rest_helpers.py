@@ -12,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from google.api_core import rest_helpers
+
+
+def test_flatten_simple_value():
+    with pytest.raises(TypeError):
+        rest_helpers.flatten_query_params('abc')
+
+
+def test_flatten_list():
+    with pytest.raises(TypeError):
+        rest_helpers.flatten_query_params(['abc', 'def'])
 
 
 def test_flatten_none():
@@ -47,7 +59,7 @@ def test_flatten_nested_dict():
     assert rest_helpers.flatten_query_params(obj) == expected_result
 
 
-def test_flatten_ignore_repeated_dict():
+def test_flatten_repeated_dict():
     obj = {'a':
            {'b':
             {'c':
@@ -55,7 +67,19 @@ def test_flatten_ignore_repeated_dict():
              }
             },
            'd': 'uvw', }
-    # a.b.c is a repeated dict - ignored
-    expected_result = [('d', 'uvw')]
 
-    assert rest_helpers.flatten_query_params(obj) == expected_result
+    with pytest.raises(ValueError):
+        rest_helpers.flatten_query_params(obj)
+
+
+def test_flatten_repeated_list():
+    obj = {'a':
+           {'b':
+            {'c':
+             [['e', 'f'], ['g', 'h']]
+             }
+            },
+           'd': 'uvw', }
+
+    with pytest.raises(ValueError):
+        rest_helpers.flatten_query_params(obj)
