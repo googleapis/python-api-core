@@ -75,9 +75,6 @@ def _is_primitive_value(obj):
 
 
 def _flatten_value(obj, key_path):
-    if not key_path:
-        # There must be a key.
-        return []
     return [('.'.join(key_path), obj)]
 
 
