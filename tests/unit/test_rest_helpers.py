@@ -19,12 +19,12 @@ from google.api_core import rest_helpers
 
 def test_flatten_simple_value():
     with pytest.raises(TypeError):
-        rest_helpers.flatten_query_params('abc')
+        rest_helpers.flatten_query_params("abc")
 
 
 def test_flatten_list():
     with pytest.raises(TypeError):
-        rest_helpers.flatten_query_params(['abc', 'def'])
+        rest_helpers.flatten_query_params(["abc", "def"])
 
 
 def test_flatten_none():
@@ -36,50 +36,42 @@ def test_flatten_empty_dict():
 
 
 def test_flatten_simple_dict():
-    assert rest_helpers.flatten_query_params({'a': 'abc', 'b': 'def'}) == [
-        ('a', 'abc'), ('b', 'def')]
+    assert rest_helpers.flatten_query_params({"a": "abc", "b": "def"}) == [
+        ("a", "abc"),
+        ("b", "def"),
+    ]
 
 
 def test_flatten_repeated_field():
-    assert rest_helpers.flatten_query_params({'a': ['x', 'y', 'z', None]}) == [
-        ('a', 'x'), ('a', 'y'), ('a', 'z')]
+    assert rest_helpers.flatten_query_params({"a": ["x", "y", "z", None]}) == [
+        ("a", "x"),
+        ("a", "y"),
+        ("a", "z"),
+    ]
 
 
 def test_flatten_nested_dict():
-    obj = {'a':
-           {'b':
-            {'c': ['x', 'y', 'z']}},
-           'd':
-           {'e': 'uvw'}}
-    expected_result = [('a.b.c', 'x'),
-                       ('a.b.c', 'y'),
-                       ('a.b.c', 'z'),
-                       ('d.e', 'uvw')]
+    obj = {"a": {"b": {"c": ["x", "y", "z"]}}, "d": {"e": "uvw"}}
+    expected_result = [("a.b.c", "x"), ("a.b.c", "y"), ("a.b.c", "z"), ("d.e", "uvw")]
 
     assert rest_helpers.flatten_query_params(obj) == expected_result
 
 
 def test_flatten_repeated_dict():
-    obj = {'a':
-           {'b':
-            {'c':
-             [{'v': 1}, {'v': 2}]
-             }
-            },
-           'd': 'uvw', }
+    obj = {
+        "a": {"b": {"c": [{"v": 1}, {"v": 2}]}},
+        "d": "uvw",
+    }
 
     with pytest.raises(ValueError):
         rest_helpers.flatten_query_params(obj)
 
 
 def test_flatten_repeated_list():
-    obj = {'a':
-           {'b':
-            {'c':
-             [['e', 'f'], ['g', 'h']]
-             }
-            },
-           'd': 'uvw', }
+    obj = {
+        "a": {"b": {"c": [["e", "f"], ["g", "h"]]}},
+        "d": "uvw",
+    }
 
     with pytest.raises(ValueError):
         rest_helpers.flatten_query_params(obj)

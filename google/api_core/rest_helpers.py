@@ -75,14 +75,11 @@ def _is_primitive_value(obj):
 
 
 def _flatten_value(obj, key_path):
-    return [('.'.join(key_path), obj)]
+    return [(".".join(key_path), obj)]
 
 
 def _flatten_dict(obj, key_path):
-    items = (
-        _flatten(value, key_path=key_path + [key])
-        for key, value in obj.items()
-    )
+    items = (_flatten(value, key_path=key_path + [key]) for key, value in obj.items())
     return functools.reduce(operator.concat, items, [])
 
 
@@ -90,7 +87,8 @@ def _flatten_list(elems, key_path):
     # Only lists of scalar values are supported.
     # The name (key_path) is repeated for each value.
     items = (
-        _flatten_value(elem, key_path=key_path) for elem in elems
+        _flatten_value(elem, key_path=key_path)
+        for elem in elems
         if _is_primitive_value(elem)
     )
     return functools.reduce(operator.concat, items, [])
