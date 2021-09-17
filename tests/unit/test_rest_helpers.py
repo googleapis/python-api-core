@@ -41,7 +41,7 @@ def test_flatten_simple_dict():
 
 
 def test_flatten_repeated_field():
-    assert rest_helpers.flatten_query_params({'a': ['x', 'y', 'z']}) == [
+    assert rest_helpers.flatten_query_params({'a': ['x', 'y', 'z', None]}) == [
         ('a', 'x'), ('a', 'y'), ('a', 'z')]
 
 
