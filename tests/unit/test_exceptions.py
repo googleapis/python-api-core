@@ -14,10 +14,14 @@
 
 import http.client
 import json
+from google.rpc.status_pb2 import Status
 
 import grpc
 import mock
 import requests
+from google.rpc import error_details_pb2
+from google.protobuf import any_pb2, json_format
+from grpc_status import rpc_status
 
 from google.api_core import exceptions
 
@@ -25,7 +29,7 @@ from google.api_core import exceptions
 def test_create_google_cloud_error():
     exception = exceptions.GoogleAPICallError("Testing")
     exception.code = 600
-    assert str(exception) == "600 Testing"
+    assert str(exception) == "600 Testing []"
     assert exception.message == "Testing"
     assert exception.errors == []
     assert exception.response is None
@@ -42,7 +46,7 @@ def test_create_google_cloud_error_with_args():
     response = mock.sentinel.response
     exception = exceptions.GoogleAPICallError("Testing", [error], response=response)
     exception.code = 600
-    assert str(exception) == "600 Testing"
+    assert str(exception) == "600 Testing []"
     assert exception.message == "Testing"
     assert exception.errors == [error]
     assert exception.response == response
@@ -224,3 +228,39 @@ def test_from_grpc_error_non_call():
     assert exception.message == message
     assert exception.errors == [error]
     assert exception.response == error
+
+
+def test_error_details_from_rest_response():
+    bad_request_details = error_details_pb2.BadRequest()
+    field_violation = bad_request_details.field_violations.add()
+    field_violation.field = "document.content"
+    field_violation.description = "Must have some text content to annotate."
+    status_detail = any_pb2.Any()
+    status_detail.Pack(bad_request_details)
+
+    status = rpc_status.status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status.details.append(status_detail)
+
+    # See schema in https://cloud.google.com/apis/design/errors#http_mapping
+    http_response = make_response(
+        json.dumps({"error": json.loads(json_format.MessageToJson(status))}).encode(
+            "utf-8"
+        )
+    )
+    exception = exceptions.from_http_response(http_response)
+    want_error_details = [bad_request_details]
+    assert want_error_details == exception.error_details
+
+
+def test_error_details_from_v1_rest_response():
+    response = make_response(
+        json.dumps(
+            {"error": {"message": "\u2019 message", "errors": ["1", "2"]}}
+        ).encode("utf-8")
+    )
+    exception = exceptions.from_http_response(response)
+    assert exception.error_details == []

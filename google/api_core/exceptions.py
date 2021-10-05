@@ -22,12 +22,20 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import http.client
+from google import rpc
+from google.rpc import status_pb2
+from google.rpc import error_details_pb2
+from google.protobuf import json_format
+import pprint
+import json
 
 try:
     import grpc
+    from grpc_status import rpc_status
 
 except ImportError:  # pragma: NO COVER
     grpc = None
+    rpc_status = None
 
 # Lookup tables for mapping exceptions from HTTP and gRPC transports.
 # Populated by _GoogleAPICallErrorMeta
@@ -124,7 +132,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         self._response = response
 
     def __str__(self):
-        return "{} {}".format(self.code, self.message)
+        return "{} {} {}".format(self.code, self.message, self.error_details)
 
     @property
     def errors(self):
@@ -134,6 +142,65 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
             Sequence[Any]: A list of additional error details.
         """
         return list(self._errors)
+
+    def _parse_status(self, rpc_call) -> status_pb2.Status:
+        if grpc and isinstance(rpc_call, grpc.Call):
+            return rpc_status.from_call(rpc_call)
+        if not isinstance(rpc_call, dict):
+            return None
+        # Per HTTP mapping guide, rpc Status should be in
+        # error field of the response object, unless it's a
+        # v1 format.
+        # Ref:
+        #   https://cloud.google.com/apis/design/errors#http_mapping
+        if rpc_call.get("error", None) is None:
+            # v1 error format, no status.
+            return None
+        status = rpc_call["error"]
+        status_pb = status_pb2.Status()
+        json_string = json.dumps(status)
+        json_format.Parse(json_string, status_pb)
+        return status_pb
+
+    @property
+    def error_details(self):
+        """Detailed error information.
+
+        Returns:
+           A list of additional error details.
+       """
+        if getattr(self, "_error_details", None):
+            return self._error_details
+        error_details = []
+        possible_errors = [
+            error_details_pb2.BadRequest,
+            error_details_pb2.PreconditionFailure,
+            error_details_pb2.QuotaFailure,
+            error_details_pb2.ErrorInfo,
+            error_details_pb2.RetryInfo,
+            error_details_pb2.ResourceInfo,
+            error_details_pb2.RequestInfo,
+            error_details_pb2.DebugInfo,
+            error_details_pb2.Help,
+            error_details_pb2.LocalizedMessage,
+        ]
+        for rpc_error in self._errors:
+            status = self._parse_status(rpc_error)
+            if status is None:
+                continue
+            for detail in status.details:
+                matched_detail_cls = list(
+                    filter(lambda x: detail.Is(x.DESCRIPTOR), possible_errors)
+                )
+                # If nothing matched, use detail directly.
+                if len(matched_detail_cls) == 0:
+                    info = detail
+                else:
+                    info = matched_detail_cls[0]()
+                    detail.Unpack(info)
+                error_details.append(info)
+        self._error_details = error_details
+        return error_details
 
     @property
     def response(self):
