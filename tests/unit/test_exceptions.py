@@ -14,17 +14,18 @@
 
 import http.client
 import json
+from google.rpc import status_pb2
 from google.rpc.status_pb2 import Status
 
 import grpc
 import mock
 import requests
 from google.rpc import error_details_pb2
+from google.rpc import code_pb2
 from google.protobuf import any_pb2, json_format
 from grpc_status import rpc_status
-
 from google.api_core import exceptions
-
+from google.protobuf import text_format
 
 def test_create_google_cloud_error():
     exception = exceptions.GoogleAPICallError("Testing")
@@ -37,11 +38,8 @@ def test_create_google_cloud_error():
 
 def test_create_google_cloud_error_with_args():
     error = {
-        "domain": "global",
-        "location": "test",
-        "locationType": "testing",
+        "code": 600,
         "message": "Testing",
-        "reason": "test",
     }
     response = mock.sentinel.response
     exception = exceptions.GoogleAPICallError("Testing", [error], response=response)
@@ -230,29 +228,33 @@ def test_from_grpc_error_non_call():
     assert exception.response == error
 
 
-def test_error_details_from_rest_response():
+def create_bad_request_details():
     bad_request_details = error_details_pb2.BadRequest()
     field_violation = bad_request_details.field_violations.add()
     field_violation.field = "document.content"
     field_violation.description = "Must have some text content to annotate."
     status_detail = any_pb2.Any()
     status_detail.Pack(bad_request_details)
+    return status_detail
+    
 
+def test_error_details_from_rest_response():
+    bad_request_detail = create_bad_request_details()
     status = rpc_status.status_pb2.Status()
     status.code = 3
     status.message = (
         "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
     )
-    status.details.append(status_detail)
+    status.details.append(bad_request_detail)
 
-    # See schema in https://cloud.google.com/apis/design/errors#http_mapping
+    # See JSON schema in https://cloud.google.com/apis/design/errors#http_mapping
     http_response = make_response(
         json.dumps({"error": json.loads(json_format.MessageToJson(status))}).encode(
             "utf-8"
         )
     )
     exception = exceptions.from_http_response(http_response)
-    want_error_details = [bad_request_details]
+    want_error_details = [json.loads(json_format.MessageToJson(bad_request_detail))]
     assert want_error_details == exception.error_details
 
 
@@ -264,3 +266,24 @@ def test_error_details_from_v1_rest_response():
     )
     exception = exceptions.from_http_response(response)
     assert exception.error_details == []
+
+
+def test_error_details_from_grpc_response():
+    status = rpc_status.status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status_detail = create_bad_request_details()
+    status.details.append(status_detail)
+
+    # Actualy error doesn't matter as long as its grpc.Call,
+    # because from_call is mocked.
+    error = mock.create_autospec(grpc.Call, instance=True)
+    with mock.patch('grpc_status.rpc_status.from_call') as m:
+        m.return_value = status
+        exception = exceptions.from_grpc_error(error)
+    
+    bad_request_detail = error_details_pb2.BadRequest()
+    status_detail.Unpack(bad_request_detail)
+    assert exception.error_details == [bad_request_detail]
