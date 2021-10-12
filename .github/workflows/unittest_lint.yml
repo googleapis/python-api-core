@@ -94,7 +94,7 @@ jobs:
 
     - name: Install coverage
       run: |
-        python -m pip install nox
+        python -m pip install coverage
 
     - name: Report coverage results
       run: |
