@@ -69,7 +69,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: coverage-artifacts
-        path: .coverage${{ matrix.w_grcp_gcp }}-${{ matrix-python }}
+        path: .coverage${{ matrix.w_grcp_gcp }}-${{ matrix.python }}
 
   report-coverage:
     runs-on: ubuntu-latest
