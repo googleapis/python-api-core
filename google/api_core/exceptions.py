@@ -485,8 +485,6 @@ def _is_informative_grpc_error(rpc_exc):
 
 
 def _parse_grpc_error_details(rpc_exc):
-    if not rpc_status or not isinstance(rpc_exc, grpc.Call):
-        return []
     status = rpc_status.from_call(rpc_exc)
     if not status:
         return []

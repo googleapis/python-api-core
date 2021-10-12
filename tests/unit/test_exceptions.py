@@ -280,8 +280,6 @@ def test_error_details_from_v1_rest_response():
 
 
 def test_error_details_from_grpc_response():
-    if not rpc_status:
-        return
     status = rpc_status.status_pb2.Status()
     status.code = 3
     status.message = (
@@ -300,3 +298,20 @@ def test_error_details_from_grpc_response():
     bad_request_detail = error_details_pb2.BadRequest()
     status_detail.Unpack(bad_request_detail)
     assert exception.error_details == [bad_request_detail]
+
+
+def test_error_details_from_grpc_response_unknown_error():
+    status_detail = any_pb2.Any()
+
+    status = rpc_status.status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status.details.append(status_detail)
+
+    error = mock.create_autospec(grpc.Call, instance=True)
+    with mock.patch("grpc_status.rpc_status.from_call") as m:
+        m.return_value = status
+        exception = exceptions.from_grpc_error(error)
+    assert exception.error_details == [status_detail]
