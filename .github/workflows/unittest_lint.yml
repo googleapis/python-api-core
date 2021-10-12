@@ -86,17 +86,17 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Download coverage results
-      uses: actions/download-artifact@v2
-      with:
-        name: coverage-artifacts
-        path: ${{ github.workspace }}/.coverage-results/
-
     - name: Install coverage
       run: |
         python -m pip install coverage
 
+    - name: Download coverage results
+      uses: actions/download-artifact@v2
+      with:
+        name: coverage-artifacts
+        path: .coverage-results/
+
     - name: Report coverage results
       run: |
-        coverage combine ${{ github.workspace }}/.coverage-results/
+        coverage combine .coverage-results/.coverage*
         coverage report --show-missing --fail-under=100
