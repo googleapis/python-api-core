@@ -90,7 +90,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: coverage-artifacts
-        path: .coverage-results/
+        path: ${{ github.workspace }}/.coverage-results/
 
     - name: Install coverage
       run: |
@@ -98,5 +98,5 @@ jobs:
 
     - name: Report coverage results
       run: |
-        coverage combine .coverage-results/
+        coverage combine ${{ github.workspace }}/.coverage-results/
         coverage report --show-missing --fail-under=100
