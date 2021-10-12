@@ -29,9 +29,9 @@ jobs:
       run: |
         nox -s lint
 
-    - name: Run lint_setup
+    - name: Run lint_setup_py
       run: |
-        nox -s lint_setup
+        nox -s lint_setup_py
 
   run-unittests:
     runs-on: ubuntu-latest
