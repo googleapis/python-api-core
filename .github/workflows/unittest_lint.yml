@@ -53,7 +53,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: {{ matrix.python }}
+        python-version: ${{ matrix.python }}
 
     - name: Install nox
       run: |
@@ -61,15 +61,15 @@ jobs:
 
     - name: Run unit tests
       env:
-        COVERAGE_FILE: .coverage{{ matrix.w_grcp_gcp }}-{{matrix.python }}
+        COVERAGE_FILE: .coverage${{ matrix.w_grcp_gcp }}-${{matrix.python }}
       run: |
-        nox -s unit{{ matrix.w_grcp_gcp }}-{{ matrix.python }}
+        nox -s unit${{ matrix.w_grcp_gcp }}-${{ matrix.python }}
 
     - name: Upload coverage results
       uses: actions/upload-artifact@v2
       with:
         name: coverage-artifacts
-        path: .coverage{{ matrix.w_grcp_gcp }}-{{ matrix-python }}
+        path: .coverage${{ matrix.w_grcp_gcp }}-${{ matrix-python }}
 
   report-coverage:
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: {{ matrix.python }}
+        python-version: ${{ matrix.python }}
 
     - name: Download coverage results
       uses: actions/download-artifact@v2
