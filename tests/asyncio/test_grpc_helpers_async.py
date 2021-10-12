@@ -36,6 +36,7 @@ class RpcErrorImpl(grpc.RpcError, grpc.Call):
     def trailing_metadata(self):
         return None
 
+
 @pytest.mark.asyncio
 async def test_wrap_unary_errors():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)

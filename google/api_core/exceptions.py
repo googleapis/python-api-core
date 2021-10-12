@@ -99,6 +99,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
     Args:
         message (str): The exception message.
         errors (Sequence[Any]): An optional list of error details.
+        details (Sequence[Any]): An optional list of objects defined in google.rpc.error_details.
         response (Union[requests.Request, grpc.Call]): The response or
             gRPC call metadata.
     """
@@ -128,7 +129,10 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         self._response = response
 
     def __str__(self):
-        return "{} {} {}".format(self.code, self.message, self.error_details)
+        if self.error_details:
+            return "{} {} {}".format(self.code, self.message, self.error_details)
+        else:
+            return "{} {}".format(self.code, self.message)
 
     @property
     def errors(self):
@@ -481,9 +485,7 @@ def _is_informative_grpc_error(rpc_exc):
 
 
 def _parse_grpc_error_details(rpc_exc):
-    if not rpc_status:
-        return []
-    if not isinstance(rpc_exc, grpc.Call):
+    if not rpc_status or not isinstance(rpc_exc, grpc.Call):
         return []
     status = rpc_status.from_call(rpc_exc)
     if not status:
@@ -529,9 +531,11 @@ def from_grpc_error(rpc_exc):
     # However, check for grpc.RpcError breaks backward compatibility.
     if isinstance(rpc_exc, grpc.Call) or _is_informative_grpc_error(rpc_exc):
         return from_grpc_status(
-            rpc_exc.code(), rpc_exc.details(), errors=(rpc_exc,),
+            rpc_exc.code(),
+            rpc_exc.details(),
+            errors=(rpc_exc,),
             details=_parse_grpc_error_details(rpc_exc),
-            response=rpc_exc
+            response=rpc_exc,
         )
     else:
         return GoogleAPICallError(str(rpc_exc), errors=(rpc_exc,), response=rpc_exc)
