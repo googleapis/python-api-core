@@ -156,7 +156,7 @@ def pytype(session):
     session.run("pytype")
 
 
-@nox.session(python="3.6")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
     """Run type-checking."""
     session.install(".[grpc, grpcgcp]", "mypy")
