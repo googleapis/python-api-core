@@ -20,14 +20,13 @@ on :mod:`google.api_core`, including both HTTP and gRPC clients.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from typing import Union
-from typing import Dict
 
 import http.client
+from typing import Dict
+from typing import Union
 
 try:
     import grpc
-
 except ImportError:  # pragma: NO COVER
     grpc = None
 
