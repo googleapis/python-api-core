@@ -19,13 +19,8 @@ import requests
 
 from google.rpc import error_details_pb2, status_pb2
 from google.protobuf import any_pb2, json_format
-
-try:
-    import grpc
-    from grpc_status import rpc_status
-except ImportError:
-    grpc = None
-    grpc_status = None
+import grpc
+from grpc_status import rpc_status
 
 from google.api_core import exceptions
 
