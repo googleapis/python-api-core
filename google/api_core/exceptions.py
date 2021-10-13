@@ -20,6 +20,8 @@ on :mod:`google.api_core`, including both HTTP and gRPC clients.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from typing import Union
+from typing import Dict
 
 import http.client
 
@@ -31,8 +33,8 @@ except ImportError:  # pragma: NO COVER
 
 # Lookup tables for mapping exceptions from HTTP and gRPC transports.
 # Populated by _GoogleAPICallErrorMeta
-_HTTP_CODE_TO_EXCEPTION = {}
-_GRPC_CODE_TO_EXCEPTION = {}
+_HTTP_CODE_TO_EXCEPTION: Dict[int, Exception] = {}
+_GRPC_CODE_TO_EXCEPTION: Dict[int, Exception] = {}
 
 # Additional lookup table to map integer status codes to grpc status code
 # grpc does not currently support initializing enums from ints
@@ -100,7 +102,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
             gRPC call metadata.
     """
 
-    code = None
+    code: Union[int, None] = None
     """Optional[int]: The HTTP status code associated with this error.
 
     This may be ``None`` if the exception does not have a direct mapping
