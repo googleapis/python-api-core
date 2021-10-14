@@ -14,15 +14,15 @@
 
 import http.client
 import json
+
+import grpc
+from grpc_status import rpc_status
 import mock
 import requests
 
-from google.rpc import error_details_pb2, status_pb2
-from google.protobuf import any_pb2, json_format
-import grpc
-from grpc_status import rpc_status
-
 from google.api_core import exceptions
+from google.protobuf import any_pb2, json_format
+from google.rpc import error_details_pb2, status_pb2
 
 
 def test_create_google_cloud_error():
