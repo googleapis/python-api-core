@@ -36,7 +36,7 @@ dependencies = [
     "setuptools >= 40.3.0",
 ]
 extras = {
-    "grpc": ["grpcio >= 1.33.2, < 2.0dev", "grpcio-status >= 1.0.0, < 2.0dev"],
+    "grpc": ["grpcio >= 1.33.2, < 2.0dev", "grpcio-status >= 1.33.2, < 2.0dev"],
     "grpcgcp": "grpcio-gcp >= 0.2.2",
     "grpcio-gcp": "grpcio-gcp >= 0.2.2",
 }
