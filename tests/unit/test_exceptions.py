@@ -253,7 +253,7 @@ def test_error_details_from_rest_response():
     )
     exception = exceptions.from_http_response(http_response)
     want_error_details = [json.loads(json_format.MessageToJson(bad_request_detail))]
-    assert want_error_details == exception.error_details
+    assert want_error_details == exception.details
     # 404 POST comes from make_response.
     assert str(exception) == (
         "404 POST https://example.com/: 3 INVALID_ARGUMENT:"
@@ -271,7 +271,7 @@ def test_error_details_from_v1_rest_response():
         ).encode("utf-8")
     )
     exception = exceptions.from_http_response(response)
-    assert exception.error_details == []
+    assert exception.details == []
 
 
 def test_error_details_from_grpc_response():
@@ -292,7 +292,7 @@ def test_error_details_from_grpc_response():
 
     bad_request_detail = error_details_pb2.BadRequest()
     status_detail.Unpack(bad_request_detail)
-    assert exception.error_details == [bad_request_detail]
+    assert exception.details == [bad_request_detail]
 
 
 def test_error_details_from_grpc_response_unknown_error():
@@ -309,4 +309,4 @@ def test_error_details_from_grpc_response_unknown_error():
     with mock.patch("grpc_status.rpc_status.from_call") as m:
         m.return_value = status
         exception = exceptions.from_grpc_error(error)
-    assert exception.error_details == [status_detail]
+    assert exception.details == [status_detail]

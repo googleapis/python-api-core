@@ -131,8 +131,8 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         self._response = response
 
     def __str__(self):
-        if self.error_details:
-            return "{} {} {}".format(self.code, self.message, self.error_details)
+        if self.details:
+            return "{} {} {}".format(self.code, self.message, self.details)
         else:
             return "{} {}".format(self.code, self.message)
 
@@ -146,7 +146,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         return list(self._errors)
 
     @property
-    def error_details(self):
+    def details(self):
         """Information contained in google.rpc.status.details.
 
         Reference:
