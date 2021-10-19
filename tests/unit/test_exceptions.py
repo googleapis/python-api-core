@@ -307,6 +307,7 @@ def test_error_details_from_grpc_response():
     assert exception.details == [bad_request_detail]
 
 
+@pytest.mark.skipif(grpc is None, reason="gRPC not importable")
 def test_error_details_from_grpc_response_unknown_error():
     status_detail = any_pb2.Any()
 
