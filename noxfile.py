@@ -36,6 +36,7 @@ nox.options.sessions = [
     "unit_wo_grpc",
     "cover",
     "pytype",
+    "mypy",
     "lint",
     "lint_setup_py",
     "blacken",
@@ -163,6 +164,14 @@ def pytype(session):
     """Run type-checking."""
     session.install(".[grpc, grpcgcp]", "pytype >= 2019.3.21")
     session.run("pytype")
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION)
+def mypy(session):
+    """Run type-checking."""
+    session.install(".[grpc, grpcgcp]", "mypy")
+    session.install("types-setuptools", "types-requests", "types-mock")
+    session.run("mypy", "google", "tests")
 
 
 @nox.session(python="3.6")
