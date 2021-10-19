@@ -285,6 +285,7 @@ def test_error_details_from_v1_rest_response():
     assert exception.details == []
 
 
+@pytest.mark.skipif(grpc is None, reason="gRPC not importable")
 def test_error_details_from_grpc_response():
     status = rpc_status.status_pb2.Status()
     status.code = 3
