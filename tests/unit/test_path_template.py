@@ -387,3 +387,36 @@ def helper_test_transcode(http_options_list, expected_result_list):
         expected_result["body"] = expected_result_list[2]
 
     return (http_options, expected_result)
+
+
+def test_path_template_to_regex():
+    path_pattern_to_regex = {
+        "*": "^[^/]+$",
+        "**": "^.*$",
+        "foo": "^foo$",
+        "hello/world": "^hello/world$",
+        "hello/*": "^hello/[^/]+$",
+        "*/world": "^[^/]+/world$",
+        "hello/*/world": "^hello/[^/]+/world$",
+        "hello/*/**": "^hello/[^/]+(?:/.*)?$",
+        "hello/**": "^hello(?:/.*)?$",
+        "{foo}": "^(?P<foo>[^/]+)$",
+        "{foo=*}": "^(?P<foo>[^/]+)$",
+        "{foo=**}": "^(?P<foo>.*)$",
+        "{database=projects/*/databases/*}/documents/*/**": "^(?P<database>projects/[^/]+/databases/[^/]+)/documents/[^/]+(?:/.*)?$",
+        "documents/*/{database=projects/*/databases/*}/pages/*/**": "^documents/[^/]+/(?P<database>projects/[^/]+/databases/[^/]+)/pages/[^/]+(?:/.*)?$",
+        "": "^$",
+    }
+    for k, v in path_pattern_to_regex.items():
+        got = path_template.to_regex(k).pattern
+        assert got == v
+
+
+def test_path_template_to_regex_errors():
+    overlapping_patterns = [
+        "{song=artists/*/{albums}/*/**}",
+        "{database=projects/*/databases/*/**}/documents/{document=databases/*/documents/*/**}/*/**",
+    ]
+    for x in overlapping_patterns:
+        with pytest.raises(ValueError):
+            path_template.to_regex(x)

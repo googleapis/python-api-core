@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Expand and validate URL path templates.
+"""Expand and validate URL path templates. Transform path template into RegEx.
 
 This module provides the :func:`expand` and :func:`validate` functions for
 interacting with Google-style URL `path templates`_ which are commonly used
-in Google APIs for `resource names`_.
+in Google APIs for `resource names`_. It also provides the :func:`to_regex`
+function for converting `path template` into a corresponding RegEx that
+matches resource names conforming to the pattern in `path template`.
 
 .. _path templates: https://github.com/googleapis/googleapis/blob
     /57e2d376ac7ef48681554204a3ba78a414f2c533/google/api/http.proto#L212
@@ -29,6 +31,7 @@ from collections import deque
 import copy
 import functools
 import re
+from typing import Pattern
 
 # Regular expression for extracting variable parts from a path template.
 # The variables can be expressed as:
@@ -298,3 +301,108 @@ def transcode(http_options, **request_kwargs):
         return request
 
     raise ValueError("Request obj does not match any template")
+
+
+def _split_into_segments(path_template):
+    segments = path_template.split("/")
+    named_segment_ids = [i for i, x in enumerate(segments) if "{" in x or "}" in x]
+    # bar/{foo}/baz, bar/{foo=one/two/three}/baz.
+    assert len(named_segment_ids) <= 2
+    if len(named_segment_ids) == 2:
+        # Need to merge a named segment.
+        i, j = named_segment_ids
+        segments = (
+            segments[:i] + [_merge_segments(segments[i : j + 1])] + segments[j + 1 :]
+        )
+    return segments
+
+
+def _convert_segment_to_regex(segment):
+    # Named segment
+    if "{" in segment:
+        assert "}" in segment
+        # Strip "{" and "}"
+        segment = segment[1:-1]
+        if "=" not in segment:
+            # e.g. {foo} should be {foo=*}
+            return _convert_segment_to_regex("{" + f"{segment}=*" + "}")
+        key, sub_path_template = segment.split("=")
+        group_name = f"?P<{key}>"
+        sub_regex = _convert_to_regex(sub_path_template)
+        return f"({group_name}{sub_regex})"
+    # Wildcards
+    if "**" in segment:
+        # ?: nameless capture
+        return ".*"
+    if "*" in segment:
+        return "[^/]+"
+    # Otherwise it's collection ID segment: transformed identically.
+    return segment
+
+
+def _merge_segments(segments):
+    acc = segments[0]
+    for x in segments[1:]:
+        # Don't add "/" if it's followed by a "**"
+        # because "**" will eat it.
+        if x == ".*":
+            acc += "(?:/.*)?"
+        else:
+            acc += "/"
+            acc += x
+    return acc
+
+
+def _how_many_named_segments(path_template: str) -> int:
+    return path_template.count("{")
+
+
+def _convert_to_regex(path_template) -> str:
+    if _how_many_named_segments(path_template) > 1:
+        # This also takes care of complex patterns (i.e. {foo}~{bar})
+        raise ValueError("There should be exactly one named segment.")
+    segments = _split_into_segments(path_template)
+    segment_regexes = [_convert_segment_to_regex(x) for x in segments]
+    final_regex = _merge_segments(segment_regexes)
+    return final_regex
+
+
+def to_regex(path_template: str) -> Pattern:
+    """Converts path_template into a Python regular expression string.
+
+    For the different types of the segments in the pattern, the conversion is as follows:
+    - Collection id segments
+        The literals, e.g. projects or databases. They are transformed to the regex literally.
+    - The wildcard patterns: * and **.
+        The * pattern corresponds to 1 or more non-/ symbols. The regex describing it is [^/]+
+        The ** pattern corresponds to 0 or more segments (so it can be empty).
+        The regex is technically .*, but since it should only match a leading / if it has
+        any other content (e.g. documents/**/index should match documents/index, and not documents//index),
+        it is slightly more complicated, roughly at (/.*)?.
+    - The named segments: {foo} and {foo=pattern}
+        {foo} is equivalent to {foo=*}.
+        {foo=pattern}. The pattern cannot contain another named segment,
+        and the regex generation for it is recursive. The sub-pattern regex is enclosed
+        in a capture group because then the combined regex can be used for both matching and extraction.
+
+    .. code-block:: python
+
+        >>> to_regex('{database=projects/*/databases/*}/documents/*/**')
+        ^(?P<database>projects/[^/]+/databases/[^/]+)/documents/[^/]+(?:/.*)?$
+        >>> to_regex('{foo=**}')
+        ^(?P<foo>.*)$
+        >>> to_regex('hello/*/**')
+        ^hello/[^/]+(?:/.*)?$
+        >>> to_regex('{song=artists/*/{albums}/*/**}')
+        ValueError('There should be exactly one named segment.')
+        >>> to_regex('{database=projects/*/databases/*/**}/documents/{document=databases/*/documents/*/**}/*/**')
+        ValueError('There should be exactly one named segment.')
+
+    Args:
+        path_template (str): A path template corresponding to a resource name. It can only
+        have 0 or 1 named segments. It can not contain complex resource ID path segments.
+        See https://google.aip.dev/122 and https://google.aip.dev/client-libraries/4231 for more details.
+    Returns:
+        Pattern: A Pattern object that matches strings conforming to the path_template.
+    """
+    return re.compile(f"^{_convert_to_regex(path_template)}$")
