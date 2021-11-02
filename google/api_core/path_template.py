@@ -353,11 +353,11 @@ def _merge_segments(segments):
     return acc
 
 
-def _how_many_named_segments(path_template: str) -> int:
+def _how_many_named_segments(path_template):
     return path_template.count("{")
 
 
-def _convert_to_regex(path_template) -> str:
+def _convert_to_regex(path_template):
     if _how_many_named_segments(path_template) > 1:
         # This also takes care of complex patterns (i.e. {foo}~{bar})
         raise ValueError("There should be exactly one named segment.")
@@ -369,21 +369,6 @@ def _convert_to_regex(path_template) -> str:
 
 def to_regex(path_template: str) -> Pattern:
     """Converts path_template into a Python regular expression string.
-
-    For the different types of the segments in the pattern, the conversion is as follows:
-    - Collection id segments
-        The literals, e.g. projects or databases. They are transformed to the regex literally.
-    - The wildcard patterns: * and **.
-        The * pattern corresponds to 1 or more non-/ symbols. The regex describing it is [^/]+
-        The ** pattern corresponds to 0 or more segments (so it can be empty).
-        The regex is technically .*, but since it should only match a leading / if it has
-        any other content (e.g. documents/**/index should match documents/index, and not documents//index),
-        it is slightly more complicated, roughly at (/.*)?.
-    - The named segments: {foo} and {foo=pattern}
-        {foo} is equivalent to {foo=*}.
-        {foo=pattern}. The pattern cannot contain another named segment,
-        and the regex generation for it is recursive. The sub-pattern regex is enclosed
-        in a capture group because then the combined regex can be used for both matching and extraction.
 
     .. code-block:: python
 
@@ -399,9 +384,9 @@ def to_regex(path_template: str) -> Pattern:
         ValueError('There should be exactly one named segment.')
 
     Args:
-        path_template (str): A path template corresponding to a resource name. It can only
-        have 0 or 1 named segments. It can not contain complex resource ID path segments.
-        See https://google.aip.dev/122 and https://google.aip.dev/client-libraries/4231 for more details.
+        path_template (str): A path template corresponding to a resource name.
+            It can only have 0 or 1 named segments. It can not contain complex resource ID path segments.
+            See https://google.aip.dev/122 and https://google.aip.dev/client-libraries/4231 for more details.
     Returns:
         Pattern: A Pattern object that matches strings conforming to the path_template.
     """
