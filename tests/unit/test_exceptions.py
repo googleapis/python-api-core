@@ -262,6 +262,7 @@ def test_from_grpc_error_bare_call():
     assert exception.message == message
     assert exception.errors == [error]
     assert exception.response == error
+    assert exception.details == []
 
 
 def create_bad_request_details():
