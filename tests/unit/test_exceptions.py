@@ -15,11 +15,19 @@
 import http.client
 import json
 
-import grpc
 import mock
+import pytest
 import requests
 
+try:
+    import grpc
+    from grpc_status import rpc_status
+except ImportError:
+    grpc = rpc_status = None
+
 from google.api_core import exceptions
+from google.protobuf import any_pb2, json_format
+from google.rpc import error_details_pb2, status_pb2
 
 
 def test_create_google_cloud_error():
@@ -33,11 +41,8 @@ def test_create_google_cloud_error():
 
 def test_create_google_cloud_error_with_args():
     error = {
-        "domain": "global",
-        "location": "test",
-        "locationType": "testing",
+        "code": 600,
         "message": "Testing",
-        "reason": "test",
     }
     response = mock.sentinel.response
     exception = exceptions.GoogleAPICallError("Testing", [error], response=response)
@@ -151,6 +156,7 @@ def test_from_http_response_json_unicode_content():
     assert exception.errors == ["1", "2"]
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_status():
     message = "message"
     exception = exceptions.from_grpc_status(grpc.StatusCode.OUT_OF_RANGE, message)
@@ -162,6 +168,7 @@ def test_from_grpc_status():
     assert exception.errors == []
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_status_as_int():
     message = "message"
     exception = exceptions.from_grpc_status(11, message)
@@ -173,6 +180,7 @@ def test_from_grpc_status_as_int():
     assert exception.errors == []
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_status_with_errors_and_response():
     message = "message"
     response = mock.sentinel.response
@@ -187,6 +195,7 @@ def test_from_grpc_status_with_errors_and_response():
     assert exception.response == response
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_status_unknown_code():
     message = "message"
     exception = exceptions.from_grpc_status(grpc.StatusCode.OK, message)
@@ -194,6 +203,7 @@ def test_from_grpc_status_unknown_code():
     assert exception.message == message
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_error():
     message = "message"
     error = mock.create_autospec(grpc.Call, instance=True)
@@ -211,6 +221,7 @@ def test_from_grpc_error():
     assert exception.response == error
 
 
+@pytest.mark.skipif(grpc is None, reason="No grpc")
 def test_from_grpc_error_non_call():
     message = "message"
     error = mock.create_autospec(grpc.RpcError, instance=True)
@@ -224,3 +235,91 @@ def test_from_grpc_error_non_call():
     assert exception.message == message
     assert exception.errors == [error]
     assert exception.response == error
+
+
+def create_bad_request_details():
+    bad_request_details = error_details_pb2.BadRequest()
+    field_violation = bad_request_details.field_violations.add()
+    field_violation.field = "document.content"
+    field_violation.description = "Must have some text content to annotate."
+    status_detail = any_pb2.Any()
+    status_detail.Pack(bad_request_details)
+    return status_detail
+
+
+def test_error_details_from_rest_response():
+    bad_request_detail = create_bad_request_details()
+    status = status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status.details.append(bad_request_detail)
+
+    # See JSON schema in https://cloud.google.com/apis/design/errors#http_mapping
+    http_response = make_response(
+        json.dumps({"error": json.loads(json_format.MessageToJson(status))}).encode(
+            "utf-8"
+        )
+    )
+    exception = exceptions.from_http_response(http_response)
+    want_error_details = [json.loads(json_format.MessageToJson(bad_request_detail))]
+    assert want_error_details == exception.details
+    # 404 POST comes from make_response.
+    assert str(exception) == (
+        "404 POST https://example.com/: 3 INVALID_ARGUMENT:"
+        " One of content, or gcs_content_uri must be set."
+        " [{'@type': 'type.googleapis.com/google.rpc.BadRequest',"
+        " 'fieldViolations': [{'field': 'document.content',"
+        " 'description': 'Must have some text content to annotate.'}]}]"
+    )
+
+
+def test_error_details_from_v1_rest_response():
+    response = make_response(
+        json.dumps(
+            {"error": {"message": "\u2019 message", "errors": ["1", "2"]}}
+        ).encode("utf-8")
+    )
+    exception = exceptions.from_http_response(response)
+    assert exception.details == []
+
+
+@pytest.mark.skipif(grpc is None, reason="gRPC not importable")
+def test_error_details_from_grpc_response():
+    status = rpc_status.status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status_detail = create_bad_request_details()
+    status.details.append(status_detail)
+
+    # Actualy error doesn't matter as long as its grpc.Call,
+    # because from_call is mocked.
+    error = mock.create_autospec(grpc.Call, instance=True)
+    with mock.patch("grpc_status.rpc_status.from_call") as m:
+        m.return_value = status
+        exception = exceptions.from_grpc_error(error)
+
+    bad_request_detail = error_details_pb2.BadRequest()
+    status_detail.Unpack(bad_request_detail)
+    assert exception.details == [bad_request_detail]
+
+
+@pytest.mark.skipif(grpc is None, reason="gRPC not importable")
+def test_error_details_from_grpc_response_unknown_error():
+    status_detail = any_pb2.Any()
+
+    status = rpc_status.status_pb2.Status()
+    status.code = 3
+    status.message = (
+        "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
+    )
+    status.details.append(status_detail)
+
+    error = mock.create_autospec(grpc.Call, instance=True)
+    with mock.patch("grpc_status.rpc_status.from_call") as m:
+        m.return_value = status
+        exception = exceptions.from_grpc_error(error)
+    assert exception.details == [status_detail]
