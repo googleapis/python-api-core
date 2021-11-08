@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+### [1.31.4](https://www.github.com/googleapis/python-api-core/compare/v1.31.3...v1.31.4) (2021-11-08)
+
+
+### Bug Fixes
+
+* fix(deps): allow protobuf >=3.18.0 for python 3 users ([#305](https://www.github.com/googleapis/python-api-core/issues/305)) ([286347e](https://github.com/googleapis/python-api-core/commit/286347e22816057d7e50f61dc1f1f274fa90dde8))
+
 ### [1.31.3](https://www.github.com/googleapis/python-api-core/compare/v1.31.2...v1.31.3) (2021-09-20)
 
 
