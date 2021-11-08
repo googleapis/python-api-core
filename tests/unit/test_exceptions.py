@@ -247,14 +247,30 @@ def create_bad_request_details():
     return status_detail
 
 
+def create_error_info_details():
+    info = error_details_pb2.ErrorInfo(
+        reason="SERVICE_DISABLED",
+        domain="googleapis.com",
+        metadata={
+            "consumer": "projects/455411330361",
+            "service": "translate.googleapis.com",
+        },
+    )
+    status_detail = any_pb2.Any()
+    status_detail.Pack(info)
+    return status_detail
+
+
 def test_error_details_from_rest_response():
     bad_request_detail = create_bad_request_details()
+    error_info_detail = create_error_info_details()
     status = status_pb2.Status()
     status.code = 3
     status.message = (
         "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
     )
     status.details.append(bad_request_detail)
+    status.details.append(error_info_detail)
 
     # See JSON schema in https://cloud.google.com/apis/design/errors#http_mapping
     http_response = make_response(
@@ -263,7 +279,10 @@ def test_error_details_from_rest_response():
         )
     )
     exception = exceptions.from_http_response(http_response)
-    want_error_details = [json.loads(json_format.MessageToJson(bad_request_detail))]
+    want_error_details = [
+        json.loads(json_format.MessageToJson(bad_request_detail)),
+        json.loads(json_format.MessageToJson(error_info_detail)),
+    ]
     assert want_error_details == exception.details
     # 404 POST comes from make_response.
     assert str(exception) == (
@@ -271,7 +290,12 @@ def test_error_details_from_rest_response():
         " One of content, or gcs_content_uri must be set."
         " [{'@type': 'type.googleapis.com/google.rpc.BadRequest',"
         " 'fieldViolations': [{'field': 'document.content',"
-        " 'description': 'Must have some text content to annotate.'}]}]"
+        " 'description': 'Must have some text content to annotate.'}]},"
+        " {'@type': 'type.googleapis.com/google.rpc.ErrorInfo',"
+        " 'reason': 'SERVICE_DISABLED',"
+        " 'domain': 'googleapis.com',"
+        " 'metadata': {'service': 'translate.googleapis.com',"
+        " 'consumer': 'projects/455411330361'}}]"
     )
 
 
@@ -283,6 +307,7 @@ def test_error_details_from_v1_rest_response():
     )
     exception = exceptions.from_http_response(response)
     assert exception.details == []
+    assert exception.error_info is None
 
 
 @pytest.mark.skipif(grpc is None, reason="gRPC not importable")
@@ -292,9 +317,10 @@ def test_error_details_from_grpc_response():
     status.message = (
         "3 INVALID_ARGUMENT: One of content, or gcs_content_uri must be set."
     )
-    status_detail = create_bad_request_details()
-    status.details.append(status_detail)
-
+    status_br_detail = create_bad_request_details()
+    status_ei_detail = create_error_info_details()
+    status.details.append(status_br_detail)
+    status.details.append(status_ei_detail)
     # Actualy error doesn't matter as long as its grpc.Call,
     # because from_call is mocked.
     error = mock.create_autospec(grpc.Call, instance=True)
@@ -303,8 +329,11 @@ def test_error_details_from_grpc_response():
         exception = exceptions.from_grpc_error(error)
 
     bad_request_detail = error_details_pb2.BadRequest()
-    status_detail.Unpack(bad_request_detail)
-    assert exception.details == [bad_request_detail]
+    error_info_detail = error_details_pb2.ErrorInfo()
+    status_br_detail.Unpack(bad_request_detail)
+    status_ei_detail.Unpack(error_info_detail)
+    assert exception.details == [bad_request_detail, error_info_detail]
+    assert exception.error_info == error_info_detail
 
 
 @pytest.mark.skipif(grpc is None, reason="gRPC not importable")
@@ -323,3 +352,4 @@ def test_error_details_from_grpc_response_unknown_error():
         m.return_value = status
         exception = exceptions.from_grpc_error(error)
     assert exception.details == [status_detail]
+    assert exception.error_info is None
