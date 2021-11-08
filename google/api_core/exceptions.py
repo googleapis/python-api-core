@@ -104,6 +104,8 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         details (Sequence[Any]): An optional list of objects defined in google.rpc.error_details.
         response (Union[requests.Request, grpc.Call]): The response or
             gRPC call metadata.
+        error_info (Union[error_details_pb2.ErrorInfo, None]): An optional object containing error info
+            (google.rpc.error_details.ErrorInfo)
     """
 
     code: Union[int, None] = None
@@ -153,7 +155,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         Reference:
             https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
         Returns:
-            Something
+            Union[error_details_pb2.ErrorInfo, None]: An optional object containing google.rpc.error_details.ErrorInfo.
         """
         return self._error_info
 
