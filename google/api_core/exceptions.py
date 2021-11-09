@@ -516,7 +516,7 @@ def _parse_grpc_error_details(rpc_exc):
     try:
         status = rpc_status.from_call(rpc_exc)
     except NotImplementedError:  # workaround
-        return []
+        return [], None
 
     if not status:
         return [], None
