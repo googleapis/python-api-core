@@ -4,6 +4,34 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+### [2.2.2](https://www.github.com/googleapis/python-api-core/compare/v2.2.1...v2.2.2) (2021-11-02)
+
+
+### Bug Fixes
+
+* make 'gapic_v1.method.DEFAULT' a typed object ([#292](https://www.github.com/googleapis/python-api-core/issues/292)) ([ffc51f0](https://www.github.com/googleapis/python-api-core/commit/ffc51f03c7ce5d9f009ba859b8df385d52925578))
+
+### [2.2.1](https://www.github.com/googleapis/python-api-core/compare/v2.2.0...v2.2.1) (2021-10-26)
+
+
+### Bug Fixes
+
+* revert "fix: do not error on LROs with no response or error" ([#294](https://www.github.com/googleapis/python-api-core/issues/294)) ([9e6091e](https://www.github.com/googleapis/python-api-core/commit/9e6091ee59a30e72a6278b369f6a08e7aef32f22))
+
+## [2.2.0](https://www.github.com/googleapis/python-api-core/compare/v2.1.1...v2.2.0) (2021-10-25)
+
+
+### Features
+
+* add 'GoogleAPICallError.error_details' property ([#286](https://www.github.com/googleapis/python-api-core/issues/286)) ([ef6f0fc](https://www.github.com/googleapis/python-api-core/commit/ef6f0fcfdfe771172056e35e3c990998b3b00416))
+
+### [2.1.1](https://www.github.com/googleapis/python-api-core/compare/v2.1.0...v2.1.1) (2021-10-13)
+
+
+### Bug Fixes
+
+* add mypy checking + 'py.typed' file ([#290](https://www.github.com/googleapis/python-api-core/issues/290)) ([0023ee1](https://www.github.com/googleapis/python-api-core/commit/0023ee1fe0e8b80c7a9e8987e0f322a829e5d613))
+
 ## [2.1.0](https://www.github.com/googleapis/python-api-core/compare/v2.0.1...v2.1.0) (2021-10-05)
 
 

@@ -12,10 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import grpc
-from grpc import aio
 import mock
-import pytest
+import pytest  # noqa: I202
+
+try:
+    import grpc
+    from grpc import aio
+except ImportError:
+    grpc = aio = None
+
+
+if grpc is None:
+    pytest.skip("No GRPC", allow_module_level=True)
+
 
 from google.api_core import exceptions
 from google.api_core import grpc_helpers_async
@@ -31,6 +40,9 @@ class RpcErrorImpl(grpc.RpcError, grpc.Call):
         return self._code
 
     def details(self):
+        return None
+
+    def trailing_metadata(self):
         return None
 
 
