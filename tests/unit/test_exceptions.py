@@ -302,7 +302,7 @@ def test_error_details_from_rest_response():
 
     # See JSON schema in https://cloud.google.com/apis/design/errors#http_mapping
     http_response = make_response(
-        json.dumps({"error": json.loads(json_format.MessageToJson(status))}).encode(
+        json.dumps({"error": json.loads(json_format.MessageToJson(status, sort_keys=True))}).encode(
             "utf-8"
         )
     )
@@ -312,18 +312,19 @@ def test_error_details_from_rest_response():
         json.loads(json_format.MessageToJson(error_info_detail)),
     ]
     assert want_error_details == exception.details
+
     # 404 POST comes from make_response.
     assert str(exception) == (
         "404 POST https://example.com/: 3 INVALID_ARGUMENT:"
         " One of content, or gcs_content_uri must be set."
         " [{'@type': 'type.googleapis.com/google.rpc.BadRequest',"
-        " 'fieldViolations': [{'field': 'document.content',"
-        " 'description': 'Must have some text content to annotate.'}]},"
+        " 'fieldViolations': [{'description': 'Must have some text content to annotate.',"
+        " 'field': 'document.content'}]},"
         " {'@type': 'type.googleapis.com/google.rpc.ErrorInfo',"
-        " 'reason': 'SERVICE_DISABLED',"
         " 'domain': 'googleapis.com',"
-        " 'metadata': {'service': 'translate.googleapis.com',"
-        " 'consumer': 'projects/455411330361'}}]"
+        " 'metadata': {'consumer': 'projects/455411330361',"
+        " 'service': 'translate.googleapis.com'},"
+        " 'reason': 'SERVICE_DISABLED'}]"
     )
 
 
