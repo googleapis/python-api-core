@@ -302,9 +302,9 @@ def test_error_details_from_rest_response():
 
     # See JSON schema in https://cloud.google.com/apis/design/errors#http_mapping
     http_response = make_response(
-        json.dumps({"error": json.loads(json_format.MessageToJson(status, sort_keys=True))}).encode(
-            "utf-8"
-        )
+        json.dumps(
+            {"error": json.loads(json_format.MessageToJson(status, sort_keys=True))}
+        ).encode("utf-8")
     )
     exception = exceptions.from_http_response(http_response)
     want_error_details = [
@@ -336,7 +336,11 @@ def test_error_details_from_v1_rest_response():
     )
     exception = exceptions.from_http_response(response)
     assert exception.details == []
-    assert exception.error_info is None
+    assert (
+        exception.reason is None
+        and exception.domain is None
+        and exception.metadata is None
+    )
 
 
 @pytest.mark.skipif(grpc is None, reason="gRPC not importable")
@@ -362,7 +366,9 @@ def test_error_details_from_grpc_response():
     status_br_detail.Unpack(bad_request_detail)
     status_ei_detail.Unpack(error_info_detail)
     assert exception.details == [bad_request_detail, error_info_detail]
-    assert exception.error_info == error_info_detail
+    assert exception.reason == error_info_detail.reason
+    assert exception.domain == error_info_detail.domain
+    assert exception.metadata == error_info_detail.metadata
 
 
 @pytest.mark.skipif(grpc is None, reason="gRPC not importable")
@@ -381,4 +387,8 @@ def test_error_details_from_grpc_response_unknown_error():
         m.return_value = status
         exception = exceptions.from_grpc_error(error)
     assert exception.details == [status_detail]
-    assert exception.error_info is None
+    assert (
+        exception.reason is None
+        and exception.domain is None
+        and exception.metadata is None
+    )

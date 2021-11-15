@@ -105,7 +105,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         response (Union[requests.Request, grpc.Call]): The response or
             gRPC call metadata.
         error_info (Union[error_details_pb2.ErrorInfo, None]): An optional object containing error info
-            (google.rpc.error_details.ErrorInfo)
+            (google.rpc.error_details.ErrorInfo).
     """
 
     code: Union[int, None] = None
@@ -149,15 +149,46 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         return list(self._errors)
 
     @property
-    def error_info(self):
-        """Information contained in google.rpc.error_details.ErrorInfo
+    def reason(self):
+        """The reason of the error.
 
         Reference:
             https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
         Returns:
-            Union[error_details_pb2.ErrorInfo, None]: An optional object containing google.rpc.error_details.ErrorInfo.
+            Union[str, None]: An optional string containing reason of the error.
         """
-        return self._error_info
+        if not self._error_info:
+            return None
+        return self._error_info.reason
+
+    @property
+    def domain(self):
+        """The logical grouping to which the "reason" belongs.
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
+        Returns:
+            Union[str, None]: An optional string containing a logical grouping to which the "reason" belongs.
+        """
+        if not self._error_info:
+            return None
+        return self._error_info.domain
+
+    @property
+    def metadata(self):
+        """Additional structured details about this error
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
+        Returns:
+            Union[Dict[str, str], None]: An optional object containing structured details about the error.
+        """
+        if not self._error_info:
+            return None
+        return self._error_info.metadata
 
     @property
     def details(self):
