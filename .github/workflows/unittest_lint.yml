@@ -42,13 +42,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        w_grcp_gcp: ["", "_grpc_gcp"]
+        option: ["", "_grpc_gcp", "_wo_grpc"]
         python:
           - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
+        exclude:
+          - option: "_wo_grpc"
+            python: 3.7
+          - option: "_wo_grpc"
+            python: 3.8
+          - option: "_wo_grpc"
+            python: 3.9
 
     steps:
 
@@ -67,15 +74,15 @@ jobs:
 
     - name: Run unit tests
       env:
-        COVERAGE_FILE: .coverage${{ matrix.w_grcp_gcp }}-${{matrix.python }}
+        COVERAGE_FILE: .coverage${{ matrix.option }}-${{matrix.python }}
       run: |
-        nox -s unit${{ matrix.w_grcp_gcp }}-${{ matrix.python }}
+        nox -s unit${{ matrix.option }}-${{ matrix.python }}
 
     - name: Upload coverage results
       uses: actions/upload-artifact@v2
       with:
         name: coverage-artifacts
-        path: .coverage${{ matrix.w_grcp_gcp }}-${{ matrix.python }}
+        path: .coverage${{ matrix.option }}-${{ matrix.python }}
 
   report-coverage:
     runs-on: ubuntu-latest
