@@ -1,4 +1,4 @@
-name: "Run lint, unit tests, and cover"
+name: "Lint / Unit tests / Cover / Mypy"
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  run-lint:
+  run-lint-mypy:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +33,10 @@ jobs:
     - name: Run lint_setup_py
       run: |
         nox -s lint_setup_py
+
+    - name: Run mypy
+      run: |
+        nox -s mypy
 
   run-unittests:
     runs-on: ubuntu-latest
