@@ -16,5 +16,12 @@
 
 from google.api_core.operations_v1.operations_async_client import OperationsAsyncClient
 from google.api_core.operations_v1.operations_client import OperationsClient
+from google.api_core.operations_v1.transports.rest import OperationsRestTransport
+from google.api_core.operations_v1.operations_rest_client import OperationsRestClient
 
-__all__ = ["OperationsAsyncClient", "OperationsClient"]
+__all__ = [
+    "OperationsAsyncClient",
+    "OperationsClient",
+    "OperationsRestClient",
+    "OperationsRestTransport"
+]
