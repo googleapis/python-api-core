@@ -249,7 +249,6 @@ class OperationsRestTransport(OperationsTransport):
             preserving_proto_field_name=True,
             including_default_value_fields=True,
         )
-        print("request_kwargs={}".format(request_kwargs))
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
