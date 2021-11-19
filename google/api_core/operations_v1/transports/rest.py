@@ -1,17 +1,3 @@
-from google.auth.transport.requests import AuthorizedSession  # type: ignore
-import json  # type: ignore
-from google.auth import credentials as ga_credentials  # type: ignore
-from google.api_core import exceptions as core_exceptions  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.api_core import rest_helpers  # type: ignore
-from google.api_core import path_template  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
-from google.longrunning import operations_pb2  # type: ignore
-from requests import __version__ as requests_version
-from typing import Callable, Dict, Optional, Sequence, Tuple, Union
-import warnings
-
-OptionalRetry = Union[retries.Retry, object]
 # -*- coding: utf-8 -*-
 # Copyright 2020 Google LLC
 #
@@ -28,12 +14,23 @@ OptionalRetry = Union[retries.Retry, object]
 # limitations under the License.
 #
 
+from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
+from requests import __version__ as requests_version
+
+from google.api_core import exceptions as core_exceptions  # type: ignore
+from google.api_core import gapic_v1  # type: ignore
+from google.api_core import path_template  # type: ignore
+from google.api_core import rest_helpers  # type: ignore
+from google.api_core import retry as retries  # type: ignore
+from google.auth import credentials as ga_credentials  # type: ignore
+from google.auth.transport.requests import AuthorizedSession  # type: ignore
+from google.longrunning import operations_pb2  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
 from google.protobuf import json_format  # type: ignore
+from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTransport
 
-from .base import OperationsTransport, DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO
-
+OptionalRetry = Union[retries.Retry, object]
 
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
@@ -160,7 +157,7 @@ class OperationsRestTransport(OperationsTransport):
         """
 
         http_options = [
-            {"method": "get", "uri": "/v1/{name=operations}",},
+            {"method": "get", "uri": "/v1/{name=operations}"},
         ]
         if "google.longrunning.Operations.ListOperations" in self._http_options:
             http_options = self._http_options[
@@ -237,7 +234,7 @@ class OperationsRestTransport(OperationsTransport):
         """
 
         http_options = [
-            {"method": "get", "uri": "/v1/{name=operations/**}",},
+            {"method": "get", "uri": "/v1/{name=operations/**}"},
         ]
         if "google.longrunning.Operations.GetOperation" in self._http_options:
             http_options = self._http_options[
@@ -307,7 +304,7 @@ class OperationsRestTransport(OperationsTransport):
         """
 
         http_options = [
-            {"method": "delete", "uri": "/v1/{name=operations/**}",},
+            {"method": "delete", "uri": "/v1/{name=operations/**}"},
         ]
         if "google.longrunning.Operations.DeleteOperation" in self._http_options:
             http_options = self._http_options[
@@ -349,6 +346,8 @@ class OperationsRestTransport(OperationsTransport):
         if response.status_code >= 400:
             raise core_exceptions.from_http_response(response)
 
+        return empty_pb2.Empty()
+
     def _cancel_operation(
         self,
         request: operations_pb2.CancelOperationRequest,
@@ -372,7 +371,7 @@ class OperationsRestTransport(OperationsTransport):
         """
 
         http_options = [
-            {"method": "post", "uri": "/v1/{name=operations/**}:cancel", "body": "*",},
+            {"method": "post", "uri": "/v1/{name=operations/**}:cancel", "body": "*"},
         ]
         if "google.longrunning.Operations.CancelOperation" in self._http_options:
             http_options = self._http_options[
@@ -423,6 +422,8 @@ class OperationsRestTransport(OperationsTransport):
         # subclass.
         if response.status_code >= 400:
             raise core_exceptions.from_http_response(response)
+
+        return empty_pb2.Empty()
 
     @property
     def list_operations(

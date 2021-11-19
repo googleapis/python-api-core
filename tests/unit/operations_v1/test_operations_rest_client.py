@@ -14,46 +14,39 @@
 # limitations under the License.
 #
 import os
+
 import mock
-
-import math
 import pytest
-from proto.marshal.rules.dates import DurationRule, TimestampRule
-
-from requests import PreparedRequest
 from requests import Response
 from requests.sessions import Session
 
 from google.api_core import client_options
 from google.api_core import exceptions as core_exceptions
 from google.api_core import gapic_v1
-from google.api_core import path_template
-from google.auth import credentials as ga_credentials
-from google.auth.exceptions import MutualTLSChannelError
 from google.api_core.operations_v1 import OperationsRestClient
 from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import transports
+import google.auth
+from google.auth import credentials as ga_credentials
+from google.auth.exceptions import MutualTLSChannelError
 from google.longrunning import operations_pb2
 from google.oauth2 import service_account
-from google.protobuf import any_pb2  # type: ignore
-from google.protobuf import duration_pb2  # type: ignore
 from google.protobuf import json_format  # type: ignore
 from google.rpc import status_pb2  # type: ignore
-import google.auth
 
 
 HTTP_OPTIONS = {
     "google.longrunning.Operations.CancelOperation": [
-        {"method": "post", "uri": "/v3/{name=operations/*}:cancel", "body": "*",},
+        {"method": "post", "uri": "/v3/{name=operations/*}:cancel", "body": "*"},
     ],
     "google.longrunning.Operations.DeleteOperation": [
-        {"method": "delete", "uri": "/v3/{name=operations/*}",},
+        {"method": "delete", "uri": "/v3/{name=operations/*}"},
     ],
     "google.longrunning.Operations.GetOperation": [
-        {"method": "get", "uri": "/v3/{name=operations/*}",},
+        {"method": "get", "uri": "/v3/{name=operations/*}"},
     ],
     "google.longrunning.Operations.ListOperations": [
-        {"method": "get", "uri": "/v3/{name=operations}",},
+        {"method": "get", "uri": "/v3/{name=operations}"},
     ],
 }
 
@@ -110,7 +103,7 @@ def test__get_default_mtls_endpoint():
     )
 
 
-@pytest.mark.parametrize("client_class", [OperationsRestClient,])
+@pytest.mark.parametrize("client_class", [OperationsRestClient])
 def test_operations_client_from_service_account_info(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -126,7 +119,7 @@ def test_operations_client_from_service_account_info(client_class):
 
 
 @pytest.mark.parametrize(
-    "transport_class,transport_name", [(transports.OperationsRestTransport, "rest"),]
+    "transport_class,transport_name", [(transports.OperationsRestTransport, "rest")]
 )
 def test_operations_client_service_account_always_use_jwt(
     transport_class, transport_name
@@ -135,18 +128,18 @@ def test_operations_client_service_account_always_use_jwt(
         service_account.Credentials, "with_always_use_jwt_access", create=True
     ) as use_jwt:
         creds = service_account.Credentials(None, None, None)
-        transport = transport_class(credentials=creds, always_use_jwt_access=True)
+        transport_class(credentials=creds, always_use_jwt_access=True)
         use_jwt.assert_called_once_with(True)
 
     with mock.patch.object(
         service_account.Credentials, "with_always_use_jwt_access", create=True
     ) as use_jwt:
         creds = service_account.Credentials(None, None, None)
-        transport = transport_class(credentials=creds, always_use_jwt_access=False)
+        transport_class(credentials=creds, always_use_jwt_access=False)
         use_jwt.assert_not_called()
 
 
-@pytest.mark.parametrize("client_class", [OperationsRestClient,])
+@pytest.mark.parametrize("client_class", [OperationsRestClient])
 def test_operations_client_from_service_account_file(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -177,7 +170,7 @@ def test_operations_client_get_transport_class():
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest"),],
+    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
 )
 @mock.patch.object(
     OperationsRestClient,
@@ -386,7 +379,7 @@ def test_operations_client_mtls_env_auto(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest"),],
+    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
 )
 def test_operations_client_client_options_scopes(
     client_class, transport_class, transport_name
@@ -410,7 +403,7 @@ def test_operations_client_client_options_scopes(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest"),],
+    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
 )
 def test_operations_client_client_options_credentials_file(
     client_class, transport_class, transport_name
@@ -483,7 +476,7 @@ def test_list_operations_rest_failure():
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
-            response = client.list_operations(name="operations")
+            client.list_operations(name="operations")
 
 
 def test_list_operations_rest_pager():
@@ -507,10 +500,10 @@ def test_list_operations_rest_pager():
                 operations=[], next_page_token="def",
             ),
             operations_pb2.ListOperationsResponse(
-                operations=[operations_pb2.Operation(),], next_page_token="ghi",
+                operations=[operations_pb2.Operation()], next_page_token="ghi",
             ),
             operations_pb2.ListOperationsResponse(
-                operations=[operations_pb2.Operation(), operations_pb2.Operation(),],
+                operations=[operations_pb2.Operation(), operations_pb2.Operation()],
             ),
         )
         # Two responses for two calls
@@ -582,7 +575,7 @@ def test_get_operation_rest_failure():
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
-            response = client.get_operation("operations/sample1")
+            client.get_operation("operations/sample1")
 
 
 def test_delete_operation_rest(
@@ -592,9 +585,6 @@ def test_delete_operation_rest(
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
-        # Designate an appropriate value for the returned response.
-        return_value = None
-
         # Wrap the value into a proper Response obj
         response_value = Response()
         response_value.status_code = 200
@@ -633,9 +623,6 @@ def test_cancel_operation_rest(transport: str = "rest"):
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
-        # Designate an appropriate value for the returned response.
-        return_value = None
-
         # Wrap the value into a proper Response obj
         response_value = Response()
         response_value.status_code = 200
@@ -675,7 +662,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        client = OperationsRestClient(
+        OperationsRestClient(
             credentials=ga_credentials.AnonymousCredentials(), transport=transport,
         )
 
@@ -684,7 +671,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        client = OperationsRestClient(
+        OperationsRestClient(
             client_options={"credentials_file": "credentials.json"},
             transport=transport,
         )
@@ -694,7 +681,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        client = OperationsRestClient(
+        OperationsRestClient(
             client_options={"scopes": ["1", "2"]}, transport=transport,
         )
 
@@ -708,7 +695,7 @@ def test_transport_instance():
     assert client.transport is transport
 
 
-@pytest.mark.parametrize("transport_class", [transports.OperationsRestTransport,])
+@pytest.mark.parametrize("transport_class", [transports.OperationsRestTransport])
 def test_transport_adc(transport_class):
     # Test default credentials are used if not provided.
     with mock.patch.object(google.auth, "default") as adc:
@@ -720,7 +707,7 @@ def test_transport_adc(transport_class):
 def test_operations_base_transport_error():
     # Passing both a credentials object and credentials_file should raise an error
     with pytest.raises(core_exceptions.DuplicateCredentialArgs):
-        transport = transports.OperationsTransport(
+        transports.OperationsTransport(
             credentials=ga_credentials.AnonymousCredentials(),
             credentials_file="credentials.json",
         )
@@ -761,7 +748,7 @@ def test_operations_base_transport_with_credentials_file():
     ) as Transport:
         Transport.return_value = None
         load_creds.return_value = (ga_credentials.AnonymousCredentials(), None)
-        transport = transports.OperationsTransport(
+        transports.OperationsTransport(
             credentials_file="credentials.json", quota_project_id="octopus",
         )
         load_creds.assert_called_once_with(
@@ -779,7 +766,7 @@ def test_operations_base_transport_with_adc():
     ) as Transport:
         Transport.return_value = None
         adc.return_value = (ga_credentials.AnonymousCredentials(), None)
-        transport = transports.OperationsTransport()
+        transports.OperationsTransport()
         adc.assert_called_once()
 
 
@@ -926,7 +913,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
     with mock.patch.object(
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
-        client = OperationsRestClient(
+        OperationsRestClient(
             credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
         )
         prep.assert_called_once_with(client_info)
@@ -935,7 +922,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
         transport_class = OperationsRestClient.get_transport_class()
-        transport = transport_class(
+        transport_class(
             credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
         )
         prep.assert_called_once_with(client_info)

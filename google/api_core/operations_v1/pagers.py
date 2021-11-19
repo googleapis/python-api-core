@@ -15,13 +15,10 @@
 #
 from typing import (
     Any,
-    AsyncIterator,
-    Awaitable,
     Callable,
+    Iterator,
     Sequence,
     Tuple,
-    Optional,
-    Iterator,
 )
 
 from google.longrunning import operations_pb2
