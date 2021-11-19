@@ -20,6 +20,7 @@ import math
 import pytest
 from proto.marshal.rules.dates import DurationRule, TimestampRule
 
+from requests import PreparedRequest
 from requests import Response
 from requests.sessions import Session
 
@@ -41,8 +42,32 @@ from google.rpc import status_pb2  # type: ignore
 import google.auth
 
 
+HTTP_OPTIONS = {
+    "google.longrunning.Operations.CancelOperation": [
+        {"method": "post", "uri": "/v3/{name=operations/*}:cancel", "body": "*",},
+    ],
+    "google.longrunning.Operations.DeleteOperation": [
+        {"method": "delete", "uri": "/v3/{name=operations/*}",},
+    ],
+    "google.longrunning.Operations.GetOperation": [
+        {"method": "get", "uri": "/v3/{name=operations/*}",},
+    ],
+    "google.longrunning.Operations.ListOperations": [
+        {"method": "get", "uri": "/v3/{name=operations}",},
+    ],
+}
+
+
 def client_cert_source_callback():
     return b"cert bytes", b"key bytes"
+
+
+def _get_operations_rest_client():
+    transport = transports.rest.OperationsRestTransport(
+        credentials=ga_credentials.AnonymousCredentials(), http_options=HTTP_OPTIONS
+    )
+
+    return OperationsRestClient(transport=transport)
 
 
 # If default endpoint is localhost, then default mtls endpoint will be the same.
@@ -410,9 +435,7 @@ def test_operations_client_client_options_credentials_file(
 def test_list_operations_rest(
     transport: str = "rest", request_type=operations_pb2.ListOperationsRequest
 ):
-    client = OperationsRestClient(
-        credentials=ga_credentials.AnonymousCredentials(), transport=transport,
-    )
+    client = _get_operations_rest_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -427,11 +450,40 @@ def test_list_operations_rest(
         json_return_value = json_format.MessageToJson(return_value)
         response_value._content = json_return_value.encode("UTF-8")
         req.return_value = response_value
-        response = client.list_operations(name="operations")
+        response = client.list_operations(
+            name="operations", filter_="my_filter", page_size=10, page_token="abc"
+        )
+
+        actual_args = req.call_args
+        assert actual_args.args[0] == "GET"
+        assert (
+            actual_args.args[1]
+            == "https://longrunning.googleapis.com:443/v3/operations"
+        )
+        assert actual_args.kwargs["params"] == [
+            ("filter", "my_filter"),
+            ("pageSize", 10),
+            ("pageToken", "abc"),
+        ]
 
     # Establish that the response is the type that we expect.
     assert isinstance(response, pagers.ListOperationsPager)
     assert response.next_page_token == "next_page_token_value"
+
+
+def test_list_operations_rest_failure():
+    client = _get_operations_rest_client()
+
+    with mock.patch.object(Session, "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "GET"
+        mock_request.url = "https://longrunning.googleapis.com:443/v3/operations"
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            response = client.list_operations(name="operations")
 
 
 def test_list_operations_rest_pager():
@@ -486,15 +538,13 @@ def test_list_operations_rest_pager():
 def test_get_operation_rest(
     transport: str = "rest", request_type=operations_pb2.GetOperationRequest
 ):
-    client = OperationsRestClient(
-        credentials=ga_credentials.AnonymousCredentials(), transport=transport,
-    )
+    client = _get_operations_rest_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
         # Designate an appropriate value for the returned response.
         return_value = operations_pb2.Operation(
-            name="name_value", done=True, error=status_pb2.Status(code=411),
+            name="operations/sample1", done=True, error=status_pb2.Status(code=411),
         )
 
         # Wrap the value into a proper Response obj
@@ -505,18 +555,40 @@ def test_get_operation_rest(
         req.return_value = response_value
         response = client.get_operation("operations/sample1")
 
+    actual_args = req.call_args
+    assert actual_args.args[0] == "GET"
+    assert (
+        actual_args.args[1]
+        == "https://longrunning.googleapis.com:443/v3/operations/sample1"
+    )
+
     # Establish that the response is the type that we expect.
     assert isinstance(response, operations_pb2.Operation)
-    assert response.name == "name_value"
+    assert response.name == "operations/sample1"
     assert response.done is True
+
+
+def test_get_operation_rest_failure():
+    client = _get_operations_rest_client()
+
+    with mock.patch.object(Session, "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "GET"
+        mock_request.url = (
+            "https://longrunning.googleapis.com:443/v3/operations/sample1"
+        )
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            response = client.get_operation("operations/sample1")
 
 
 def test_delete_operation_rest(
     transport: str = "rest", request_type=operations_pb2.DeleteOperationRequest
 ):
-    client = OperationsRestClient(
-        credentials=ga_credentials.AnonymousCredentials(), transport=transport,
-    )
+    client = _get_operations_rest_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -531,12 +603,33 @@ def test_delete_operation_rest(
         req.return_value = response_value
         client.delete_operation(name="operations/sample1")
         assert req.call_count == 1
+        actual_args = req.call_args
+        assert actual_args.args[0] == "DELETE"
+        assert (
+            actual_args.args[1]
+            == "https://longrunning.googleapis.com:443/v3/operations/sample1"
+        )
+
+
+def test_delete_operation_rest_failure():
+    client = _get_operations_rest_client()
+
+    with mock.patch.object(Session, "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "DELETE"
+        mock_request.url = (
+            "https://longrunning.googleapis.com:443/v3/operations/sample1"
+        )
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            client.delete_operation(name="operations/sample1")
 
 
 def test_cancel_operation_rest(transport: str = "rest"):
-    client = OperationsRestClient(
-        credentials=ga_credentials.AnonymousCredentials(), transport=transport,
-    )
+    client = _get_operations_rest_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -551,6 +644,29 @@ def test_cancel_operation_rest(transport: str = "rest"):
         req.return_value = response_value
         client.cancel_operation(name="operations/sample1")
         assert req.call_count == 1
+        actual_args = req.call_args
+        assert actual_args.args[0] == "POST"
+        assert (
+            actual_args.args[1]
+            == "https://longrunning.googleapis.com:443/v3/operations/sample1:cancel"
+        )
+
+
+def test_cancel_operation_rest_failure():
+    client = _get_operations_rest_client()
+
+    with mock.patch.object(Session, "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "POST"
+        mock_request.url = (
+            "https://longrunning.googleapis.com:443/v3/operations/sample1:cancel"
+        )
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            client.cancel_operation(name="operations/sample1")
 
 
 def test_credentials_transport_error():

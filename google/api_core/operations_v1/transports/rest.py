@@ -451,9 +451,5 @@ class OperationsRestTransport(OperationsTransport):
     ) -> Callable[[operations_pb2.CancelOperationRequest], empty_pb2.Empty]:
         return self._cancel_operation
 
-    @property
-    def close(self):
-        self._session.close()
-
 
 __all__ = ("OperationsRestTransport",)

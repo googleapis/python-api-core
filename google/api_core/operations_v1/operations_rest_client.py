@@ -566,29 +566,3 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
         rpc(
             request, retry=retry, timeout=timeout, metadata=metadata,
         )
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        """Releases underlying transport's resources.
-
-        .. warning::
-            ONLY use as a context manager if the transport is NOT shared
-            with other clients! Exiting the with block will CLOSE the transport
-            and may cause errors in other clients!
-        """
-        self.transport.close()
-
-
-try:
-    DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
-        gapic_version=pkg_resources.get_distribution(
-            "google.api_core.operations_v1",
-        ).version,
-    )
-except pkg_resources.DistributionNotFound:
-    DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo()
-
-
-__all__ = ("OperationsRestClient",)
