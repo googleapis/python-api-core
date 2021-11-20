@@ -65,14 +65,14 @@ class OperationsRestTransport(OperationsTransport):
         *,
         host: str = "longrunning.googleapis.com",
         credentials: ga_credentials.Credentials = None,
-        credentials_file: str = None,
-        scopes: Sequence[str] = None,
-        client_cert_source_for_mtls: Callable[[], Tuple[bytes, bytes]] = None,
+        credentials_file: Optional[str] = None,
+        scopes: Optional[Sequence[str]] = None,
+        client_cert_source_for_mtls: Optional[Callable[[], Tuple[bytes, bytes]]] = None,
         quota_project_id: Optional[str] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
-        http_options: Dict = None,
+        http_options: Optional[Dict] = None,
     ) -> None:
         """Instantiate the transport.
 
@@ -133,7 +133,7 @@ class OperationsRestTransport(OperationsTransport):
         request: operations_pb2.ListOperationsRequest,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.ListOperationsResponse:
         r"""Call the list operations method over HTTP.
@@ -209,7 +209,7 @@ class OperationsRestTransport(OperationsTransport):
         request: operations_pb2.GetOperationRequest,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
         r"""Call the get operation method over HTTP.
@@ -286,7 +286,7 @@ class OperationsRestTransport(OperationsTransport):
         request: operations_pb2.DeleteOperationRequest,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> empty_pb2.Empty:
         r"""Call the delete operation method over HTTP.
@@ -353,7 +353,7 @@ class OperationsRestTransport(OperationsTransport):
         request: operations_pb2.CancelOperationRequest,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> empty_pb2.Empty:
         r"""Call the cancel operation method over HTTP.

@@ -17,7 +17,12 @@ import os
 
 import mock
 import pytest
-from requests import Response
+
+try:
+    import grpc  # noqa: F401
+except ImportError:
+    pytest.skip("No GRPC", allow_module_level=True)
+from requests import Response  # noqa I201
 from requests.sessions import Session
 
 from google.api_core import client_options
@@ -55,9 +60,9 @@ def client_cert_source_callback():
     return b"cert bytes", b"key bytes"
 
 
-def _get_operations_rest_client():
+def _get_operations_rest_client(http_options=HTTP_OPTIONS):
     transport = transports.rest.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(), http_options=HTTP_OPTIONS
+        credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
     )
 
     return OperationsRestClient(transport=transport)
@@ -465,14 +470,14 @@ def test_list_operations_rest(
 
 
 def test_list_operations_rest_failure():
-    client = _get_operations_rest_client()
+    client = _get_operations_rest_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
         response_value.status_code = 400
         mock_request = mock.MagicMock()
         mock_request.method = "GET"
-        mock_request.url = "https://longrunning.googleapis.com:443/v3/operations"
+        mock_request.url = "https://longrunning.googleapis.com:443/v1/operations"
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
@@ -562,7 +567,7 @@ def test_get_operation_rest(
 
 
 def test_get_operation_rest_failure():
-    client = _get_operations_rest_client()
+    client = _get_operations_rest_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -570,7 +575,7 @@ def test_get_operation_rest_failure():
         mock_request = mock.MagicMock()
         mock_request.method = "GET"
         mock_request.url = (
-            "https://longrunning.googleapis.com:443/v3/operations/sample1"
+            "https://longrunning.googleapis.com:443/v1/operations/sample1"
         )
         response_value.request = mock_request
         req.return_value = response_value
@@ -602,7 +607,7 @@ def test_delete_operation_rest(
 
 
 def test_delete_operation_rest_failure():
-    client = _get_operations_rest_client()
+    client = _get_operations_rest_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -610,7 +615,7 @@ def test_delete_operation_rest_failure():
         mock_request = mock.MagicMock()
         mock_request.method = "DELETE"
         mock_request.url = (
-            "https://longrunning.googleapis.com:443/v3/operations/sample1"
+            "https://longrunning.googleapis.com:443/v1/operations/sample1"
         )
         response_value.request = mock_request
         req.return_value = response_value
@@ -640,7 +645,7 @@ def test_cancel_operation_rest(transport: str = "rest"):
 
 
 def test_cancel_operation_rest_failure():
-    client = _get_operations_rest_client()
+    client = _get_operations_rest_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -648,7 +653,7 @@ def test_cancel_operation_rest_failure():
         mock_request = mock.MagicMock()
         mock_request.method = "POST"
         mock_request.url = (
-            "https://longrunning.googleapis.com:443/v3/operations/sample1:cancel"
+            "https://longrunning.googleapis.com:443/v1/operations/sample1:cancel"
         )
         response_value.request = mock_request
         req.return_value = response_value
