@@ -48,7 +48,9 @@ class OperationsRestClientMeta(type):
     _transport_registry = OrderedDict()  # type: Dict[str, Type[OperationsTransport]]
     _transport_registry["rest"] = OperationsRestTransport
 
-    def get_transport_class(cls, label: str = None,) -> Type[OperationsTransport]:
+    def get_transport_class(
+        cls, label: Optional[str] = None,
+    ) -> Type[OperationsTransport]:
         """Returns an appropriate transport class.
 
         Args:
@@ -341,12 +343,12 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
     def list_operations(
         self,
         name: str,
-        filter_: str = None,
+        filter_: Optional[str] = None,
         *,
-        page_size: int = None,
-        page_token: str = None,
+        page_size: Optional[int] = None,
+        page_token: Optional[str] = None,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListOperationsPager:
         r"""Lists operations that match the specified filter in the request.
@@ -420,7 +422,7 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
         name: str,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
         r"""Gets the latest state of a long-running operation.
@@ -467,7 +469,7 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
         name: str,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Deletes a long-running operation. This method indicates that the
@@ -509,10 +511,10 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
 
     def cancel_operation(
         self,
-        name: str = None,
+        name: Optional[str] = None,
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Starts asynchronous cancellation on a long-running operation.

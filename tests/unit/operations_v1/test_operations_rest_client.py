@@ -303,8 +303,16 @@ def test_operations_client_mtls_env_auto(
         options = client_options.ClientOptions(
             client_cert_source=client_cert_source_callback
         )
+
+        def fake_init(client_cert_source_for_mtls=None, **kwargs):
+            """Invoke client_cert source if provided."""
+
+            if client_cert_source_for_mtls:
+                client_cert_source_for_mtls()
+                return None
+
         with mock.patch.object(transport_class, "__init__") as patched:
-            patched.return_value = None
+            patched.side_effect = fake_init
             client = client_class(client_options=options)
 
             if use_client_cert_env == "false":
