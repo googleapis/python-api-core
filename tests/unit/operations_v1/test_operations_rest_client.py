@@ -28,7 +28,7 @@ from requests.sessions import Session
 from google.api_core import client_options
 from google.api_core import exceptions as core_exceptions
 from google.api_core import gapic_v1
-from google.api_core.operations_v1 import OperationsRestClient
+from google.api_core.operations_v1 import AbstractOperationsClient
 from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import transports
 import google.auth
@@ -60,12 +60,12 @@ def client_cert_source_callback():
     return b"cert bytes", b"key bytes"
 
 
-def _get_operations_rest_client(http_options=HTTP_OPTIONS):
+def _get_operations_client(http_options=HTTP_OPTIONS):
     transport = transports.rest.OperationsRestTransport(
         credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
     )
 
-    return OperationsRestClient(transport=transport)
+    return AbstractOperationsClient(transport=transport)
 
 
 # If default endpoint is localhost, then default mtls endpoint will be the same.
@@ -86,29 +86,30 @@ def test__get_default_mtls_endpoint():
     sandbox_mtls_endpoint = "example.mtls.sandbox.googleapis.com"
     non_googleapi = "api.example.com"
 
-    assert OperationsRestClient._get_default_mtls_endpoint(None) is None
+    assert AbstractOperationsClient._get_default_mtls_endpoint(None) is None
     assert (
-        OperationsRestClient._get_default_mtls_endpoint(api_endpoint)
+        AbstractOperationsClient._get_default_mtls_endpoint(api_endpoint)
         == api_mtls_endpoint
     )
     assert (
-        OperationsRestClient._get_default_mtls_endpoint(api_mtls_endpoint)
+        AbstractOperationsClient._get_default_mtls_endpoint(api_mtls_endpoint)
         == api_mtls_endpoint
     )
     assert (
-        OperationsRestClient._get_default_mtls_endpoint(sandbox_endpoint)
+        AbstractOperationsClient._get_default_mtls_endpoint(sandbox_endpoint)
         == sandbox_mtls_endpoint
     )
     assert (
-        OperationsRestClient._get_default_mtls_endpoint(sandbox_mtls_endpoint)
+        AbstractOperationsClient._get_default_mtls_endpoint(sandbox_mtls_endpoint)
         == sandbox_mtls_endpoint
     )
     assert (
-        OperationsRestClient._get_default_mtls_endpoint(non_googleapi) == non_googleapi
+        AbstractOperationsClient._get_default_mtls_endpoint(non_googleapi)
+        == non_googleapi
     )
 
 
-@pytest.mark.parametrize("client_class", [OperationsRestClient])
+@pytest.mark.parametrize("client_class", [AbstractOperationsClient])
 def test_operations_client_from_service_account_info(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -144,7 +145,7 @@ def test_operations_client_service_account_always_use_jwt(
         use_jwt.assert_not_called()
 
 
-@pytest.mark.parametrize("client_class", [OperationsRestClient])
+@pytest.mark.parametrize("client_class", [AbstractOperationsClient])
 def test_operations_client_from_service_account_file(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -163,36 +164,36 @@ def test_operations_client_from_service_account_file(client_class):
 
 
 def test_operations_client_get_transport_class():
-    transport = OperationsRestClient.get_transport_class()
+    transport = AbstractOperationsClient.get_transport_class()
     available_transports = [
         transports.OperationsRestTransport,
     ]
     assert transport in available_transports
 
-    transport = OperationsRestClient.get_transport_class("rest")
+    transport = AbstractOperationsClient.get_transport_class("rest")
     assert transport == transports.OperationsRestTransport
 
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
+    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
 )
 @mock.patch.object(
-    OperationsRestClient,
+    AbstractOperationsClient,
     "DEFAULT_ENDPOINT",
-    modify_default_endpoint(OperationsRestClient),
+    modify_default_endpoint(AbstractOperationsClient),
 )
 def test_operations_client_client_options(
     client_class, transport_class, transport_name
 ):
     # Check that if channel is provided we won't create a new one.
-    with mock.patch.object(OperationsRestClient, "get_transport_class") as gtc:
+    with mock.patch.object(AbstractOperationsClient, "get_transport_class") as gtc:
         transport = transport_class(credentials=ga_credentials.AnonymousCredentials())
         client = client_class(transport=transport)
         gtc.assert_not_called()
 
     # Check that if channel is provided via str we will create a new one.
-    with mock.patch.object(OperationsRestClient, "get_transport_class") as gtc:
+    with mock.patch.object(AbstractOperationsClient, "get_transport_class") as gtc:
         client = client_class(transport=transport_name)
         gtc.assert_called()
 
@@ -279,14 +280,14 @@ def test_operations_client_client_options(
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name,use_client_cert_env",
     [
-        (OperationsRestClient, transports.OperationsRestTransport, "rest", "true"),
-        (OperationsRestClient, transports.OperationsRestTransport, "rest", "false"),
+        (AbstractOperationsClient, transports.OperationsRestTransport, "rest", "true"),
+        (AbstractOperationsClient, transports.OperationsRestTransport, "rest", "false"),
     ],
 )
 @mock.patch.object(
-    OperationsRestClient,
+    AbstractOperationsClient,
     "DEFAULT_ENDPOINT",
-    modify_default_endpoint(OperationsRestClient),
+    modify_default_endpoint(AbstractOperationsClient),
 )
 @mock.patch.dict(os.environ, {"GOOGLE_API_USE_MTLS_ENDPOINT": "auto"})
 def test_operations_client_mtls_env_auto(
@@ -392,7 +393,7 @@ def test_operations_client_mtls_env_auto(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
+    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
 )
 def test_operations_client_client_options_scopes(
     client_class, transport_class, transport_name
@@ -416,7 +417,7 @@ def test_operations_client_client_options_scopes(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(OperationsRestClient, transports.OperationsRestTransport, "rest")],
+    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
 )
 def test_operations_client_client_options_credentials_file(
     client_class, transport_class, transport_name
@@ -441,7 +442,7 @@ def test_operations_client_client_options_credentials_file(
 def test_list_operations_rest(
     transport: str = "rest", request_type=operations_pb2.ListOperationsRequest
 ):
-    client = _get_operations_rest_client()
+    client = _get_operations_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -478,7 +479,7 @@ def test_list_operations_rest(
 
 
 def test_list_operations_rest_failure():
-    client = _get_operations_rest_client(http_options=None)
+    client = _get_operations_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -493,7 +494,9 @@ def test_list_operations_rest_failure():
 
 
 def test_list_operations_rest_pager():
-    client = OperationsRestClient(credentials=ga_credentials.AnonymousCredentials(),)
+    client = AbstractOperationsClient(
+        credentials=ga_credentials.AnonymousCredentials(),
+    )
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -544,7 +547,7 @@ def test_list_operations_rest_pager():
 def test_get_operation_rest(
     transport: str = "rest", request_type=operations_pb2.GetOperationRequest
 ):
-    client = _get_operations_rest_client()
+    client = _get_operations_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -575,7 +578,7 @@ def test_get_operation_rest(
 
 
 def test_get_operation_rest_failure():
-    client = _get_operations_rest_client(http_options=None)
+    client = _get_operations_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -594,7 +597,7 @@ def test_get_operation_rest_failure():
 def test_delete_operation_rest(
     transport: str = "rest", request_type=operations_pb2.DeleteOperationRequest
 ):
-    client = _get_operations_rest_client()
+    client = _get_operations_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -615,7 +618,7 @@ def test_delete_operation_rest(
 
 
 def test_delete_operation_rest_failure():
-    client = _get_operations_rest_client(http_options=None)
+    client = _get_operations_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -632,7 +635,7 @@ def test_delete_operation_rest_failure():
 
 
 def test_cancel_operation_rest(transport: str = "rest"):
-    client = _get_operations_rest_client()
+    client = _get_operations_client()
 
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(Session, "request") as req:
@@ -653,7 +656,7 @@ def test_cancel_operation_rest(transport: str = "rest"):
 
 
 def test_cancel_operation_rest_failure():
-    client = _get_operations_rest_client(http_options=None)
+    client = _get_operations_client(http_options=None)
 
     with mock.patch.object(Session, "request") as req:
         response_value = Response()
@@ -675,7 +678,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        OperationsRestClient(
+        AbstractOperationsClient(
             credentials=ga_credentials.AnonymousCredentials(), transport=transport,
         )
 
@@ -684,7 +687,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        OperationsRestClient(
+        AbstractOperationsClient(
             client_options={"credentials_file": "credentials.json"},
             transport=transport,
         )
@@ -694,7 +697,7 @@ def test_credentials_transport_error():
         credentials=ga_credentials.AnonymousCredentials(),
     )
     with pytest.raises(ValueError):
-        OperationsRestClient(
+        AbstractOperationsClient(
             client_options={"scopes": ["1", "2"]}, transport=transport,
         )
 
@@ -704,7 +707,7 @@ def test_transport_instance():
     transport = transports.OperationsRestTransport(
         credentials=ga_credentials.AnonymousCredentials(),
     )
-    client = OperationsRestClient(transport=transport)
+    client = AbstractOperationsClient(transport=transport)
     assert client.transport is transport
 
 
@@ -787,7 +790,7 @@ def test_operations_auth_adc():
     # If no credentials are provided, we should use ADC credentials.
     with mock.patch.object(google.auth, "default", autospec=True) as adc:
         adc.return_value = (ga_credentials.AnonymousCredentials(), None)
-        OperationsRestClient()
+        AbstractOperationsClient()
         adc.assert_called_once_with(
             scopes=None, default_scopes=(), quota_project_id=None,
         )
@@ -805,7 +808,7 @@ def test_operations_http_transport_client_cert_source_for_mtls():
 
 
 def test_operations_host_no_port():
-    client = OperationsRestClient(
+    client = AbstractOperationsClient(
         credentials=ga_credentials.AnonymousCredentials(),
         client_options=client_options.ClientOptions(
             api_endpoint="longrunning.googleapis.com"
@@ -815,7 +818,7 @@ def test_operations_host_no_port():
 
 
 def test_operations_host_with_port():
-    client = OperationsRestClient(
+    client = AbstractOperationsClient(
         credentials=ga_credentials.AnonymousCredentials(),
         client_options=client_options.ClientOptions(
             api_endpoint="longrunning.googleapis.com:8000"
@@ -829,7 +832,7 @@ def test_common_billing_account_path():
     expected = "billingAccounts/{billing_account}".format(
         billing_account=billing_account,
     )
-    actual = OperationsRestClient.common_billing_account_path(billing_account)
+    actual = AbstractOperationsClient.common_billing_account_path(billing_account)
     assert expected == actual
 
 
@@ -837,17 +840,17 @@ def test_parse_common_billing_account_path():
     expected = {
         "billing_account": "clam",
     }
-    path = OperationsRestClient.common_billing_account_path(**expected)
+    path = AbstractOperationsClient.common_billing_account_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = OperationsRestClient.parse_common_billing_account_path(path)
+    actual = AbstractOperationsClient.parse_common_billing_account_path(path)
     assert expected == actual
 
 
 def test_common_folder_path():
     folder = "whelk"
     expected = "folders/{folder}".format(folder=folder,)
-    actual = OperationsRestClient.common_folder_path(folder)
+    actual = AbstractOperationsClient.common_folder_path(folder)
     assert expected == actual
 
 
@@ -855,17 +858,17 @@ def test_parse_common_folder_path():
     expected = {
         "folder": "octopus",
     }
-    path = OperationsRestClient.common_folder_path(**expected)
+    path = AbstractOperationsClient.common_folder_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = OperationsRestClient.parse_common_folder_path(path)
+    actual = AbstractOperationsClient.parse_common_folder_path(path)
     assert expected == actual
 
 
 def test_common_organization_path():
     organization = "oyster"
     expected = "organizations/{organization}".format(organization=organization,)
-    actual = OperationsRestClient.common_organization_path(organization)
+    actual = AbstractOperationsClient.common_organization_path(organization)
     assert expected == actual
 
 
@@ -873,17 +876,17 @@ def test_parse_common_organization_path():
     expected = {
         "organization": "nudibranch",
     }
-    path = OperationsRestClient.common_organization_path(**expected)
+    path = AbstractOperationsClient.common_organization_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = OperationsRestClient.parse_common_organization_path(path)
+    actual = AbstractOperationsClient.parse_common_organization_path(path)
     assert expected == actual
 
 
 def test_common_project_path():
     project = "cuttlefish"
     expected = "projects/{project}".format(project=project,)
-    actual = OperationsRestClient.common_project_path(project)
+    actual = AbstractOperationsClient.common_project_path(project)
     assert expected == actual
 
 
@@ -891,10 +894,10 @@ def test_parse_common_project_path():
     expected = {
         "project": "mussel",
     }
-    path = OperationsRestClient.common_project_path(**expected)
+    path = AbstractOperationsClient.common_project_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = OperationsRestClient.parse_common_project_path(path)
+    actual = AbstractOperationsClient.parse_common_project_path(path)
     assert expected == actual
 
 
@@ -904,7 +907,7 @@ def test_common_location_path():
     expected = "projects/{project}/locations/{location}".format(
         project=project, location=location,
     )
-    actual = OperationsRestClient.common_location_path(project, location)
+    actual = AbstractOperationsClient.common_location_path(project, location)
     assert expected == actual
 
 
@@ -913,10 +916,10 @@ def test_parse_common_location_path():
         "project": "scallop",
         "location": "abalone",
     }
-    path = OperationsRestClient.common_location_path(**expected)
+    path = AbstractOperationsClient.common_location_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = OperationsRestClient.parse_common_location_path(path)
+    actual = AbstractOperationsClient.parse_common_location_path(path)
     assert expected == actual
 
 
@@ -926,7 +929,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
     with mock.patch.object(
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
-        OperationsRestClient(
+        AbstractOperationsClient(
             credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
         )
         prep.assert_called_once_with(client_info)
@@ -934,7 +937,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
     with mock.patch.object(
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
-        transport_class = OperationsRestClient.get_transport_class()
+        transport_class = AbstractOperationsClient.get_transport_class()
         transport_class(
             credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
         )

@@ -37,7 +37,7 @@ from google.oauth2 import service_account  # type: ignore
 OptionalRetry = Union[retries.Retry, object]
 
 
-class OperationsRestClientMeta(type):
+class AbstractOperationsClientMeta(type):
     """Metaclass for the Operations client.
 
     This provides class-level methods for building and retrieving
@@ -69,7 +69,7 @@ class OperationsRestClientMeta(type):
         return next(iter(cls._transport_registry.values()))
 
 
-class OperationsRestClient(metaclass=OperationsRestClientMeta):
+class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
     """Manages long-running operations with an API service.
 
     When an API method normally takes long time to complete, it can be
@@ -128,7 +128,7 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
             kwargs: Additional arguments to pass to the constructor.
 
         Returns:
-            OperationsRestClient: The constructed client.
+            AbstractOperationsClient: The constructed client.
         """
         credentials = service_account.Credentials.from_service_account_info(info)
         kwargs["credentials"] = credentials
@@ -146,7 +146,7 @@ class OperationsRestClient(metaclass=OperationsRestClientMeta):
             kwargs: Additional arguments to pass to the constructor.
 
         Returns:
-            OperationsRestClient: The constructed client.
+            AbstractOperationsClient: The constructed client.
         """
         credentials = service_account.Credentials.from_service_account_file(filename)
         kwargs["credentials"] = credentials

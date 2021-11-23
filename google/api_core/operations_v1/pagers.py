@@ -28,7 +28,7 @@ class ListOperationsPager:
     """A pager for iterating through ``list_operations`` requests.
 
     This class thinly wraps an initial
-    :class:`google.api_core.operations_v1.types.ListOperationsResponse` object, and
+    :class:`google.longrunning.operations_pb2.ListOperationsResponse` object, and
     provides an ``__iter__`` method to iterate through its
     ``operations`` field.
 
@@ -37,7 +37,7 @@ class ListOperationsPager:
     through the ``operations`` field on the
     corresponding responses.
 
-    All the usual :class:`google.api_core.operations_v1.types.ListOperationsResponse`
+    All the usual :class:`google.longrunning.operations_pb2.ListOperationsResponse`
     attributes are available on the pager. If multiple requests are made, only
     the most recent response is retained, and thus used for attribute lookup.
     """
@@ -55,9 +55,9 @@ class ListOperationsPager:
         Args:
             method (Callable): The method that was originally called, and
                 which instantiated this pager.
-            request (google.api_core.operations_v1.types.ListOperationsRequest):
+            request (google.longrunning.operations_pb2.ListOperationsRequest):
                 The initial request object.
-            response (google.api_core.operations_v1.types.ListOperationsResponse):
+            response (google.longrunning.operations_pb2.ListOperationsResponse):
                 The initial response object.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
