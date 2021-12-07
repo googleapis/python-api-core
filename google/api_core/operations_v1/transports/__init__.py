@@ -1,4 +1,5 @@
-# Copyright 2016 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+from collections import OrderedDict
+from typing import Dict, Type
 
-"""Google namespace package."""
+from .base import OperationsTransport
+from .rest import OperationsRestTransport
 
-try:
-    import pkg_resources
 
-    pkg_resources.declare_namespace(__name__)
-except ImportError:
-    import pkgutil
+# Compile a registry of transports.
+_transport_registry = OrderedDict()  # type: Dict[str, Type[OperationsTransport]]
+_transport_registry["rest"] = OperationsRestTransport
 
-    # See: https://github.com/python/mypy/issues/1422
-    __path__ = pkgutil.extend_path(__path__, __name__)  # type: ignore
+__all__ = (
+    "OperationsTransport",
+    "OperationsRestTransport",
+)
