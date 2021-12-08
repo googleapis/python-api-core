@@ -472,8 +472,13 @@ def from_http_response(response):
     errors = payload.get("error", {}).get("errors", ())
     # In JSON, details are already formatted in developer-friendly way.
     details = payload.get("error", {}).get("details", ())
-    error_info_type = "type.googleapis.com/google.rpc.ErrorInfo"
-    error_info = [d for d in details if d.get("@type", "") == error_info_type]
+    error_info = list(
+        filter(
+            lambda detail: detail.get("@type", "")
+            == "type.googleapis.com/google.rpc.ErrorInfo",
+            details,
+        )
+    )
     error_info = error_info[0] if error_info else None
 
     message = "{method} {url}: {error}".format(
