@@ -74,8 +74,6 @@ class ResponseMock(requests.Response):
             self._i += n
             return x.decode("utf-8")
 
-        def __iter__(self):
-            return self
 
     def __init__(
         self,
@@ -176,7 +174,7 @@ def test_next_not_array():
 
 def test_cancel():
     with patch.object(
-        rest_streaming.ResponseIterator, "cancel", return_value=None
+        ResponseMock, "close", return_value=None
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=EchoResponse)
         itr = rest_streaming.ResponseIterator(resp, EchoResponse)
