@@ -77,9 +77,15 @@ class ResponseIterator:
                 if self._in_string:
                     self._obj += char
             elif char == "[":
-                self._level += 1
+                if self._level == 0:
+                    self._level += 1
+                else:
+                    self._obj += char
             elif char == "]":
-                self._level -= 1
+                if self._level == 1:
+                    self._level -= 1
+                else:
+                    self._obj += char
             else:
                 self._obj += char
 

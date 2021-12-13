@@ -24,9 +24,18 @@ import requests
 from google.api_core import rest_streaming
 
 
+class Genre(proto.Enum):
+    GENRE_UNSPECIFIED = 0
+    CLASSICAL = 1
+    JAZZ = 2
+    ROCK = 3
+
+
 class Composer(proto.Message):
     given_name = proto.Field(proto.STRING, number=1)
     family_name = proto.Field(proto.STRING, number=2)
+    relateds = proto.RepeatedField(proto.STRING, number=3)
+    indices = proto.MapField(proto.STRING, proto.STRING, number=4)
 
 
 class Song(proto.Message):
@@ -34,6 +43,10 @@ class Song(proto.Message):
     title = proto.Field(proto.STRING, number=2)
     lyrics = proto.Field(proto.STRING, number=3)
     year = proto.Field(proto.INT32, number=4)
+    genre = proto.Field(Genre, number=5)
+    is_five_mins_longer = proto.Field(proto.BOOL, number=6)
+    score = proto.Field(proto.DOUBLE, number=7)
+    likes = proto.Field(proto.INT64, number=8)
 
 
 class EchoResponse(proto.Message):
@@ -43,15 +56,10 @@ class EchoResponse(proto.Message):
 class ResponseMock(requests.Response):
     class _ResponseItr:
         def __init__(
-            self,
-            _response_bytes: bytes,
-            decode_unicode: bool,
-            random_split=False,
-            seed=0,
+            self, _response_bytes: bytes, random_split=False, seed=0,
         ):
             self._responses_bytes = _response_bytes
             self._i = 0
-            self._decode_unicode = decode_unicode
             self._random_split = random_split
             random.seed(seed)
 
@@ -64,9 +72,7 @@ class ResponseMock(requests.Response):
                 n = 1
             x = self._responses_bytes[self._i : self._i + n]
             self._i += n
-            if self._decode_unicode:
-                x = x.decode("utf-8")
-            return x
+            return x.decode("utf-8")
 
         def __iter__(self):
             return self
@@ -101,11 +107,9 @@ class ResponseMock(requests.Response):
     def close(self):
         raise NotImplementedError()
 
-    def iter_content(self, *args, decode_unicode=True, **kwargs):
+    def iter_content(self, *args, **kwargs):
         return self._ResponseItr(
-            self._parse_responses(self._responses),
-            decode_unicode,
-            random_split=self._random_split,
+            self._parse_responses(self._responses), random_split=self._random_split,
         )
 
 
@@ -119,6 +123,16 @@ def test_next_simple():
 
 
 def test_next_nested():
+    responses = [
+        Song(title="some song", composer=Composer(given_name="some name")),
+        Song(title="another song"),
+    ]
+    resp = ResponseMock(responses=responses, random_split=False, response_cls=Song)
+    itr = rest_streaming.ResponseIterator(resp, Song)
+    assert list(itr) == responses
+
+
+def test_next_random():
     responses = [
         Song(title="some song", composer=Composer(given_name="some name")),
         Song(title="another song"),
@@ -141,7 +155,7 @@ def test_next_stress():
 
 def test_next_escaped_characters_in_string():
     responses = [
-        Song(title="title\nfoo\tbar", composer=Composer(given_name="name\n\n\n"))
+        Song(title="title\nfoo\tbar{}", composer=Composer(given_name="name\n\n\n"))
     ]
     resp = ResponseMock(responses=responses, random_split=True, response_cls=Song)
     itr = rest_streaming.ResponseIterator(resp, Song)
@@ -157,4 +171,14 @@ def test_next_not_array():
         itr = rest_streaming.ResponseIterator(resp, EchoResponse)
         with pytest.raises(ValueError):
             next(itr)
+        mock_method.assert_called_once()
+
+
+def test_cancel():
+    with patch.object(
+        rest_streaming.ResponseIterator, "cancel", return_value=None
+    ) as mock_method:
+        resp = ResponseMock(responses=[], response_cls=EchoResponse)
+        itr = rest_streaming.ResponseIterator(resp, EchoResponse)
+        itr.cancel()
         mock_method.assert_called_once()
