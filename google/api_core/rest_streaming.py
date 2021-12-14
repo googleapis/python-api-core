@@ -14,8 +14,10 @@
 
 """Helpers for server-side streaming in REST."""
 
+from collections import deque
 import json
 import string
+from typing import Deque
 
 import requests
 
@@ -35,7 +37,7 @@ class ResponseIterator:
         # Inner iterator over HTTP response's content.
         self._response_itr = self._response.iter_content(decode_unicode=True)
         # Contains a list of JSON responses ready to be sent to user.
-        self._ready_objs = []
+        self._ready_objs: Deque[str] = deque()
         # Current JSON response being built.
         self._obj = ""
         # Keeps track of the nesting level within a JSON object.
@@ -96,10 +98,10 @@ class ResponseIterator:
         return self._grab()
 
     def _grab(self):
-        obj = self._ready_objs[0]
-        self._ready_objs = self._ready_objs[1:]
         # Add extra quotes to make json.loads happy.
-        return self._response_message_cls.from_json(json.loads('"' + obj + '"'))
+        return self._response_message_cls.from_json(
+            json.loads('"' + self._ready_objs.popleft() + '"')
+        )
 
     def __iter__(self):
         return self

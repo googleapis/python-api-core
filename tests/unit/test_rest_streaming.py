@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import logging
 import random
 from typing import List
 from unittest.mock import patch
@@ -22,6 +23,13 @@ import pytest
 import requests
 
 from google.api_core import rest_streaming
+from google.protobuf import duration_pb2
+from google.protobuf import timestamp_pb2
+
+
+SEED = 0
+logging.info(f"Starting rest streaming tests with random seed: {SEED}")
+random.seed(SEED)
 
 
 class Genre(proto.Enum):
@@ -47,6 +55,8 @@ class Song(proto.Message):
     is_five_mins_longer = proto.Field(proto.BOOL, number=6)
     score = proto.Field(proto.DOUBLE, number=7)
     likes = proto.Field(proto.INT64, number=8)
+    duration = proto.Field(duration_pb2.Duration, number=9)
+    date_added = proto.Field(timestamp_pb2.Timestamp, number=10)
 
 
 class EchoResponse(proto.Message):
@@ -55,13 +65,10 @@ class EchoResponse(proto.Message):
 
 class ResponseMock(requests.Response):
     class _ResponseItr:
-        def __init__(
-            self, _response_bytes: bytes, random_split=False, seed=0,
-        ):
+        def __init__(self, _response_bytes: bytes, random_split=False):
             self._responses_bytes = _response_bytes
             self._i = 0
             self._random_split = random_split
-            random.seed(seed)
 
         def __next__(self):
             if self._i == len(self._responses_bytes):
@@ -74,32 +81,22 @@ class ResponseMock(requests.Response):
             self._i += n
             return x.decode("utf-8")
 
-
     def __init__(
-        self,
-        *args,
-        responses: List[proto.Message],
-        random_split=False,
-        response_cls,
-        **kwargs
+        self, responses: List[proto.Message], response_cls, random_split=False,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self._responses = responses
         self._random_split = random_split
         self._response_message_cls = response_cls
 
     def _parse_responses(self, responses: List[proto.Message]) -> bytes:
-        ret_val = "["
         # json.dumps returns a string surrounded with quotes that need to be stripped
         # in order to be an actual JSON.
         json_responses = [
-            json.dumps(self._response_message_cls.to_json(r))[1:-1] for r in responses
+            json.dumps(self._response_message_cls.to_json(r)).strip('"')
+            for r in responses
         ]
-        for x in json_responses:
-            ret_val += x
-            ret_val += ","
-        ret_val = ret_val[:-1]  # Remove trailing comma.
-        ret_val += "]"
+        ret_val = "[{}]".format(",".join(json_responses))
         return bytes(ret_val, "utf-8")
 
     def close(self):
@@ -111,36 +108,31 @@ class ResponseMock(requests.Response):
         )
 
 
-def test_next_simple():
+@pytest.mark.parametrize("random_split", [True, False])
+def test_next_simple(random_split):
     responses = [EchoResponse(content="hello world"), EchoResponse(content="yes")]
     resp = ResponseMock(
-        responses=responses, random_split=False, response_cls=EchoResponse
+        responses=responses, random_split=random_split, response_cls=EchoResponse
     )
     itr = rest_streaming.ResponseIterator(resp, EchoResponse)
     assert list(itr) == responses
 
 
-def test_next_nested():
+@pytest.mark.parametrize("random_split", [True, False])
+def test_next_nested(random_split):
     responses = [
         Song(title="some song", composer=Composer(given_name="some name")),
         Song(title="another song"),
     ]
-    resp = ResponseMock(responses=responses, random_split=False, response_cls=Song)
+    resp = ResponseMock(
+        responses=responses, random_split=random_split, response_cls=Song
+    )
     itr = rest_streaming.ResponseIterator(resp, Song)
     assert list(itr) == responses
 
 
-def test_next_random():
-    responses = [
-        Song(title="some song", composer=Composer(given_name="some name")),
-        Song(title="another song"),
-    ]
-    resp = ResponseMock(responses=responses, random_split=True, response_cls=Song)
-    itr = rest_streaming.ResponseIterator(resp, Song)
-    assert list(itr) == responses
-
-
-def test_next_stress():
+@pytest.mark.parametrize("random_split", [True, False])
+def test_next_stress(random_split):
     n = 50
     responses = [
         Song(title="title_%d" % i, composer=Composer(given_name="name_%d" % i))
@@ -151,11 +143,14 @@ def test_next_stress():
     assert list(itr) == responses
 
 
-def test_next_escaped_characters_in_string():
+@pytest.mark.parametrize("random_split", [True, False])
+def test_next_escaped_characters_in_string(random_split):
     responses = [
         Song(title="title\nfoo\tbar{}", composer=Composer(given_name="name\n\n\n"))
     ]
-    resp = ResponseMock(responses=responses, random_split=True, response_cls=Song)
+    resp = ResponseMock(
+        responses=responses, random_split=random_split, response_cls=Song
+    )
     itr = rest_streaming.ResponseIterator(resp, Song)
     assert list(itr) == responses
 
@@ -173,9 +168,7 @@ def test_next_not_array():
 
 
 def test_cancel():
-    with patch.object(
-        ResponseMock, "close", return_value=None
-    ) as mock_method:
+    with patch.object(ResponseMock, "close", return_value=None) as mock_method:
         resp = ResponseMock(responses=[], response_cls=EchoResponse)
         itr = rest_streaming.ResponseIterator(resp, EchoResponse)
         itr.cancel()
