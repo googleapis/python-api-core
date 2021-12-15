@@ -4,6 +4,14 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.3.1](https://www.github.com/googleapis/python-api-core/compare/v2.3.0...v2.3.1) (2021-12-15)
+
+
+### Bug Fixes
+
+* exclude function target from retry deadline exceeded exception message ([#318](https://www.github.com/googleapis/python-api-core/issues/318)) ([34ebdcc](https://www.github.com/googleapis/python-api-core/commit/34ebdcc251d4f3d7d496e8e0b78847645a06650b))
+
+
 ## [2.3.0](https://www.github.com/googleapis/python-api-core/compare/v2.2.2...v2.3.0) (2021-11-25)
 
 
