@@ -4,6 +4,11 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.3.2](https://www.github.com/googleapis/python-api-core/compare/v2.3.1...v2.3.2) (2021-12-16)
+
+### Bug Fixes
+
+
 ## [2.3.1](https://www.github.com/googleapis/python-api-core/compare/v2.3.0...v2.3.1) (2021-12-15)
 
 
