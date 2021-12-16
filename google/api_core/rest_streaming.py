@@ -63,14 +63,16 @@ class ResponseIterator:
                 if self._level == 1:
                     # Level 1 corresponds to the outermost JSON object
                     # (i.e. the one we care about).
-                    self._obj = char
+                    self._obj = ""
                 if not self._in_string:
                     self._level += 1
+                self._obj += char
             elif char == "}":
+                self._obj += char
                 if not self._in_string:
                     self._level -= 1
                 if not self._in_string and self._level == 1:
-                    self._ready_objs.append(self._obj + char)
+                    self._ready_objs.append(self._obj)
             elif char == '"':
                 # Helps to deal with an escaped quotes inside of a string.
                 if not self._next_should_be_escaped:
@@ -114,6 +116,7 @@ class ResponseIterator:
 
     def _grab(self):
         # Add extra quotes to make json.loads happy.
+        print(self._ready_objs)
         return self._response_message_cls.from_json(self._ready_objs.popleft())
 
     def __iter__(self):

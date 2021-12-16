@@ -96,6 +96,7 @@ class ResponseMock(requests.Response):
         json_responses = [
             self._response_message_cls.to_json(r).strip('"') for r in responses
         ]
+        logging.info(f"Sending JSON stream: {json_responses}")
         ret_val = "[{}]".format(",".join(json_responses))
         return bytes(ret_val, "utf-8")
 
@@ -122,7 +123,7 @@ def test_next_simple(random_split):
 def test_next_nested(random_split):
     responses = [
         Song(title="some song", composer=Composer(given_name="some name")),
-        Song(title="another song", duration=datetime.datetime()),
+        Song(title="another song", date_added=datetime.datetime(2021, 12, 17)),
     ]
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=Song
