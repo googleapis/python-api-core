@@ -15,7 +15,6 @@
 """Helpers for server-side streaming in REST."""
 
 from collections import deque
-import json
 import string
 from typing import Deque
 
@@ -45,6 +44,8 @@ class ResponseIterator:
         # Keeps track whether HTTP response is currently sending values
         # inside of a string value.
         self._in_string = False
+        # Whether an escape symbol "\" was encountered.
+        self._next_should_be_escaped = False
 
     def cancel(self):
         """Cancel existing streaming operation.
@@ -62,19 +63,19 @@ class ResponseIterator:
                 if self._level == 1:
                     # Level 1 corresponds to the outermost JSON object
                     # (i.e. the one we care about).
-                    self._obj = ""
+                    self._obj = char
                 if not self._in_string:
                     self._level += 1
-                self._obj += char
-            elif char == '"':
-                self._in_string = not self._in_string
-                self._obj += char
             elif char == "}":
-                self._obj += char
                 if not self._in_string:
                     self._level -= 1
                 if not self._in_string and self._level == 1:
-                    self._ready_objs.append(self._obj)
+                    self._ready_objs.append(self._obj + char)
+            elif char == '"':
+                # Helps to deal with an escaped quotes inside of a string.
+                if not self._next_should_be_escaped:
+                    self._in_string = not self._in_string
+                self._obj += char
             elif char in string.whitespace:
                 if self._in_string:
                     self._obj += char
@@ -91,17 +92,29 @@ class ResponseIterator:
             else:
                 self._obj += char
 
+            if char == "\\":
+                # Escaping the "\".
+                if self._next_should_be_escaped:
+                    self._next_should_be_escaped = False
+                else:
+                    self._next_should_be_escaped = True
+            else:
+                self._next_should_be_escaped = False
+
     def __next__(self):
         while not self._ready_objs:
-            chunk = next(self._response_itr)
-            self._process_chunk(chunk)
+            try:
+                chunk = next(self._response_itr)
+                self._process_chunk(chunk)
+            except StopIteration as e:
+                if self._level > 0:
+                    raise ValueError("Unfinished stream: %s" % self._obj)
+                raise e
         return self._grab()
 
     def _grab(self):
         # Add extra quotes to make json.loads happy.
-        return self._response_message_cls.from_json(
-            json.loads('"' + self._ready_objs.popleft() + '"')
-        )
+        return self._response_message_cls.from_json(self._ready_objs.popleft())
 
     def __iter__(self):
         return self
