@@ -116,7 +116,6 @@ class ResponseIterator:
 
     def _grab(self):
         # Add extra quotes to make json.loads happy.
-        print(self._ready_objs)
         return self._response_message_cls.from_json(self._ready_objs.popleft())
 
     def __iter__(self):
