@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+* address broken wheels in version 2.3.1
 
 ## [2.3.1](https://www.github.com/googleapis/python-api-core/compare/v2.3.0...v2.3.1) (2021-12-15)
 
