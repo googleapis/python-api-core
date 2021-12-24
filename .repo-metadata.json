@@ -1,7 +1,7 @@
 {
     "name": "google-api-core",
     "name_pretty": "Google API client core library",
-    "client_documentation": "https://cloud.google.com/python/docs/reference/google-api-core/latest",
+    "client_documentation": "https://googleapis.dev/python/google-api-core/latest",
     "release_level": "stable",
     "language": "python",
     "library_type": "CORE",
