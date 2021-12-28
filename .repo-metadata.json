@@ -8,6 +8,5 @@
     "repo": "googleapis/python-api-core",
     "distribution_name": "google-api-core",
     "default_version": "",
-    "codeowner_team": "@googleapis/actools-python",
-    "api_shortname": "google-api-core"
+    "codeowner_team": "@googleapis/actools-python"
 }
