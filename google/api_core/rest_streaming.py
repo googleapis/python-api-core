@@ -45,7 +45,7 @@ class ResponseIterator:
         # inside of a string value.
         self._in_string = False
         # Whether an escape symbol "\" was encountered.
-        self._next_should_be_escaped = False
+        self._escape_next = False
 
     def cancel(self):
         """Cancel existing streaming operation.
@@ -75,7 +75,7 @@ class ResponseIterator:
                     self._ready_objs.append(self._obj)
             elif char == '"':
                 # Helps to deal with an escaped quotes inside of a string.
-                if not self._next_should_be_escaped:
+                if not self._escape_next:
                     self._in_string = not self._in_string
                 self._obj += char
             elif char in string.whitespace:
@@ -93,15 +93,7 @@ class ResponseIterator:
                     self._obj += char
             else:
                 self._obj += char
-
-            if char == "\\":
-                # Escaping the "\".
-                if self._next_should_be_escaped:
-                    self._next_should_be_escaped = False
-                else:
-                    self._next_should_be_escaped = True
-            else:
-                self._next_should_be_escaped = False
+            self._escape_next = not self._escape_next if char == "\\" else False
 
     def __next__(self):
         while not self._ready_objs:
