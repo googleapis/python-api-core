@@ -13,10 +13,6 @@
 * iterator for processing JSON responses in REST streaming. ([#317](https://www.github.com/googleapis/python-api-core/issues/317)) ([f9f2696](https://www.github.com/googleapis/python-api-core/commit/f9f26969842b456ea372bed941d712b7a9ab7239))
 
 
-### Bug Fixes
-
-* exclude function target from retry deadline exceeded exception message ([#318](https://www.github.com/googleapis/python-api-core/issues/318)) ([34ebdcc](https://www.github.com/googleapis/python-api-core/commit/34ebdcc251d4f3d7d496e8e0b78847645a06650b))
-
 ## [2.3.0](https://www.github.com/googleapis/python-api-core/compare/v2.2.2...v2.3.0) (2021-11-25)
 
 
