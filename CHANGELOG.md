@@ -13,7 +13,6 @@
 * iterator for processing JSON responses in REST streaming. ([#317](https://www.github.com/googleapis/python-api-core/issues/317)) ([f9f2696](https://www.github.com/googleapis/python-api-core/commit/f9f26969842b456ea372bed941d712b7a9ab7239))
 
 ## [2.3.2](https://www.github.com/googleapis/python-api-core/compare/v2.3.1...v2.3.2) (2021-12-16)
-
 ### Bug Fixes
 
 * address broken wheels in version 2.3.1
