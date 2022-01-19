@@ -4,6 +4,76 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.4.0](https://www.github.com/googleapis/python-api-core/compare/v2.3.2...v2.4.0) (2022-01-11)
+
+
+### Features
+
+* add support for 'error_info' ([#315](https://www.github.com/googleapis/python-api-core/issues/315)) ([cc46aa6](https://www.github.com/googleapis/python-api-core/commit/cc46aa68ec184871330d16a6c767f57a4f0eb633))
+* iterator for processing JSON responses in REST streaming. ([#317](https://www.github.com/googleapis/python-api-core/issues/317)) ([f9f2696](https://www.github.com/googleapis/python-api-core/commit/f9f26969842b456ea372bed941d712b7a9ab7239))
+
+## [2.3.2](https://www.github.com/googleapis/python-api-core/compare/v2.3.1...v2.3.2) (2021-12-16)
+
+
+### Bug Fixes
+
+* address broken wheels in version 2.3.1
+
+## [2.3.1](https://www.github.com/googleapis/python-api-core/compare/v2.3.0...v2.3.1) (2021-12-15)
+
+
+### Bug Fixes
+* exclude function target from retry deadline exceeded exception message ([#318](https://www.github.com/googleapis/python-api-core/issues/318)) ([34ebdcc](https://www.github.com/googleapis/python-api-core/commit/34ebdcc251d4f3d7d496e8e0b78847645a06650b))
+
+## [2.3.0](https://www.github.com/googleapis/python-api-core/compare/v2.2.2...v2.3.0) (2021-11-25)
+
+
+### Features
+
+* add operations rest client to support long-running operations. ([#311](https://www.github.com/googleapis/python-api-core/issues/311)) ([ce1adf3](https://www.github.com/googleapis/python-api-core/commit/ce1adf395982ede157c0f25a920946bb52789873))
+
+
+### Bug Fixes
+
+* handle bare 'grpc.Call' in 'from_grpc_error' ([#298](https://www.github.com/googleapis/python-api-core/issues/298)) ([060b339](https://www.github.com/googleapis/python-api-core/commit/060b339e3af296dd1772bfc1b4a0d2b4264cae1f))
+
+### [2.2.2](https://www.github.com/googleapis/python-api-core/compare/v2.2.1...v2.2.2) (2021-11-02)
+
+
+### Bug Fixes
+
+* make 'gapic_v1.method.DEFAULT' a typed object ([#292](https://www.github.com/googleapis/python-api-core/issues/292)) ([ffc51f0](https://www.github.com/googleapis/python-api-core/commit/ffc51f03c7ce5d9f009ba859b8df385d52925578))
+
+### [2.2.1](https://www.github.com/googleapis/python-api-core/compare/v2.2.0...v2.2.1) (2021-10-26)
+
+
+### Bug Fixes
+
+* revert "fix: do not error on LROs with no response or error" ([#294](https://www.github.com/googleapis/python-api-core/issues/294)) ([9e6091e](https://www.github.com/googleapis/python-api-core/commit/9e6091ee59a30e72a6278b369f6a08e7aef32f22))
+
+## [2.2.0](https://www.github.com/googleapis/python-api-core/compare/v2.1.1...v2.2.0) (2021-10-25)
+
+
+### Features
+
+* add 'GoogleAPICallError.error_details' property ([#286](https://www.github.com/googleapis/python-api-core/issues/286)) ([ef6f0fc](https://www.github.com/googleapis/python-api-core/commit/ef6f0fcfdfe771172056e35e3c990998b3b00416))
+
+### [2.1.1](https://www.github.com/googleapis/python-api-core/compare/v2.1.0...v2.1.1) (2021-10-13)
+
+
+### Bug Fixes
+
+* add mypy checking + 'py.typed' file ([#290](https://www.github.com/googleapis/python-api-core/issues/290)) ([0023ee1](https://www.github.com/googleapis/python-api-core/commit/0023ee1fe0e8b80c7a9e8987e0f322a829e5d613))
+
+## [2.1.0](https://www.github.com/googleapis/python-api-core/compare/v2.0.1...v2.1.0) (2021-10-05)
+
+
+### Features
+
+* add grpc transcoding + tests ([#259](https://www.github.com/googleapis/python-api-core/issues/259)) ([afe0fa1](https://www.github.com/googleapis/python-api-core/commit/afe0fa14c21289c8244606a9f81544cff8ac5f7c))
+* Add helper function to format query_params for rest transport. ([#275](https://www.github.com/googleapis/python-api-core/issues/275)) ([1c5eb4d](https://www.github.com/googleapis/python-api-core/commit/1c5eb4df93d78e791082d9282330ebf0faacd222))
+* add support for Python 3.10 ([#284](https://www.github.com/googleapis/python-api-core/issues/284)) ([a422a5d](https://www.github.com/googleapis/python-api-core/commit/a422a5d72cb6f363d57e7a4effe421ba8e049cde))
+
 ### [2.0.1](https://www.github.com/googleapis/python-api-core/compare/v2.0.0...v2.0.1) (2021-08-31)
 
 

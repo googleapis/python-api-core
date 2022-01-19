@@ -33,8 +33,10 @@ CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
+    "unit_wo_grpc",
     "cover",
     "pytype",
+    "mypy",
     "lint",
     "lint_setup_py",
     "blacken",
@@ -77,7 +79,7 @@ def blacken(session):
     session.run("black", *BLACK_EXCLUDES, *BLACK_PATHS)
 
 
-def default(session):
+def default(session, install_grpc=True):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -91,7 +93,10 @@ def default(session):
 
     # Install all test dependencies, then install this package in-place.
     session.install("mock", "pytest", "pytest-cov")
-    session.install("-e", ".[grpc]", "-c", constraints_path)
+    if install_grpc:
+        session.install("-e", ".[grpc]", "-c", constraints_path)
+    else:
+        session.install("-e", ".", "-c", constraints_path)
 
     pytest_args = [
         "python",
@@ -121,13 +126,13 @@ def default(session):
         session.run(*pytest_args)
 
 
-@nox.session(python=["3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10"])
 def unit(session):
     """Run the unit test suite."""
     default(session)
 
 
-@nox.session(python=["3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10"])
 def unit_grpc_gcp(session):
     """Run the unit test suite with grpcio-gcp installed."""
     constraints_path = str(
@@ -137,6 +142,12 @@ def unit_grpc_gcp(session):
     session.install("-e", ".[grpcgcp]", "-c", constraints_path)
 
     default(session)
+
+
+@nox.session(python=["3.6", "3.10"])
+def unit_wo_grpc(session):
+    """Run the unit test suite w/o grpcio installed"""
+    default(session, install_grpc=False)
 
 
 @nox.session(python="3.6")
@@ -153,6 +164,16 @@ def pytype(session):
     """Run type-checking."""
     session.install(".[grpc, grpcgcp]", "pytype >= 2019.3.21")
     session.run("pytype")
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION)
+def mypy(session):
+    """Run type-checking."""
+    session.install(".[grpc, grpcgcp]", "mypy")
+    session.install(
+        "types-setuptools", "types-requests", "types-protobuf", "types-mock"
+    )
+    session.run("mypy", "google", "tests")
 
 
 @nox.session(python="3.6")
