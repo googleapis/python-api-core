@@ -28,6 +28,7 @@ excludes = [
     ".flake8",  # flake8-import-order, layout
     ".coveragerc",  # layout
     "CONTRIBUTING.rst",  # no systests
+    ".github/workflows/unittest.yml", # exclude unittest gh action
 ]
 templated_files = common.py_library(microgenerator=True, cov_level=100)
 s.move(templated_files, excludes=excludes)
