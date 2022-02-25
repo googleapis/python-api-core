@@ -156,15 +156,15 @@ def test_error():
         CustomOperation(
             name=TEST_OPERATION_NAME,
             status=CustomOperation.StatusCode.DONE,
-            error_code=7,
-            error_message="Permission denied",
+            error_code=400,
+            error_message="Bad request",
         ),
     ]
 
     ex_op, _, _ = make_extended_operation(responses)
 
     # Defaults to CallError when grpc is not installed
-    with pytest.raises((exceptions.PermissionDenied, exceptions.GoogleAPICallError)):
+    with pytest.raises(exceptions.BadRequest):
         ex_op.result()
 
     # Inconsistent result

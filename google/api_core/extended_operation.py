@@ -132,8 +132,7 @@ class ExtendedOperation(polling.PollingFuture):
                 return
 
             if self.error_code and self.error_message:
-                # TODO(dovs): handle this better.
-                exception = exceptions.from_grpc_status(
+                exception = exceptions.from_http_status(
                     status_code=self.error_code,
                     message=self.error_message,
                     response=self._extended_operation,
