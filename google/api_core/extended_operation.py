@@ -17,10 +17,22 @@
 These futures can be used to synchronously wait for the result of a
 lon-running operations using :meth:`ExtendedOperation.result`:
 
-.. code-black:: python
+.. code-block:: python
 
     extended_operation = my_api_client.long_running_method()
-    result =
+
+    extended_operation.result()
+
+Or asynchronously using callbacks and :meth:`Operation.add_done_callback`:
+
+.. code-block:: python
+
+    extended_operation = my_api_client.long_running_method()
+
+    def my_callback(ex_op):
+        print(f"Operation {ex_op.name} completed")
+
+    extended_operation.add_done_callback(my_callback)
 
 """
 
@@ -46,18 +58,19 @@ class ExtendedOperation(polling.PollingFuture):
     Note: Most long-running API methods use google.api_core.operation.Operation
     This class is a wrapper for a subset of methods that use alternative
     Long-Running Operation (LRO) semantics.
+
+    Note: there is not a concrete type the extended operation must be.
+    It MUST have fields that correspond to the following, POSSIBLY WITH DIFFERENT NAMES:
+    * name: str
+    * status: Union[str, bool, enum.Enum]
+    * error_code: int
+    * error_message: str
     """
 
     def __init__(
         self, extended_operation, refresh, cancel, retry=polling.DEFAULT_RETRY
     ):
         super().__init__(retry=retry)
-        # Note: there is not a concrete type the extended operation must be.
-        # It MUST have fields that correspond to the following, POSSIBLY WITH DIFFERENT NAMES:
-        # * name: str
-        # * status: Union[str, bool, enum.Enum]
-        # * error_code: int
-        # * error_message: str
         self._extended_operation = extended_operation
         self._refresh = refresh
         self._cancel = cancel
@@ -149,27 +162,45 @@ class ExtendedOperation(polling.PollingFuture):
 
     @classmethod
     def make(cls, refresh, cancel, extended_operation, **kwargs):
-        # Note: it is the caller's responsibility to set up refresh and cancel
-        # with their correct request argument.
-        # The reason for this is that the services that use Extended Operations
-        # have rpcs that look something like the following:
-        # // service.proto
-        # service MyLongService {
-        #     rpc StartLongTask(StartLongTaskRequest) returns (ExtendedOperation) {
-        #         option (google.cloud.operation_service) = "CustomOperationService";
-        #     }
-        # }
-        #
-        # service CustomOperationService {
-        #     rpc Get(GetOperationRequest) returns (ExtendedOperation) {
-        #         option (google.cloud.operation_polling_method) = true;
-        #     }
-        # }
-        #
-        # Any info needed for the poll, e.g. a name, path params, etc.
-        # is held in the request, which the initial client method is in a much
-        # better position to make made because the caller made the initial request.
-        #
-        # TL;DR: the caller sets up closures for refresh and cancel that carry
-        # the properly configured requests.
+        """
+        Return an instantiated ExtendedOperation (or child) that wraps
+        * a refresh callable
+        * a cancel callable (can be a no-op)
+        * an initial result
+
+        .. note::
+            It is the caller's responsibility to set up refresh and cancel
+            with their correct request argument.
+            The reason for this is that the services that use Extended Operations
+            have rpcs that look something like the following:
+
+            // service.proto
+            service MyLongService {
+                rpc StartLongTask(StartLongTaskRequest) returns (ExtendedOperation) {
+                    option (google.cloud.operation_service) = "CustomOperationService";
+                }
+            }
+
+            service CustomOperationService {
+                rpc Get(GetOperationRequest) returns (ExtendedOperation) {
+                    option (google.cloud.operation_polling_method) = true;
+                }
+            }
+
+            Any info needed for the poll, e.g. a name, path params, etc.
+            is held in the request, which the initial client method is in a much
+            better position to make made because the caller made the initial request.
+
+            TL;DR: the caller sets up closures for refresh and cancel that carry
+            the properly configured requests.
+
+        Args:
+            refresh (Callable[Optional[Retry]][type(extended_operation)]): A callable that
+                returns the latest state of the operation.
+            cancel (Callable[][Any]): A callable that tries to cancel the operation
+                on a best effort basis.
+            extended_operation (Any): The initial response of the long running method.
+                See the docstring for ExtendedOperation.__init__ for requirements on
+                the type and fields of extended_operation
+        """
         return cls(extended_operation, refresh, cancel, **kwargs)
