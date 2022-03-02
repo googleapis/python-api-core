@@ -15,7 +15,7 @@
 """Futures for extended long-running operations returned from Google Cloud APIs.
 
 These futures can be used to synchronously wait for the result of a
-lon-running operations using :meth:`ExtendedOperation.result`:
+long-running operations using :meth:`ExtendedOperation.result`:
 
 .. code-block:: python
 
