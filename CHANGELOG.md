@@ -4,6 +4,27 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.7.0](https://github.com/googleapis/python-api-core/compare/v2.6.1...v2.7.0) (2022-03-08)
+
+
+### Features
+
+* expose extra fields in ExtendedOperation ([#351](https://github.com/googleapis/python-api-core/issues/351)) ([9abc6f4](https://github.com/googleapis/python-api-core/commit/9abc6f48f23c87b9771dca3c96b4f6af39620a50))
+
+### [2.6.1](https://github.com/googleapis/python-api-core/compare/v2.6.0...v2.6.1) (2022-03-05)
+
+
+### Bug Fixes
+
+* Remove py2 tag from wheel ([#343](https://github.com/googleapis/python-api-core/issues/343)) ([7e21e9e](https://github.com/googleapis/python-api-core/commit/7e21e9e34892472a34f9b44175fa761f0e3fd9ed))
+
+## [2.6.0](https://github.com/googleapis/python-api-core/compare/v2.5.0...v2.6.0) (2022-03-03)
+
+
+### Features
+
+* initial support for Extended Operations ([#344](https://github.com/googleapis/python-api-core/issues/344)) ([021bb7d](https://github.com/googleapis/python-api-core/commit/021bb7d5bf0a1d8ac58dbf0c738fac309135ba7d))
+
 ## [2.5.0](https://github.com/googleapis/python-api-core/compare/v2.4.0...v2.5.0) (2022-02-02)
 
 
