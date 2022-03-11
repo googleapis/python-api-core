@@ -27,9 +27,9 @@ METRICS_METADATA_KEY = "x-goog-api-client"
 class ClientInfo(client_info.ClientInfo):
     """Client information used to generate a user-agent for API calls.
 
-    This user-agent information is sent along with API calls to allow the
-    receiving service to do analytics on which versions of Python and Google
-    libraries are being used.
+    This user-agent information is sent along with API calls via the
+    `x-goog-api-client` header to allow the receiving service to do analytics
+    on which versions of Python and Google libraries are being used.
 
     Args:
         python_version (str): The Python interpreter version, for example,
@@ -42,7 +42,7 @@ class ClientInfo(client_info.ClientInfo):
             library, generally used if the client library was not generated
             by gapic or if additional functionality was built on top of
             a gapic client library.
-        user_agent (Optional[str]): Prefix to the user agent header. This is
+        user_agent (Optional[str]): Prefix to the `x-goog-api-client` header. This is
             used to supply information such as application name or partner tool.
             Recommended format: ``application-or-tool-ID/major.minor.version``.
     """
