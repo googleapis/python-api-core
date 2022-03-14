@@ -276,7 +276,11 @@ class BidiRpc(object):
         request_generator = _RequestQueueGenerator(
             self._request_queue, initial_request=self._initial_request
         )
-        call = self._start_rpc(iter(request_generator), metadata=self._rpc_metadata)
+        try:
+            call = self._start_rpc(iter(request_generator), metadata=self._rpc_metadata)
+        except exceptions.GoogleAPICallError as exc:
+            self._on_call_done(exc)
+            raise
 
         request_generator.call = call
 
