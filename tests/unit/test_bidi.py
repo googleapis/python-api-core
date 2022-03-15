@@ -813,7 +813,7 @@ class TestBackgroundConsumer(object):
         bidi_rpc.add_done_callback(callback)
         bidi_rpc._start_rpc.side_effect = expected_exception
 
-        consumer = bidi.BackgroundConsumer(bidi_rpc, on_response=lambda: None)
+        consumer = bidi.BackgroundConsumer(bidi_rpc, on_response=None)
         consumer.start()
         assert callback.call_args.args[0] == expected_exception
 
