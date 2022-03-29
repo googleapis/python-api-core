@@ -64,7 +64,10 @@ def lint(session):
     session.install("flake8", "flake8-import-order", BLACK_VERSION)
     session.install(".")
     session.run(
-        "black", "--check", *BLACK_EXCLUDES, *BLACK_PATHS,
+        "black",
+        "--check",
+        *BLACK_EXCLUDES,
+        *BLACK_PATHS,
     )
     session.run("flake8", "google", "tests")
 
