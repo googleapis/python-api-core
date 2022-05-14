@@ -70,6 +70,7 @@ class ClientOptions(object):
         scopes (Optional[Sequence[str]]): OAuth access token override scopes.
         api_key (Optional[str]): Google API key. ``credentials_file`` and
             ``api_key`` are mutually exclusive.
+        audience (Optional[str]): The desired API audience.
 
     Raises:
         ValueError: If both ``client_cert_source`` and ``client_encrypted_cert_source``
