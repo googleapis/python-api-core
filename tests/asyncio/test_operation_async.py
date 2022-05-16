@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-import mock
+from unittest import mock
 import pytest
 
 try:

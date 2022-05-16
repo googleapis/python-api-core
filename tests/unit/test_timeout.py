@@ -15,7 +15,7 @@
 import datetime
 import itertools
 
-import mock
+from unittest import mock
 
 from google.api_core import timeout
 

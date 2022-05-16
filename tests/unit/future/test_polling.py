@@ -16,7 +16,7 @@ import concurrent.futures
 import threading
 import time
 
-import mock
+from unittest import mock
 import pytest
 
 from google.api_core import exceptions, retry

@@ -14,7 +14,7 @@
 
 from __future__ import unicode_literals
 
-import mock
+from unittest import mock
 import pytest
 
 from google.api_core import path_template

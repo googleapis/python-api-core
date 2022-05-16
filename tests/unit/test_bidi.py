@@ -17,7 +17,7 @@ import logging
 import queue
 import threading
 
-import mock
+from unittest import mock
 import pytest
 
 try:

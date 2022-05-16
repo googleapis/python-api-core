@@ -15,7 +15,7 @@
 import math
 import types
 
-import mock
+from unittest import mock
 import pytest
 
 from google.api_core import page_iterator
@@ -177,7 +177,7 @@ class TestIterator(object):
         item2 = 100
         item3 = 211
 
-        # Make pages from mock responses
+        # Make pages from unittest.mock responses
         parent = mock.sentinel.parent
         page1 = page_iterator.Page(
             parent, (item1, item2), page_iterator._item_to_value_identity
