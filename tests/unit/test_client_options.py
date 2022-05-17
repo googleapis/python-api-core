@@ -36,7 +36,7 @@ def test_constructor():
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/cloud-platform.read-only",
         ],
-        audience="foo2.googleapis.com",
+        api_audience="foo2.googleapis.com",
     )
 
     assert options.api_endpoint == "foo.googleapis.com"
@@ -47,7 +47,7 @@ def test_constructor():
         "https://www.googleapis.com/auth/cloud-platform",
         "https://www.googleapis.com/auth/cloud-platform.read-only",
     ]
-    assert options.audience == "foo2.googleapis.com"
+    assert options.api_audience == "foo2.googleapis.com"
 
 
 def test_constructor_with_encrypted_cert_source():
@@ -116,7 +116,7 @@ def test_from_dict():
                 "https://www.googleapis.com/auth/cloud-platform",
                 "https://www.googleapis.com/auth/cloud-platform.read-only",
             ],
-            "audience": "foo2.googleapis.com",
+            "api_audience": "foo2.googleapis.com",
         }
     )
 
@@ -129,7 +129,7 @@ def test_from_dict():
         "https://www.googleapis.com/auth/cloud-platform.read-only",
     ]
     assert options.api_key is None
-    assert options.audience == "foo2.googleapis.com"
+    assert options.api_audience == "foo2.googleapis.com"
 
 
 def test_from_dict_bad_argument():
