@@ -59,7 +59,9 @@ def make_extended_operation(responses=None):
     refresh.responses = client_operations_responses
     cancel = mock.Mock(spec=["__call__"])
     extended_operation_future = extended_operation.ExtendedOperation.make(
-        refresh, cancel, client_operations_responses[0],
+        refresh,
+        cancel,
+        client_operations_responses[0],
     )
 
     return extended_operation_future, refresh, cancel
@@ -68,8 +70,8 @@ def make_extended_operation(responses=None):
 def test_constructor():
     ex_op, refresh, _ = make_extended_operation()
     assert ex_op._extended_operation == refresh.responses[0]
-    assert ex_op.cancelled() is False
-    assert ex_op.done() is False
+    assert not ex_op.cancelled()
+    assert not ex_op.done()
     assert ex_op.name == TEST_OPERATION_NAME
     assert ex_op.status == CustomOperation.StatusCode.PENDING
     assert ex_op.error_code is None

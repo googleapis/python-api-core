@@ -36,6 +36,7 @@ def test_constructor():
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/cloud-platform.read-only",
         ],
+        api_audience="foo2.googleapis.com",
     )
 
     assert options.api_endpoint == "foo.googleapis.com"
@@ -46,6 +47,7 @@ def test_constructor():
         "https://www.googleapis.com/auth/cloud-platform",
         "https://www.googleapis.com/auth/cloud-platform.read-only",
     ]
+    assert options.api_audience == "foo2.googleapis.com"
 
 
 def test_constructor_with_encrypted_cert_source():
@@ -98,7 +100,8 @@ def test_constructor_with_api_key():
 def test_constructor_with_both_api_key_and_credentials_file():
     with pytest.raises(ValueError):
         client_options.ClientOptions(
-            api_key="api-key", credentials_file="path/to/credentials.json",
+            api_key="api-key",
+            credentials_file="path/to/credentials.json",
         )
 
 
@@ -113,6 +116,7 @@ def test_from_dict():
                 "https://www.googleapis.com/auth/cloud-platform",
                 "https://www.googleapis.com/auth/cloud-platform.read-only",
             ],
+            "api_audience": "foo2.googleapis.com",
         }
     )
 
@@ -125,6 +129,7 @@ def test_from_dict():
         "https://www.googleapis.com/auth/cloud-platform.read-only",
     ]
     assert options.api_key is None
+    assert options.api_audience == "foo2.googleapis.com"
 
 
 def test_from_dict_bad_argument():

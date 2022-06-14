@@ -21,7 +21,7 @@ import shutil
 import nox  # pytype: disable=import-error
 
 
-BLACK_VERSION = "black==19.10b0"
+BLACK_VERSION = "black==22.3.0"
 BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
@@ -32,7 +32,6 @@ CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 # 'docfx' is excluded since it only needs to run in 'docs-presubmit'
 nox.options.sessions = [
     "unit",
-    "unit_grpc_gcp",
     "unit_wo_grpc",
     "cover",
     "pytype",
@@ -64,7 +63,10 @@ def lint(session):
     session.install("flake8", "flake8-import-order", BLACK_VERSION)
     session.install(".")
     session.run(
-        "black", "--check", *BLACK_EXCLUDES, *BLACK_PATHS,
+        "black",
+        "--check",
+        *BLACK_EXCLUDES,
+        *BLACK_PATHS,
     )
     session.run("flake8", "google", "tests")
 
@@ -140,18 +142,6 @@ def unit(session):
     default(session)
 
 
-@nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10"])
-def unit_grpc_gcp(session):
-    """Run the unit test suite with grpcio-gcp installed."""
-    constraints_path = str(
-        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-    )
-    # Install grpcio-gcp
-    session.install("-e", ".[grpcgcp]", "-c", constraints_path)
-
-    default(session)
-
-
 @nox.session(python=["3.6", "3.10"])
 def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
@@ -170,14 +160,14 @@ def lint_setup_py(session):
 @nox.session(python="3.6")
 def pytype(session):
     """Run type-checking."""
-    session.install(".[grpc, grpcgcp]", "pytype >= 2019.3.21")
+    session.install(".[grpc]", "pytype >= 2019.3.21")
     session.run("pytype")
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
     """Run type-checking."""
-    session.install(".[grpc, grpcgcp]", "mypy")
+    session.install(".[grpc]", "mypy")
     session.install(
         "types-setuptools",
         "types-requests",
@@ -204,7 +194,7 @@ def cover(session):
 def docs(session):
     """Build the docs for this library."""
 
-    session.install("-e", ".[grpc, grpcgcp]")
+    session.install("-e", ".[grpc]")
     session.install("sphinx==4.0.1", "alabaster", "recommonmark")
 
     shutil.rmtree(os.path.join("docs", "_build"), ignore_errors=True)

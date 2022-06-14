@@ -18,7 +18,6 @@ import collections
 import functools
 
 import grpc
-import pkg_resources
 
 from google.api_core import exceptions
 import google.auth
@@ -26,21 +25,6 @@ import google.auth.credentials
 import google.auth.transport.grpc
 import google.auth.transport.requests
 
-try:
-    import grpc_gcp
-
-    HAS_GRPC_GCP = True
-except ImportError:
-    HAS_GRPC_GCP = False
-
-try:
-    # google.auth.__version__ was added in 1.26.0
-    _GOOGLE_AUTH_VERSION = google.auth.__version__
-except AttributeError:
-    try:  # try pkg_resources if it is available
-        _GOOGLE_AUTH_VERSION = pkg_resources.get_distribution("google-auth").version
-    except pkg_resources.DistributionNotFound:  # pragma: NO COVER
-        _GOOGLE_AUTH_VERSION = None
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
@@ -246,7 +230,9 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
     metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-        credentials, request, default_host=default_host,
+        credentials,
+        request,
+        default_host=default_host,
     )
 
     # Create a set of grpc.CallCredentials using the metadata plugin.
@@ -289,8 +275,7 @@ def create_channel(
         default_scopes (Sequence[str]): Default scopes passed by a Google client
             library. Use 'scopes' for user-defined scopes.
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
-        kwargs: Additional key-word args passed to
-            :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
+        kwargs: Additional key-word args passed to :func:`grpc.secure_channel`.
 
     Returns:
         grpc.Channel: The created channel.
@@ -309,12 +294,7 @@ def create_channel(
         default_host=default_host,
     )
 
-    if HAS_GRPC_GCP:
-        # If grpc_gcp module is available use grpc_gcp.secure_channel,
-        # otherwise, use grpc.secure_channel to create grpc channel.
-        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-    else:
-        return grpc.secure_channel(target, composite_credentials, **kwargs)
+    return grpc.secure_channel(target, composite_credentials, **kwargs)
 
 
 _MethodCall = collections.namedtuple(

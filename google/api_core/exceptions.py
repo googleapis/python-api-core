@@ -24,15 +24,23 @@ from __future__ import unicode_literals
 import http.client
 from typing import Dict
 from typing import Union
+import warnings
 
 from google.rpc import error_details_pb2
 
 try:
     import grpc
-    from grpc_status import rpc_status
+
+    try:
+        from grpc_status import rpc_status
+    except ImportError:  # pragma: NO COVER
+        warnings.warn(
+            "Please install grpcio-status to obtain helpful grpc error messages.",
+            ImportWarning,
+        )
+        rpc_status = None
 except ImportError:  # pragma: NO COVER
     grpc = None
-    rpc_status = None
 
 # Lookup tables for mapping exceptions from HTTP and gRPC transports.
 # Populated by _GoogleAPICallErrorMeta
@@ -194,7 +202,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
 
         Returns:
             Sequence[Any]: A list of structured objects from error_details.proto
-       """
+        """
         return list(self._details)
 
     @property
@@ -482,7 +490,9 @@ def from_http_response(response):
     error_info = error_info[0] if error_info else None
 
     message = "{method} {url}: {error}".format(
-        method=response.request.method, url=response.request.url, error=error_message,
+        method=response.request.method,
+        url=response.request.url,
+        error=error_message,
     )
 
     exception = from_http_status(
@@ -589,7 +599,9 @@ def from_grpc_error(rpc_exc):
     """
     # NOTE(lidiz) All gRPC error shares the parent class grpc.RpcError.
     # However, check for grpc.RpcError breaks backward compatibility.
-    if isinstance(rpc_exc, grpc.Call) or _is_informative_grpc_error(rpc_exc):
+    if (
+        grpc is not None and isinstance(rpc_exc, grpc.Call)
+    ) or _is_informative_grpc_error(rpc_exc):
         details, err_info = _parse_grpc_error_details(rpc_exc)
         return from_grpc_status(
             rpc_exc.code(),
