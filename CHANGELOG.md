@@ -4,6 +4,14 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [1.32.0](https://github.com/googleapis/python-api-core/compare/v1.31.6...v1.32.0) (2022-07-13)
+
+
+### Features
+
+* add api_key to client options in v1 branch ([4834224](https://github.com/googleapis/python-api-core/commit/483422487129fe4a0d2e30637cbea02bc0f370bf))
+* adds support for audience in client_options in v1 branch ([#411](https://github.com/googleapis/python-api-core/issues/411)) ([4834224](https://github.com/googleapis/python-api-core/commit/483422487129fe4a0d2e30637cbea02bc0f370bf))
+
 ### [1.31.6](https://github.com/googleapis/python-api-core/compare/v1.31.5...v1.31.6) (2022-05-27)
 
 
