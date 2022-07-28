@@ -314,7 +314,7 @@ def create_channel(
         # to create grpc channel.
         if int(PROTOBUF_VERSION.split('.')[0]) < 4:
             warnings.warn("""Support for grpcio-gcp is deprecated. This feature will be
-                removed from `google-api-core` after August 1, 2023. If you need to
+                removed from `google-api-core` after January 1, 2024. If you need to
                 continue to use this feature, please pin to a specific version of
                 `google-api-core`.""",
                 DeprecationWarning
