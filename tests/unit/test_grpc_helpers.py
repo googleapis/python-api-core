@@ -685,6 +685,7 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
 
+
 @pytest.mark.skipif(
     not grpc_helpers.HAS_GRPC_GCP, reason="grpc_gcp module not available"
 )
