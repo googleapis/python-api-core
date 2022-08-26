@@ -16,8 +16,8 @@ from __future__ import unicode_literals
 
 import mock
 import pytest
-from google.api import auth_pb2
 
+from google.api import auth_pb2
 from google.api_core import path_template
 
 
