@@ -214,15 +214,16 @@ def test__replace_variable_with_pattern():
             [["get", "/v1/{oauth.canonical_scopes}", ""]],
             auth_pb2.AuthenticationRule(
                 selector="bar",
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="parent")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="parent"),
+            ),
             {},
             [
                 "get",
                 "/v1/parent",
                 None,
                 auth_pb2.AuthenticationRule(
-                    selector="bar",
-                    oauth=auth_pb2.OAuthRequirements()),
+                    selector="bar", oauth=auth_pb2.OAuthRequirements()
+                ),
             ],
         ],
     ],
@@ -246,15 +247,16 @@ def test_transcode_base_case(http_options, message, request_kwargs, expected_res
             [["get", "/v1/{oauth.canonical_scopes}", ""]],
             auth_pb2.AuthenticationRule(
                 selector="bar",
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="parent")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="parent"),
+            ),
             {},
             [
                 "get",
                 "/v1/parent",
                 None,
                 auth_pb2.AuthenticationRule(
-                    selector="bar",
-                    oauth=auth_pb2.OAuthRequirements()),
+                    selector="bar", oauth=auth_pb2.OAuthRequirements()
+                ),
             ],
         ],
         [
@@ -273,7 +275,8 @@ def test_transcode_base_case(http_options, message, request_kwargs, expected_res
             [["get", "/v1/{selector}/{oauth.canonical_scopes}", ""]],
             auth_pb2.AuthenticationRule(
                 selector="parent",
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="child")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="child"),
+            ),
             {"field": {"subfield1": "parent", "subfield2": "child"}, "foo": "bar"},
             [
                 "get",
@@ -315,8 +318,8 @@ def test_transcode_subfields(http_options, message, request_kwargs, expected_res
         [
             [["get", "/v1/{selector=a/*/b/*}", ""]],
             auth_pb2.AuthenticationRule(
-                selector="a/parent/b/child",
-                allow_without_credential=True),
+                selector="a/parent/b/child", allow_without_credential=True
+            ),
             {},
             [
                 "get",
@@ -347,8 +350,8 @@ def test_transcode_subfields(http_options, message, request_kwargs, expected_res
         [
             [["get", "/v1/{selector=a/**/b/**}", ""]],
             auth_pb2.AuthenticationRule(
-                selector="a/parent/p1/b/child/c1",
-                allow_without_credential=True),
+                selector="a/parent/p1/b/child/c1", allow_without_credential=True
+            ),
             {},
             [
                 "get",
@@ -380,18 +383,21 @@ def test_transcode_subfields(http_options, message, request_kwargs, expected_res
             [["get", "/v1/{selector=a/**/b/*}/v2/{oauth.canonical_scopes}", ""]],
             auth_pb2.AuthenticationRule(
                 selector="a/parent/p1/b/child",
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first"),
+            ),
             {"field": "a/parent/p1/b/child", "name": "first", "foo": "bar"},
             [
                 "get",
                 "/v1/a/parent/p1/b/child/v2/first",
                 None,
-                auth_pb2.AuthenticationRule(oauth=auth_pb2.OAuthRequirements())
+                auth_pb2.AuthenticationRule(oauth=auth_pb2.OAuthRequirements()),
             ],
         ],
     ],
 )
-def test_transcode_with_wildcard(http_options, message, request_kwargs, expected_result):
+def test_transcode_with_wildcard(
+    http_options, message, request_kwargs, expected_result
+):
     http_options, expected_result = helper_test_transcode(http_options, expected_result)
     result = path_template.transcode(http_options, message, **request_kwargs)
     assert result == expected_result
@@ -411,13 +417,15 @@ def test_transcode_with_wildcard(http_options, message, request_kwargs, expected
             [["post", "/v1/no/template", "oauth"]],
             auth_pb2.AuthenticationRule(
                 selector="bar",
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="child")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="child"),
+            ),
             {},
             [
                 "post",
                 "/v1/no/template",
                 auth_pb2.OAuthRequirements(canonical_scopes="child"),
-                auth_pb2.AuthenticationRule(selector="bar")],
+                auth_pb2.AuthenticationRule(selector="bar"),
+            ],
         ],
         [
             [["post", "/v1/{field=a/*}/b/{name=**}", "data"]],
@@ -441,7 +449,8 @@ def test_transcode_with_wildcard(http_options, message, request_kwargs, expected
                 selector="a/parent",
                 allow_without_credential=True,
                 requirements=[auth_pb2.AuthRequirement(provider_id="p")],
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last"),
+            ),
             {},
             [
                 "post",
@@ -449,7 +458,8 @@ def test_transcode_with_wildcard(http_options, message, request_kwargs, expected
                 auth_pb2.OAuthRequirements(),
                 auth_pb2.AuthenticationRule(
                     requirements=[auth_pb2.AuthRequirement(provider_id="p")],
-                    allow_without_credential=True),
+                    allow_without_credential=True,
+                ),
             ],
         ],
         # Wildcard body
@@ -474,7 +484,8 @@ def test_transcode_with_wildcard(http_options, message, request_kwargs, expected
             auth_pb2.AuthenticationRule(
                 selector="a/parent",
                 allow_without_credential=True,
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last"),
+            ),
             {
                 "field": "a/parent",
                 "name": "first/last",
@@ -485,8 +496,8 @@ def test_transcode_with_wildcard(http_options, message, request_kwargs, expected
                 "post",
                 "/v1/a/parent/b/first/last",
                 auth_pb2.AuthenticationRule(
-                    allow_without_credential=True,
-                    oauth=auth_pb2.OAuthRequirements()),
+                    allow_without_credential=True, oauth=auth_pb2.OAuthRequirements()
+                ),
                 auth_pb2.AuthenticationRule(),
             ],
         ],
@@ -523,20 +534,25 @@ def test_transcode_with_body(http_options, message, request_kwargs, expected_res
         ],
         [
             [
-                ["post", "/v1/{selector=a/*}/b/{oauth.canonical_scopes=**}", "extra_data"],
+                [
+                    "post",
+                    "/v1/{selector=a/*}/b/{oauth.canonical_scopes=**}",
+                    "extra_data",
+                ],
                 ["post", "/v1/{selector=a/*}/b/{oauth.canonical_scopes=**}", "*"],
             ],
             auth_pb2.AuthenticationRule(
                 selector="a/parent",
                 allow_without_credential=True,
-                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last")),
+                oauth=auth_pb2.OAuthRequirements(canonical_scopes="first/last"),
+            ),
             {},
             [
                 "post",
                 "/v1/a/parent/b/first/last",
                 auth_pb2.AuthenticationRule(
-                    allow_without_credential=True,
-                    oauth=auth_pb2.OAuthRequirements()),
+                    allow_without_credential=True, oauth=auth_pb2.OAuthRequirements()
+                ),
                 auth_pb2.AuthenticationRule(),
             ],
         ],
@@ -557,15 +573,16 @@ def test_transcode_with_body(http_options, message, request_kwargs, expected_res
             auth_pb2.AuthenticationRule(
                 selector="a/parent",
                 allow_without_credential=True,
-                oauth=auth_pb2.OAuthRequirements()),
+                oauth=auth_pb2.OAuthRequirements(),
+            ),
             {},
             [
                 "get",
                 "/v1/a/parent/b/first/last",
                 None,
                 auth_pb2.AuthenticationRule(
-                    allow_without_credential=True,
-                    oauth=auth_pb2.OAuthRequirements())
+                    allow_without_credential=True, oauth=auth_pb2.OAuthRequirements()
+                ),
             ],
         ],
     ],
@@ -585,13 +602,29 @@ def test_transcode_with_additional_bindings(
         [[["get", "/v1/{selector}", ""]], auth_pb2.AuthenticationRule(), {}],
         [[["get", "/v1/{name}", ""]], auth_pb2.AuthenticationRule(), {}],
         [[["get", "/v1/{name}", ""]], None, {"name": "first/last"}],
-        [[["get", "/v1/{selector}", ""]], auth_pb2.AuthenticationRule(selector="first/last"), {}],
+        [
+            [["get", "/v1/{selector}", ""]],
+            auth_pb2.AuthenticationRule(selector="first/last"),
+            {},
+        ],
         [[["get", "/v1/{name=mr/*/*}", ""]], None, {"name": "first/last"}],
-        [[["get", "/v1/{selector=mr/*/*}", ""]], auth_pb2.AuthenticationRule(selector="first/last"), {}],
+        [
+            [["get", "/v1/{selector=mr/*/*}", ""]],
+            auth_pb2.AuthenticationRule(selector="first/last"),
+            {},
+        ],
         [[["post", "/v1/{name}", "data"]], None, {"name": "first/last"}],
-        [[["post", "/v1/{selector}", "data"]], auth_pb2.AuthenticationRule(selector="first"), {}],
+        [
+            [["post", "/v1/{selector}", "data"]],
+            auth_pb2.AuthenticationRule(selector="first"),
+            {},
+        ],
         [[["post", "/v1/{first_name}", "data"]], None, {"last_name": "last"}],
-        [[["post", "/v1/{first_name}", ""]], auth_pb2.AuthenticationRule(selector="first"), {}],
+        [
+            [["post", "/v1/{first_name}", ""]],
+            auth_pb2.AuthenticationRule(selector="first"),
+            {},
+        ],
     ],
 )
 def test_transcode_fails(http_options, message, request_kwargs):
