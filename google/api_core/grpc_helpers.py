@@ -33,6 +33,7 @@ PROTOBUF_VERSION = google.protobuf.__version__
 if int(PROTOBUF_VERSION.split(".")[0]) < 4:
     try:
         import grpc_gcp
+
         warnings.warn(
             """Support for grpcio-gcp is deprecated. This feature will be
             removed from `google-api-core` after January 1, 2024. If you need to
