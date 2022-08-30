@@ -149,10 +149,10 @@ def unit_grpc_gcp(session):
     constraints_path = str(
         CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
     )
-    # Install protobuf < 4.0.0
-    session.install("protobuf<4.0.0")
     # Install grpcio-gcp
     session.install("-e", ".[grpcgcp]", "-c", constraints_path)
+    # Install protobuf < 4.0.0
+    session.install("protobuf<4.0.0")
 
     default(session)
 
