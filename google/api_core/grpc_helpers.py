@@ -29,11 +29,21 @@ import google.protobuf
 
 PROTOBUF_VERSION = google.protobuf.__version__
 
-try:
-    import grpc_gcp
-
-    HAS_GRPC_GCP = True
-except ImportError:
+# The grpcio-gcp package only has support for protobuf < 4
+if int(PROTOBUF_VERSION.split(".")[0]) < 4:
+    try:
+        import grpc_gcp
+        warnings.warn(
+            """Support for grpcio-gcp is deprecated. This feature will be
+            removed from `google-api-core` after January 1, 2024. If you need to
+            continue to use this feature, please pin to a specific version of
+            `google-api-core`.""",
+            DeprecationWarning,
+        )
+        HAS_GRPC_GCP = True
+    except ImportError:
+        HAS_GRPC_GCP = False
+else:
     HAS_GRPC_GCP = False
 
 
@@ -308,21 +318,8 @@ def create_channel(
     )
 
     if HAS_GRPC_GCP:
-        # The grpcio-gcp package does not support protobuf 4.x.x.
-        # If grpc_gcp module is available and the environment has protobuf<4.x.x
-        # use grpc_gcp.secure_channel, otherwise, use grpc.secure_channel
-        # to create grpc channel.
-        if int(PROTOBUF_VERSION.split(".")[0]) < 4:
-            warnings.warn(
-                """Support for grpcio-gcp is deprecated. This feature will be
-                removed from `google-api-core` after January 1, 2024. If you need to
-                continue to use this feature, please pin to a specific version of
-                `google-api-core`.""",
-                DeprecationWarning,
-            )
-            return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-    else:
-        return grpc.secure_channel(target, composite_credentials, **kwargs)
+        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
+    return grpc.secure_channel(target, composite_credentials, **kwargs)
 
 
 _MethodCall = collections.namedtuple(
