@@ -30,7 +30,7 @@ import google.protobuf
 PROTOBUF_VERSION = google.protobuf.__version__
 
 # The grpcio-gcp package only has support for protobuf < 4
-if int(PROTOBUF_VERSION.split(".")[0]) < 4:
+if PROTOBUF_VERSION == "4.":
     try:
         import grpc_gcp
 
