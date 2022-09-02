@@ -40,7 +40,8 @@ def flatten_query_params(obj, strict=False):
 
     Args:
       obj: a possibly nested dictionary (from json), or None
-      strict: a bool, defaulting to False, to enforce that all values in the result tuples be strings and, if boolean, lower-cased.
+      strict: a bool, defaulting to False, to enforce that all values in the
+              result tuples be strings and, if boolean, lower-cased.
 
     Returns: a list of tuples, with each tuple having a (possibly) multi-part name
       and a scalar value.
@@ -81,7 +82,10 @@ def _flatten_value(obj, key_path, strict=False):
 
 
 def _flatten_dict(obj, key_path, strict=False):
-    items = (_flatten(value, key_path=key_path + [key], strict=strict) for key, value in obj.items())
+    items = (
+        _flatten(value, key_path=key_path + [key], strict=strict)
+        for key, value in obj.items()
+    )
     return functools.reduce(operator.concat, items, [])
 
 
