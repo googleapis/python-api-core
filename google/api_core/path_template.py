@@ -25,10 +25,10 @@ in Google APIs for `resource names`_.
 
 from __future__ import unicode_literals
 
+from collections import deque
+import copy
 import functools
 import re
-
-import six
 
 # Regular expression for extracting variable parts from a path template.
 # The variables can be expressed as:
@@ -66,7 +66,7 @@ def _expand_variable_match(positional_vars, named_vars, match):
     """Expand a matched variable with its value.
 
     Args:
-        positional_vars (list): A list of positonal variables. This list will
+        positional_vars (list): A list of positional variables. This list will
             be modified.
         named_vars (dict): A dictionary of named variables.
         match (re.Match): A regular expression match.
@@ -83,7 +83,7 @@ def _expand_variable_match(positional_vars, named_vars, match):
     name = match.group("name")
     if name is not None:
         try:
-            return six.text_type(named_vars[name])
+            return str(named_vars[name])
         except KeyError:
             raise ValueError(
                 "Named variable '{}' not specified and needed by template "
@@ -91,7 +91,7 @@ def _expand_variable_match(positional_vars, named_vars, match):
             )
     elif positional is not None:
         try:
-            return six.text_type(positional_vars.pop(0))
+            return str(positional_vars.pop(0))
         except IndexError:
             raise ValueError(
                 "Positional variable not specified and needed by template "
@@ -172,6 +172,56 @@ def _generate_pattern_for_template(tmpl):
     return _VARIABLE_RE.sub(_replace_variable_with_pattern, tmpl)
 
 
+def get_field(request, field):
+    """Get the value of a field from a given dictionary.
+
+    Args:
+        request (dict | Message): A dictionary or a Message object.
+        field (str): The key to the request in dot notation.
+
+    Returns:
+        The value of the field.
+    """
+    parts = field.split(".")
+    value = request
+
+    for part in parts:
+        if not isinstance(value, dict):
+            value = getattr(value, part, None)
+        else:
+            value = value.get(part)
+    if isinstance(value, dict):
+        return
+    return value
+
+
+def delete_field(request, field):
+    """Delete the value of a field from a given dictionary.
+
+    Args:
+        request (dict | Message): A dictionary object or a Message.
+        field (str): The key to the request in dot notation.
+    """
+    parts = deque(field.split("."))
+    while len(parts) > 1:
+        part = parts.popleft()
+        if not isinstance(request, dict):
+            if hasattr(request, part):
+                request = getattr(request, part, None)
+            else:
+                return
+        else:
+            request = request.get(part)
+    part = parts.popleft()
+    if not isinstance(request, dict):
+        if hasattr(request, part):
+            request.ClearField(part)
+        else:
+            return
+    else:
+        request.pop(part, None)
+
+
 def validate(tmpl, path):
     """Validate a path against the path template.
 
@@ -195,3 +245,79 @@ def validate(tmpl, path):
     """
     pattern = _generate_pattern_for_template(tmpl) + "$"
     return True if re.match(pattern, path) is not None else False
+
+
+def transcode(http_options, message=None, **request_kwargs):
+    """Transcodes a grpc request pattern into a proper HTTP request following the rules outlined here,
+    https://github.com/googleapis/googleapis/blob/master/google/api/http.proto#L44-L312
+
+     Args:
+         http_options (list(dict)): A list of dicts which consist of these keys,
+             'method'    (str): The http method
+             'uri'       (str): The path template
+             'body'      (str): The body field name (optional)
+             (This is a simplified representation of the proto option `google.api.http`)
+
+         message (Message) : A request object (optional)
+         request_kwargs (dict) : A dict representing the request object
+
+     Returns:
+         dict: The transcoded request with these keys,
+             'method'        (str)   : The http method
+             'uri'           (str)   : The expanded uri
+             'body'          (dict | Message)  : A dict or a Message representing the body (optional)
+             'query_params'  (dict | Message)  : A dict or Message mapping query parameter variables and values
+
+     Raises:
+         ValueError: If the request does not match the given template.
+    """
+    transcoded_value = message or request_kwargs
+    for http_option in http_options:
+        request = {}
+
+        # Assign path
+        uri_template = http_option["uri"]
+        path_fields = [
+            match.group("name") for match in _VARIABLE_RE.finditer(uri_template)
+        ]
+        path_args = {field: get_field(transcoded_value, field) for field in path_fields}
+        request["uri"] = expand(uri_template, **path_args)
+
+        if not validate(uri_template, request["uri"]) or not all(path_args.values()):
+            continue
+
+        # Remove fields used in uri path from request
+        leftovers = copy.deepcopy(transcoded_value)
+        for path_field in path_fields:
+            delete_field(leftovers, path_field)
+
+        # Assign body and query params
+        body = http_option.get("body")
+
+        if body:
+            if body == "*":
+                request["body"] = leftovers
+                if message:
+                    request["query_params"] = message.__class__()
+                else:
+                    request["query_params"] = {}
+            else:
+                try:
+                    if message:
+                        request["body"] = getattr(leftovers, body)
+                        delete_field(leftovers, body)
+                    else:
+                        request["body"] = leftovers.pop(body)
+                except (KeyError, AttributeError):
+                    continue
+                request["query_params"] = leftovers
+        else:
+            request["query_params"] = leftovers
+        request["method"] = http_option["method"]
+        return request
+
+    raise ValueError(
+        "Request {} does not match any URL path template in available HttpRule's {}".format(
+            request_kwargs, [opt["uri"] for opt in http_options]
+        )
+    )

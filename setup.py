@@ -29,21 +29,15 @@ description = "Google API client core library"
 # 'Development Status :: 5 - Production/Stable'
 release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
-    "googleapis-common-protos >= 1.6.0, < 2.0dev",
-    'protobuf >= 3.12.0, < 3.18.0; python_version < "3"',
-    'protobuf >= 3.12.0, < 4.0.0dev; python_version > "3"',
-    "google-auth >= 1.25.0, < 2.0dev",
+    "googleapis-common-protos >= 1.56.2, < 2.0dev",
+    "protobuf >= 3.20.1, <4.0.0dev",
+    "google-auth >= 1.25.0, < 3.0dev",
     "requests >= 2.18.0, < 3.0.0dev",
-    "setuptools >= 40.3.0",
-    "packaging >= 14.3",
-    "six >= 1.13.0",
-    "pytz",
-    'futures >= 3.2.0; python_version < "3.2"',
 ]
 extras = {
-    "grpc": "grpcio >= 1.29.0, < 2.0dev",
-    "grpcgcp": "grpcio-gcp >= 0.2.2",
-    "grpcio-gcp": "grpcio-gcp >= 0.2.2",
+    "grpc": ["grpcio >= 1.33.2, < 2.0dev", "grpcio-status >= 1.33.2, < 2.0dev"],
+    "grpcgcp": "grpcio-gcp >= 0.2.2, < 1.0dev",
+    "grpcio-gcp": "grpcio-gcp >= 0.2.2, < 1.0dev",
 }
 
 
@@ -87,14 +81,11 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
         "Topic :: Internet",
     ],
@@ -103,7 +94,7 @@ setuptools.setup(
     namespace_packages=namespaces,
     install_requires=dependencies,
     extras_require=extras,
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*",
+    python_requires=">=3.7",
     include_package_data=True,
     zip_safe=False,
 )
