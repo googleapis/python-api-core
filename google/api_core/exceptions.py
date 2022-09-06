@@ -21,19 +21,31 @@ on :mod:`google.api_core`, including both HTTP and gRPC clients.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import six
-from six.moves import http_client
+import http.client
+from typing import Dict
+from typing import Union
+import warnings
+
+from google.rpc import error_details_pb2
 
 try:
     import grpc
 
+    try:
+        from grpc_status import rpc_status
+    except ImportError:  # pragma: NO COVER
+        warnings.warn(
+            "Please install grpcio-status to obtain helpful grpc error messages.",
+            ImportWarning,
+        )
+        rpc_status = None
 except ImportError:  # pragma: NO COVER
     grpc = None
 
 # Lookup tables for mapping exceptions from HTTP and gRPC transports.
 # Populated by _GoogleAPICallErrorMeta
-_HTTP_CODE_TO_EXCEPTION = {}
-_GRPC_CODE_TO_EXCEPTION = {}
+_HTTP_CODE_TO_EXCEPTION: Dict[int, Exception] = {}
+_GRPC_CODE_TO_EXCEPTION: Dict[int, Exception] = {}
 
 # Additional lookup table to map integer status codes to grpc status code
 # grpc does not currently support initializing enums from ints
@@ -56,7 +68,6 @@ class DuplicateCredentialArgs(GoogleAPIError):
     pass
 
 
-@six.python_2_unicode_compatible
 class RetryError(GoogleAPIError):
     """Raised when a function has exhausted all of its available retries.
 
@@ -92,19 +103,20 @@ class _GoogleAPICallErrorMeta(type):
         return cls
 
 
-@six.python_2_unicode_compatible
-@six.add_metaclass(_GoogleAPICallErrorMeta)
-class GoogleAPICallError(GoogleAPIError):
+class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
     """Base class for exceptions raised by calling API methods.
 
     Args:
         message (str): The exception message.
         errors (Sequence[Any]): An optional list of error details.
+        details (Sequence[Any]): An optional list of objects defined in google.rpc.error_details.
         response (Union[requests.Request, grpc.Call]): The response or
             gRPC call metadata.
+        error_info (Union[error_details_pb2.ErrorInfo, None]): An optional object containing error info
+            (google.rpc.error_details.ErrorInfo).
     """
 
-    code = None
+    code: Union[int, None] = None
     """Optional[int]: The HTTP status code associated with this error.
 
     This may be ``None`` if the exception does not have a direct mapping
@@ -120,15 +132,56 @@ class GoogleAPICallError(GoogleAPIError):
     This may be ``None`` if the exception does not match up to a gRPC error.
     """
 
-    def __init__(self, message, errors=(), response=None):
+    def __init__(self, message, errors=(), details=(), response=None, error_info=None):
         super(GoogleAPICallError, self).__init__(message)
         self.message = message
         """str: The exception message."""
         self._errors = errors
+        self._details = details
         self._response = response
+        self._error_info = error_info
 
     def __str__(self):
-        return "{} {}".format(self.code, self.message)
+        if self.details:
+            return "{} {} {}".format(self.code, self.message, self.details)
+        else:
+            return "{} {}".format(self.code, self.message)
+
+    @property
+    def reason(self):
+        """The reason of the error.
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
+        Returns:
+            Union[str, None]: An optional string containing reason of the error.
+        """
+        return self._error_info.reason if self._error_info else None
+
+    @property
+    def domain(self):
+        """The logical grouping to which the "reason" belongs.
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
+        Returns:
+            Union[str, None]: An optional string containing a logical grouping to which the "reason" belongs.
+        """
+        return self._error_info.domain if self._error_info else None
+
+    @property
+    def metadata(self):
+        """Additional structured details about this error.
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L112
+
+        Returns:
+            Union[Dict[str, str], None]: An optional object containing structured details about the error.
+        """
+        return self._error_info.metadata if self._error_info else None
 
     @property
     def errors(self):
@@ -138,6 +191,19 @@ class GoogleAPICallError(GoogleAPIError):
             Sequence[Any]: A list of additional error details.
         """
         return list(self._errors)
+
+    @property
+    def details(self):
+        """Information contained in google.rpc.status.details.
+
+        Reference:
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
+            https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto
+
+        Returns:
+            Sequence[Any]: A list of structured objects from error_details.proto
+        """
+        return list(self._details)
 
     @property
     def response(self):
@@ -153,25 +219,25 @@ class Redirection(GoogleAPICallError):
 class MovedPermanently(Redirection):
     """Exception mapping a ``301 Moved Permanently`` response."""
 
-    code = http_client.MOVED_PERMANENTLY
+    code = http.client.MOVED_PERMANENTLY
 
 
 class NotModified(Redirection):
     """Exception mapping a ``304 Not Modified`` response."""
 
-    code = http_client.NOT_MODIFIED
+    code = http.client.NOT_MODIFIED
 
 
 class TemporaryRedirect(Redirection):
     """Exception mapping a ``307 Temporary Redirect`` response."""
 
-    code = http_client.TEMPORARY_REDIRECT
+    code = http.client.TEMPORARY_REDIRECT
 
 
 class ResumeIncomplete(Redirection):
     """Exception mapping a ``308 Resume Incomplete`` response.
 
-    .. note:: :attr:`http_client.PERMANENT_REDIRECT` is ``308``, but Google
+    .. note:: :attr:`http.client.PERMANENT_REDIRECT` is ``308``, but Google
         APIs differ in their use of this status code.
     """
 
@@ -185,7 +251,7 @@ class ClientError(GoogleAPICallError):
 class BadRequest(ClientError):
     """Exception mapping a ``400 Bad Request`` response."""
 
-    code = http_client.BAD_REQUEST
+    code = http.client.BAD_REQUEST
 
 
 class InvalidArgument(BadRequest):
@@ -210,7 +276,7 @@ class OutOfRange(BadRequest):
 class Unauthorized(ClientError):
     """Exception mapping a ``401 Unauthorized`` response."""
 
-    code = http_client.UNAUTHORIZED
+    code = http.client.UNAUTHORIZED
 
 
 class Unauthenticated(Unauthorized):
@@ -222,7 +288,7 @@ class Unauthenticated(Unauthorized):
 class Forbidden(ClientError):
     """Exception mapping a ``403 Forbidden`` response."""
 
-    code = http_client.FORBIDDEN
+    code = http.client.FORBIDDEN
 
 
 class PermissionDenied(Forbidden):
@@ -235,20 +301,20 @@ class NotFound(ClientError):
     """Exception mapping a ``404 Not Found`` response or a
     :attr:`grpc.StatusCode.NOT_FOUND` error."""
 
-    code = http_client.NOT_FOUND
+    code = http.client.NOT_FOUND
     grpc_status_code = grpc.StatusCode.NOT_FOUND if grpc is not None else None
 
 
 class MethodNotAllowed(ClientError):
     """Exception mapping a ``405 Method Not Allowed`` response."""
 
-    code = http_client.METHOD_NOT_ALLOWED
+    code = http.client.METHOD_NOT_ALLOWED
 
 
 class Conflict(ClientError):
     """Exception mapping a ``409 Conflict`` response."""
 
-    code = http_client.CONFLICT
+    code = http.client.CONFLICT
 
 
 class AlreadyExists(Conflict):
@@ -266,26 +332,25 @@ class Aborted(Conflict):
 class LengthRequired(ClientError):
     """Exception mapping a ``411 Length Required`` response."""
 
-    code = http_client.LENGTH_REQUIRED
+    code = http.client.LENGTH_REQUIRED
 
 
 class PreconditionFailed(ClientError):
     """Exception mapping a ``412 Precondition Failed`` response."""
 
-    code = http_client.PRECONDITION_FAILED
+    code = http.client.PRECONDITION_FAILED
 
 
 class RequestRangeNotSatisfiable(ClientError):
     """Exception mapping a ``416 Request Range Not Satisfiable`` response."""
 
-    code = http_client.REQUESTED_RANGE_NOT_SATISFIABLE
+    code = http.client.REQUESTED_RANGE_NOT_SATISFIABLE
 
 
 class TooManyRequests(ClientError):
     """Exception mapping a ``429 Too Many Requests`` response."""
 
-    # http_client does not define a constant for this in Python 2.
-    code = 429
+    code = http.client.TOO_MANY_REQUESTS
 
 
 class ResourceExhausted(TooManyRequests):
@@ -298,8 +363,7 @@ class Cancelled(ClientError):
     """Exception mapping a :attr:`grpc.StatusCode.CANCELLED` error."""
 
     # This maps to HTTP status code 499. See
-    # https://github.com/googleapis/googleapis/blob/master/google/rpc\
-    # /code.proto
+    # https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
     code = 499
     grpc_status_code = grpc.StatusCode.CANCELLED if grpc is not None else None
 
@@ -312,7 +376,7 @@ class InternalServerError(ServerError):
     """Exception mapping a ``500 Internal Server Error`` response. or a
     :attr:`grpc.StatusCode.INTERNAL` error."""
 
-    code = http_client.INTERNAL_SERVER_ERROR
+    code = http.client.INTERNAL_SERVER_ERROR
     grpc_status_code = grpc.StatusCode.INTERNAL if grpc is not None else None
 
 
@@ -332,28 +396,28 @@ class MethodNotImplemented(ServerError):
     """Exception mapping a ``501 Not Implemented`` response or a
     :attr:`grpc.StatusCode.UNIMPLEMENTED` error."""
 
-    code = http_client.NOT_IMPLEMENTED
+    code = http.client.NOT_IMPLEMENTED
     grpc_status_code = grpc.StatusCode.UNIMPLEMENTED if grpc is not None else None
 
 
 class BadGateway(ServerError):
     """Exception mapping a ``502 Bad Gateway`` response."""
 
-    code = http_client.BAD_GATEWAY
+    code = http.client.BAD_GATEWAY
 
 
 class ServiceUnavailable(ServerError):
     """Exception mapping a ``503 Service Unavailable`` response or a
     :attr:`grpc.StatusCode.UNAVAILABLE` error."""
 
-    code = http_client.SERVICE_UNAVAILABLE
+    code = http.client.SERVICE_UNAVAILABLE
     grpc_status_code = grpc.StatusCode.UNAVAILABLE if grpc is not None else None
 
 
 class GatewayTimeout(ServerError):
     """Exception mapping a ``504 Gateway Timeout`` response."""
 
-    code = http_client.GATEWAY_TIMEOUT
+    code = http.client.GATEWAY_TIMEOUT
 
 
 class DeadlineExceeded(GatewayTimeout):
@@ -414,13 +478,30 @@ def from_http_response(response):
 
     error_message = payload.get("error", {}).get("message", "unknown error")
     errors = payload.get("error", {}).get("errors", ())
+    # In JSON, details are already formatted in developer-friendly way.
+    details = payload.get("error", {}).get("details", ())
+    error_info = list(
+        filter(
+            lambda detail: detail.get("@type", "")
+            == "type.googleapis.com/google.rpc.ErrorInfo",
+            details,
+        )
+    )
+    error_info = error_info[0] if error_info else None
 
     message = "{method} {url}: {error}".format(
-        method=response.request.method, url=response.request.url, error=error_message
+        method=response.request.method,
+        url=response.request.url,
+        error=error_message,
     )
 
     exception = from_http_status(
-        response.status_code, message, errors=errors, response=response
+        response.status_code,
+        message,
+        errors=errors,
+        details=details,
+        response=response,
+        error_info=error_info,
     )
     return exception
 
@@ -467,6 +548,45 @@ def _is_informative_grpc_error(rpc_exc):
     return hasattr(rpc_exc, "code") and hasattr(rpc_exc, "details")
 
 
+def _parse_grpc_error_details(rpc_exc):
+    try:
+        status = rpc_status.from_call(rpc_exc)
+    except NotImplementedError:  # workaround
+        return [], None
+
+    if not status:
+        return [], None
+
+    possible_errors = [
+        error_details_pb2.BadRequest,
+        error_details_pb2.PreconditionFailure,
+        error_details_pb2.QuotaFailure,
+        error_details_pb2.ErrorInfo,
+        error_details_pb2.RetryInfo,
+        error_details_pb2.ResourceInfo,
+        error_details_pb2.RequestInfo,
+        error_details_pb2.DebugInfo,
+        error_details_pb2.Help,
+        error_details_pb2.LocalizedMessage,
+    ]
+    error_info = None
+    error_details = []
+    for detail in status.details:
+        matched_detail_cls = list(
+            filter(lambda x: detail.Is(x.DESCRIPTOR), possible_errors)
+        )
+        # If nothing matched, use detail directly.
+        if len(matched_detail_cls) == 0:
+            info = detail
+        else:
+            info = matched_detail_cls[0]()
+            detail.Unpack(info)
+        error_details.append(info)
+        if isinstance(info, error_details_pb2.ErrorInfo):
+            error_info = info
+    return error_details, error_info
+
+
 def from_grpc_error(rpc_exc):
     """Create a :class:`GoogleAPICallError` from a :class:`grpc.RpcError`.
 
@@ -479,9 +599,17 @@ def from_grpc_error(rpc_exc):
     """
     # NOTE(lidiz) All gRPC error shares the parent class grpc.RpcError.
     # However, check for grpc.RpcError breaks backward compatibility.
-    if isinstance(rpc_exc, grpc.Call) or _is_informative_grpc_error(rpc_exc):
+    if (
+        grpc is not None and isinstance(rpc_exc, grpc.Call)
+    ) or _is_informative_grpc_error(rpc_exc):
+        details, err_info = _parse_grpc_error_details(rpc_exc)
         return from_grpc_status(
-            rpc_exc.code(), rpc_exc.details(), errors=(rpc_exc,), response=rpc_exc
+            rpc_exc.code(),
+            rpc_exc.details(),
+            errors=(rpc_exc,),
+            details=details,
+            response=rpc_exc,
+            error_info=err_info,
         )
     else:
         return GoogleAPICallError(str(rpc_exc), errors=(rpc_exc,), response=rpc_exc)

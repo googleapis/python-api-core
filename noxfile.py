@@ -21,7 +21,7 @@ import shutil
 import nox  # pytype: disable=import-error
 
 
-BLACK_VERSION = "black==19.10b0"
+BLACK_VERSION = "black==22.3.0"
 BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
@@ -29,17 +29,29 @@ BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
 DEFAULT_PYTHON_VERSION = "3.7"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
-_MINIMAL_ASYNCIO_SUPPORT_PYTHON_VERSION = [3, 6]
+# 'docfx' is excluded since it only needs to run in 'docs-presubmit'
+nox.options.sessions = [
+    "unit",
+    "unit_grpc_gcp",
+    "unit_wo_grpc",
+    "cover",
+    "pytype",
+    "mypy",
+    "lint",
+    "lint_setup_py",
+    "blacken",
+    "docs",
+]
 
 
-def _greater_or_equal_than_36(version_string):
+def _greater_or_equal_than_37(version_string):
     tokens = version_string.split(".")
     for i, token in enumerate(tokens):
         try:
             tokens[i] = int(token)
         except ValueError:
             pass
-    return tokens >= [3, 6]
+    return tokens >= [3, 7]
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
@@ -52,7 +64,10 @@ def lint(session):
     session.install("flake8", "flake8-import-order", BLACK_VERSION)
     session.install(".")
     session.run(
-        "black", "--check", *BLACK_EXCLUDES, *BLACK_PATHS,
+        "black",
+        "--check",
+        *BLACK_EXCLUDES,
+        *BLACK_PATHS,
     )
     session.run("flake8", "google", "tests")
 
@@ -67,7 +82,7 @@ def blacken(session):
     session.run("black", *BLACK_EXCLUDES, *BLACK_PATHS)
 
 
-def default(session):
+def default(session, install_grpc=True):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -80,56 +95,75 @@ def default(session):
     )
 
     # Install all test dependencies, then install this package in-place.
-    session.install("mock", "pytest", "pytest-cov", "grpcio >= 1.0.2")
-    session.install("-e", ".", "-c", constraints_path)
+    session.install("dataclasses", "mock", "pytest", "pytest-cov", "pytest-xdist")
+    if install_grpc:
+        session.install("-e", ".[grpc]", "-c", constraints_path)
+    else:
+        session.install("-e", ".", "-c", constraints_path)
 
     pytest_args = [
         "python",
         "-m",
         "py.test",
-        "--quiet",
-        "--cov=google.api_core",
-        "--cov=tests.unit",
-        "--cov-append",
-        "--cov-config=.coveragerc",
-        "--cov-report=",
-        "--cov-fail-under=0",
-        os.path.join("tests", "unit"),
+        *(
+            # Helpful for running a single test or testfile.
+            session.posargs
+            or [
+                "--quiet",
+                "--cov=google.api_core",
+                "--cov=tests.unit",
+                "--cov-append",
+                "--cov-config=.coveragerc",
+                "--cov-report=",
+                "--cov-fail-under=0",
+                # Running individual tests with parallelism enabled is usually not helpful.
+                "-n=auto",
+                os.path.join("tests", "unit"),
+            ]
+        ),
     ]
-    pytest_args.extend(session.posargs)
 
-    # Inject AsyncIO content and proto-plus, if version >= 3.6.
+    # Inject AsyncIO content and proto-plus, if version >= 3.7.
     # proto-plus is needed for a field mask test in test_protobuf_helpers.py
-    if _greater_or_equal_than_36(session.python):
+    if _greater_or_equal_than_37(session.python):
         session.install("asyncmock", "pytest-asyncio", "proto-plus")
 
-        pytest_args.append("--cov=tests.asyncio")
-        pytest_args.append(os.path.join("tests", "asyncio"))
-        session.run(*pytest_args)
-    else:
-        # Run py.test against the unit tests.
-        session.run(*pytest_args)
+        # Having positional arguments means the user wants to run specific tests.
+        # Best not to add additional tests to that list.
+        if not session.posargs:
+            pytest_args.append("--cov=tests.asyncio")
+            pytest_args.append(os.path.join("tests", "asyncio"))
+
+    session.run(*pytest_args)
 
 
-@nox.session(python=["2.7", "3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.7", "3.8", "3.9", "3.10"])
 def unit(session):
     """Run the unit test suite."""
     default(session)
 
 
-@nox.session(python=["2.7", "3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10"])
 def unit_grpc_gcp(session):
     """Run the unit test suite with grpcio-gcp installed."""
     constraints_path = str(
         CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
     )
     # Install grpcio-gcp
-    session.install("grpcio-gcp", "-c", constraints_path)
+    session.install("-e", ".[grpcgcp]", "-c", constraints_path)
+    # Install protobuf < 4.0.0
+    session.install("protobuf<4.0.0")
 
     default(session)
 
 
-@nox.session(python="3.6")
+@nox.session(python=["3.8", "3.10"])
+def unit_wo_grpc(session):
+    """Run the unit test suite w/o grpcio installed"""
+    default(session, install_grpc=False)
+
+
+@nox.session(python="3.8")
 def lint_setup_py(session):
     """Verify that setup.py is valid (including RST check)."""
 
@@ -137,18 +171,28 @@ def lint_setup_py(session):
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
-# No 2.7 due to https://github.com/google/importlab/issues/26.
-# No 3.7 because pytype supports up to 3.6 only.
-@nox.session(python="3.6")
+@nox.session(python="3.8")
 def pytype(session):
     """Run type-checking."""
-    session.install(
-        ".", "grpcio >= 1.8.2", "grpcio-gcp >= 0.2.2", "pytype >= 2019.3.21"
-    )
+    session.install(".[grpc]", "pytype >= 2019.3.21")
     session.run("pytype")
 
 
-@nox.session(python="3.6")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
+def mypy(session):
+    """Run type-checking."""
+    session.install(".[grpc]", "mypy")
+    session.install(
+        "types-setuptools",
+        "types-requests",
+        "types-protobuf",
+        "types-mock",
+        "types-dataclasses",
+    )
+    session.run("mypy", "google", "tests")
+
+
+@nox.session(python="3.8")
 def cover(session):
     """Run the final coverage report.
 
@@ -164,8 +208,7 @@ def cover(session):
 def docs(session):
     """Build the docs for this library."""
 
-    session.install(".", "grpcio >= 1.8.2", "grpcio-gcp >= 0.2.2")
-    session.install("-e", ".")
+    session.install("-e", ".[grpc]")
     session.install("sphinx==4.0.1", "alabaster", "recommonmark")
 
     shutil.rmtree(os.path.join("docs", "_build"), ignore_errors=True)

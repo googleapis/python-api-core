@@ -14,9 +14,13 @@
 
 import datetime
 
-from grpc.experimental import aio
 import mock
 import pytest
+
+try:
+    from grpc import aio
+except ImportError:
+    pytest.skip("No GRPC", allow_module_level=True)
 
 from google.api_core import exceptions
 from google.api_core import gapic_v1
@@ -158,7 +162,8 @@ async def test_wrap_method_with_default_retry_and_timeout_using_sentinel(unused_
     )
 
     result = await wrapped_method(
-        retry=gapic_v1.method_async.DEFAULT, timeout=gapic_v1.method_async.DEFAULT,
+        retry=gapic_v1.method_async.DEFAULT,
+        timeout=gapic_v1.method_async.DEFAULT,
     )
 
     assert result == 42

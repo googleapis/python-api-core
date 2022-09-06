@@ -21,4 +21,5 @@ try:
 except ImportError:
     import pkgutil
 
-    __path__ = pkgutil.extend_path(__path__, __name__)
+    # See: https://github.com/python/mypy/issues/1422
+    __path__ = pkgutil.extend_path(__path__, __name__)  # type: ignore
