@@ -25,26 +25,19 @@ import google.auth
 import google.auth.credentials
 import google.auth.transport.grpc
 import google.auth.transport.requests
-import google.protobuf
 
-PROTOBUF_VERSION = google.protobuf.__version__
+try:
+    import grpc_gcp
 
-# The grpcio-gcp package only has support for protobuf < 4
-if PROTOBUF_VERSION[0:2] == "3.":
-    try:
-        import grpc_gcp
-
-        warnings.warn(
-            """Support for grpcio-gcp is deprecated. This feature will be
-            removed from `google-api-core` after January 1, 2024. If you need to
-            continue to use this feature, please pin to a specific version of
-            `google-api-core`.""",
-            DeprecationWarning,
-        )
-        HAS_GRPC_GCP = True
-    except ImportError:
-        HAS_GRPC_GCP = False
-else:
+    warnings.warn(
+        """Support for grpcio-gcp is deprecated. This feature will be
+        removed from `google-api-core` after January 1, 2024. If you need to
+        continue to use this feature, please pin to a specific version of
+        `google-api-core`.""",
+        DeprecationWarning,
+    )
+    HAS_GRPC_GCP = True
+except ImportError:
     HAS_GRPC_GCP = False
 
 
