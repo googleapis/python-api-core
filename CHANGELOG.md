@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [1.33.0](https://github.com/googleapis/python-api-core/compare/v1.32.0...v1.33.0) (2022-09-06)
+
+
+### Features
+
+* Merge main branch into v1 ([#438](https://github.com/googleapis/python-api-core/issues/438)) ([a175ce5](https://github.com/googleapis/python-api-core/commit/a175ce55578a6a3e79b6960d8e28d4e7f67ce5ee))
+
 ## [1.32.0](https://github.com/googleapis/python-api-core/compare/v1.31.6...v1.32.0) (2022-07-13)
 
 
