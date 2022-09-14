@@ -279,7 +279,8 @@ def transcode(http_options, message=None, **request_kwargs):
         # Assign path
         uri_template = http_option["uri"]
         fields = [
-            (m.group("name"), m.group("template")) for m in _VARIABLE_RE.finditer(uri_template)
+            (m.group("name"), m.group("template"))
+            for m in _VARIABLE_RE.finditer(uri_template)
         ]
         bindings.append((uri_template, fields))
 
@@ -320,10 +321,15 @@ def transcode(http_options, message=None, **request_kwargs):
         return request
 
     bindings_description = [
-        "\n\tURI: \"{}\""
+        '\n\tURI: "{}"'
         "\n\tRequired request fields:\n\t\t{}".format(
             uri,
-            "\n\t\t".join(["field: \"{}\", pattern: \"{}\"".format(n, p if p else "*") for n, p in fields])
+            "\n\t\t".join(
+                [
+                    'field: "{}", pattern: "{}"'.format(n, p if p else "*")
+                    for n, p in fields
+                ]
+            ),
         )
         for uri, fields in bindings
     ]
@@ -334,6 +340,7 @@ def transcode(http_options, message=None, **request_kwargs):
         "initialized with an invalid value."
         "\nPlease make sure your request matches at least one accepted HTTP binding."
         "\nTo match a binding the request message must have all the required fields "
-        "initialized with values matching their patterns as "
-        "listed below:{}".format("\n".join(bindings_description))
+        "initialized with values matching their patterns as listed below:{}".format(
+            "\n".join(bindings_description)
+        )
     )
