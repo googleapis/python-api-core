@@ -38,7 +38,7 @@ class _MethodDefault(enum.Enum):
 
 
 DEFAULT = _MethodDefault._DEFAULT_VALUE
-"""Sentinel value indicating that a retry or timeout argument was unspecified,
+"""Sentinel value indicating that a retry, timeout, or compression argument was unspecified,
 so the default should be used."""
 
 
@@ -115,15 +115,17 @@ class _GapicCallable(object):
             provided to the RPC method on every invocation. This is merged with
             any metadata specified during invocation. If ``None``, no
             additional metadata will be passed to the RPC method.
+        compression (grpc.Compression): Indicates the compression method to be used for an RPC.
     """
 
-    def __init__(self, target, retry, timeout, metadata=None):
+    def __init__(self, target, retry, timeout, metadata=None, compression=None):
         self._target = target
         self._retry = retry
         self._timeout = timeout
         self._metadata = metadata
+        self._compression = compression
 
-    def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, **kwargs):
+    def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
         timeout = _determine_timeout(
             self._timeout,
@@ -138,7 +140,7 @@ class _GapicCallable(object):
             retry = self._retry
 
         # Apply all applicable decorators.
-        wrapped_func = _apply_decorators(self._target, [retry, timeout])
+        wrapped_func = _apply_decorators(self._target, [retry, timeout, compression])
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
@@ -158,12 +160,13 @@ def wrap_method(
     func,
     default_retry=None,
     default_timeout=None,
-    client_info=client_info.DEFAULT_CLIENT_INFO,
+    default_compression=None,
+    client_info=client_info.DEFAULT_CLIENT_INFO
 ):
     """Wrap an RPC method with common behavior.
 
-    This applies common error wrapping, retry, and timeout behavior a function.
-    The wrapped function will take optional ``retry`` and ``timeout``
+    This applies common error wrapping, retry, timeout, and compression behavior a function.
+    The wrapped function will take optional ``retry``, ``timeout``, and ``compression``
     arguments.
 
     For example::
@@ -227,6 +230,8 @@ def wrap_method(
         default_timeout (Optional[google.api_core.Timeout]): The default
             timeout strategy. Can also be specified as an int or float. If
             ``None``, the method will not have timeout specified by default.
+        default_compression (Optional[grpc.Compression]): The default
+            grpc.Compression.
         client_info
             (Optional[google.api_core.gapic_v1.client_info.ClientInfo]):
                 Client information used to create a user-agent string that's
@@ -248,6 +253,6 @@ def wrap_method(
 
     return functools.wraps(func)(
         _GapicCallable(
-            func, default_retry, default_timeout, metadata=user_agent_metadata
+            func, default_retry, default_timeout, metadata=user_agent_metadata, compression=default_compression
         )
     )

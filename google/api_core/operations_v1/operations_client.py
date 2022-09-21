@@ -69,24 +69,28 @@ class OperationsClient(object):
             self.operations_stub.GetOperation,
             default_retry=method_configs["GetOperation"].retry,
             default_timeout=method_configs["GetOperation"].timeout,
+            default_compression=method_configs["GetOperation"].compression,
         )
 
         self._list_operations = gapic_v1.method.wrap_method(
             self.operations_stub.ListOperations,
             default_retry=method_configs["ListOperations"].retry,
             default_timeout=method_configs["ListOperations"].timeout,
+            default_compression=method_configs["ListOperations"].compression,
         )
 
         self._cancel_operation = gapic_v1.method.wrap_method(
             self.operations_stub.CancelOperation,
             default_retry=method_configs["CancelOperation"].retry,
             default_timeout=method_configs["CancelOperation"].timeout,
+            default_compression=method_configs["CancelOperation"].compression,
         )
 
         self._delete_operation = gapic_v1.method.wrap_method(
             self.operations_stub.DeleteOperation,
             default_retry=method_configs["DeleteOperation"].retry,
             default_timeout=method_configs["DeleteOperation"].timeout,
+            default_compression=method_configs["DeleteOperation"].compression,
         )
 
     # Service calls
@@ -96,6 +100,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
+        compression=None
     ):
         """Gets the latest state of a long-running operation.
 
@@ -123,6 +128,8 @@ class OperationsClient(object):
                 not time out.
             metadata (Optional[List[Tuple[str, str]]]):
                 Additional gRPC metadata.
+            compression (grpc.Compression): An element of grpc.compression
+                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
 
         Returns:
             google.longrunning.operations_pb2.Operation: The state of the
@@ -140,7 +147,7 @@ class OperationsClient(object):
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         return self._get_operation(
-            request, retry=retry, timeout=timeout, metadata=metadata
+            request, retry=retry, timeout=timeout, compression=compression, metadata=metadata
         )
 
     def list_operations(
@@ -150,6 +157,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
+        compression=None
     ):
         """
         Lists operations that match the specified filter in the request.
@@ -187,6 +195,8 @@ class OperationsClient(object):
                 not time out.
             metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
                 metadata.
+            compression (grpc.Compression): An element of grpc.compression
+                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
 
         Returns:
             google.api_core.page_iterator.Iterator: An iterator that yields
@@ -209,7 +219,7 @@ class OperationsClient(object):
 
         # Create the method used to fetch pages
         method = functools.partial(
-            self._list_operations, retry=retry, timeout=timeout, metadata=metadata
+            self._list_operations,  retry=retry, timeout=timeout, compression=compression, metadata=metadata
         )
 
         iterator = page_iterator.GRPCIterator(
@@ -229,6 +239,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
+        compression=None
     ):
         """Starts asynchronous cancellation on a long-running operation.
 
@@ -262,6 +273,8 @@ class OperationsClient(object):
                 not time out.
             metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
                 metadata.
+            compression (grpc.Compression): An element of grpc.compression
+                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
 
         Raises:
             google.api_core.exceptions.MethodNotImplemented: If the server
@@ -278,7 +291,7 @@ class OperationsClient(object):
         metadata = metadata or []
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
-        self._cancel_operation(request, retry=retry, timeout=timeout, metadata=metadata)
+        self._cancel_operation(request, retry=retry, timeout=timeout, compression=compression, metadata=metadata)
 
     def delete_operation(
         self,
@@ -286,6 +299,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
+        compression=None
     ):
         """Deletes a long-running operation.
 
@@ -313,6 +327,8 @@ class OperationsClient(object):
                 not time out.
             metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
                 metadata.
+            compression (grpc.Compression): An element of grpc.compression
+                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
 
         Raises:
             google.api_core.exceptions.MethodNotImplemented: If the server
@@ -329,4 +345,4 @@ class OperationsClient(object):
         metadata = metadata or []
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
-        self._delete_operation(request, retry=retry, timeout=timeout, metadata=metadata)
+        self._delete_operation(request, retry=retry, timeout=timeout, compression=compression, metadata=metadata)

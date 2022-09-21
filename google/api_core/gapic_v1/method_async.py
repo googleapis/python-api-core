@@ -30,6 +30,7 @@ def wrap_method(
     func,
     default_retry=None,
     default_timeout=None,
+    default_compression=None,
     client_info=client_info.DEFAULT_CLIENT_INFO,
 ):
     """Wrap an async RPC method with common behavior.
@@ -44,5 +45,5 @@ def wrap_method(
     metadata = [client_info.to_grpc_metadata()] if client_info is not None else None
 
     return functools.wraps(func)(
-        _GapicCallable(func, default_retry, default_timeout, metadata=metadata)
+        _GapicCallable(func, default_retry, default_timeout, default_compression, metadata=metadata)
     )

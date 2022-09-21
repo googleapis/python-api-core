@@ -113,6 +113,31 @@ def test_wrap_method_with_custom_client_info():
     assert client_info.to_grpc_metadata() in metadata
 
 
+def test_wrap_method_with_no_compression():
+    method = mock.Mock(spec=["__call__"])
+
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, compression=None
+    )
+
+    wrapped_method(1, 2, meep="moop")
+
+    method.assert_called_once_with(1, 2, meep="moop")
+
+
+def test_wrap_method_with_custom_client_info():
+    compression = grpc.Compression.Gzip
+    method = mock.Mock(spec=["__call__"])
+
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, compression=compression
+    )
+
+    wrapped_method(1, 2, meep="moop")
+
+    method.assert_called_once_with(1, 2, meep="moop", compression=grpc.Compression.Gzip)
+
+
 def test_invoke_wrapped_method_with_metadata():
     method = mock.Mock(spec=["__call__"])
 

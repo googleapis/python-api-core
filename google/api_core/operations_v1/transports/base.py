@@ -129,6 +129,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
+                default_compression=None,
                 client_info=client_info,
             ),
             self.get_operation: gapic_v1.method.wrap_method(
@@ -143,6 +144,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
+                default_compression=None,
                 client_info=client_info,
             ),
             self.delete_operation: gapic_v1.method.wrap_method(
@@ -157,6 +159,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
+                default_compression=None,
                 client_info=client_info,
             ),
             self.cancel_operation: gapic_v1.method.wrap_method(
@@ -171,6 +174,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
+                default_compression=None,
                 client_info=client_info,
             ),
         }

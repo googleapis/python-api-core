@@ -19,6 +19,7 @@ import pytest
 
 try:
     from grpc import aio
+    from grpc import Compression
 except ImportError:
     pytest.skip("No GRPC", allow_module_level=True)
 
@@ -90,6 +91,31 @@ async def test_wrap_method_with_custom_client_info():
     # Check that the custom client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
     assert client_info.to_grpc_metadata() in metadata
+
+
+@pytest.mark.asyncio
+async def test_wrap_method_with_no_compression():
+    fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
+    method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
+
+    wrapped_method = gapic_v1.method_async.wrap_method(method, compression=None)
+
+    await wrapped_method(1, 2, meep="moop")
+
+    method.assert_called_once_with(1, 2, meep="moop")
+
+
+@pytest.mark.asyncio
+async def test_wrap_method_with_custom_compression():
+    compression = Compression.Gzip
+    fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
+    method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
+
+    wrapped_method = gapic_v1.method_async.wrap_method(method, compression=compression)
+
+    await wrapped_method(1, 2, meep="moop")
+
+    method.assert_called_once_with(1, 2, meep="moop", compression=compression)
 
 
 @pytest.mark.asyncio
