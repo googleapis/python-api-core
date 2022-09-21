@@ -276,6 +276,7 @@ def create_channel(
     quota_project_id=None,
     default_scopes=None,
     default_host=None,
+    compression=None,
     **kwargs
 ):
     """Create a secure channel with credentials.
@@ -297,6 +298,9 @@ def create_channel(
         default_scopes (Sequence[str]): Default scopes passed by a Google client
             library. Use 'scopes' for user-defined scopes.
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
+        compression (grpc.Compression): An optional value indicating the
+            compression method to be used over the lifetime of the channel.
+            This is an EXPERIMENTAL option.
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
             Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
@@ -319,12 +323,12 @@ def create_channel(
     )
 
     if HAS_GRPC_GCP:
-        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-    return grpc.secure_channel(target, composite_credentials, **kwargs)
+        return grpc_gcp.secure_channel(target, composite_credentials, compression=compression, **kwargs)
+    return grpc.secure_channel(target, composite_credentials, compression=compression, **kwargs)
 
 
 _MethodCall = collections.namedtuple(
-    "_MethodCall", ("request", "timeout", "metadata", "credentials")
+    "_MethodCall", ("request", "timeout", "metadata", "credentials", "compression")
 )
 
 _ChannelRequest = collections.namedtuple("_ChannelRequest", ("method", "request"))
@@ -353,9 +357,9 @@ class _CallableStub(object):
         """List[Tuple]: All invocations of this callable. Each tuple is the
         request, timeout, metadata, and credentials."""
 
-    def __call__(self, request, timeout=None, metadata=None, credentials=None):
+    def __call__(self, request, timeout=None, metadata=None, credentials=None, compression=None):
         self._channel.requests.append(_ChannelRequest(self._method, request))
-        self.calls.append(_MethodCall(request, timeout, metadata, credentials))
+        self.calls.append(_MethodCall(request, timeout, metadata, credentials, compression))
         self.requests.append(request)
 
         response = self.response
