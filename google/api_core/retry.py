@@ -139,15 +139,15 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
     Yields:
         float: successive sleep intervals.
     """
-    delay = initial
+    delay = min(initial, maximum)
     while True:
-        # Introduce jitter by yielding a delay that is uniformly distributed
-        # to average out to the delay time.
-        yield min(random.uniform(0.0, delay * 2.0), maximum)
-        delay = delay * multiplier
+        yield random.uniform(0.0, delay)
+        delay = min(delay * multiplier, maximum)
 
 
-def retry_target(target, predicate, sleep_generator, deadline, on_error=None):
+def retry_target(
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+):
     """Call a function and retry if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
@@ -161,12 +161,14 @@ def retry_target(target, predicate, sleep_generator, deadline, on_error=None):
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        deadline (float): How long to keep retrying the target. The last sleep
+        timeout (float): How long to keep retrying the target. The last sleep
             period is shortened as necessary, so that the last retry runs at
             ``deadline`` (and not considerably beyond it).
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
+        deadline (float): DEPRECATED use ``timeout`` instead. For backward
+            compatibility, if specified it will override ``timeout`` parameter.
 
     Returns:
         Any: the return value of the target function.
@@ -176,12 +178,13 @@ def retry_target(target, predicate, sleep_generator, deadline, on_error=None):
         ValueError: If the sleep generator stops yielding values.
         Exception: If the target raises a method that isn't retryable.
     """
-    if deadline is not None:
-        deadline_datetime = datetime_helpers.utcnow() + datetime.timedelta(
-            seconds=deadline
-        )
+
+    timeout = kwargs.get("deadline", timeout)
+
+    if timeout is not None:
+        deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout)
     else:
-        deadline_datetime = None
+        deadline = None
 
     last_exc = None
 
@@ -198,19 +201,17 @@ def retry_target(target, predicate, sleep_generator, deadline, on_error=None):
             if on_error is not None:
                 on_error(exc)
 
-        now = datetime_helpers.utcnow()
-
-        if deadline_datetime is not None:
-            if deadline_datetime <= now:
+        if deadline is not None:
+            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=sleep
+            )
+            if deadline < next_attempt_time:
                 raise exceptions.RetryError(
                     "Deadline of {:.1f}s exceeded while calling target function".format(
-                        deadline
+                        timeout
                     ),
                     last_exc,
                 ) from last_exc
-            else:
-                time_to_deadline = (deadline_datetime - now).total_seconds()
-                sleep = min(time_to_deadline, sleep)
 
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
@@ -223,11 +224,77 @@ def retry_target(target, predicate, sleep_generator, deadline, on_error=None):
 class Retry(object):
     """Exponential retry decorator.
 
-    This class is a decorator used to add exponential back-off retry behavior
-    to an RPC call.
+    This class is a decorator used to add retry or polling behavior to an RPC
+    call.
 
     Although the default behavior is to retry transient API errors, a
     different predicate can be provided to retry other exceptions.
+
+    There two important concepts that retry/polling behavior may operate on -
+    Deadline and Timeout, which need to be properly defined for the correct
+    usage of this class and the rest of the library.
+
+    Deadline - a fixed point in time by which a certain operation must
+    terminate. For example if a certain operaiton has a deadline
+    "2022-10-18T23:30:52.123Z" it must terminate (successfully or with an
+    error) till that time regradless of when it was started of if it has
+    ever been started at all.
+
+    Timeout - the maximum duration of time after which a certain operation
+    must terminate (successfully or with an error). The countdown begins right
+    after an operation was started. For example if an operation was started at
+    09:24:00 with timeout of 75 seconds, it must terminate not later than
+    09:25:15.
+
+    Unfortunately this class (and the api-core library as a whole) has not been
+    properly distinguishing the concepts of timeout and deadline and the
+    ``deadline`` parameter actually  means ``timeout``. That is why the
+    ``deadline`` has been deprecated and ``timeout`` should be used instead. If
+    ``deadline`` parameter is set, it will override ``timeout`` parameter, thus
+    ``retry.deadline`` should be treated as just a deprecated alias for
+    ``retry.timeout``.
+
+    In other words it is safe to assume that this class and the rest of this
+    library operates in terms of timeouts (not deadlines) unless explicitly
+    noted the usage of deadline semantics.
+
+    Now, when we have Timeout term properly defined, it is also important to
+    understand the three most common applications of the timeout concept in the
+    context of this library.
+
+    Usually the generic Timeout term may stand for one of the following actual
+    timeouts: RPC Timeout, Retry Timeout or Polling Timeout.
+
+    RPC Timeout - a value supplied by the client side to the server side such
+    that the server side knows the maximum amount of time it is expected to
+    spend handling that specifc RPC. For example, in case of a gRPC transport,
+    RPC Timeout is represented by setting "grpc-timeout" header in the HTTP2
+    request. The `timeout` property of this class normally never represents the
+    RPC Timeout as it is handled separately by the ``google.api_core.timeout``
+    module of this library.
+
+    Retry Timeout - this is the most common meaning of the ``timeout`` property
+    of this class, and it defines how long a certain RPC may be retried in case
+    an error is returned from the server.
+
+    Polling Timeout - it is similar to Retry Timeout, but defines how long the
+    client side is allowed to call polling rpc repeatedly to check a status of a
+    long running operaiton. Unlike in the retry case, the polling rpc is
+    expected to succed (its errors are supposed to be handled by the retry
+    logic). The decision if a new polling attemtp needs to be made is made
+    not based on the RPC status code but based on the status of the returned
+    status of an operation (i.e. it is higher level concept than the rpc error
+    codes).
+
+    With the actual timeout types being defined above, the client libraries
+    often refer to just Timeout without clarifying which type specifically
+    that is. In that case the actual timeout type (sometimes also refered to as
+    Logical Timeout) can be determined from the context. If it is a unary rpc
+    call (i.e. a regular one) Timeout usually stands for the RPC Timeout (if
+    provided directly as a standaone value) or Retry Timeout (if provided as
+    ``retry.timeout`` property of the unary RPC's retry config). For
+    ``Operation`` or ``PolllingFuture` in general Timeout stands for
+    Polling Timeout.
 
     Args:
         predicate (Callable[Exception]): A callable that should return ``True``
@@ -236,9 +303,9 @@ class Retry(object):
             must be greater than 0.
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
-        deadline (float): How long to keep retrying in seconds. The last sleep
-            period is shortened as necessary, so that the last retry runs at
-            ``deadline`` (and not considerably beyond it).
+        timeout (float): How long to keep retrying in seconds.
+        deadline (float): DEPRECATED: use `timeout` instead. For backward
+            compatibility, if specified it will override ``timeout`` parameter.
     """
 
     def __init__(
@@ -247,14 +314,16 @@ class Retry(object):
         initial=_DEFAULT_INITIAL_DELAY,
         maximum=_DEFAULT_MAXIMUM_DELAY,
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
-        deadline=_DEFAULT_DEADLINE,
+        timeout=_DEFAULT_DEADLINE,
         on_error=None,
+        **kwargs
     ):
         self._predicate = predicate
         self._initial = initial
         self._multiplier = multiplier
         self._maximum = maximum
-        self._deadline = deadline
+        self._timeout = kwargs.get("deadline", timeout)
+        self._deadline = self._timeout
         self._on_error = on_error
 
     def __call__(self, func, on_error=None):
@@ -284,7 +353,7 @@ class Retry(object):
                 target,
                 self._predicate,
                 sleep_generator,
-                self._deadline,
+                self._timeout,
                 on_error=on_error,
             )
 
@@ -292,23 +361,45 @@ class Retry(object):
 
     @property
     def deadline(self):
-        return self._deadline
+        """
+        DEPRECATED: use ``timeout`` instead.  Check the ``Retry`` class
+        documentation for details.
+        """
+        return self._timeout
+
+    @property
+    def timeout(self):
+        return self._timeout
 
     def with_deadline(self, deadline):
-        """Return a copy of this retry with the given deadline.
+        """Return a copy of this retry with the given timeout.
+
+        DEPRECATED use :meth:`with_timeout` instead. Check the ``Retry`` class
+        documentation for details.
 
         Args:
-            deadline (float): How long to keep retrying.
+            deadline (float): How long to keep retrying in seconds.
 
         Returns:
-            Retry: A new retry instance with the given deadline.
+            Retry: A new retry instance with the given timeout.
+        """
+        return self.with_timeout(timeout=deadline)
+
+    def with_timeout(self, timeout):
+        """Return a copy of this retry with the given timeout.
+
+        Args:
+            timeout (float): How long to keep retrying in seconds.
+
+        Returns:
+            Retry: A new retry instance with the given timeout.
         """
         return Retry(
             predicate=self._predicate,
             initial=self._initial,
             maximum=self._maximum,
             multiplier=self._multiplier,
-            deadline=deadline,
+            timeout=timeout,
             on_error=self._on_error,
         )
 
@@ -327,7 +418,7 @@ class Retry(object):
             initial=self._initial,
             maximum=self._maximum,
             multiplier=self._multiplier,
-            deadline=self._deadline,
+            timeout=self._timeout,
             on_error=self._on_error,
         )
 
@@ -348,19 +439,19 @@ class Retry(object):
             initial=initial if initial is not None else self._initial,
             maximum=maximum if maximum is not None else self._maximum,
             multiplier=multiplier if multiplier is not None else self._multiplier,
-            deadline=self._deadline,
+            timeout=self._timeout,
             on_error=self._on_error,
         )
 
     def __str__(self):
         return (
             "<Retry predicate={}, initial={:.1f}, maximum={:.1f}, "
-            "multiplier={:.1f}, deadline={:.1f}, on_error={}>".format(
+            "multiplier={:.1f}, timeout={}, on_error={}>".format(
                 self._predicate,
                 self._initial,
                 self._maximum,
                 self._multiplier,
-                self._deadline,
+                self._timeout,  # timeout can be None, thus no {:.1f}
                 self._on_error,
             )
         )

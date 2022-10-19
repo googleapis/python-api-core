@@ -14,6 +14,7 @@
 
 """gapic configuration for the googe.longrunning.operations client."""
 
+# DEPRECATED retry and timeou classes are instantiated directly
 config = {
     "interfaces": {
         "google.longrunning.Operations": {
