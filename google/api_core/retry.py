@@ -293,7 +293,7 @@ class Retry(object):
     call (i.e. a regular one) Timeout usually stands for the RPC Timeout (if
     provided directly as a standaone value) or Retry Timeout (if provided as
     ``retry.timeout`` property of the unary RPC's retry config). For
-    ``Operation`` or ``PolllingFuture` in general Timeout stands for
+    ``Operation`` or ``PolllingFuture`` in general Timeout stands for
     Polling Timeout.
 
     Args:

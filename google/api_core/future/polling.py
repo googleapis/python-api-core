@@ -108,8 +108,8 @@ class PollingFuture(base.Future):
 
         Args:
             retry (google.api_core.retry.Retry): (Optional) How to retry the
-            polling RPC (to not be confused with polling configuration, see
-            the documentation for :meth:`result` for details).
+                polling RPC (to not be confused with polling configuration, see
+                the documentation for :meth:`result` for details).
 
         Returns:
             bool: True if the operation is complete, False otherwise.
@@ -128,6 +128,7 @@ class PollingFuture(base.Future):
 
     def _blocking_poll(self, timeout=_DEFAULT_VALUE, retry=None, polling=None):
         """Poll and wait for the Future to be resolved."""
+
         if self._result_set:
             return
 
