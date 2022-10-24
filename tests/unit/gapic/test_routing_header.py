@@ -14,6 +14,8 @@
 
 import pytest
 
+from enum import Enum
+
 try:
     import grpc  # noqa: F401
 except ImportError:
@@ -33,6 +35,30 @@ def test_to_routing_header_with_slashes():
     params = [("name", "me/ep"), ("book.read", "1&2")]
     value = routing_header.to_routing_header(params)
     assert value == "name=me/ep&book.read=1%262"
+
+
+def test_enum_fully_qualified():
+    class Message:
+        class Color(Enum):
+            RED= 1
+            GREEN = 2
+            BLUE = 3
+    params = [("color", Message.Color.RED)]
+    value = routing_header.to_routing_header(params)
+    assert value == "color=Color.RED"
+    value = routing_header.to_routing_header(params, fully_qualified_enums=True)
+    assert value == "color=Color.RED"
+
+
+def test_enum_nonqualified():
+    class Message:
+        class Color(Enum):
+            RED= 1
+            GREEN = 2
+            BLUE = 3
+    params = [("color", Message.Color.RED),("num",5)]
+    value = routing_header.to_routing_header(params, fully_qualified_enums=False)
+    assert value == "color=RED"
 
 
 def test_to_grpc_metadata():
