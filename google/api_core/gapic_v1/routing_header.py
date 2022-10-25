@@ -26,13 +26,13 @@ from urllib.parse import urlencode
 ROUTING_METADATA_KEY = "x-goog-request-params"
 
 
-def to_routing_header(params, fully_qualified_enums=True):
+def to_routing_header(params, qualified_enums=True):
     """Returns a routing header string for the given request parameters.
 
     Args:
         params (Mapping[str, Any]): A dictionary containing the request
             parameters used for routing.
-        fully_qualified_enums (bool): Whether to represent enum values
+        qualified_enums (bool): Whether to represent enum values
             as their type-qualified symbol names instead of as their
             unqualified symbol names.
 
@@ -40,7 +40,7 @@ def to_routing_header(params, fully_qualified_enums=True):
         str: The routing header string.
 
     """
-    if not fully_qualified_enums:
+    if not qualified_enums:
         if isinstance(params, dict):
             tuples = params.items()
         else:
@@ -53,14 +53,14 @@ def to_routing_header(params, fully_qualified_enums=True):
     )
 
 
-def to_grpc_metadata(params, fully_qualified_enums=True):
+def to_grpc_metadata(params, qualified_enums=True):
     """Returns the gRPC metadata containing the routing headers for the given
     request parameters.
 
     Args:
         params (Mapping[str, Any]): A dictionary containing the request
             parameters used for routing.
-        fully_qualified_enums (bool): Whether to represent enum values
+        qualified_enums (bool): Whether to represent enum values
             as their type-qualified symbol names instead of as their
             unqualified symbol names.
 
@@ -68,4 +68,4 @@ def to_grpc_metadata(params, fully_qualified_enums=True):
         Tuple(str, str): The gRPC metadata containing the routing header key
             and value.
     """
-    return (ROUTING_METADATA_KEY, to_routing_header(params, fully_qualified_enums))
+    return (ROUTING_METADATA_KEY, to_routing_header(params, qualified_enums))

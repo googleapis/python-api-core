@@ -46,7 +46,7 @@ def test_enum_fully_qualified():
     params = [("color", Message.Color.RED)]
     value = routing_header.to_routing_header(params)
     assert value == "color=Color.RED"
-    value = routing_header.to_routing_header(params, fully_qualified_enums=True)
+    value = routing_header.to_routing_header(params, qualified_enums=True)
     assert value == "color=Color.RED"
 
 
@@ -57,8 +57,8 @@ def test_enum_nonqualified():
             GREEN = 2
             BLUE = 3
     params = [("color", Message.Color.RED),("num",5)]
-    value = routing_header.to_routing_header(params, fully_qualified_enums=False)
-    assert value == "color=RED"
+    value = routing_header.to_routing_header(params, qualified_enums=False)
+    assert value == "color=RED&num=5"
 
 
 def test_to_grpc_metadata():
