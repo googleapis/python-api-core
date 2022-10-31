@@ -44,7 +44,7 @@ RETRY_PREDICATE = retries.if_exception_type(
 # (to not be confused with polling logic).
 DEFAULT_RETRY = retries.Retry(predicate=RETRY_PREDICATE)
 
-# Poling predicate is supposed to poll only on _OperationNotComplete.
+# Polling predicate is supposed to poll only on _OperationNotComplete.
 # Any RPC-specific errors (like ServiceUnavailable) will be handled
 # by retry logic (to not be confused with polling logic) which is triggered for
 # every polling RPC independently of polling logic but within its context.
