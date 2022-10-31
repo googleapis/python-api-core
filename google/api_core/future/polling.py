@@ -61,9 +61,6 @@ DEFAULT_POLLING = retries.Retry(
     timeout=900,
 )
 
-# Default value used to distinguish None and Unset
-_DEFAULT_POLLING_VALUE = object()
-
 
 class PollingFuture(base.Future):
     """A Future that needs to poll some service to check its status.
