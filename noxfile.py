@@ -102,7 +102,7 @@ def default(session, install_grpc=True):
         # https://github.com/pytest-dev/pytest/issues/10451 is fixed
         "pytest<7.2.0",
         "pytest-cov",
-        "pytest-xdist"
+        "pytest-xdist",
     )
 
     if install_grpc:
