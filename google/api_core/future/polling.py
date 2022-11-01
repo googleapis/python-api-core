@@ -55,10 +55,10 @@ POLLING_PREDICATE = retries.if_exception_type(
 # Default polling configuration
 DEFAULT_POLLING = retries.Retry(
     predicate=POLLING_PREDICATE,
-    initial=1.0,
-    maximum=20.0,
+    initial=1.0,  # seconds
+    maximum=20.0,  # seconds
     multiplier=1.5,
-    timeout=900,
+    timeout=900,  # seconds
 )
 
 
@@ -137,7 +137,8 @@ class PollingFuture(base.Future):
             polling(self._done_or_raise)(retry=retry)
         except exceptions.RetryError:
             raise concurrent.futures.TimeoutError(
-                "Operation did not complete within the designated timeout."
+                f"Operation did not complete within the designated timeout of "
+                f"{polling.timeout} seconds."
             )
 
     def result(self, timeout=_DEFAULT_VALUE, retry=None, polling=None):
