@@ -276,7 +276,6 @@ class TestAsyncRetry:
         target.assert_called_once_with("meep")
         sleep.assert_not_called()
 
-    # Make uniform return half of its maximum, which is the calculated sleep time.
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -302,7 +301,6 @@ class TestAsyncRetry:
         sleep.assert_called_once_with(retry_._initial)
         assert on_error.call_count == 1
 
-    # Make uniform return half of its maximum, which is the calculated sleep time.
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -376,8 +374,7 @@ class TestAsyncRetry:
         sleep.assert_not_called()
         _some_function.assert_not_called()
 
-    # Make uniform return half of its maximum, which is the calculated sleep time.
-    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n / 2.0)
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___init___when_retry_is_executed(self, sleep, uniform):
