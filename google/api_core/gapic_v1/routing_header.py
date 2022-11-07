@@ -45,7 +45,7 @@ def to_routing_header(params, qualified_enums=True):
             tuples = params.items()
         else:
             tuples = params
-        params = [(x[0],x[1].name) if isinstance(x[1], Enum) else x for x in tuples]
+        params = [(x[0], x[1].name) if isinstance(x[1], Enum) else x for x in tuples]
     return urlencode(
         params,
         # Per Google API policy (go/api-url-encoding), / is not encoded.
