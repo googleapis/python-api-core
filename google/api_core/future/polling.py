@@ -39,14 +39,14 @@ RETRY_PREDICATE = retries.if_exception_type(
     exceptions.ServiceUnavailable,
 )
 
-# DEPRECATED, use DEFAULT_POLLING to configure LRO polling logic. Construct
+# DEPRECATED: use DEFAULT_POLLING to configure LRO polling logic. Construct
 # Retry object using its default values as a baseline for any custom retry logic
-# (to not be confused with polling logic).
+# (not to be confused with polling logic).
 DEFAULT_RETRY = retries.Retry(predicate=RETRY_PREDICATE)
 
-# Polling predicate is supposed to poll only on _OperationNotComplete.
+# POLLING_PREDICATE is supposed to poll only on _OperationNotComplete.
 # Any RPC-specific errors (like ServiceUnavailable) will be handled
-# by retry logic (to not be confused with polling logic) which is triggered for
+# by retry logic (not to be confused with polling logic) which is triggered for
 # every polling RPC independently of polling logic but within its context.
 POLLING_PREDICATE = retries.if_exception_type(
     _OperationNotComplete,
@@ -68,7 +68,7 @@ class PollingFuture(base.Future):
     The :meth:`done` method should be implemented by subclasses. The polling
     behavior will repeatedly call ``done`` until it returns True.
 
-    The actuall polling logic is encapsulated in :meth:`result` method, see
+    The actuall polling logic is encapsulated in :meth:`result` method. See
     documentation for that method for details on how polling works.
 
     .. note::
@@ -82,7 +82,7 @@ class PollingFuture(base.Future):
             ``timeout`` argument is specified in :meth:`result` method it will
             override the ``polling.timeout`` property.
         retry (google.api_core.retry.Retry): DEPRECATED use ``polling`` instead.
-            If set it will override ``polling`` paremeter for backward
+            If set, it will override ``polling`` paremeter for backward
             compatibility.
     """
 
@@ -147,23 +147,23 @@ class PollingFuture(base.Future):
         This method will poll for operation status periodically, blocking if
         necessary. If you just want to make sure that this method does not block
         for more than X seconds and you do not care about the nitty-gritty of
-        how this  method operates, just call it with ``result(timeout=X)``. The
+        how this method operates, just call it with ``result(timeout=X)``. The
         other parameters are for advanced use only.
 
         Every call to this method is controlled by the following three
-        parameters each of which has a specific distinct role although all three
+        parameters, each of which has a specific, distinct role, even though all three
         may look very similar: ``timeout``, ``retry`` and ``polling``. In most
         cases users do not need to specify any custom values for any of these
-        parameters and rely on default ones instead.
+        parameters and may simply rely on default ones instead.
 
-        If you choose to specify your custom parameters, please make sure you've
+        If you choose to specify custom parameters, please make sure you've
         read the documentation below carefully.
 
-        First please check :class:`google.api_core.retry.Retry`
+        First, please check :class:`google.api_core.retry.Retry`
         class documentation for the proper definition of timeout and deadline
         terms and for the definition the three different types of timeouts.
-        This class operates in terms of Retry Timeot and Polling Timeout, it
-        does let customizing RPC timeout and a user is expected to rely on
+        This class operates in terms of Retry Timeout and Polling Timeout. It
+        does not let customizing RPC timeout and the user is expected to rely on
         default behavior for it.
 
         The roles of each argument of this method are as follows:
@@ -174,38 +174,38 @@ class PollingFuture(base.Future):
         neither Retry Timeout nor RPC Timeout.
 
         ``retry`` (google.api_core.retry.Retry): (Optional) How to retry the
-        polling RPC. The ``retry.timeout`` propery of this parameter is the
+        polling RPC. The ``retry.timeout`` property of this parameter is the
         Retry Timeout as defined in :class:`google.api_core.retry.Retry`.
         This parameter defines ONLY how the polling RPC call is retried
-        (i.e. what to do if the RPC we used for polling returned an error), it
-        does  NOT define how the polling is done (i.e. how frequently and for
-        how long to call the polling RPC - use ``polling`` parameter for that).
+        (i.e. what to do if the RPC we used for polling returned an error). It
+        does NOT define how the polling is done (i.e. how frequently and for
+        how long to call the polling RPC); use the ``polling`` parameter for that.
         If a polling RPC throws and error and retrying it fails, the whole
         future fails with the corresponding exception. If you want to tune which
-        server response error codes are not fatal for operation polling use this
+        server response error codes are not fatal for operation polling, use this
         parameter to control that (``retry.predicate`` in particular).
 
         ``polling`` (google.api_core.retry.Retry): (Optional) How often and
         for how long to call the polling RPC periodically (i.e. what to do if
         a polling rpc returned successfully but its returned result indicates
-        that the long running operaiton is not completed yet, so we need to
+        that the long running operation is not completed yet, so we need to
         check it again at some point in future). This parameter does NOT define
-        how to retry each individual polling RPC in case of an error (use the
-        ``retry`` parameter for that). The ``polling.timeout`` of this parameter
+        how to retry each individual polling RPC in case of an error; use the
+        ``retry`` parameter for that. The ``polling.timeout`` of this parameter
         is Polling Timeout as defined in as defined in
         :class:`google.api_core.retry.Retry`.
 
-        For each of the arguments there are also default values in place, which
+        For each of the arguments, there are also default values in place, which
         will be used if a user does not specify their own. The default values
         for the three parameters are not to be confused with the default values
         for the corresponding arguments in this method (those serve as "not set"
-        markers for the resoluiton logic).
+        markers for the resolution logic).
 
-        If ``timeout`` is provided (i.e.``timeout is not _DEFAULT VALUE``, note
-        the `None` value means "infinite timeout") it will be used to control
-        the actual Polling Timeout. Otherwise, ``polling.timeout`` value
+        If ``timeout`` is provided (i.e.``timeout is not _DEFAULT VALUE``; note
+        the ``None`` value means "infinite timeout"), it will be used to control
+        the actual Polling Timeout. Otherwise, the ``polling.timeout`` value
         will be used instead (see below for how the ``polling`` config itself
-        gets resolved). In other words this parameter  effectively overrides
+        gets resolved). In other words, this parameter  effectively overrides
         the ``polling.timeout`` value if specified. This is so to preserve
         backward compatibility.
 
@@ -215,20 +215,20 @@ class PollingFuture(base.Future):
         polling RPC will be called with whichever default retry config was
         specified for the polling RPC at the moment of the construction of the
         polling RPC's client. For example, if the polling RPC is
-        `operations_client.get_operation()`  the ``retry`` parameter will be
+        ``operations_client.get_operation()``, the ``retry`` parameter will be
         controlling its retry behavior (not polling  behavior) and, if not
         specified, that specific method (``operations_client.get_operation()``)
         will be retried according to the default retry config provided during
         creation of ``operations_client`` client instead. This argument exists
-        mainly for backward compatibility, users are very unlikely to ever need
+        mainly for backward compatibility; users are very unlikely to ever need
         to set this parameter explicitly.
 
-        If ``polling`` is provided (i.e. ``polling is not None``) it will be used
+        If ``polling`` is provided (i.e. ``polling is not None``), it will be used
         to controll the overall polling behavior and ``polling.timeout`` will
         controll Polling Timeout unless it is overridden by ``timeout`` parameter
-        as described above. If not provided the``polling`` parameter specified
+        as described above. If not provided, the``polling`` parameter specified
         during construction of this future (the ``polling`` argument in the
-        constructor) will be used instead. Note, since ``timeout`` argument may
+        constructor) will be used instead. Note: since the ``timeout`` argument may
         override ``polling.timeout`` value, this parameter should be viewed as
         coupled with the ``timeout`` parameter as described above.
 
@@ -238,7 +238,7 @@ class PollingFuture(base.Future):
             retry (google.api_core.retry.Retry): (Optional) How to retry the
                 polling RPC. This defines ONLY how the polling RPC call is
                 retried (i.e. what to do if the RPC we used for polling returned
-                an error), it does  NOT define how the polling is done (i.e. how
+                an error). It does  NOT define how the polling is done (i.e. how
                 frequently and for how long to call the polling RPC).
             polling (google.api_core.retry.Retry): (Optional) How often and
                 for how long to call polling RPC periodically. This parameter
@@ -268,7 +268,7 @@ class PollingFuture(base.Future):
         See the documentation for the :meth:`result` method for details on how
         this method operates, as both ``result`` and this method rely on the
         exact same polling logic. The only difference is that this method does
-        not accept ``retry`` and ``polling`` arguments but relies on defaul ones
+        not accept ``retry`` and ``polling`` arguments but relies on the default ones
         instead.
 
         Args:

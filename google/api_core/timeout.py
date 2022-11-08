@@ -128,7 +128,7 @@ class TimeToDeadlineTimeout(object):
 class ConstantTimeout(object):
     """A decorator that adds a constant timeout argument.
 
-    DEPRECATED: use `TimeToDeadlineTimeout` instead.
+    DEPRECATED: use ``TimeToDeadlineTimeout`` instead.
 
     This is effectively equivalent to
     ``functools.partial(func, timeout=timeout)``.
@@ -202,7 +202,7 @@ class ExponentialTimeout(object):
     """A decorator that adds an exponentially increasing timeout argument.
 
     DEPRECATED: the concept of incrementing timeout exponentially has been
-    deprecated. Use `TimeToDeadlineTimeout` instead.
+    deprecated. Use ``TimeToDeadlineTimeout`` instead.
 
     This is useful if a function is called multiple times. Each time the
     function is called this decorator will calculate a new timeout parameter

@@ -167,7 +167,7 @@ def retry_target(
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
-        deadline (float): DEPRECATED use ``timeout`` instead. For backward
+        deadline (float): DEPRECATED: use ``timeout`` instead. For backward
             compatibility, if specified it will override ``timeout`` parameter.
 
     Returns:
@@ -230,70 +230,69 @@ class Retry(object):
     Although the default behavior is to retry transient API errors, a
     different predicate can be provided to retry other exceptions.
 
-    There two important concepts that retry/polling behavior may operate on -
+    There two important concepts that retry/polling behavior may operate on,
     Deadline and Timeout, which need to be properly defined for the correct
     usage of this class and the rest of the library.
 
-    Deadline - a fixed point in time by which a certain operation must
-    terminate. For example if a certain operaiton has a deadline
+    Deadline: a fixed point in time by which a certain operation must
+    terminate. For example, if a certain operation has a deadline
     "2022-10-18T23:30:52.123Z" it must terminate (successfully or with an
-    error) till that time regradless of when it was started of if it has
-    ever been started at all.
+    error) by that time, regardless of when it was started or whether it
+    was started at all.
 
-    Timeout - the maximum duration of time after which a certain operation
+    Timeout: the maximum duration of time after which a certain operation
     must terminate (successfully or with an error). The countdown begins right
-    after an operation was started. For example if an operation was started at
-    09:24:00 with timeout of 75 seconds, it must terminate not later than
+    after an operation was started. For example, if an operation was started at
+    09:24:00 with timeout of 75 seconds, it must terminate no later than
     09:25:15.
 
-    Unfortunately this class (and the api-core library as a whole) has not been
-    properly distinguishing the concepts of timeout and deadline and the
-    ``deadline`` parameter actually  means ``timeout``. That is why the
-    ``deadline`` has been deprecated and ``timeout`` should be used instead. If
-    ``deadline`` parameter is set, it will override ``timeout`` parameter, thus
+    Unfortunately, in the past this class (and the api-core library as a whole) has not been
+    properly distinguishing the concepts of "timeout" and "deadline", and the
+    ``deadline`` parameter has meant ``timeout``. That is why
+    ``deadline`` has been deprecated and ``timeout`` should be used instead. If the
+    ``deadline`` parameter is set, it will override the ``timeout`` parameter. In other words,
     ``retry.deadline`` should be treated as just a deprecated alias for
     ``retry.timeout``.
 
-    In other words it is safe to assume that this class and the rest of this
-    library operates in terms of timeouts (not deadlines) unless explicitly
+    Said another way, it is safe to assume that this class and the rest of this
+    library operate in terms of timeouts (not deadlines) unless explicitly
     noted the usage of deadline semantics.
 
-    Now, when we have Timeout term properly defined, it is also important to
-    understand the three most common applications of the timeout concept in the
+    It is also important to
+    understand the three most common applications of the Timeout concept in the
     context of this library.
 
     Usually the generic Timeout term may stand for one of the following actual
-    timeouts: RPC Timeout, Retry Timeout or Polling Timeout.
+    timeouts: RPC Timeout, Retry Timeout, or Polling Timeout.
 
-    RPC Timeout - a value supplied by the client side to the server side such
+    RPC Timeout: a value supplied by the client to the server so
     that the server side knows the maximum amount of time it is expected to
-    spend handling that specifc RPC. For example, in case of a gRPC transport,
+    spend handling that specifc RPC. For example, in the case of gRPC transport,
     RPC Timeout is represented by setting "grpc-timeout" header in the HTTP2
     request. The `timeout` property of this class normally never represents the
     RPC Timeout as it is handled separately by the ``google.api_core.timeout``
     module of this library.
 
-    Retry Timeout - this is the most common meaning of the ``timeout`` property
-    of this class, and it defines how long a certain RPC may be retried in case
-    an error is returned from the server.
+    Retry Timeout: this is the most common meaning of the ``timeout`` property
+    of this class, and defines how long a certain RPC may be retried in case
+    the server returns an error.
 
-    Polling Timeout - it is similar to Retry Timeout, but defines how long the
-    client side is allowed to call polling rpc repeatedly to check a status of a
-    long running operaiton. Unlike in the retry case, the polling rpc is
-    expected to succed (its errors are supposed to be handled by the retry
-    logic). The decision if a new polling attemtp needs to be made is made
-    not based on the RPC status code but based on the status of the returned
-    status of an operation (i.e. it is higher level concept than the rpc error
-    codes).
+    Polling Timeout: defines how long the
+    client side is allowed to call the polling RPC repeatedly to check a status of a
+    long-running operation. Each polling RPC is
+    expected to succeed (its errors are supposed to be handled by the retry
+    logic). The decision as to whether a new polling attempt needs to be made is based
+    not on the RPC status code but  on the status of the returned
+    status of an operation. In other words: we will poll a long-running operation until the operation is done or the polling timeout expires. Each poll will inform us of the status of the operation. The poll consists of an RPC to the server that may itself be retried as per the poll-specific retry settings in case of errors. The operation-level retry settings do NOT apply to polling-RPC retries.
 
     With the actual timeout types being defined above, the client libraries
     often refer to just Timeout without clarifying which type specifically
     that is. In that case the actual timeout type (sometimes also refered to as
     Logical Timeout) can be determined from the context. If it is a unary rpc
     call (i.e. a regular one) Timeout usually stands for the RPC Timeout (if
-    provided directly as a standaone value) or Retry Timeout (if provided as
+    provided directly as a standalone value) or Retry Timeout (if provided as
     ``retry.timeout`` property of the unary RPC's retry config). For
-    ``Operation`` or ``PolllingFuture`` in general Timeout stands for
+    ``Operation`` or ``PollingFuture`` in general Timeout stands for
     Polling Timeout.
 
     Args:
@@ -303,9 +302,9 @@ class Retry(object):
             must be greater than 0.
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
-        timeout (float): How long to keep retrying in seconds.
+        timeout (float): How long to keep retrying, in seconds.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
-            compatibility, if specified it will override ``timeout`` parameter.
+            compatibility, if specified it will override the ``timeout`` parameter.
     """
 
     def __init__(
@@ -362,7 +361,7 @@ class Retry(object):
     @property
     def deadline(self):
         """
-        DEPRECATED: use ``timeout`` instead.  Check the ``Retry`` class
+        DEPRECATED: use ``timeout`` instead.  Refer to the ``Retry`` class
         documentation for details.
         """
         return self._timeout
@@ -374,7 +373,7 @@ class Retry(object):
     def with_deadline(self, deadline):
         """Return a copy of this retry with the given timeout.
 
-        DEPRECATED use :meth:`with_timeout` instead. Check the ``Retry`` class
+        DEPRECATED: use :meth:`with_timeout` instead. Refer to the ``Retry`` class
         documentation for details.
 
         Args:
@@ -389,7 +388,7 @@ class Retry(object):
         """Return a copy of this retry with the given timeout.
 
         Args:
-            timeout (float): How long to keep retrying in seconds.
+            timeout (float): How long to keep retrying, in seconds.
 
         Returns:
             Retry: A new retry instance with the given timeout.

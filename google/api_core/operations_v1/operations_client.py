@@ -61,14 +61,14 @@ class OperationsClient(object):
         self.operations_stub = operations_pb2.OperationsStub(channel)
 
         default_retry = retries.Retry(
-            initial=0.1,
-            maximum=60.0,
+            initial=0.1,  # seconds
+            maximum=60.0,  # seconds
             multiplier=1.3,
             predicate=retries.if_exception_type(
                 core_exceptions.DeadlineExceeded,
                 core_exceptions.ServiceUnavailable,
             ),
-            timeout=600.0,
+            timeout=600.0,  # seconds
         )
         default_timeout = timeouts.TimeToDeadlineTimeout(timeout=600.0)
 

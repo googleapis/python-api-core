@@ -63,9 +63,9 @@ class Operation(polling.PollingFuture):
             metadata.
         polling (google.api_core.retry.Retry): The configuration used for polling.
             This parameter controls how often :meth:`done` is polled. If the
-            ``timeout`` argument is specified in :meth:`result` method it will
+            ``timeout`` argument is specified in the :meth:`result` method, it will
             override the ``polling.timeout`` property.
-        retry (google.api_core.retry.Retry): DEPRECATED use ``polling`` instead.
+        retry (google.api_core.retry.Retry): DEPRECATED: use ``polling`` instead.
             If specified it will override ``polling`` parameter to maintain
             backward compatibility.
     """

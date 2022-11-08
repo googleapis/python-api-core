@@ -110,7 +110,7 @@ class OperationsRestTransport(OperationsTransport):
             http_options: a dictionary of http_options for transcoding, to override
                 the defaults from operatons.proto.  Each method has an entry
                 with the corresponding http rules as value.
-            uir_prefix: uri prefix (usually represents API version). Is set to
+            uri_prefix: uri prefix (usually represents API version). Set to
                 "v1" by default.
 
         """

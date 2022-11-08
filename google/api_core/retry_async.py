@@ -87,12 +87,12 @@ async def retry_target(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        timeout (float): How long to keep retrying the target.
+        timeout (float): How long to keep retrying the target, in seconds.
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
-        deadline (float): DEPRECATED use ``timeout`` instead. For beckward
-        compatibility, if set it will override ``timeout`` parameter.
+        deadline (float): DEPRECATED use ``timeout`` instead. For backward
+        compatibility, if set it will override the ``timeout`` parameter.
 
     Returns:
         Any: the return value of the target function.
@@ -250,7 +250,7 @@ class AsyncRetry:
 
     def with_deadline(self, deadline):
         """Return a copy of this retry with the given deadline.
-        DEPRECATED use :meth:`with_timeout` instead.
+        DEPRECATED: use :meth:`with_timeout` instead.
 
         Args:
             deadline (float): How long to keep retrying.
@@ -264,7 +264,7 @@ class AsyncRetry:
         """Return a copy of this retry with the given timeout.
 
         Args:
-            timeout (float): How long to keep retrying.
+            timeout (float): How long to keep retrying, in seconds.
 
         Returns:
             AsyncRetry: A new retry instance with the given timeout.

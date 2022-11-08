@@ -69,7 +69,7 @@ class _GapicCallable(object):
             callable. If ``None``, this callable will not retry by default
         timeout (google.api_core.timeout.Timeout): The default timeout for the
             callable (i.e. duration of time within which an RPC must terminate
-            after its start, to not be confused with deadline). If ``None``,
+            after its start, not to be confused with deadline). If ``None``,
             this callable will not specify a timeout argument to the low-level
             RPC method by default.
         metadata (Sequence[Tuple[str, str]]): Additional metadata that is
