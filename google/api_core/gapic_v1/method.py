@@ -71,7 +71,7 @@ class _GapicCallable(object):
             callable (i.e. duration of time within which an RPC must terminate
             after its start, not to be confused with deadline). If ``None``,
             this callable will not specify a timeout argument to the low-level
-            RPC method by default.
+            RPC method.
         metadata (Sequence[Tuple[str, str]]): Additional metadata that is
             provided to the RPC method on every invocation. This is merged with
             any metadata specified during invocation. If ``None``, no

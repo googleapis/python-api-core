@@ -14,9 +14,9 @@
 
 """Decorators for applying timeout arguments to functions.
 
-These decorators are used to wrap API methods to apply either a constant
-(DEPRECATED), exponential (DEPRECATED) or Deadline-dependent (recommended)
-timeout argument.
+These decorators are used to wrap API methods to apply either a
+Deadline-dependent (recommended), constant (DEPRECATED) or exponential
+(DEPRECATED) timeout argument.
 
 For example, imagine an API method that can take a while to return results,
 such as one that might block until a resource is ready:

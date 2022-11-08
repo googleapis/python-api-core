@@ -234,7 +234,7 @@ class PollingFuture(base.Future):
 
         Args:
             timeout (int): (Optional) How long (in seconds) to wait for the
-                operation to complete.
+                operation to complete. If None, wait indefinitely.
             retry (google.api_core.retry.Retry): (Optional) How to retry the
                 polling RPC. This defines ONLY how the polling RPC call is
                 retried (i.e. what to do if the RPC we used for polling returned

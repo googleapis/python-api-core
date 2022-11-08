@@ -74,7 +74,7 @@ class OperationsRestTransport(OperationsTransport):
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
         http_options: Optional[Dict] = None,
-        uri_prefix: str = "v1",
+        path_prefix: str = "v1",
     ) -> None:
         """Instantiate the transport.
 
@@ -110,7 +110,7 @@ class OperationsRestTransport(OperationsTransport):
             http_options: a dictionary of http_options for transcoding, to override
                 the defaults from operatons.proto.  Each method has an entry
                 with the corresponding http rules as value.
-            uri_prefix: uri prefix (usually represents API version). Set to
+            path_prefix: path prefix (usually represents API version). Set to
                 "v1" by default.
 
         """
@@ -141,7 +141,7 @@ class OperationsRestTransport(OperationsTransport):
             self._session.configure_mtls_channel(client_cert_source_for_mtls)
         self._prep_wrapped_messages(client_info)
         self._http_options = http_options or {}
-        self._uri_prefix = uri_prefix
+        self._path_prefix = path_prefix
 
     def _list_operations(
         self,
@@ -174,7 +174,7 @@ class OperationsRestTransport(OperationsTransport):
         http_options = [
             {
                 "method": "get",
-                "uri": "/{}/{{name=**}}/operations".format(self._uri_prefix),
+                "uri": "/{}/{{name=**}}/operations".format(self._path_prefix),
             },
         ]
         if "google.longrunning.Operations.ListOperations" in self._http_options:
@@ -254,7 +254,7 @@ class OperationsRestTransport(OperationsTransport):
         http_options = [
             {
                 "method": "get",
-                "uri": "/{}/{{name=**/operations/*}}".format(self._uri_prefix),
+                "uri": "/{}/{{name=**/operations/*}}".format(self._path_prefix),
             },
         ]
         if "google.longrunning.Operations.GetOperation" in self._http_options:
@@ -327,7 +327,7 @@ class OperationsRestTransport(OperationsTransport):
         http_options = [
             {
                 "method": "delete",
-                "uri": "/{}/{{name=**/operations/*}}".format(self._uri_prefix),
+                "uri": "/{}/{{name=**/operations/*}}".format(self._path_prefix),
             },
         ]
         if "google.longrunning.Operations.DeleteOperation" in self._http_options:
@@ -397,7 +397,7 @@ class OperationsRestTransport(OperationsTransport):
         http_options = [
             {
                 "method": "post",
-                "uri": "/{}/{{name=**/operations/*}}:cancel".format(self._uri_prefix),
+                "uri": "/{}/{{name=**/operations/*}}:cancel".format(self._path_prefix),
                 "body": "*",
             },
         ]

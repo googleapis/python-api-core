@@ -161,9 +161,7 @@ def retry_target(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        timeout (float): How long to keep retrying the target. The last sleep
-            period is shortened as necessary, so that the last retry runs at
-            ``deadline`` (and not considerably beyond it).
+        timeout (float): How long to keep retrying the target.
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
