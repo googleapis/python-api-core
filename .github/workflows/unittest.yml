@@ -17,6 +17,7 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
         exclude:
           - option: "_wo_grpc"
             python: 3.7
@@ -24,6 +25,8 @@ jobs:
             python: 3.8
           - option: "_wo_grpc"
             python: 3.9
+          - option: "_wo_grpc"
+            python: 3.10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
