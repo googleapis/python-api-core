@@ -105,7 +105,7 @@ class PollingFuture(base.Future):
 
         Args:
             retry (google.api_core.retry.Retry): (Optional) How to retry the
-                polling RPC (to not be confused with polling configuration, see
+                polling RPC (to not be confused with polling configuration. See
                 the documentation for :meth:`result` for details).
 
         Returns:
