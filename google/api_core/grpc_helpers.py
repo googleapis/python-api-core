@@ -311,7 +311,7 @@ def create_channel(
         default_host=default_host,
     )
 
-    if HAS_GRPC_GCP:
+    if HAS_GRPC_GCP:  # pragma: NO COVER
         return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
     return grpc.secure_channel(target, composite_credentials, **kwargs)
 
