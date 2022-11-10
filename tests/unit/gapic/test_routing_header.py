@@ -61,7 +61,7 @@ def test_enum_nonqualified():
     params = [("color", Message.Color.RED), ("num", 5)]
     value = routing_header.to_routing_header(params, qualified_enums=False)
     assert value == "color=RED&num=5"
-    params = {"color" : Message.Color.RED, "num" : 5}
+    params = {"color": Message.Color.RED, "num": 5}
     value = routing_header.to_routing_header(params, qualified_enums=False)
     assert value == "color=RED&num=5"
 
