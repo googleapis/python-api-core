@@ -166,7 +166,7 @@ def unit_grpc_gcp(session):
     default(session)
 
 
-@nox.session(python=["3.8", "3.11"])
+@nox.session(python=["3.8", "3.10", "3.11"])
 def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
     default(session, install_grpc=False)
