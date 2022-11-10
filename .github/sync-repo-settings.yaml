@@ -21,6 +21,7 @@ branchProtectionRules:
     - 'unit-3.9'
     - 'unit-3.10'
     - 'unit-3.11'
+    - 'unit_wo_grpc-3.10'
     - 'unit_wo_grpc-3.11'
     - 'cover'
     - 'docs'
