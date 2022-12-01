@@ -4,6 +4,18 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [1.34.0](https://github.com/googleapis/python-api-core/compare/v1.33.2...v1.34.0) (2022-12-01)
+
+
+### Features
+
+* Allow representing enums with their unqualified symbolic names in headers in v1 branch ([#462](https://github.com/googleapis/python-api-core/issues/462)) ([7d51dbf](https://github.com/googleapis/python-api-core/commit/7d51dbf2ebfbd7b63680463116ed5ec7fab7ca0b))
+
+
+### Bug Fixes
+
+* Major refactoring of Polling, Retry and Timeout logic in v1 branch ([#465](https://github.com/googleapis/python-api-core/issues/465)) ([7d51dbf](https://github.com/googleapis/python-api-core/commit/7d51dbf2ebfbd7b63680463116ed5ec7fab7ca0b))
+
 ## [1.33.2](https://github.com/googleapis/python-api-core/compare/v1.33.1...v1.33.2) (2022-10-10)
 
 
