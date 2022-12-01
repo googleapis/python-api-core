@@ -171,7 +171,7 @@ def unit_wo_grpc(session):
     default(session, install_grpc=False)
 
 
-@nox.session(python="3.8")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def lint_setup_py(session):
     """Verify that setup.py is valid (including RST check)."""
 
