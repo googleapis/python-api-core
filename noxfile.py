@@ -26,7 +26,7 @@ BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
 
-DEFAULT_PYTHON_VERSION = "3.7"
+DEFAULT_PYTHON_VERSION = "3.10"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 
 # 'docfx' is excluded since it only needs to run in 'docs-presubmit'
@@ -61,7 +61,7 @@ def lint(session):
     Returns a failure if the linters find linting errors or sufficiently
     serious code quality issues.
     """
-    session.install("flake8", "flake8-import-order", BLACK_VERSION)
+    session.install("flake8", BLACK_VERSION)
     session.install(".")
     session.run(
         "black",
@@ -94,8 +94,16 @@ def default(session, install_grpc=True):
         CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
     )
 
-    # Install all test dependencies, then install this package in-place.
-    session.install("dataclasses", "mock", "pytest", "pytest-cov", "pytest-xdist")
+    session.install(
+        "dataclasses",
+        "mock",
+        # Revert to just "pytest" once
+        # https://github.com/pytest-dev/pytest/issues/10451 is fixed
+        "pytest<7.2.0",
+        "pytest-cov",
+        "pytest-xdist",
+    )
+
     if install_grpc:
         session.install("-e", ".[grpc]", "-c", constraints_path)
     else:
@@ -104,7 +112,7 @@ def default(session, install_grpc=True):
     pytest_args = [
         "python",
         "-m",
-        "py.test",
+        "pytest",
         *(
             # Helpful for running a single test or testfile.
             session.posargs
@@ -204,7 +212,7 @@ def cover(session):
     session.run("coverage", "erase")
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.9")
 def docs(session):
     """Build the docs for this library."""
 
@@ -226,7 +234,7 @@ def docs(session):
     )
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.9")
 def docfx(session):
     """Build the docfx yaml files for this library."""
 

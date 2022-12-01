@@ -28,7 +28,6 @@ import google.auth.transport.requests
 
 try:
     import grpc_gcp
-
     warnings.warn(
         """Support for grpcio-gcp is deprecated. This feature will be
         removed from `google-api-core` after January 1, 2024. If you need to
