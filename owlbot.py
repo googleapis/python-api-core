@@ -47,8 +47,6 @@ s.replace(
 """,
 )
 
-s.replace(".github/workflows/lint.yml", "python-version: \"3.10\"", "python-version: \"3.7\"")
-
 python.configure_previous_major_version_branches()
 
 s.shell.run(["nox", "-s", "blacken"], hide_output=False)
