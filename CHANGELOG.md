@@ -4,6 +4,68 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.11.0](https://github.com/googleapis/python-api-core/compare/v2.10.2...v2.11.0) (2022-11-10)
+
+
+### Features
+
+* Add support for Python 3.11 ([#466](https://github.com/googleapis/python-api-core/issues/466)) ([ff379e3](https://github.com/googleapis/python-api-core/commit/ff379e304c353bcab734e1c4706b74b356a1e932))
+* Allow representing enums with their unqualified symbolic names in headers ([#465](https://github.com/googleapis/python-api-core/issues/465)) ([522b98e](https://github.com/googleapis/python-api-core/commit/522b98ecc1ebd1c2280d3d7c73a02f6e4fb528d4))
+
+
+### Bug Fixes
+
+* Major refactoring of Polling, Retry and Timeout logic ([#462](https://github.com/googleapis/python-api-core/issues/462)) ([434253d](https://github.com/googleapis/python-api-core/commit/434253de16d9efdf984ddb64c409706cda1d5f82))
+* Require google-auth &gt;= 2.14.1 ([#463](https://github.com/googleapis/python-api-core/issues/463)) ([7cc329f](https://github.com/googleapis/python-api-core/commit/7cc329fe1498b0a4285123448e4ea80c6a780d47))
+
+## [2.10.2](https://github.com/googleapis/python-api-core/compare/v2.10.1...v2.10.2) (2022-10-08)
+
+
+### Bug Fixes
+
+* **deps:** Allow protobuf 3.19.5 ([#459](https://github.com/googleapis/python-api-core/issues/459)) ([e949364](https://github.com/googleapis/python-api-core/commit/e949364ce3a2c4c3cdb2658054d4793aa942d999))
+
+## [2.10.1](https://github.com/googleapis/python-api-core/compare/v2.10.0...v2.10.1) (2022-09-14)
+
+
+### Bug Fixes
+
+* Improve transcoding error message ([#442](https://github.com/googleapis/python-api-core/issues/442)) ([538df80](https://github.com/googleapis/python-api-core/commit/538df80ed6d21f43b512a73853935f7a7b9bdf52))
+
+## [2.10.0](https://github.com/googleapis/python-api-core/compare/v2.9.0...v2.10.0) (2022-09-02)
+
+
+### Features
+
+* Add 'strict' to flatten_query_params to lower-case bools ([#433](https://github.com/googleapis/python-api-core/issues/433)) ([83678e9](https://github.com/googleapis/python-api-core/commit/83678e94e1081f9087b19c43f26fad4774184d66))
+
+## [2.9.0](https://github.com/googleapis/python-api-core/compare/v2.8.2...v2.9.0) (2022-09-01)
+
+
+### Features
+
+* Make grpc transcode logic work in terms of protobuf python objects ([#428](https://github.com/googleapis/python-api-core/issues/428)) ([c3ad8ea](https://github.com/googleapis/python-api-core/commit/c3ad8ea67447e3d8a1154d7a9221e116f60d425a))
+
+
+### Bug Fixes
+
+* Require python 3.7+ ([#410](https://github.com/googleapis/python-api-core/issues/410)) ([7ddb8c0](https://github.com/googleapis/python-api-core/commit/7ddb8c00e6be7ab6905a9a802ad1c3063fbfa46c))
+* Restore support for grpcio-gcp ([#418](https://github.com/googleapis/python-api-core/issues/418)) ([8c19609](https://github.com/googleapis/python-api-core/commit/8c19609d6244930bd91fd5f40ef9b5b65584c4a5))
+
+## [2.8.2](https://github.com/googleapis/python-api-core/compare/v2.8.1...v2.8.2) (2022-06-13)
+
+
+### Bug Fixes
+
+* **deps:** allow protobuf < 5.0.0 ([#400](https://github.com/googleapis/python-api-core/issues/400)) ([8f73d2e](https://github.com/googleapis/python-api-core/commit/8f73d2ee2d3af2201f877aa7e2f7361147759dc7))
+* drop support for grpc-gcp ([#401](https://github.com/googleapis/python-api-core/issues/401)) ([5da6733](https://github.com/googleapis/python-api-core/commit/5da6733a475c436efc11b14889af73b3a0e20379))
+
+
+### Documentation
+
+* fix changelog header to consistent size ([#394](https://github.com/googleapis/python-api-core/issues/394)) ([ac266e9](https://github.com/googleapis/python-api-core/commit/ac266e935bc4e7c6dff250384407e7a60d8dba90))
+* Fix typo in the BackgroundConsumer docstring ([#395](https://github.com/googleapis/python-api-core/issues/395)) ([0eb727f](https://github.com/googleapis/python-api-core/commit/0eb727f92314db3c4383754514f75a49ba02e27b))
+
 ## [2.8.1](https://github.com/googleapis/python-api-core/compare/v2.8.0...v2.8.1) (2022-05-26)
 
 
