@@ -61,6 +61,7 @@ import functools
 import logging
 import random
 import time
+import inspect
 
 import requests.exceptions
 
@@ -188,7 +189,10 @@ def retry_target(
 
     for sleep in sleep_generator:
         try:
-            return target()
+            if inspect.isgeneratorfunction(target):
+                yield from target()
+            else:
+                return target()
 
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.

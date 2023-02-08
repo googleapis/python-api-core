@@ -55,6 +55,7 @@ import asyncio
 import datetime
 import functools
 import logging
+import inspect
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
@@ -115,13 +116,8 @@ async def retry_target(
 
     for sleep in sleep_generator:
         try:
-            if not deadline_dt:
-                return await target()
-            else:
-                return await asyncio.wait_for(
-                    target(),
-                    timeout=(deadline_dt - datetime_helpers.utcnow()).total_seconds(),
-                )
+            async for item in target():
+                yield item
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
@@ -220,13 +216,22 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return await retry_target(
+            async for item in retry_target(
                 target,
                 self._predicate,
                 sleep_generator,
                 self._timeout,
                 on_error=on_error,
-            )
+                ):
+                yield item
+            raise AsyncStopIteration
+            # return await retry_target(
+            #     target,
+            #     self._predicate,
+            #     sleep_generator,
+            #     self._timeout,
+            #     on_error=on_error,
+            # )
 
         return retry_wrapped_func
 
