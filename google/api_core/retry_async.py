@@ -89,7 +89,7 @@ async def retry_target_generator(
             async for item in target():
                 yield item
                 # check for overtime
-                if deadline_dt <= datetime_helpers.utcnow():
+                if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
                     raise asyncio.TimeoutError("generator timeout")
             return
         # pylint: disable=broad-except
@@ -123,10 +123,6 @@ async def retry_target_generator(
         await asyncio.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
-
-
-
-
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
