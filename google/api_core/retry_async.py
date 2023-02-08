@@ -71,6 +71,62 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
+async def retry_target_generator(
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+):
+    timeout = kwargs.get("deadline", timeout)
+
+    deadline_dt = (
+        (datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout))
+        if timeout
+        else None
+    )
+
+    last_exc = None
+
+    for sleep in sleep_generator:
+        try:
+            async for item in target():
+                yield item
+                # check for overtime
+                if deadline_dt <= datetime_helpers.utcnow():
+                    raise asyncio.TimeoutError("generator timeout")
+            return
+        # pylint: disable=broad-except
+        # This function explicitly must deal with broad exceptions.
+        except Exception as exc:
+            if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
+                raise
+            last_exc = exc
+            if on_error is not None:
+                on_error(exc)
+
+        now = datetime_helpers.utcnow()
+
+        if deadline_dt:
+            if deadline_dt <= now:
+                # Chains the raising RetryError with the root cause error,
+                # which helps observability and debugability.
+                raise exceptions.RetryError(
+                    "Timeout of {:.1f}s exceeded while calling target function".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+            else:
+                time_to_deadline = (deadline_dt - now).total_seconds()
+                sleep = min(time_to_deadline, sleep)
+
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
+        )
+        await asyncio.sleep(sleep)
+
+    raise ValueError("Sleep generator stopped yielding sleep values.")
+
+
+
+
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -116,9 +172,13 @@ async def retry_target(
 
     for sleep in sleep_generator:
         try:
-            async for item in target():
-                yield item
-            return
+            if not deadline_dt:
+                return await target()
+            else:
+                return await asyncio.wait_for(
+                    target(),
+                    timeout=(deadline_dt - datetime_helpers.utcnow()).total_seconds(),
+                )
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
@@ -184,6 +244,7 @@ class AsyncRetry:
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_TIMEOUT,
         on_error=None,
+        generator_target=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -193,6 +254,7 @@ class AsyncRetry:
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
+        self._generator_target = generator_target
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -217,13 +279,22 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return retry_target(
-                target,
-                self._predicate,
-                sleep_generator,
-                self._timeout,
-                on_error=on_error,
-            )
+            if self._generator_target:
+                return retry_target_generator(
+                    target,
+                    self._predicate,
+                    sleep_generator,
+                    self._timeout,
+                    on_error=on_error,
+                )
+            else:
+                return await retry_target(
+                    target,
+                    self._predicate,
+                    sleep_generator,
+                    self._timeout,
+                    on_error=on_error,
+                )
 
         return retry_wrapped_func
 
