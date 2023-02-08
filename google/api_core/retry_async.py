@@ -118,6 +118,7 @@ async def retry_target(
         try:
             async for item in target():
                 yield item
+            return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
@@ -216,22 +217,13 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            async for item in retry_target(
+            return retry_target(
                 target,
                 self._predicate,
                 sleep_generator,
                 self._timeout,
                 on_error=on_error,
-                ):
-                yield item
-            raise AsyncStopIteration
-            # return await retry_target(
-            #     target,
-            #     self._predicate,
-            #     sleep_generator,
-            #     self._timeout,
-            #     on_error=on_error,
-            # )
+            )
 
         return retry_wrapped_func
 
