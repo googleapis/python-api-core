@@ -61,7 +61,6 @@ import functools
 import logging
 import random
 import time
-import inspect
 
 import requests.exceptions
 
@@ -147,7 +146,7 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
 
 
 def retry_target(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+    target, predicate, sleep_generator, timeout=None, on_error=None, generator_target=False, **kwargs
 ):
     """Call a function and retry if it fails.
 
@@ -189,8 +188,9 @@ def retry_target(
 
     for sleep in sleep_generator:
         try:
-            if inspect.isgeneratorfunction(target):
+            if generator_target:
                 yield from target()
+                return
             else:
                 return target()
 
@@ -317,6 +317,7 @@ class Retry(object):
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
+        generator_target=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -326,6 +327,7 @@ class Retry(object):
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
+        self._generator_target = generator_target
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -356,6 +358,7 @@ class Retry(object):
                 sleep_generator,
                 self._timeout,
                 on_error=on_error,
+                generator_target=self._generator_target,
             )
 
         return retry_wrapped_func
