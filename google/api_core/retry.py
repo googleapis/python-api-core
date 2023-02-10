@@ -165,6 +165,9 @@ def retry_target(
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
+        generator_target (bool): If True, the target function will be treated 
+            as a generator. Wrapper function will `yield from` the target, and
+            pass `close()` calls through.
         deadline (float): DEPRECATED: use ``timeout`` instead. For backward
             compatibility, if specified it will override ``timeout`` parameter.
 
@@ -189,14 +192,18 @@ def retry_target(
     for sleep in sleep_generator:
         try:
             if generator_target:
-                yield from target()
-                return
+                result = yield from target()
+                return result
             else:
                 return target()
 
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
+            if generator_target and isinstance(exc, GeneratorExit):
+                # pass close call to target generator
+                target.close()
+                raise
             if not predicate(exc):
                 raise
             last_exc = exc
@@ -305,6 +312,12 @@ class Retry(object):
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
         timeout (float): How long to keep retrying, in seconds.
+        on_error (Callable[Exception]): A function to call while processing
+            a retryable exception. Any error raised by this function will
+            *not* be caught.
+        generator_target (bool): If True, the target function will be treated 
+            as a generator. Wrapper function will `yield from` the target, and
+            pass `close()` calls through.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
