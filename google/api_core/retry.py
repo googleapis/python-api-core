@@ -155,8 +155,8 @@ def retry_target_generator(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Generator): The generator to call and retry. This must be a
-            nullary function - apply arguments with `functools.partial`.
+        target(Callable[None, Generator[Any,Any,Any]]): A generator function to yield from.
+            This must be a nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
             It should return True to retry or False otherwise.
@@ -170,7 +170,7 @@ def retry_target_generator(
             compatibility, if specified it will override ``timeout`` parameter.
 
     Returns:
-        Any: the return value of the target function.
+        Generator[Any,Any,Any]: returns a generator that wraps the target in retry logic.
 
     Raises:
         google.api_core.RetryError: If the deadline is exceeded while retrying.
@@ -189,6 +189,7 @@ def retry_target_generator(
 
     for sleep in sleep_generator:
         try:
+            #create and yeild from a new instance of the generator from input generator function
             return (yield from target())
 
         except Exception as exc:
@@ -197,19 +198,7 @@ def retry_target_generator(
             last_exc = exc
             if on_error is not None:
                 on_error(exc)
-
-        if deadline is not None:
-            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=sleep
-            )
-            if deadline < next_attempt_time:
-                raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded while calling target function".format(
-                        timeout
-                    ),
-                    last_exc,
-                ) from last_exc
-
+        _raise_if_over_deadline(deadline, sleep_time)
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
         )
@@ -226,7 +215,7 @@ def retry_target(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Callable): The function to call and retry. This must be a
+        target(Callable[None, Any]): The function to call and retry. This must be a
             nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -270,19 +259,7 @@ def retry_target(
             last_exc = exc
             if on_error is not None:
                 on_error(exc)
-
-        if deadline is not None:
-            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=sleep
-            )
-            if deadline < next_attempt_time:
-                raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded while calling target function".format(
-                        timeout
-                    ),
-                    last_exc,
-                ) from last_exc
-
+        _raise_if_over_deadline(deadline, sleep_time)
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
         )
@@ -290,6 +267,27 @@ def retry_target(
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
+def _raise_if_over_deadline(deadline, sleep_time):
+    """
+    Raise an exception if the next sleep time would push it over the deadline
+
+    Args:
+        deadline (float): a UTC timestamp for when to stop retries
+        sleep_time (float): the amount of time to sleep before the next try
+    Raises:
+        google.api_core.RetryError: If the deadline is exceeded while retrying.
+    """
+    if deadline is not None:
+        next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
+            seconds=sleep
+        )
+        if deadline < next_attempt_time:
+            raise exceptions.RetryError(
+                "Deadline of {:.1f}s exceeded while calling target function".format(
+                    timeout
+                ),
+                last_exc,
+            ) from last_exc
 
 class Retry(object):
     """Exponential retry decorator.
@@ -405,13 +403,15 @@ class Retry(object):
         """Wrap a callable with retry behavior.
 
         Args:
-            func (Callable): The callable to add retry behavior to.
+            func (Callable[Any, Any]): The callable to add retry behavior to.
+                If a generator function is passed in (Callable[Any, Generator[Any,Any,Any]]),
+                a matcing retryable generator will be returned.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
 
         Returns:
-            Callable: A callable that will invoke ``func`` with retry
+            Callable: A callable that will invoke or yield from ``func`` with retry
                 behavior.
         """
         if self._on_error is not None:
@@ -424,6 +424,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
+            # if the target is a generator function, use a different retry function that is also a generator function
             retry_func = retry_target if not isgeneratorfunction(func) else retry_target_generator
             return retry_func(
                 target,
