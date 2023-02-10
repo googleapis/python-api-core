@@ -15,6 +15,7 @@
 import datetime
 import itertools
 import re
+import inspect
 
 import mock
 import pytest
@@ -467,3 +468,23 @@ class TestRetry(object):
         assert _some_function.call_count == 2
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_target(self, sleep):
+        retry_ = retry.Retry()
+
+        decorated = retry_(sample_generator)
+
+        num = 10
+        result = decorated(num)
+        assert inspect.isgenerator(result)
+        unpacked = [i for i in result]
+        assert len(unpacked) == num
+        for a,b in zip(unpacked, sample_generator(num)):
+            assert a == b
+        sleep.assert_not_called()
+
+
+def sample_generator(num=5):
+    for i in range(num):
+        yield i

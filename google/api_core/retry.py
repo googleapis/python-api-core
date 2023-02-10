@@ -61,6 +61,7 @@ import functools
 import logging
 import random
 import time
+from inspect import isgeneratorfunction
 
 import requests.exceptions
 
@@ -145,16 +146,16 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
         delay = min(delay * multiplier, maximum)
 
 
-def retry_target(
-    target, predicate, sleep_generator, timeout=None, on_error=None, generator_target=False, **kwargs
+def retry_target_generator(
+        target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
-    """Call a function and retry if it fails.
+    """Wrap a generator object and retry if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Callable): The function to call and retry. This must be a
+        target(Generator): The generator to call and retry. This must be a
             nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -165,9 +166,6 @@ def retry_target(
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
-        generator_target (bool): If True, the target function will be treated 
-            as a generator. Wrapper function will `yield from` the target, and
-            pass `close()` calls through.
         deadline (float): DEPRECATED: use ``timeout`` instead. For backward
             compatibility, if specified it will override ``timeout`` parameter.
 
@@ -191,19 +189,89 @@ def retry_target(
 
     for sleep in sleep_generator:
         try:
-            if generator_target:
-                result = yield from target()
-                return result
-            else:
-                return target()
+            yield from target()
+            return
+
+        # pylint: disable=broad-except
+        # This function explicitly must deal with broad exceptions.
+        except GeneratorExit:
+            # pass close call to target generator
+            target.close()
+            raise
+        except Exception as exc:
+            if not predicate(exc):
+                raise
+            last_exc = exc
+            if on_error is not None:
+                on_error(exc)
+
+        if deadline is not None:
+            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=sleep
+            )
+            if deadline < next_attempt_time:
+                raise exceptions.RetryError(
+                    "Deadline of {:.1f}s exceeded while calling target function".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
+        )
+        time.sleep(sleep)
+
+    raise ValueError("Sleep generator stopped yielding sleep values.")
+
+def retry_target(
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+):
+    """Call a function and retry if it fails.
+
+    This is the lowest-level retry helper. Generally, you'll use the
+    higher-level retry helper :class:`Retry`.
+
+    Args:
+        target(Callable): The function to call and retry. This must be a
+            nullary function - apply arguments with `functools.partial`.
+        predicate (Callable[Exception]): A callable used to determine if an
+            exception raised by the target should be considered retryable.
+            It should return True to retry or False otherwise.
+        sleep_generator (Iterable[float]): An infinite iterator that determines
+            how long to sleep between retries.
+        timeout (float): How long to keep retrying the target.
+        on_error (Callable[Exception]): A function to call while processing a
+            retryable exception.  Any error raised by this function will *not*
+            be caught.
+        deadline (float): DEPRECATED: use ``timeout`` instead. For backward
+            compatibility, if specified it will override ``timeout`` parameter.
+
+    Returns:
+        Any: the return value of the target function.
+
+    Raises:
+        google.api_core.RetryError: If the deadline is exceeded while retrying.
+        ValueError: If the sleep generator stops yielding values.
+        Exception: If the target raises a method that isn't retryable.
+    """
+
+    timeout = kwargs.get("deadline", timeout)
+
+    if timeout is not None:
+        deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout)
+    else:
+        deadline = None
+
+    last_exc = None
+
+    for sleep in sleep_generator:
+        try:
+            return target()
 
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            if generator_target and isinstance(exc, GeneratorExit):
-                # pass close call to target generator
-                target.close()
-                raise
             if not predicate(exc):
                 raise
             last_exc = exc
@@ -330,7 +398,6 @@ class Retry(object):
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
-        generator_target=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -340,7 +407,6 @@ class Retry(object):
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
-        self._generator_target = generator_target
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -365,13 +431,13 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return retry_target(
+            retry_func = retry_target if not isgeneratorfunction(target) else retry_target_generator
+            return retry_func(
                 target,
                 self._predicate,
                 sleep_generator,
                 self._timeout,
                 on_error=on_error,
-                generator_target=self._generator_target,
             )
 
         return retry_wrapped_func
