@@ -469,12 +469,19 @@ class TestRetry(object):
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
 
-    def _generator_mock(self, num=5, error_on=None, return_val=None):
-        for i in range(num):
-            if error_on and i == error_on:
-                raise ValueError("generator mock error")
-            yield i
-        return return_val
+    def _generator_mock(self, num=5, error_on=None, return_val=None, exceptions_seen=None):
+        try:
+            sent_in = None
+            for i in range(num):
+                if error_on and i == error_on:
+                    raise ValueError("generator mock error")
+                sent_in = yield (sent_in if sent_in else i)
+            return return_val
+        except (Exception, BaseException, GeneratorExit) as e:
+            # keep track of exceptions seen by generator
+            if exceptions_seen is not None:
+                exceptions_seen.append(e)
+            raise
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_success(self, sleep):
@@ -494,4 +501,132 @@ class TestRetry(object):
             assert a == b
         sleep.assert_not_called()
 
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___generator_retry(self, sleep):
+        on_error = mock.Mock()
+        retry_ = retry.Retry(on_error=on_error, predicate=retry.if_exception_type(ValueError))
+        result = retry_(self._generator_mock)(error_on=3)
+        assert inspect.isgenerator(result)
+        # error thrown on 3
+        # generator should contain 0, 1, 2 looping
+        unpacked = [next(result) for i in range(10)]
+        assert unpacked == [0,1,2,0,1,2,0,1,2,0]
+        assert on_error.call_count==3
 
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
+        on_error = mock.Mock()
+        retry_ = retry.Retry(
+            predicate=retry.if_exception_type(ValueError),
+            initial=1.0,
+            maximum=1024.0,
+            multiplier=2.0,
+            deadline=30.9,
+        )
+
+        utcnow = datetime.datetime.utcnow()
+        utcnow_patcher = mock.patch(
+            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
+        )
+
+        decorated = retry_(self._generator_mock, on_error=on_error)
+        generator = decorated(error_on=1)
+        with utcnow_patcher as patched_utcnow:
+            # Make sure that calls to fake time.sleep() also advance the mocked
+            # time clock.
+            def increase_time(sleep_delay):
+                patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
+
+            sleep.side_effect = increase_time
+            with pytest.raises(exceptions.RetryError):
+                unpacked = [i for i in generator]
+
+        # check the delays
+        assert sleep.call_count == 4  # once between each successive target calls
+        last_wait = sleep.call_args.args[0]
+        total_wait = sum(call_args.args[0] for call_args in sleep.call_args_list)
+        assert last_wait == 8.0
+        assert total_wait == 15.0
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_send(self, sleep):
+        """
+        Send should be passed through retry into target generator
+        """
+        retry_ = retry.Retry()
+
+        decorated = retry_(self._generator_mock)
+
+        generator = decorated(5)
+        result = next(generator)
+        in_messages = ["test_1", "hello", "world"]
+        out_messages = []
+        for msg in in_messages:
+            recv = generator.send(msg)
+            out_messages.append(recv)
+        assert in_messages == out_messages
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_return(self, sleep):
+        """
+        Generator return value should be passed through retry decorator
+        """
+        retry_ = retry.Retry()
+
+        decorated = retry_(self._generator_mock)
+
+        expected_value = "done"
+        generator = decorated(5, return_val=expected_value)
+        found_value = None
+        try:
+            while True:
+                next(generator)
+        except StopIteration as e:
+            found_value = e.value
+        assert found_value == expected_value
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_close(self, sleep):
+        retry_ = retry.Retry()
+
+        decorated = retry_(self._generator_mock)
+
+        exception_list = []
+        generator = decorated(10, exceptions_seen=exception_list)
+        for i in range(2):
+            next(generator)
+        generator.close()
+        assert isinstance(exception_list[0], GeneratorExit)
+        assert inspect.getgeneratorstate(generator) == 'GEN_CLOSED'
+        with pytest.raises(StopIteration):
+            # calling next on closed generator should raise error
+            next(generator)
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_throw(self, sleep):
+        retry_ = retry.Retry()
+
+        decorated = retry_(self._generator_mock)
+
+        exception_list = []
+        generator = decorated(10, exceptions_seen=exception_list)
+        for i in range(2):
+            next(generator)
+        with pytest.raises(BufferError):
+            generator.throw(BufferError("test"))
+        assert isinstance(exception_list[0], BufferError)
+        assert inspect.getgeneratorstate(generator) == 'GEN_CLOSED'
+        with pytest.raises(StopIteration):
+            # calling next on closed generator should raise error
+            next(generator)
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___init___generator_without_retry_executed(self, sleep):
+        pass
+
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("time.sleep", autospec=True)
+
+    def test___init___generator_when_retry_is_executed(self, sleep, uniform):
+        pass

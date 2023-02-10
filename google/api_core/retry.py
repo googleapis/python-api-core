@@ -189,15 +189,8 @@ def retry_target_generator(
 
     for sleep in sleep_generator:
         try:
-            yield from target()
-            return
+            return (yield from target())
 
-        # pylint: disable=broad-except
-        # This function explicitly must deal with broad exceptions.
-        except GeneratorExit:
-            # pass close call to target generator
-            target.close()
-            raise
         except Exception as exc:
             if not predicate(exc):
                 raise
@@ -431,7 +424,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = retry_target if not isgeneratorfunction(target) else retry_target_generator
+            retry_func = retry_target if not isgeneratorfunction(func) else retry_target_generator
             return retry_func(
                 target,
                 self._predicate,
