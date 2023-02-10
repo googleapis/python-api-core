@@ -469,22 +469,29 @@ class TestRetry(object):
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
 
+    def _generator_mock(self, num=5, error_on=None, return_val=None):
+        for i in range(num):
+            if error_on and i == error_on:
+                raise ValueError("generator mock error")
+            yield i
+        return return_val
+
     @mock.patch("time.sleep", autospec=True)
-    def test___call___with_generator_target(self, sleep):
+    def test___call___generator_success(self, sleep):
         retry_ = retry.Retry()
 
-        decorated = retry_(sample_generator)
+        decorated = retry_(self._generator_mock)
 
         num = 10
         result = decorated(num)
+        # check types
         assert inspect.isgenerator(result)
+        assert type(decorated(num)) == type(self._generator_mock(num))
+        # check yield contents
         unpacked = [i for i in result]
         assert len(unpacked) == num
-        for a,b in zip(unpacked, sample_generator(num)):
+        for a,b in zip(decorated(num), self._generator_mock(num)):
             assert a == b
         sleep.assert_not_called()
 
 
-def sample_generator(num=5):
-    for i in range(num):
-        yield i
