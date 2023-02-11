@@ -513,6 +513,20 @@ class TestAsyncRetry:
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
+    async def test___call___with_generator_throw(self, sleep):
+        # should retry if throw retryable exception
+        retry_ = retry_async.AsyncRetry(predicate=retry_async.if_exception_type(ValueError))
+        decorated = retry_(self._generator_mock)
+        generator = decorated(10)
+        for i in range(2):
+            await anext(generator)
+        throw_val = await generator.athrow(ValueError("test"))
+        assert throw_val == 0
+        # calling next on closed generator should not raise error
+        assert await anext(generator) == 1
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
     async def test___call___with_is_generator(self, sleep):
         gen_retry_ = retry_async.AsyncRetry(is_generator=True, predicate=retry_async.if_exception_type(ValueError))
         not_gen_retry_ = retry_async.AsyncRetry(is_generator=False, predicate=retry_async.if_exception_type(ValueError))

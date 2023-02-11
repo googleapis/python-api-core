@@ -87,6 +87,9 @@ async def retry_target_generator(
 
     for sleep in sleep_generator:
         try:
+            # composed generators do not currently support `yield from`,
+            # so we can not pass asend or athrow calls
+            # https://peps.python.org/pep-0525/#asynchronous-yield-from
             subgenerator = target()
             async for item in subgenerator:
                 yield item
