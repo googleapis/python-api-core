@@ -75,7 +75,8 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 async def retry_target_generator(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
-    """Await a coroutine and retry if it fails.
+    """Wrap an Asyncrhonous Generator Function in another that will
+    spawn and yeild from a new generator instance if an error occurs
 
     This is the lowest-level retry helper. Generally, you'll use the
     higher-level retry helper :class:`Retry`.
@@ -97,12 +98,14 @@ async def retry_target_generator(
         compatibility, if set it will override the ``timeout`` parameter.
 
     Returns:
-        Any: the return value of the target function.
+        AsynchronousGenerator: This function spawns new asynchronous generator
+            instances when called.
 
-    Raises:
+    Generator Raises:
         google.api_core.RetryError: If the deadline is exceeded while retrying.
         ValueError: If the sleep generator stops yielding values.
         Exception: If the target raises a method that isn't retryable.
+        StopAsyncIteration: If the generator is exhausted
     """
 
     timeout = kwargs.get("deadline", timeout)
