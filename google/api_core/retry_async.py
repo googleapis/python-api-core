@@ -86,11 +86,16 @@ async def retry_target_generator(
 
     for sleep in sleep_generator:
         try:
-            async for item in target():
-                yield item
+            subgenerator = target()
+            async for item in subgenerator:
+                try:
+                    yield item
+                except (Exception, GeneratorExit) as exc:
+                    # if athrow, or aclose pass on to subgenerator
+                    await subgenerator.athrow(exc)
                 # check for overtime
-                if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
-                    raise asyncio.TimeoutError("generator timeout")
+                # if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
+                #     raise asyncio.TimeoutError("generator timeout")
             return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
