@@ -133,7 +133,7 @@ async def retry_target(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Callable): The function to call and retry. This must be a
+        target(Coroutine): The function to call and retry. This must be a
             nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -256,18 +256,22 @@ class AsyncRetry:
         """Wrap a callable with retry behavior.
 
         Args:
-            func (Callable): The callable to add retry behavior to.
+            func (Union[Coroutine, Callable[Any, AsynchronousGenerator]): The
+            coroutine or async generator function to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
 
         Returns:
-            Union[Coroutine, Awaitable[AsynchronousGenerator]: A couroutine
-                that will invoke or yield from ``func`` with retry
-                behavior.
+            Union[Coroutine, AsynchronousGenerator]: One of:
+                - A couroutine that will invoke ``func`` if ``func`` is a coroutine
+                - An AsynchronousGenerator that yields from ``func`` if ``func`` is an AsynchronousGenerator.
         """
         if self._on_error is not None:
             on_error = self._on_error
+
+        # if the target is a generator function, make sure return is also a generator function
+        use_generator = self._is_generator if self._is_generator is not None else isasyncgenfunction(func)
 
         @functools.wraps(func)
         async def retry_wrapped_func(*args, **kwargs):
@@ -276,16 +280,22 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
+            return await retry_target(target, self._predicate, sleep_generator, self._timeout, on_error=on_error)
+
+
+        @functools.wraps(func)
+        def retry_wrapped_generator(*args, **kwargs):
+            """A wrapper that yields through target generator with retry."""
+            target = functools.partial(func, *args, **kwargs)
+            sleep_generator = exponential_sleep_generator(
+                self._initial, self._maximum, multiplier=self._multiplier
+            )
             # if the target is a generator function, make sure return is also a generator function
             use_generator = self._is_generator if self._is_generator is not None else isasyncgenfunction(func)
             fn_args = (target, self._predicate, sleep_generator, self._timeout)
-            fn_kwargs = {"on_error": on_error}
-            if use_generator:
-                return retry_target_generator(*fn_args, **fn_kwargs)
-            else:
-                return await retry_target(*fn_args, **fn_kwargs)
+            return retry_target_generator(target, self._predicate, sleep_generator, self._timeout, on_error=on_error)
 
-        return retry_wrapped_func
+        return retry_wrapped_generator if use_generator else retry_wrapped_func
 
     def _replace(
         self,

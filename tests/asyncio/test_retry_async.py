@@ -427,12 +427,10 @@ class TestAsyncRetry:
         num = 10
         generator = decorated(num)
         # check types
-        # assert inspect.isasyncgen(generator)
-        # assert type(decorated(num)) == type(self._generator_target(num))
+        assert inspect.isasyncgen(generator)
+        assert type(decorated(num)) == type(self._generator_mock(num))
         # check yield contents
-        # unpacked = [i async for i in self._generator_mock(num)]
-        # TODO: get rid of extra await?
-        unpacked = [i async for i in await generator]
+        unpacked = [i async for i in generator]
         assert len(unpacked) == num
         expected = [i async for i in self._generator_mock(num)]
         for a,b in zip(unpacked, expected):
