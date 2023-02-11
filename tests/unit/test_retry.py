@@ -564,14 +564,17 @@ class TestRetry(object):
 
         decorated = retry_(self._generator_mock)
 
-        generator = decorated(5)
+        generator = decorated(10)
         result = next(generator)
+        assert result == 0
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
         for msg in in_messages:
             recv = generator.send(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
+        assert next(generator) == 4
+        assert next(generator) == 5
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_return(self, sleep):
