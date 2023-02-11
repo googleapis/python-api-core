@@ -87,22 +87,23 @@ async def retry_target_generator(
 
     for sleep in sleep_generator:
         try:
-            # composed generators do not currently support `yield from`,
-            # so we can not pass asend or athrow calls
-            # https://peps.python.org/pep-0525/#asynchronous-yield-from
             subgenerator = target()
             async for item in subgenerator:
-                yield item
+                try:
+                    yield item
+                except GeneratorExit as close_exc:
+                    # handle aclose()
+                    await subgenerator.aclose()
+                    raise
+                except Exception as throw_exc:
+                    # handle athrow()
+                    await subgenerator.athrow(throw_exc)
                 # check for overtime
                 # if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
                 #     raise asyncio.TimeoutError("generator timeout")
             return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
-        except GeneratorExit as close_exc:
-            if subgenerator is not None:
-                await subgenerator.aclose()
-                raise
         except Exception as exc:
             if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
                 raise
