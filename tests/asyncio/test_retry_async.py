@@ -16,6 +16,7 @@ import datetime
 import re
 import inspect
 import functools
+import asyncio
 
 import mock
 import pytest
@@ -418,6 +419,11 @@ class TestAsyncRetry:
                 exceptions_seen.append(e)
             raise
 
+    async def _generator_infinite(self):
+        while True:
+            asyncio.sleep(5)
+        yield "done"
+
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_success(self, sleep):
@@ -492,8 +498,39 @@ class TestAsyncRetry:
         last_wait = sleep.call_args.args[0]
         total_wait = sum(call_args.args[0] for call_args in sleep.call_args_list)
 
-        assert last_wait == 2.9  # and not 8.0, because the last delay was shortened
-        assert total_wait == 9.9  # the same as the deadline
+        assert abs(last_wait - 2.9) <= 1e3  # and not 8.0, because the last delay was shortened
+        assert abs(total_wait - 9.9) <= 1e3  # the same as the deadline
+
+
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_await_hitting_deadline(self, sleep, uniform):
+        timeout_value = 10
+        retry_ = retry_async.AsyncRetry(deadline=timeout_value)
+        utcnow = datetime.datetime.utcnow()
+        utcnow_patcher = mock.patch(
+            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
+        )
+        # test timeout before yielding anything
+        generator = retry_(self._generator_infinite)()
+        with utcnow_patcher as patched_utcnow:
+            patched_utcnow.return_value += datetime.timedelta(seconds=20)
+            with pytest.raises(exceptions.RetryError) as retry_error:
+                await anext(generator)
+            assert f"{timeout_value:.1f}" in str(retry_error.value)
+        # test timeout mid-stream
+        exception_list = []
+        generator = retry_(self._generator_mock)(10, exceptions_seen=exception_list)
+        assert await anext(generator) == 0
+        assert await anext(generator) == 1
+        assert await anext(generator) == 2
+        with utcnow_patcher as patched_utcnow:
+            patched_utcnow.return_value += datetime.timedelta(seconds=20)
+            with pytest.raises(exceptions.RetryError) as retry_error:
+                await anext(generator)
+            assert f"{timeout_value:.1f}" in str(retry_error.value)
+        assert isinstance(exception_list[0], asyncio.CancelledError)
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio

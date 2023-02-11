@@ -74,7 +74,7 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
 
 async def retry_target_generator(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+    target, predicate, sleep_generator, deadline_dt=None, timeout_seconds=None, on_error=None, **kwargs
 ):
     """Wrap an Asyncrhonous Generator Function in another that will
     spawn and yeild from a new generator instance if an error occurs
@@ -91,12 +91,13 @@ async def retry_target_generator(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        timeout (float): How long to keep retrying the target, in seconds.
+        deadline_dt (float): The utc timestamp to timeout at.
+        timeout_seconds (float): the amount of seconds the timeout was set for.
+            deadline_dt is used for actual timeout calculation, but the timeout
+            value is presented to the user for errors.
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
-        deadline (float): DEPRECATED use ``timeout`` instead. For backward
-        compatibility, if set it will override the ``timeout`` parameter.
 
     Returns:
         AsynchronousGenerator: This function spawns new asynchronous generator
@@ -108,14 +109,6 @@ async def retry_target_generator(
         Exception: If the target raises a method that isn't retryable.
         StopAsyncIteration: If the generator is exhausted
     """
-
-    timeout = kwargs.get("deadline", timeout)
-
-    deadline_dt = (
-        (datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout))
-        if timeout
-        else None
-    )
 
     last_exc = None
     subgenerator = None
@@ -155,7 +148,7 @@ async def retry_target_generator(
                 await subgenerator.aclose()
             last_exc = exc
         await _raise_or_sleep(
-            last_exc, predicate, on_error, timeout, deadline_dt, sleep
+            last_exc, predicate, on_error, timeout_seconds, deadline_dt, sleep
         )
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
@@ -263,7 +256,7 @@ async def _raise_or_sleep(
             # Chains the raising RetryError with the root cause error,
             # which helps observability and debugability.
             raise exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded while calling target function".format(
+                "Timeout of {:.1f}s exceeded".format(
                     timeout
                 ),
                 last_exc,
@@ -358,33 +351,37 @@ class AsyncRetry:
                 target,
                 self._predicate,
                 sleep_generator,
-                self._timeout,
+                timeout=self._timeout,
                 on_error=on_error,
             )
 
         @functools.wraps(func)
-        def retry_wrapped_generator(*args, **kwargs):
+        def retry_wrapped_generator(*args, deadline_dt=None, **kwargs):
             """A wrapper that yields through target generator with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             # if the target is a generator function, make sure return is also a generator function
-            use_generator = (
-                self._is_generator
-                if self._is_generator is not None
-                else isasyncgenfunction(func)
-            )
-            fn_args = (target, self._predicate, sleep_generator, self._timeout)
             return retry_target_generator(
                 target,
                 self._predicate,
                 sleep_generator,
-                self._timeout,
+                deadline_dt=deadline_dt,
+                timeout_seconds=self._timeout,
                 on_error=on_error,
             )
-
-        return retry_wrapped_generator if use_generator else retry_wrapped_func
+        if use_generator:
+            # for generator, bake deadline into function at call time
+            # time should start counting at generator creation, not first yield
+            deadline_dt = (
+                (datetime_helpers.utcnow() + datetime.timedelta(seconds=self._timeout))
+                if self._timeout
+                else None
+            )
+            return functools.partial(retry_wrapped_generator, deadline_dt=deadline_dt)
+        else:
+            return retry_wrapped_func
 
     def _replace(
         self,
