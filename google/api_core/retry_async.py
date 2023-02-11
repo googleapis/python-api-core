@@ -74,6 +74,36 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 async def retry_target_generator(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
+    """Await a coroutine and retry if it fails.
+
+    This is the lowest-level retry helper. Generally, you'll use the
+    higher-level retry helper :class:`Retry`.
+
+    Args:
+        target(Callable[None, AsynchronousGenerator]): An asynchronous
+            generator function to yield from. This must be a nullary 
+            function - apply arguments with `functools.partial`.
+        predicate (Callable[Exception]): A callable used to determine if an
+            exception raised by the target should be considered retryable.
+            It should return True to retry or False otherwise.
+        sleep_generator (Iterable[float]): An infinite iterator that determines
+            how long to sleep between retries.
+        timeout (float): How long to keep retrying the target, in seconds.
+        on_error (Callable[Exception]): A function to call while processing a
+            retryable exception.  Any error raised by this function will *not*
+            be caught.
+        deadline (float): DEPRECATED use ``timeout`` instead. For backward
+        compatibility, if set it will override the ``timeout`` parameter.
+
+    Returns:
+        Any: the return value of the target function.
+
+    Raises:
+        google.api_core.RetryError: If the deadline is exceeded while retrying.
+        ValueError: If the sleep generator stops yielding values.
+        Exception: If the target raises a method that isn't retryable.
+    """
+
     timeout = kwargs.get("deadline", timeout)
 
     deadline_dt = (
@@ -98,14 +128,15 @@ async def retry_target_generator(
                 except Exception as throw_exc:
                     # handle athrow()
                     await subgenerator.athrow(throw_exc)
-                # check for overtime
-                # if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
-                #     raise asyncio.TimeoutError("generator timeout")
+                # check for timeout
+                if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
+                    raise asyncio.TimeoutError("generator timeout")
             return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
+                await subgenerator.aclose()
                 raise
             last_exc = exc
             if on_error is not None:
@@ -137,7 +168,7 @@ async def retry_target_generator(
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
-    """Call a function and retry if it fails.
+    """Await a coroutine and retry if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
     higher-level retry helper :class:`Retry`.
