@@ -543,6 +543,7 @@ class TestRetry(object):
             with pytest.raises(exceptions.RetryError):
                 unpacked = [i for i in generator]
 
+        assert on_error.call_count == 5
         # check the delays
         assert sleep.call_count == 4  # once between each successive target calls
         last_wait = sleep.call_args.args[0]
@@ -606,8 +607,7 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_throw(self, sleep):
-        retry_ = retry.Retry()
-
+        retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
         decorated = retry_(self._generator_mock)
 
         exception_list = []
@@ -621,8 +621,16 @@ class TestRetry(object):
         with pytest.raises(StopIteration):
             # calling next on closed generator should raise error
             next(generator)
-
-
+        # should retry if throw retryable exception
+        exception_list = []
+        generator = decorated(10, exceptions_seen=exception_list)
+        for i in range(2):
+            next(generator)
+        val = generator.throw(ValueError("test"))
+        assert val == 0
+        assert isinstance(exception_list[0], ValueError)
+        # calling next on closed generator should not raise error
+        assert next(generator) == 1
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_is_generator(self, sleep):

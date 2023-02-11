@@ -15,6 +15,7 @@
 import datetime
 import re
 import inspect
+import functools
 
 import mock
 import pytest
@@ -455,7 +456,43 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
-        pass
+        on_error = mock.Mock()
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError),
+            initial=1.0,
+            maximum=1024.0,
+            multiplier=2.0,
+            deadline=9.9,
+        )
+
+        utcnow = datetime.datetime.utcnow()
+        utcnow_patcher = mock.patch(
+            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
+        )
+
+        decorated = retry_(self._generator_mock, on_error=on_error)
+        generator = decorated(error_on=1)
+
+        with utcnow_patcher as patched_utcnow:
+            # Make sure that calls to fake asyncio.sleep() also advance the mocked
+            # time clock.
+            def increase_time(sleep_delay):
+                patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
+
+            sleep.side_effect = increase_time
+
+            with pytest.raises(exceptions.RetryError):
+                unpacked = [i async for i in generator]
+
+        assert on_error.call_count == 5
+
+        # check the delays
+        assert sleep.call_count == 4  # once between each successive target calls
+        last_wait = sleep.call_args.args[0]
+        total_wait = sum(call_args.args[0] for call_args in sleep.call_args_list)
+
+        assert last_wait == 2.9  # and not 8.0, because the last delay was shortened
+        assert total_wait == 9.9  # the same as the deadline
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -477,4 +514,23 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_is_generator(self, sleep):
-        pass
+        gen_retry_ = retry_async.AsyncRetry(is_generator=True, predicate=retry_async.if_exception_type(ValueError))
+        not_gen_retry_ = retry_async.AsyncRetry(is_generator=False, predicate=retry_async.if_exception_type(ValueError))
+        auto_retry_ = retry_async.AsyncRetry(predicate=retry_async.if_exception_type(ValueError))
+        # force generator to act as non-generator
+        with pytest.raises(TypeError):
+            # error will be thrown because gen is coroutine
+            gen = not_gen_retry_(self._generator_mock)(10, error_on=3)
+            unpacked = [await anext(gen) for i in range(10)]
+        # wrapped generators won't be detected as generator functions
+        wrapped = functools.partial(self._generator_mock, 10, error_on=6)
+        assert not inspect.isasyncgenfunction(wrapped)
+        with pytest.raises(TypeError):
+            # error will be thrown because gen is coroutine
+            gen = auto_retry_(wrapped)()
+            unpacked = [next(gen) for i in range(10)]
+        # force non-detected to be accepted as generator
+        gen = gen_retry_(wrapped)()
+        unpacked = [await anext(gen) for i in range(10)]
+        assert unpacked == [0,1,2,3,4,5,0,1,2,3]
+
