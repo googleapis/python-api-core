@@ -240,7 +240,7 @@ class AsyncRetry:
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_TIMEOUT,
         on_error=None,
-        is_generator=False,
+        is_generator=None,
         **kwargs
     ):
         self._predicate = predicate
