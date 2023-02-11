@@ -16,6 +16,7 @@ import datetime
 import itertools
 import re
 import inspect
+import functools
 
 import mock
 import pytest
@@ -621,12 +622,31 @@ class TestRetry(object):
             # calling next on closed generator should raise error
             next(generator)
 
-    @mock.patch("time.sleep", autospec=True)
-    def test___init___generator_without_retry_executed(self, sleep):
-        pass
 
-    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
-    @mock.patch("time.sleep", autospec=True)
 
-    def test___init___generator_when_retry_is_executed(self, sleep, uniform):
-        pass
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_is_generator(self, sleep):
+        gen_retry_ = retry.Retry(is_generator=True,  predicate=retry.if_exception_type(ValueError))
+        not_gen_retry_ = retry.Retry(is_generator=False, predicate=retry.if_exception_type(ValueError))
+        auto_retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
+        # force generator to act as non-generator
+        with pytest.raises(ValueError):
+            # generator should not retry if error is thrown on yield
+            gen = not_gen_retry_(self._generator_mock)(10, error_on=3)
+            unpacked = [next(gen) for i in range(10)]
+        # wrapped generators won't be detected as generator functions
+        wrapped = functools.partial(self._generator_mock, 10, error_on=6)
+        assert not inspect.isgeneratorfunction(wrapped)
+        with pytest.raises(ValueError):
+            # generator should not retry if error is thrown on yield
+            gen = auto_retry_(wrapped)()
+            unpacked = [next(gen) for i in range(10)]
+        # force non-detected to be accepted as generator
+        gen = gen_retry_(wrapped)()
+        unpacked = [next(gen) for i in range(10)]
+        assert unpacked == [0,1,2,3,4,5,0,1,2,3]
+
+
+
+
+

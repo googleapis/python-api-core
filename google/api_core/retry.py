@@ -193,16 +193,8 @@ def retry_target_generator(
             return (yield from target())
 
         except Exception as exc:
-            if not predicate(exc):
-                raise
             last_exc = exc
-            if on_error is not None:
-                on_error(exc)
-        _raise_if_over_deadline(deadline, sleep_time)
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        time.sleep(sleep)
+        _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
@@ -246,7 +238,6 @@ def retry_target(
         deadline = None
 
     last_exc = None
-
     for sleep in sleep_generator:
         try:
             return target()
@@ -254,32 +245,42 @@ def retry_target(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            if not predicate(exc):
-                raise
             last_exc = exc
-            if on_error is not None:
-                on_error(exc)
-        _raise_if_over_deadline(deadline, sleep_time)
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        time.sleep(sleep)
+        _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
+
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
-def _raise_if_over_deadline(deadline, sleep_time):
+def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep_time):
     """
-    Raise an exception if the next sleep time would push it over the deadline
+    Helper function that contains retry and timeout logic.
+    Raise an exception if:
+        - the exception is not handled by the predicate
+        - the next sleep time would push it over the deadline
+    Otherwise, sleeps before next retry
 
     Args:
+        last_exc (Exception): the last exception that was encountered as part
+            running the target function
+        predicate (Callable[Exception]): A callable used to determine if an
+            exception raised by the target should be considered retryable.
+            It should return True to retry or False otherwise.
+        on_error (Callable[Exception]): A function to call while processing a
+            retryable exception.  Any error raised by this function will *not*
+            be caught.
+        timeout (float): total time the target was retried for.
         deadline (float): a UTC timestamp for when to stop retries
         sleep_time (float): the amount of time to sleep before the next try
     Raises:
         google.api_core.RetryError: If the deadline is exceeded while retrying.
     """
+    if not predicate(last_exc):
+        raise last_exc
+    if on_error is not None:
+        on_error(last_exc)
     if deadline is not None:
         next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-            seconds=sleep
+            seconds=sleep_time
         )
         if deadline < next_attempt_time:
             raise exceptions.RetryError(
@@ -288,6 +289,10 @@ def _raise_if_over_deadline(deadline, sleep_time):
                 ),
                 last_exc,
             ) from last_exc
+    _LOGGER.debug(
+        "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep_time)
+    )
+    time.sleep(sleep_time)
 
 class Retry(object):
     """Exponential retry decorator.
@@ -374,9 +379,10 @@ class Retry(object):
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
-        generator_target (bool): If True, the target function will be treated 
-            as a generator. Wrapper function will `yield from` the target, and
-            pass `close()` calls through.
+        is_generator (Optional[bool]): Indicates whether the input function
+            should be treated as a generator function. If True, retries will 
+            `yield from` wrapped function. If false, retries will call wrapped
+            function directly. If None, function will be auto-detected.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
@@ -389,6 +395,7 @@ class Retry(object):
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
+        is_generator=None,
         **kwargs
     ):
         self._predicate = predicate
@@ -398,6 +405,7 @@ class Retry(object):
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
+        self._is_generator = is_generator
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -424,8 +432,9 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            # if the target is a generator function, use a different retry function that is also a generator function
-            retry_func = retry_target if not isgeneratorfunction(func) else retry_target_generator
+            # if the target is a generator function, make sure return is also a generator function
+            use_generator = self._is_generator if self._is_generator is not None else isgeneratorfunction(func)
+            retry_func = retry_target_generator if use_generator else retry_target
             return retry_func(
                 target,
                 self._predicate,
