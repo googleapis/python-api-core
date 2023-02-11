@@ -497,6 +497,28 @@ class TestAsyncRetry:
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
+    async def test___call___with_generator_send(self, sleep):
+        """
+        Send should be passed through retry into target generator
+        """
+        retry_ = retry_async.AsyncRetry()
+
+        decorated = retry_(self._generator_mock)
+
+        generator = decorated(10)
+        result = await anext(generator)
+        assert result == 0
+        in_messages = ["test_1", "hello", "world"]
+        out_messages = []
+        for msg in in_messages:
+            recv = await generator.asend(msg)
+            out_messages.append(recv)
+        assert in_messages == out_messages
+        assert await anext(generator) == 4
+        assert await anext(generator) == 5
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
     async def test___call___with_generator_close(self, sleep):
         retry_ = retry_async.AsyncRetry()
         decorated = retry_(self._generator_mock)

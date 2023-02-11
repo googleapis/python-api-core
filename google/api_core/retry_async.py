@@ -56,6 +56,7 @@ import datetime
 import functools
 import logging
 from inspect import isasyncgenfunction
+import sys
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
@@ -122,19 +123,30 @@ async def retry_target_generator(
     for sleep in sleep_generator:
         try:
             subgenerator = target()
-            async for item in subgenerator:
+
+            sent_in = None
+            while True:
+                ## Read from Subgenerator
+                # TODO: add test for timeout
+                next_value = await asyncio.wait_for(
+                    subgenerator.asend(sent_in),
+                    timeout=(deadline_dt - datetime_helpers.utcnow()).total_seconds(),
+                )
+                ## Yield from Wrapper to caller
                 try:
-                    yield item
-                except GeneratorExit as close_exc:
-                    # handle aclose()
+                    # yield last value from subgenerator
+                    # exceptions from `athrow` and `aclose` are injected here
+                    sent_in = yield next_value
+                except GeneratorExit:
+                    # if wrapper received `aclose`, pass to subgenerator and close
                     await subgenerator.aclose()
-                    raise
-                except Exception as throw_exc:
-                    # handle athrow()
-                    await subgenerator.athrow(throw_exc)
-                # check for timeout
-                if deadline_dt and deadline_dt <= datetime_helpers.utcnow():
-                    raise asyncio.TimeoutError("generator timeout")
+                    return
+                except:
+                    # if wrapper received `athrow`, pass to subgenerator
+                    await subgenerator.athrow(*sys.exc_info())
+            return
+        except StopAsyncIteration:
+            # if generator exhausted, return
             return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
@@ -239,7 +251,6 @@ async def _raise_or_sleep(
     if (
         not predicate(last_exc)
         and not isinstance(last_exc, asyncio.TimeoutError)
-        and not isinstance(last_exc, GeneratorExit)
     ):
         raise last_exc
     if on_error is not None:
