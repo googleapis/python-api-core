@@ -186,13 +186,16 @@ def retry_target_generator(
         deadline = None
 
     last_exc = None
-
+    subgenerator = None
     for sleep in sleep_generator:
         try:
             #create and yeild from a new instance of the generator from input generator function
-            return (yield from target())
+            subgenerator = target()
+            return (yield from subgenerator)
 
         except Exception as exc:
+            if subgenerator is not None:
+                subgenerator.close()
             last_exc = exc
         _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
 
