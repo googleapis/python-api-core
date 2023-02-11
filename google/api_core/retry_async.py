@@ -55,6 +55,7 @@ import asyncio
 import datetime
 import functools
 import logging
+from inspect import isasyncgenfunction
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
@@ -239,7 +240,7 @@ class AsyncRetry:
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_TIMEOUT,
         on_error=None,
-        generator_target=False,
+        is_generator=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -249,7 +250,7 @@ class AsyncRetry:
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
-        self._generator_target = generator_target
+        self._is_generator = is_generator
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -261,7 +262,8 @@ class AsyncRetry:
                 *not* be caught.
 
         Returns:
-            Callable: A callable that will invoke ``func`` with retry
+            Union[Coroutine, Awaitable[AsynchronousGenerator]: A couroutine
+                that will invoke or yield from ``func`` with retry
                 behavior.
         """
         if self._on_error is not None:
@@ -274,22 +276,14 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            if self._generator_target:
-                return retry_target_generator(
-                    target,
-                    self._predicate,
-                    sleep_generator,
-                    self._timeout,
-                    on_error=on_error,
-                )
+            # if the target is a generator function, make sure return is also a generator function
+            use_generator = self._is_generator if self._is_generator is not None else isasyncgenfunction(func)
+            fn_args = (target, self._predicate, sleep_generator, self._timeout)
+            fn_kwargs = {"on_error": on_error}
+            if use_generator:
+                return retry_target_generator(*fn_args, **fn_kwargs)
             else:
-                return await retry_target(
-                    target,
-                    self._predicate,
-                    sleep_generator,
-                    self._timeout,
-                    on_error=on_error,
-                )
+                return await retry_target(*fn_args, **fn_kwargs)
 
         return retry_wrapped_func
 

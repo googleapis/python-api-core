@@ -14,6 +14,7 @@
 
 import datetime
 import re
+import inspect
 
 import mock
 import pytest
@@ -402,3 +403,75 @@ class TestAsyncRetry:
         assert _some_function.call_count == 2
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
+
+    async def _generator_mock(self, num=5, error_on=None, exceptions_seen=None):
+        try:
+            sent_in = None
+            for i in range(num):
+                if error_on and i == error_on:
+                    raise ValueError("generator mock error")
+                sent_in = yield (sent_in if sent_in else i)
+        except (Exception, BaseException, GeneratorExit) as e:
+            # keep track of exceptions seen by generator
+            if exceptions_seen is not None:
+                exceptions_seen.append(e)
+            raise
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_success(self, sleep):
+        retry_ = retry_async.AsyncRetry(is_generator=True)
+
+        decorated = retry_(self._generator_mock)
+
+        num = 10
+        generator = decorated(num)
+        # check types
+        # assert inspect.isasyncgen(generator)
+        # assert type(decorated(num)) == type(self._generator_target(num))
+        # check yield contents
+        # unpacked = [i async for i in self._generator_mock(num)]
+        # TODO: get rid of extra await?
+        unpacked = [i async for i in await generator]
+        assert len(unpacked) == num
+        expected = [i async for i in self._generator_mock(num)]
+        for a,b in zip(unpacked, expected):
+            assert a == b
+        sleep.assert_not_called()
+
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_retry(self, sleep):
+        pass
+
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
+        pass
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_generator_send(self, sleep):
+        pass
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_generator_return(self, sleep):
+        pass
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_generator_close(self, sleep):
+        pass
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_generator_throw(self, sleep):
+        pass
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_is_generator(self, sleep):
+        pass
