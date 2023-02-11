@@ -470,7 +470,9 @@ class TestRetry(object):
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
 
-    def _generator_mock(self, num=5, error_on=None, return_val=None, exceptions_seen=None):
+    def _generator_mock(
+        self, num=5, error_on=None, return_val=None, exceptions_seen=None
+    ):
         try:
             sent_in = None
             for i in range(num):
@@ -498,21 +500,23 @@ class TestRetry(object):
         # check yield contents
         unpacked = [i for i in result]
         assert len(unpacked) == num
-        for a,b in zip(decorated(num), self._generator_mock(num)):
+        for a, b in zip(decorated(num), self._generator_mock(num)):
             assert a == b
         sleep.assert_not_called()
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_retry(self, sleep):
         on_error = mock.Mock()
-        retry_ = retry.Retry(on_error=on_error, predicate=retry.if_exception_type(ValueError))
+        retry_ = retry.Retry(
+            on_error=on_error, predicate=retry.if_exception_type(ValueError)
+        )
         result = retry_(self._generator_mock)(error_on=3)
         assert inspect.isgenerator(result)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
         unpacked = [next(result) for i in range(10)]
-        assert unpacked == [0,1,2,0,1,2,0,1,2,0]
-        assert on_error.call_count==3
+        assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+        assert on_error.call_count == 3
 
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
@@ -600,7 +604,7 @@ class TestRetry(object):
             next(generator)
         generator.close()
         assert isinstance(exception_list[0], GeneratorExit)
-        assert inspect.getgeneratorstate(generator) == 'GEN_CLOSED'
+        assert inspect.getgeneratorstate(generator) == "GEN_CLOSED"
         with pytest.raises(StopIteration):
             # calling next on closed generator should raise error
             next(generator)
@@ -617,7 +621,7 @@ class TestRetry(object):
         with pytest.raises(BufferError):
             generator.throw(BufferError("test"))
         assert isinstance(exception_list[0], BufferError)
-        assert inspect.getgeneratorstate(generator) == 'GEN_CLOSED'
+        assert inspect.getgeneratorstate(generator) == "GEN_CLOSED"
         with pytest.raises(StopIteration):
             # calling next on closed generator should raise error
             next(generator)
@@ -634,8 +638,12 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_is_generator(self, sleep):
-        gen_retry_ = retry.Retry(is_generator=True,  predicate=retry.if_exception_type(ValueError))
-        not_gen_retry_ = retry.Retry(is_generator=False, predicate=retry.if_exception_type(ValueError))
+        gen_retry_ = retry.Retry(
+            is_generator=True, predicate=retry.if_exception_type(ValueError)
+        )
+        not_gen_retry_ = retry.Retry(
+            is_generator=False, predicate=retry.if_exception_type(ValueError)
+        )
         auto_retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
         # force generator to act as non-generator
         with pytest.raises(ValueError):
@@ -652,9 +660,4 @@ class TestRetry(object):
         # force non-detected to be accepted as generator
         gen = gen_retry_(wrapped)()
         unpacked = [next(gen) for i in range(10)]
-        assert unpacked == [0,1,2,3,4,5,0,1,2,3]
-
-
-
-
-
+        assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]

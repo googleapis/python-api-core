@@ -434,23 +434,24 @@ class TestAsyncRetry:
         unpacked = [i async for i in generator]
         assert len(unpacked) == num
         expected = [i async for i in self._generator_mock(num)]
-        for a,b in zip(unpacked, expected):
+        for a, b in zip(unpacked, expected):
             assert a == b
         sleep.assert_not_called()
-
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry(self, sleep):
         on_error = mock.Mock()
-        retry_ = retry_async.AsyncRetry(on_error=on_error, predicate=retry_async.if_exception_type(ValueError))
+        retry_ = retry_async.AsyncRetry(
+            on_error=on_error, predicate=retry_async.if_exception_type(ValueError)
+        )
         generator = retry_(self._generator_mock)(error_on=3)
         assert inspect.isasyncgen(generator)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
         unpacked = [await anext(generator) for i in range(10)]
-        assert unpacked == [0,1,2,0,1,2,0,1,2,0]
-        assert on_error.call_count==3
+        assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+        assert on_error.call_count == 3
 
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
@@ -514,7 +515,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_throw(self, sleep):
-        retry_ = retry_async.AsyncRetry(predicate=retry_async.if_exception_type(ValueError))
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError)
+        )
         decorated = retry_(self._generator_mock)
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
@@ -540,9 +543,15 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_is_generator(self, sleep):
-        gen_retry_ = retry_async.AsyncRetry(is_generator=True, predicate=retry_async.if_exception_type(ValueError))
-        not_gen_retry_ = retry_async.AsyncRetry(is_generator=False, predicate=retry_async.if_exception_type(ValueError))
-        auto_retry_ = retry_async.AsyncRetry(predicate=retry_async.if_exception_type(ValueError))
+        gen_retry_ = retry_async.AsyncRetry(
+            is_generator=True, predicate=retry_async.if_exception_type(ValueError)
+        )
+        not_gen_retry_ = retry_async.AsyncRetry(
+            is_generator=False, predicate=retry_async.if_exception_type(ValueError)
+        )
+        auto_retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError)
+        )
         # force generator to act as non-generator
         with pytest.raises(TypeError):
             # error will be thrown because gen is coroutine
@@ -558,5 +567,4 @@ class TestAsyncRetry:
         # force non-detected to be accepted as generator
         gen = gen_retry_(wrapped)()
         unpacked = [await anext(gen) for i in range(10)]
-        assert unpacked == [0,1,2,3,4,5,0,1,2,3]
-
+        assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]

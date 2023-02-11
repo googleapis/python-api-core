@@ -71,6 +71,7 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
+
 async def retry_target_generator(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
@@ -81,7 +82,7 @@ async def retry_target_generator(
 
     Args:
         target(Callable[None, AsynchronousGenerator]): An asynchronous
-            generator function to yield from. This must be a nullary 
+            generator function to yield from. This must be a nullary
             function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -138,9 +139,12 @@ async def retry_target_generator(
             if subgenerator is not None:
                 await subgenerator.aclose()
             last_exc = exc
-        await _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline_dt, sleep)
+        await _raise_or_sleep(
+            last_exc, predicate, on_error, timeout, deadline_dt, sleep
+        )
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
+
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -197,11 +201,16 @@ async def retry_target(
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             last_exc = exc
-        await _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline_dt, sleep)
+        await _raise_or_sleep(
+            last_exc, predicate, on_error, timeout, deadline_dt, sleep
+        )
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
-async def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline_dt, sleep_time):
+
+async def _raise_or_sleep(
+    last_exc, predicate, on_error, timeout, deadline_dt, sleep_time
+):
     """
     Helper function that contains retry and timeout logic.
     Raise an exception if:
@@ -224,7 +233,11 @@ async def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline_dt, s
     Raises:
         google.api_core.RetryError: If the deadline is exceeded while retrying.
     """
-    if not predicate(last_exc) and not isinstance(last_exc, asyncio.TimeoutError) and not isinstance(last_exc, GeneratorExit):
+    if (
+        not predicate(last_exc)
+        and not isinstance(last_exc, asyncio.TimeoutError)
+        and not isinstance(last_exc, GeneratorExit)
+    ):
         raise last_exc
     if on_error is not None:
         on_error(last_exc)
@@ -249,6 +262,7 @@ async def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline_dt, s
         "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep_time)
     )
     await asyncio.sleep(sleep_time)
+
 
 class AsyncRetry:
     """Exponential retry decorator for async functions.
@@ -313,7 +327,11 @@ class AsyncRetry:
             on_error = self._on_error
 
         # if the target is a generator function, make sure return is also a generator function
-        use_generator = self._is_generator if self._is_generator is not None else isasyncgenfunction(func)
+        use_generator = (
+            self._is_generator
+            if self._is_generator is not None
+            else isasyncgenfunction(func)
+        )
 
         @functools.wraps(func)
         async def retry_wrapped_func(*args, **kwargs):
@@ -322,8 +340,13 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return await retry_target(target, self._predicate, sleep_generator, self._timeout, on_error=on_error)
-
+            return await retry_target(
+                target,
+                self._predicate,
+                sleep_generator,
+                self._timeout,
+                on_error=on_error,
+            )
 
         @functools.wraps(func)
         def retry_wrapped_generator(*args, **kwargs):
@@ -333,9 +356,19 @@ class AsyncRetry:
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             # if the target is a generator function, make sure return is also a generator function
-            use_generator = self._is_generator if self._is_generator is not None else isasyncgenfunction(func)
+            use_generator = (
+                self._is_generator
+                if self._is_generator is not None
+                else isasyncgenfunction(func)
+            )
             fn_args = (target, self._predicate, sleep_generator, self._timeout)
-            return retry_target_generator(target, self._predicate, sleep_generator, self._timeout, on_error=on_error)
+            return retry_target_generator(
+                target,
+                self._predicate,
+                sleep_generator,
+                self._timeout,
+                on_error=on_error,
+            )
 
         return retry_wrapped_generator if use_generator else retry_wrapped_func
 

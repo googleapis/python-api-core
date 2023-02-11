@@ -147,7 +147,7 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
 
 
 def retry_target_generator(
-        target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
     """Wrap a generator object and retry if it fails.
 
@@ -189,7 +189,7 @@ def retry_target_generator(
     subgenerator = None
     for sleep in sleep_generator:
         try:
-            #create and yeild from a new instance of the generator from input generator function
+            # create and yeild from a new instance of the generator from input generator function
             subgenerator = target()
             return (yield from subgenerator)
 
@@ -200,6 +200,7 @@ def retry_target_generator(
         _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
+
 
 def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -251,8 +252,8 @@ def retry_target(
             last_exc = exc
         _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
 
-
     raise ValueError("Sleep generator stopped yielding sleep values.")
+
 
 def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep_time):
     """
@@ -296,6 +297,7 @@ def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep_time
         "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep_time)
     )
     time.sleep(sleep_time)
+
 
 class Retry(object):
     """Exponential retry decorator.
@@ -383,7 +385,7 @@ class Retry(object):
             a retryable exception. Any error raised by this function will
             *not* be caught.
         is_generator (Optional[bool]): Indicates whether the input function
-            should be treated as a generator function. If True, retries will 
+            should be treated as a generator function. If True, retries will
             `yield from` wrapped function. If false, retries will call wrapped
             function directly. If None, function will be auto-detected.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
@@ -436,7 +438,11 @@ class Retry(object):
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             # if the target is a generator function, make sure return is also a generator function
-            use_generator = self._is_generator if self._is_generator is not None else isgeneratorfunction(func)
+            use_generator = (
+                self._is_generator
+                if self._is_generator is not None
+                else isgeneratorfunction(func)
+            )
             retry_func = retry_target_generator if use_generator else retry_target
             return retry_func(
                 target,
