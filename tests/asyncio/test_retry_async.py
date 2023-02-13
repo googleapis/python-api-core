@@ -406,10 +406,12 @@ class TestAsyncRetry:
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
 
-    async def _generator_mock(self, num=5, error_on=None, exceptions_seen=None):
+    async def _generator_mock(self, num=5, error_on=None, exceptions_seen=None, sleep_time=0):
         try:
             sent_in = None
             for i in range(num):
+                if sleep_time:
+                    await asyncio.sleep(sleep_time)
                 if error_on and i == error_on:
                     raise ValueError("generator mock error")
                 sent_in = yield (sent_in if sent_in else i)
@@ -418,11 +420,6 @@ class TestAsyncRetry:
             if exceptions_seen is not None:
                 exceptions_seen.append(e)
             raise
-
-    async def _generator_infinite(self):
-        while True:
-            asyncio.sleep(5)
-        yield "done"
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -463,6 +460,7 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
+
         on_error = mock.Mock()
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -489,48 +487,44 @@ class TestAsyncRetry:
             sleep.side_effect = increase_time
 
             with pytest.raises(exceptions.RetryError):
-                unpacked = [i async for i in generator]
+                 unpacked = [i async for i in generator]
 
-        assert on_error.call_count == 5
-
+        assert on_error.call_count == 4
         # check the delays
-        assert sleep.call_count == 4  # once between each successive target calls
+        assert sleep.call_count == 3  # once between each successive target calls
         last_wait = sleep.call_args.args[0]
         total_wait = sum(call_args.args[0] for call_args in sleep.call_args_list)
+        # next wait would have put us over, so ended early
+        assert last_wait == 4
+        assert total_wait == 7
 
-        assert abs(last_wait - 2.9) <= 1e3  # and not 8.0, because the last delay was shortened
-        assert abs(total_wait - 9.9) <= 1e3  # the same as the deadline
-
-
-    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
-    @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test___call___generator_await_hitting_deadline(self, sleep, uniform):
-        timeout_value = 10
-        retry_ = retry_async.AsyncRetry(deadline=timeout_value)
+    async def test___call___generator_timeout_cancellations(self):
+        on_error = mock.Mock()
+        retry_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(ValueError),
+            deadline=0.2,
+        )
         utcnow = datetime.datetime.utcnow()
         utcnow_patcher = mock.patch(
             "google.api_core.datetime_helpers.utcnow", return_value=utcnow
         )
-        # test timeout before yielding anything
-        generator = retry_(self._generator_infinite)()
+        # ensure generator times out when awaiting past deadline
+        with pytest.raises(exceptions.RetryError):
+            infinite_gen = retry_(self._generator_mock, on_error)(sleep_time=60)
+            await anext(infinite_gen)
+        # ensure time between yields isn't counted
         with utcnow_patcher as patched_utcnow:
-            patched_utcnow.return_value += datetime.timedelta(seconds=20)
-            with pytest.raises(exceptions.RetryError) as retry_error:
-                await anext(generator)
-            assert f"{timeout_value:.1f}" in str(retry_error.value)
-        # test timeout mid-stream
-        exception_list = []
-        generator = retry_(self._generator_mock)(10, exceptions_seen=exception_list)
+            generator = retry_(self._generator_mock)(sleep_time=0.05)
+            assert await anext(generator) == 0
+            patched_utcnow.return_value += datetime.timedelta(20)
+            assert await anext(generator) == 1
+        # ensure timeout budget is tracked
+        generator = retry_(self._generator_mock)(sleep_time=0.07)
         assert await anext(generator) == 0
         assert await anext(generator) == 1
-        assert await anext(generator) == 2
-        with utcnow_patcher as patched_utcnow:
-            patched_utcnow.return_value += datetime.timedelta(seconds=20)
-            with pytest.raises(exceptions.RetryError) as retry_error:
-                await anext(generator)
-            assert f"{timeout_value:.1f}" in str(retry_error.value)
-        assert isinstance(exception_list[0], asyncio.CancelledError)
+        with pytest.raises(exceptions.RetryError):
+            await anext(generator)
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio

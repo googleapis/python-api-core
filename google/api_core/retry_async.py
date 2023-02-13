@@ -74,7 +74,7 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
 
 async def retry_target_generator(
-    target, predicate, sleep_generator, deadline_dt=None, timeout_seconds=None, on_error=None, **kwargs
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
     """Wrap an Asyncrhonous Generator Function in another that will
     spawn and yeild from a new generator instance if an error occurs
@@ -91,14 +91,15 @@ async def retry_target_generator(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        deadline_dt (float): The utc timestamp to timeout at.
-        timeout_seconds (float): the amount of seconds the timeout was set for.
-            deadline_dt is used for actual timeout calculation, but the timeout
-            value is presented to the user for errors.
+        timeout (float): How long to keep retrying the target, in seconds.
+            Because generator execution isn't continuous, only time spent
+            waiting on the target generator or sleeping between retries
+            is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
             be caught.
-
+        deadline (float): DEPRECATED use ``timeout`` instead. For backward
+            compatibility, if set it will override the ``timeout`` parameter.
     Returns:
         AsynchronousGenerator: This function spawns new asynchronous generator
             instances when called.
@@ -113,18 +114,30 @@ async def retry_target_generator(
     last_exc = None
     subgenerator = None
 
+    timeout = kwargs.get("deadline", timeout)
+    remaining_timeout_budget = timeout if timeout else None
+
     for sleep in sleep_generator:
         try:
             subgenerator = target()
 
             sent_in = None
             while True:
+                if remaining_timeout_budget <= 0:
+                    raise exceptions.RetryError(
+                        "Timeout of {:.1f}s exceeded".format(timeout)
+                    )
                 ## Read from Subgenerator
-                # TODO: add test for timeout
-                next_value = await asyncio.wait_for(
-                    subgenerator.asend(sent_in),
-                    timeout=(deadline_dt - datetime_helpers.utcnow()).total_seconds(),
-                )
+                next_value_routine = subgenerator.asend(sent_in)
+                if timeout is not None:
+                    next_value_routine = asyncio.wait_for(
+                        subgenerator.asend(sent_in),
+                        timeout=remaining_timeout_budget,
+                    )
+                start_timestamp = datetime_helpers.utcnow()
+                next_value = await next_value_routine
+                if remaining_timeout_budget is not None:
+                    remaining_timeout_budget -= (datetime_helpers.utcnow() - start_timestamp).total_seconds()
                 ## Yield from Wrapper to caller
                 try:
                     # yield last value from subgenerator
@@ -143,13 +156,36 @@ async def retry_target_generator(
             return
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
-        except Exception as exc:
+        except (Exception, asyncio.CancelledError) as exc:
+            if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
+                raise
+            last_exc = exc
+        finally:
             if subgenerator is not None:
                 await subgenerator.aclose()
-            last_exc = exc
-        await _raise_or_sleep(
-            last_exc, predicate, on_error, timeout_seconds, deadline_dt, sleep
+
+        if on_error is not None:
+            on_error(last_exc)
+
+        # sleep and adjust timeout budget
+        if remaining_timeout_budget is not None:
+            now = datetime_helpers.utcnow()
+            if remaining_timeout_budget <= sleep:
+                # Chains the raising RetryError with the root cause error,
+                # which helps observability and debugability.
+                raise exceptions.RetryError(
+                    "Timeout of {:.1f}s exceeded".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+            else:
+                sleep = min(sleep, remaining_timeout_budget)
+                remaining_timeout_budget -= sleep
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
         )
+        await asyncio.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
@@ -208,71 +244,37 @@ async def retry_target(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
+            if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
+                raise
             last_exc = exc
-        await _raise_or_sleep(
-            last_exc, predicate, on_error, timeout, deadline_dt, sleep
+            if on_error is not None:
+                on_error(last_exc)
+
+        now = datetime_helpers.utcnow()
+
+        if deadline_dt:
+            if deadline_dt <= now:
+                # Chains the raising RetryError with the root cause error,
+                # which helps observability and debugability.
+                raise exceptions.RetryError(
+                    "Timeout of {:.1f}s exceeded while calling target function".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+            else:
+                time_to_deadline = (deadline_dt - now).total_seconds()
+                sleep = min(time_to_deadline, sleep)
+
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
         )
+        await asyncio.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
-
-async def _raise_or_sleep(
-    last_exc, predicate, on_error, timeout, deadline_dt, sleep_time
-):
-    """
-    Helper function that contains retry and timeout logic.
-    Raise an exception if:
-        - the exception is not handled by the predicate
-        - the next sleep time would push it over the deadline
-    Otherwise, sleeps before next retry
-
-    Args:
-        last_exc (Exception): the last exception that was encountered as part
-            running the target function
-        predicate (Callable[Exception]): A callable used to determine if an
-            exception raised by the target should be considered retryable.
-            It should return True to retry or False otherwise.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
-        timeout (float): total time the target was retried for.
-        deadline_dt (float): a UTC timestamp for when to stop retries
-        sleep_time (float): the amount of time to sleep before the next try
-    Raises:
-        google.api_core.RetryError: If the deadline is exceeded while retrying.
-    """
-    if (
-        not predicate(last_exc)
-        and not isinstance(last_exc, asyncio.TimeoutError)
-    ):
-        raise last_exc
-    if on_error is not None:
-        on_error(last_exc)
-
-    now = datetime_helpers.utcnow()
-
-    if deadline_dt:
-        if deadline_dt <= now:
-            # Chains the raising RetryError with the root cause error,
-            # which helps observability and debugability.
-            raise exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded".format(
-                    timeout
-                ),
-                last_exc,
-            ) from last_exc
-        else:
-            time_to_deadline = (deadline_dt - now).total_seconds()
-            sleep_time = min(time_to_deadline, sleep_time)
-
-    _LOGGER.debug(
-        "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep_time)
-    )
-    await asyncio.sleep(sleep_time)
-
-
 class AsyncRetry:
-    """Exponential retry decorator for async functions.
+    """Exponential retry decorator for async coroutines.
 
     This class is a decorator used to add exponential back-off retry behavior
     to an RPC call.
@@ -288,6 +290,8 @@ class AsyncRetry:
         maximum (float): The maximum amout of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
         timeout (float): How long to keep retrying in seconds.
+            When the target is a generator, only time spent waiting on the
+            target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
@@ -367,19 +371,11 @@ class AsyncRetry:
                 target,
                 self._predicate,
                 sleep_generator,
-                deadline_dt=deadline_dt,
-                timeout_seconds=self._timeout,
+                timeout=self._timeout,
                 on_error=on_error,
             )
         if use_generator:
-            # for generator, bake deadline into function at call time
-            # time should start counting at generator creation, not first yield
-            deadline_dt = (
-                (datetime_helpers.utcnow() + datetime.timedelta(seconds=self._timeout))
-                if self._timeout
-                else None
-            )
-            return functools.partial(retry_wrapped_generator, deadline_dt=deadline_dt)
+            return retry_wrapped_generator
         else:
             return retry_wrapped_func
 
