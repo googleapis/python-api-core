@@ -526,6 +526,41 @@ class TestAsyncRetry:
         with pytest.raises(exceptions.RetryError):
             await anext(generator)
 
+    @pytest.mark.asyncio
+    async def test___call___generator_await_cancel_retryable(self):
+        """
+        cancel calls should be supported as retryable errors
+        """
+        # test without cancel as retryable
+        timeout_value = 0.1
+        retry_ = retry_async.AsyncRetry()
+        utcnow = datetime.datetime.utcnow()
+        utcnow_patcher = mock.patch(
+            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
+        )
+        generator = retry_(self._generator_mock)(sleep_time=5)
+        await anext(generator) == 0
+        task = asyncio.create_task(anext(generator))
+        await asyncio.sleep(0.1)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        with pytest.raises(StopAsyncIteration):
+            await anext(generator)
+        # test with cancel as retryable
+        retry_cancel_ = retry_async.AsyncRetry(
+            predicate=retry_async.if_exception_type(asyncio.CancelledError),
+        )
+        generator = retry_cancel_(self._generator_mock)(sleep_time=0.2)
+        await anext(generator) == 0
+        await anext(generator) == 1
+        task = asyncio.create_task(anext(generator))
+        await asyncio.sleep(0.05)
+        task.cancel()
+        await task
+        assert task.result() == 0
+        await anext(generator) == 1
+
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_send(self, sleep):
