@@ -164,8 +164,9 @@ def retry_target_generator(
             how long to sleep between retries.
         timeout (float): How long to keep retrying the target.
         on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
+            retryable exception. Non-None values returned by `on_error` will be
+            yielded for downstream consumers. Any error raised by this function
+            will *not* be caught.
         deadline (float): DEPRECATED: use ``timeout`` instead. For backward
             compatibility, if specified it will override ``timeout`` parameter.
 
@@ -194,10 +195,33 @@ def retry_target_generator(
             return (yield from subgenerator)
 
         except Exception as exc:
+            if not predicate(exc):
+                raise
+            last_exc = exc
+        finally:
             if subgenerator is not None:
                 subgenerator.close()
-            last_exc = exc
-        _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
+
+        if on_error is not None:
+            error_result = on_error(last_exc)
+            if error_result is not None:
+                yield error_result
+
+        if deadline is not None:
+            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=sleep
+            )
+            if deadline < next_attempt_time:
+                raise exceptions.RetryError(
+                    "Deadline of {:.1f}s exceeded".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
+        )
+        time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
@@ -249,55 +273,28 @@ def retry_target(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
+            if not predicate(exc):
+                raise
             last_exc = exc
-        _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep)
+        if on_error is not None:
+            on_error(last_exc)
+        if deadline is not None:
+            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=sleep
+            )
+            if deadline < next_attempt_time:
+                raise exceptions.RetryError(
+                    "Deadline of {:.1f}s exceeded".format(
+                        timeout
+                    ),
+                    last_exc,
+                ) from last_exc
+        _LOGGER.debug(
+            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
+        )
+        time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
-
-
-def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep_time):
-    """
-    Helper function that contains retry and timeout logic.
-    Raise an exception if:
-        - the exception is not handled by the predicate
-        - the next sleep time would push it over the deadline
-    Otherwise, sleeps before next retry
-
-    Args:
-        last_exc (Exception): the last exception that was encountered as part
-            running the target function
-        predicate (Callable[Exception]): A callable used to determine if an
-            exception raised by the target should be considered retryable.
-            It should return True to retry or False otherwise.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
-        timeout (float): total time the target was retried for.
-        deadline (float): a UTC timestamp for when to stop retries
-        sleep_time (float): the amount of time to sleep before the next try
-    Raises:
-        google.api_core.RetryError: If the deadline is exceeded while retrying.
-    """
-    if not predicate(last_exc):
-        raise last_exc
-    if on_error is not None:
-        on_error(last_exc)
-    if deadline is not None:
-        next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-            seconds=sleep_time
-        )
-        if deadline < next_attempt_time:
-            raise exceptions.RetryError(
-                "Deadline of {:.1f}s exceeded".format(
-                    timeout
-                ),
-                last_exc,
-            ) from last_exc
-    _LOGGER.debug(
-        "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep_time)
-    )
-    time.sleep(sleep_time)
-
 
 class Retry(object):
     """Exponential retry decorator.
@@ -383,7 +380,8 @@ class Retry(object):
         timeout (float): How long to keep retrying, in seconds.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
-            *not* be caught.
+            *not* be caught. When target is a generator function, non-None values
+            returned 1by `on_error` will be yielded for downstream consumers.
         is_generator (Optional[bool]): Indicates whether the input function
             should be treated as a generator function. If True, retries will
             `yield from` wrapped function. If false, retries will call wrapped
@@ -421,7 +419,9 @@ class Retry(object):
                 a matching retryable generator will be returned.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught.
+                *not* be caught. When target is a generator function, non-None 
+                values returned by `on_error` will be yielded for downstream 
+                consumers.
 
         Returns:
             Callable: A callable that will invoke or yield from ``func`` with retry

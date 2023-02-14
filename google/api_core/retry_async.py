@@ -96,7 +96,9 @@ async def retry_target_generator(
             is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing a
             retryable exception.  Any error raised by this function will *not*
-            be caught.
+            be caught. Non-None values returned by `on_error` will be yielded
+            for downstream consumers.
+
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
             compatibility, if set it will override the ``timeout`` parameter.
     Returns:
@@ -164,7 +166,9 @@ async def retry_target_generator(
                 await subgenerator.aclose()
 
         if on_error is not None:
-            on_error(last_exc)
+            error_result = on_error(last_exc)
+            if error_result is not None:
+                yield error_result
 
         # sleep and adjust timeout budget
         if remaining_timeout_budget is not None:
@@ -291,7 +295,10 @@ class AsyncRetry:
             target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
-            *not* be caught.
+            *not* be caught. When target is a generator function, non-None 
+            values returned by `on_error` will be yielded for downstream
+            consumers.
+
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
     """
@@ -324,7 +331,10 @@ class AsyncRetry:
             coroutine or async generator function to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught.
+                *not* be caught. When `func` is a generator function, non-None 
+                values returned by `on_error` will be yielded for downstream 
+                consumers.
+
 
         Returns:
             Union[Coroutine, AsynchronousGenerator]: One of:

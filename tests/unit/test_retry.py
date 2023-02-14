@@ -506,7 +506,7 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_retry(self, sleep):
-        on_error = mock.Mock()
+        on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
             on_error=on_error, predicate=retry.if_exception_type(ValueError)
         )
@@ -521,7 +521,7 @@ class TestRetry(object):
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
-        on_error = mock.Mock()
+        on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
             initial=1.0,
@@ -664,3 +664,14 @@ class TestRetry(object):
         gen = gen_retry_(wrapped)()
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___generator_retry_on_error_yield(self, sleep):
+        error_token = "Err"
+        retry_ = retry.Retry(
+        on_error=lambda x: error_token, predicate=retry.if_exception_type(ValueError)
+        )
+        generator = retry_(self._generator_mock)(error_on=3)
+        # error thrown on 3
+        unpacked = [next(generator) for i in range(10)]
+        assert unpacked == [0, 1, 2, error_token, 0, 1, 2, error_token, 0, 1]

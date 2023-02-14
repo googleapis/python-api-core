@@ -444,7 +444,7 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry(self, sleep):
-        on_error = mock.Mock()
+        on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
             on_error=on_error, predicate=retry_async.if_exception_type(ValueError)
         )
@@ -460,7 +460,6 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
-
         on_error = mock.Mock()
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -500,7 +499,7 @@ class TestAsyncRetry:
 
     @pytest.mark.asyncio
     async def test___call___generator_timeout_cancellations(self):
-        on_error = mock.Mock()
+        on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
             deadline=0.2,
@@ -656,3 +655,17 @@ class TestAsyncRetry:
         gen = gen_retry_(wrapped)()
         unpacked = [await anext(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_retry_on_error_yield(self, sleep):
+        error_token = "Err"
+        retry_ = retry_async.AsyncRetry(
+        on_error=lambda x: error_token, predicate=retry_async.if_exception_type(ValueError)
+        )
+        generator = retry_(self._generator_mock)(error_on=3)
+        assert inspect.isasyncgen(generator)
+        # error thrown on 3
+        # generator should contain 0, 1, 2 looping
+        unpacked = [await anext(generator) for i in range(10)]
+        assert unpacked == [0, 1, 2, error_token, 0, 1, 2, error_token, 0, 1]
