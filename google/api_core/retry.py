@@ -155,7 +155,7 @@ def retry_target_generator(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Callable[None, Generator[Any,Any,Any]]): A generator function to yield from.
+        target(Callable[None, Generator]): A generator function to yield from.
             This must be a nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -170,7 +170,7 @@ def retry_target_generator(
             compatibility, if specified it will override ``timeout`` parameter.
 
     Returns:
-        Generator[Any,Any,Any]: returns a generator that wraps the target in retry logic.
+        Generator: returns a generator that wraps the target in retry logic.
 
     Raises:
         google.api_core.RetryError: If the deadline is exceeded while retrying.
@@ -288,7 +288,7 @@ def _raise_or_sleep(last_exc, predicate, on_error, timeout, deadline, sleep_time
         )
         if deadline < next_attempt_time:
             raise exceptions.RetryError(
-                "Deadline of {:.1f}s exceeded while calling target function".format(
+                "Deadline of {:.1f}s exceeded".format(
                     timeout
                 ),
                 last_exc,
@@ -416,9 +416,9 @@ class Retry(object):
         """Wrap a callable with retry behavior.
 
         Args:
-            func (Callable[Any, Any]): The callable to add retry behavior to.
-                If a generator function is passed in (Callable[Any, Generator[Any,Any,Any]]),
-                a matcing retryable generator will be returned.
+            func (Callable): The callable to add retry behavior to.
+                If a generator function is passed in (Callable[..., Generator]),
+                a matching retryable generator will be returned.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
