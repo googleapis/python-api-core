@@ -76,8 +76,7 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 async def retry_target_generator(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
-    """Wrap an Asyncrhonous Generator Function in another that will
-    spawn and yeild from a new generator instance if an error occurs
+    """Wrap an Asyncrhonous Generator and retstart stream on errors
 
     This is the lowest-level retry helper. Generally, you'll use the
     higher-level retry helper :class:`Retry`.
@@ -169,7 +168,6 @@ async def retry_target_generator(
 
         # sleep and adjust timeout budget
         if remaining_timeout_budget is not None:
-            now = datetime_helpers.utcnow()
             if remaining_timeout_budget <= sleep:
                 # Chains the raising RetryError with the root cause error,
                 # which helps observability and debugability.
@@ -180,7 +178,6 @@ async def retry_target_generator(
                     last_exc,
                 ) from last_exc
             else:
-                sleep = min(sleep, remaining_timeout_budget)
                 remaining_timeout_budget -= sleep
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
@@ -199,8 +196,8 @@ async def retry_target(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Coroutine): The function to call and retry. This must be a
-            nullary function - apply arguments with `functools.partial`.
+        target(Callable[..., Coroutine]): The coroutine function to call and retry.
+            This must be a nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
             It should return True to retry or False otherwise.
@@ -323,7 +320,7 @@ class AsyncRetry:
         """Wrap a callable with retry behavior.
 
         Args:
-            func (Union[Coroutine, Callable[Any, AsynchronousGenerator]): The
+            func (Callable[..., Union[Coroutine, AsynchronousGenerator]]): The
             coroutine or async generator function to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
@@ -331,8 +328,8 @@ class AsyncRetry:
 
         Returns:
             Union[Coroutine, AsynchronousGenerator]: One of:
-                - A couroutine that will invoke ``func`` if ``func`` is a coroutine
-                - An AsynchronousGenerator that yields from ``func`` if ``func`` is an AsynchronousGenerator.
+                - A couroutine that will invoke ``func`` if ``func`` is a coroutine function
+                - An AsynchronousGenerator that yields from ``func`` if ``func`` is an AsynchronousGenerator function.
         """
         if self._on_error is not None:
             on_error = self._on_error
