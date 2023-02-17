@@ -30,6 +30,7 @@ import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.method
 import google.api_core.page_iterator
 
+
 def _utcnow_monotonic():
     curr_value = datetime.datetime.min
     delta = datetime.timedelta(seconds=0.5)
@@ -159,7 +160,9 @@ def test_wrap_method_with_default_retry_and_timeout_using_sentinel(unusued_sleep
 
 
 @mock.patch("time.sleep")
-def test_wrap_method_with_default_retry_timeout_compression_using_sentinel(unusued_sleep):
+def test_wrap_method_with_default_retry_timeout_compression_using_sentinel(
+    unusued_sleep,
+):
     method = mock.Mock(
         spec=["__call__"], side_effect=[exceptions.InternalServerError(None), 42]
     )
@@ -173,7 +176,7 @@ def test_wrap_method_with_default_retry_timeout_compression_using_sentinel(unusu
     result = wrapped_method(
         retry=google.api_core.gapic_v1.method.DEFAULT,
         timeout=google.api_core.gapic_v1.method.DEFAULT,
-        compression=google.api_core.gapic_v1.method.DEFAULT
+        compression=google.api_core.gapic_v1.method.DEFAULT,
     )
 
     assert result == 42

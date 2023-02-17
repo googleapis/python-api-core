@@ -107,8 +107,8 @@ class Operation(polling.PollingFuture):
 
         return protobuf_helpers.from_any_pb(
             self._metadata_type, self._operation.metadata
-        )    
- 
+        )
+
     @property
     def compression(self):
         """Compression: the current operation compression."""
@@ -116,7 +116,6 @@ class Operation(polling.PollingFuture):
             return None
 
         return self._compression_type
-    
 
     @classmethod
     def deserialize(self, payload):
@@ -304,10 +303,14 @@ def _cancel_grpc(operations_stub, operation_name):
     operations_stub.CancelOperation(request_pb)
 
 
-def from_grpc(operation, operations_stub, result_type,
-              grpc_compression=Compression.NoCompression, 
-              grpc_metadata=None,
-              **kwargs):
+def from_grpc(
+    operation,
+    operations_stub,
+    result_type,
+    grpc_compression=Compression.NoCompression,
+    grpc_metadata=None,
+    **kwargs
+):
     """Create an operation future using a gRPC client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -332,21 +335,30 @@ def from_grpc(operation, operations_stub, result_type,
             operation.
     """
     refresh = functools.partial(
-        _refresh_grpc, operations_stub, operation.name,
+        _refresh_grpc,
+        operations_stub,
+        operation.name,
         compression=grpc_compression,
         metadata=grpc_metadata,
     )
     cancel = functools.partial(
-        _cancel_grpc, operations_stub, operation.name,
+        _cancel_grpc,
+        operations_stub,
+        operation.name,
         compression=grpc_compression,
         metadata=grpc_metadata,
     )
     return Operation(operation, refresh, cancel, result_type, **kwargs)
 
 
-def from_gapic(operation, operations_client, result_type, grpc_metadata=None,
-               grpc_compression=Compression.NoCompression,
-               **kwargs):
+def from_gapic(
+    operation,
+    operations_client,
+    result_type,
+    grpc_metadata=None,
+    grpc_compression=Compression.NoCompression,
+    **kwargs
+):
     """Create an operation future from a gapic client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -372,11 +384,15 @@ def from_gapic(operation, operations_client, result_type, grpc_metadata=None,
             operation.
     """
     refresh = functools.partial(
-        operations_client.get_operation, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        operations_client.get_operation,
+        operation.name,
+        metadata=grpc_metadata,
+        compression=grpc_compression,
     )
     cancel = functools.partial(
-        operations_client.cancel_operation, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        operations_client.cancel_operation,
+        operation.name,
+        metadata=grpc_metadata,
+        compression=grpc_compression,
     )
     return Operation(operation, refresh, cancel, result_type, **kwargs)

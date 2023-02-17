@@ -193,8 +193,14 @@ class AsyncOperation(async_future.AsyncFuture):
         )
 
 
-def from_gapic(operation, operations_client, result_type, 
-               grpc_compression = Compression.NoCompression, grpc_metadata=None, **kwargs):
+def from_gapic(
+    operation,
+    operations_client,
+    result_type,
+    grpc_compression=Compression.NoCompression,
+    grpc_metadata=None,
+    **kwargs
+):
     """Create an operation future from a gapic client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -219,12 +225,14 @@ def from_gapic(operation, operations_client, result_type,
             operation.
     """
     refresh = functools.partial(
-        operations_client.get_operation, operation.name,
+        operations_client.get_operation,
+        operation.name,
         compression=grpc_compression,
         metadata=grpc_metadata,
     )
     cancel = functools.partial(
-        operations_client.cancel_operation, operation.name,
+        operations_client.cancel_operation,
+        operation.name,
         compression=grpc_compression,
         metadata=grpc_metadata,
     )

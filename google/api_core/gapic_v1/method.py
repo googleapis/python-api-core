@@ -80,7 +80,14 @@ class _GapicCallable(object):
         compression (grpc.Compression): Indicates the compression method to be used for an RPC.
     """
 
-    def __init__(self, target, retry, timeout, compression=Compression.NoCompression, metadata=None):
+    def __init__(
+        self,
+        target,
+        retry,
+        timeout,
+        compression=Compression.NoCompression,
+        metadata=None,
+    ):
         self._target = target
         self._retry = retry
         self._timeout = timeout
@@ -97,7 +104,7 @@ class _GapicCallable(object):
 
         if timeout is DEFAULT:
             timeout = self._timeout
-        
+
         if compression is DEFAULT:
             compression = self._compression
 

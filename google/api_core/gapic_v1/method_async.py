@@ -47,6 +47,10 @@ def wrap_method(
 
     return functools.wraps(func)(
         _GapicCallable(
-            func, default_retry, default_timeout, compression=default_compression, metadata=metadata
+            func,
+            default_retry,
+            default_timeout,
+            compression=default_compression,
+            metadata=metadata,
         )
     )
