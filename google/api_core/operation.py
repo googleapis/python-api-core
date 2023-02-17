@@ -304,8 +304,10 @@ def _cancel_grpc(operations_stub, operation_name):
     operations_stub.CancelOperation(request_pb)
 
 
-def from_grpc(operation, operations_stub, result_type, grpc_metadata=None,
-              grpc_compression=Compression.NoCompression, **kwargs):
+def from_grpc(operation, operations_stub, result_type,
+              grpc_compression=Compression.NoCompression, 
+              grpc_metadata=None,
+              **kwargs):
     """Create an operation future using a gRPC client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -330,12 +332,14 @@ def from_grpc(operation, operations_stub, result_type, grpc_metadata=None,
             operation.
     """
     refresh = functools.partial(
-        _refresh_grpc, operations_stub, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        _refresh_grpc, operations_stub, operation.name,
+        compression=grpc_compression,
+        metadata=grpc_metadata,
     )
     cancel = functools.partial(
-        _cancel_grpc, operations_stub, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        _cancel_grpc, operations_stub, operation.name,
+        compression=grpc_compression,
+        metadata=grpc_metadata,
     )
     return Operation(operation, refresh, cancel, result_type, **kwargs)
 

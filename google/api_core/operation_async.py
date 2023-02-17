@@ -59,9 +59,9 @@ class AsyncOperation(async_future.AsyncFuture):
             the operation.
         result_type (func:`type`): The protobuf type for the operation's
             result.
+        compression_type (Compression): The compression method for an operation.
         metadata_type (func:`type`): The protobuf type for the operation's
             metadata.
-        compression_type (Compression): The compression method for an operation.
         retry (google.api_core.retry.Retry): The retry configuration used
             when polling. This can be used to control how often :meth:`done`
             is polled. Regardless of the retry's ``deadline``, it will be
@@ -74,8 +74,8 @@ class AsyncOperation(async_future.AsyncFuture):
         refresh,
         cancel,
         result_type,
-        metadata_type=None,
         compression_type=Compression.NoCompression,
+        metadata_type=None,
         retry=async_future.DEFAULT_RETRY,
     ):
         super().__init__(retry=retry)
@@ -193,8 +193,8 @@ class AsyncOperation(async_future.AsyncFuture):
         )
 
 
-def from_gapic(operation, operations_client, result_type, grpc_metadata=None,
-               grpc_compression = Compression.NoCompression, **kwargs):
+def from_gapic(operation, operations_client, result_type, 
+               grpc_compression = Compression.NoCompression, grpc_metadata=None, **kwargs):
     """Create an operation future from a gapic client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -219,11 +219,13 @@ def from_gapic(operation, operations_client, result_type, grpc_metadata=None,
             operation.
     """
     refresh = functools.partial(
-        operations_client.get_operation, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        operations_client.get_operation, operation.name,
+        compression=grpc_compression,
+        metadata=grpc_metadata,
     )
     cancel = functools.partial(
-        operations_client.cancel_operation, operation.name, metadata=grpc_metadata,
-        compression=grpc_compression
+        operations_client.cancel_operation, operation.name,
+        compression=grpc_compression,
+        metadata=grpc_metadata,
     )
     return AsyncOperation(operation, refresh, cancel, result_type, **kwargs)
