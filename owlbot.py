@@ -30,6 +30,7 @@ excludes = [
     ".coveragerc",  # layout
     "CONTRIBUTING.rst",  # no systests
     ".github/workflows/unittest.yml", # exclude unittest gh action
+    ".github/workflows/lint.yml", # exclude lint gh action
     "README.rst",
 ]
 templated_files = common.py_library(microgenerator=True, cov_level=100)
@@ -46,8 +47,6 @@ s.replace(
 .pytype
 """,
 )
-
-s.replace(".github/workflows/lint.yml", "python-version: \"3.10\"", "python-version: \"3.7\"")
 
 python.configure_previous_major_version_branches()
 

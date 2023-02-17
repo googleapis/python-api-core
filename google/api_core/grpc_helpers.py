@@ -30,7 +30,7 @@ import google.protobuf
 PROTOBUF_VERSION = google.protobuf.__version__
 
 # The grpcio-gcp package only has support for protobuf < 4
-if PROTOBUF_VERSION[0:2] == "3.":
+if PROTOBUF_VERSION[0:2] == "3.":  # pragma: NO COVER
     try:
         import grpc_gcp
 
@@ -322,9 +322,9 @@ def create_channel(
         default_host=default_host,
     )
 
-    if HAS_GRPC_GCP:
+    if HAS_GRPC_GCP:  # pragma: NO COVER
         return grpc_gcp.secure_channel(target, composite_credentials, compression=compression, **kwargs)
-    return grpc.secure_channel(target, composite_credentials, compression=compression, **kwargs)
+    return grpc.secure_channel(target, composite_credentials, compression=compression,**kwargs)
 
 
 _MethodCall = collections.namedtuple(
