@@ -140,7 +140,11 @@ class OperationsAsyncClient:
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         return await self._get_operation(
-            request, retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )
 
     async def list_operations(
@@ -212,7 +216,11 @@ class OperationsAsyncClient:
 
         # Create the method used to fetch pages
         method = functools.partial(
-            self._list_operations, retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            self._list_operations,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )
 
         iterator = page_iterator_async.AsyncGRPCIterator(
@@ -285,7 +293,11 @@ class OperationsAsyncClient:
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         await self._cancel_operation(
-            request, retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )
 
     async def delete_operation(
@@ -341,5 +353,9 @@ class OperationsAsyncClient:
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         await self._delete_operation(
-            request, retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )

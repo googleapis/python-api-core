@@ -86,7 +86,9 @@ class _GapicCallable(object):
         self._metadata = metadata
         self._compression = compression
 
-    def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs):
+    def __call__(
+        self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs
+    ):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
 
         if retry is DEFAULT:
@@ -120,7 +122,7 @@ def wrap_method(
     default_retry=None,
     default_timeout=None,
     default_compression=None,
-    client_info=client_info.DEFAULT_CLIENT_INFO
+    client_info=client_info.DEFAULT_CLIENT_INFO,
 ):
     """Wrap an RPC method with common behavior.
 
@@ -212,6 +214,10 @@ def wrap_method(
 
     return functools.wraps(func)(
         _GapicCallable(
-            func, default_retry, default_timeout, metadata=user_agent_metadata, compression=default_compression
+            func,
+            default_retry,
+            default_timeout,
+            metadata=user_agent_metadata,
+            compression=default_compression,
         )
     )

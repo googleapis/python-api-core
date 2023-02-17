@@ -45,5 +45,7 @@ def wrap_method(
     metadata = [client_info.to_grpc_metadata()] if client_info is not None else None
 
     return functools.wraps(func)(
-        _GapicCallable(func, default_retry, default_timeout, default_compression, metadata=metadata)
+        _GapicCallable(
+            func, default_retry, default_timeout, default_compression, metadata=metadata
+        )
     )

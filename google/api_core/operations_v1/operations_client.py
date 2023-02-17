@@ -107,7 +107,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
-        compression=None
+        compression=None,
     ):
         """Gets the latest state of a long-running operation.
 
@@ -154,7 +154,11 @@ class OperationsClient(object):
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
         return self._get_operation(
-            request, retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )
 
     def list_operations(
@@ -164,7 +168,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
-        compression=None
+        compression=None,
     ):
         """
         Lists operations that match the specified filter in the request.
@@ -226,7 +230,11 @@ class OperationsClient(object):
 
         # Create the method used to fetch pages
         method = functools.partial(
-            self._list_operations,  retry=retry, timeout=timeout, compression=compression, metadata=metadata
+            self._list_operations,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
         )
 
         iterator = page_iterator.GRPCIterator(
@@ -246,7 +254,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
-        compression=None
+        compression=None,
     ):
         """Starts asynchronous cancellation on a long-running operation.
 
@@ -298,7 +306,13 @@ class OperationsClient(object):
         metadata = metadata or []
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
-        self._cancel_operation(request, retry=retry, timeout=timeout, compression=compression, metadata=metadata)
+        self._cancel_operation(
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
+        )
 
     def delete_operation(
         self,
@@ -306,7 +320,7 @@ class OperationsClient(object):
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
         metadata=None,
-        compression=None
+        compression=None,
     ):
         """Deletes a long-running operation.
 
@@ -352,4 +366,10 @@ class OperationsClient(object):
         metadata = metadata or []
         metadata.append(gapic_v1.routing_header.to_grpc_metadata({"name": name}))
 
-        self._delete_operation(request, retry=retry, timeout=timeout, compression=compression, metadata=metadata)
+        self._delete_operation(
+            request,
+            retry=retry,
+            timeout=timeout,
+            compression=compression,
+            metadata=metadata,
+        )

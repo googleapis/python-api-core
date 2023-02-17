@@ -323,8 +323,12 @@ def create_channel(
     )
 
     if HAS_GRPC_GCP:  # pragma: NO COVER
-        return grpc_gcp.secure_channel(target, composite_credentials, compression=compression, **kwargs)
-    return grpc.secure_channel(target, composite_credentials, compression=compression,**kwargs)
+        return grpc_gcp.secure_channel(
+            target, composite_credentials, compression=compression, **kwargs
+        )
+    return grpc.secure_channel(
+        target, composite_credentials, compression=compression, **kwargs
+    )
 
 
 _MethodCall = collections.namedtuple(
@@ -357,9 +361,13 @@ class _CallableStub(object):
         """List[Tuple]: All invocations of this callable. Each tuple is the
         request, timeout, metadata, and credentials."""
 
-    def __call__(self, request, timeout=None, metadata=None, credentials=None, compression=None):
+    def __call__(
+        self, request, timeout=None, metadata=None, credentials=None, compression=None
+    ):
         self._channel.requests.append(_ChannelRequest(self._method, request))
-        self.calls.append(_MethodCall(request, timeout, metadata, credentials, compression))
+        self.calls.append(
+            _MethodCall(request, timeout, metadata, credentials, compression)
+        )
         self.requests.append(request)
 
         response = self.response

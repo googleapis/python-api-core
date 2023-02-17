@@ -256,7 +256,9 @@ def create_channel(
         default_host=default_host,
     )
 
-    return aio.secure_channel(target, composite_credentials, compression=compression, **kwargs)
+    return aio.secure_channel(
+        target, composite_credentials, compression=compression, **kwargs
+    )
 
 
 class FakeUnaryUnaryCall(_WrappedUnaryUnaryCall):
