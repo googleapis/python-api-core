@@ -24,6 +24,7 @@ import functools
 from google.api_core import grpc_helpers
 from google.api_core.gapic_v1 import client_info
 from google.api_core.timeout import TimeToDeadlineTimeout
+from grpc import Compression
 
 USE_DEFAULT_METADATA = object()
 
@@ -79,23 +80,26 @@ class _GapicCallable(object):
         compression (grpc.Compression): Indicates the compression method to be used for an RPC.
     """
 
-    def __init__(self, target, retry, timeout, metadata=None, compression=None):
+    def __init__(self, target, retry, timeout, compression=Compression.NoCompression, metadata=None):
         self._target = target
         self._retry = retry
         self._timeout = timeout
-        self._metadata = metadata
         self._compression = compression
+        self._metadata = metadata
 
     def __call__(
         self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs
     ):
-        """Invoke the low-level RPC with retry, timeout, and metadata."""
+        """Invoke the low-level RPC with retry, timeout, compression, and metadata."""
 
         if retry is DEFAULT:
             retry = self._retry
 
         if timeout is DEFAULT:
             timeout = self._timeout
+        
+        if compression is DEFAULT:
+            compression = self._compression
 
         if isinstance(timeout, (int, float)):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
@@ -121,7 +125,7 @@ def wrap_method(
     func,
     default_retry=None,
     default_timeout=None,
-    default_compression=None,
+    default_compression=Compression.NoCompression,
     client_info=client_info.DEFAULT_CLIENT_INFO,
 ):
     """Wrap an RPC method with common behavior.
@@ -217,7 +221,7 @@ def wrap_method(
             func,
             default_retry,
             default_timeout,
+            default_compression,
             metadata=user_agent_metadata,
-            compression=default_compression,
         )
     )

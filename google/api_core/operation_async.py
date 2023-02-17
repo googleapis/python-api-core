@@ -44,6 +44,7 @@ from google.api_core import protobuf_helpers
 from google.api_core.future import async_future
 from google.longrunning import operations_pb2
 from google.rpc import code_pb2
+from grpc import Compression
 
 
 class AsyncOperation(async_future.AsyncFuture):
@@ -60,6 +61,7 @@ class AsyncOperation(async_future.AsyncFuture):
             result.
         metadata_type (func:`type`): The protobuf type for the operation's
             metadata.
+        compression_type (Compression): The compression method for an operation.
         retry (google.api_core.retry.Retry): The retry configuration used
             when polling. This can be used to control how often :meth:`done`
             is polled. Regardless of the retry's ``deadline``, it will be
@@ -73,6 +75,7 @@ class AsyncOperation(async_future.AsyncFuture):
         cancel,
         result_type,
         metadata_type=None,
+        compression_type=Compression.NoCompression,
         retry=async_future.DEFAULT_RETRY,
     ):
         super().__init__(retry=retry)
@@ -81,6 +84,7 @@ class AsyncOperation(async_future.AsyncFuture):
         self._cancel = cancel
         self._result_type = result_type
         self._metadata_type = metadata_type
+        self._compression_type = compression_type
         self._completion_lock = threading.Lock()
         # Invoke this in case the operation came back already complete.
         self._set_result_from_operation()
@@ -189,7 +193,8 @@ class AsyncOperation(async_future.AsyncFuture):
         )
 
 
-def from_gapic(operation, operations_client, result_type, grpc_metadata=None, **kwargs):
+def from_gapic(operation, operations_client, result_type, grpc_metadata=None,
+               grpc_compression = Compression.NoCompression, **kwargs):
     """Create an operation future from a gapic client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -206,6 +211,7 @@ def from_gapic(operation, operations_client, result_type, grpc_metadata=None, **
         result_type (:func:`type`): The protobuf result type.
         grpc_metadata (Optional[List[Tuple[str, str]]]): Additional metadata to pass
             to the rpc.
+        grpc_compression (grpc.Compression): Type of compression for the rpc.
         kwargs: Keyword args passed into the :class:`Operation` constructor.
 
     Returns:
@@ -213,9 +219,11 @@ def from_gapic(operation, operations_client, result_type, grpc_metadata=None, **
             operation.
     """
     refresh = functools.partial(
-        operations_client.get_operation, operation.name, metadata=grpc_metadata
+        operations_client.get_operation, operation.name, metadata=grpc_metadata,
+        compression=grpc_compression
     )
     cancel = functools.partial(
-        operations_client.cancel_operation, operation.name, metadata=grpc_metadata
+        operations_client.cancel_operation, operation.name, metadata=grpc_metadata,
+        compression=grpc_compression
     )
     return AsyncOperation(operation, refresh, cancel, result_type, **kwargs)

@@ -24,21 +24,22 @@ from google.api_core.gapic_v1 import client_info
 from google.api_core.gapic_v1.method import _GapicCallable
 from google.api_core.gapic_v1.method import DEFAULT  # noqa: F401
 from google.api_core.gapic_v1.method import USE_DEFAULT_METADATA  # noqa: F401
+from grpc import Compression
 
 
 def wrap_method(
     func,
     default_retry=None,
     default_timeout=None,
-    default_compression=None,
+    default_compression=Compression.NoCompression,
     client_info=client_info.DEFAULT_CLIENT_INFO,
 ):
     """Wrap an async RPC method with common behavior.
 
     Returns:
-        Callable: A new callable that takes optional ``retry`` and ``timeout``
-            arguments and applies the common error mapping, retry, timeout,
-            and metadata behavior to the low-level RPC method.
+        Callable: A new callable that takes optional ``retry``, ``timeout``,
+            and compression arguments and applies the common error mapping,
+            retry, timeout, metadata, and compression behavior to the low-level RPC method.
     """
     func = grpc_helpers_async.wrap_errors(func)
 
@@ -46,6 +47,6 @@ def wrap_method(
 
     return functools.wraps(func)(
         _GapicCallable(
-            func, default_retry, default_timeout, default_compression, metadata=metadata
+            func, default_retry, default_timeout, compression=default_compression, metadata=metadata
         )
     )

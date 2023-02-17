@@ -30,7 +30,6 @@ import google.api_core.gapic_v1.client_info
 import google.api_core.gapic_v1.method
 import google.api_core.page_iterator
 
-
 def _utcnow_monotonic():
     curr_value = datetime.datetime.min
     delta = datetime.timedelta(seconds=0.5)
@@ -90,31 +89,6 @@ def test_wrap_method_with_custom_client_info():
     # Check that the custom client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
     assert client_info.to_grpc_metadata() in metadata
-
-
-def test_wrap_method_with_no_compression():
-    method = mock.Mock(spec=["__call__"])
-
-    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
-        method, compression=None
-    )
-
-    wrapped_method(1, 2, meep="moop")
-
-    method.assert_called_once_with(1, 2, meep="moop")
-
-
-def test_wrap_method_with_custom_client_info():
-    compression = grpc.Compression.Gzip
-    method = mock.Mock(spec=["__call__"])
-
-    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
-        method, compression=compression
-    )
-
-    wrapped_method(1, 2, meep="moop")
-
-    method.assert_called_once_with(1, 2, meep="moop", compression=grpc.Compression.Gzip)
 
 
 def test_invoke_wrapped_method_with_metadata():
@@ -177,6 +151,29 @@ def test_wrap_method_with_default_retry_and_timeout_using_sentinel(unusued_sleep
     result = wrapped_method(
         retry=google.api_core.gapic_v1.method.DEFAULT,
         timeout=google.api_core.gapic_v1.method.DEFAULT,
+    )
+
+    assert result == 42
+    assert method.call_count == 2
+    method.assert_called_with(timeout=60, metadata=mock.ANY)
+
+
+@mock.patch("time.sleep")
+def test_wrap_method_with_default_retry_timeout_compression_using_sentinel(unusued_sleep):
+    method = mock.Mock(
+        spec=["__call__"], side_effect=[exceptions.InternalServerError(None), 42]
+    )
+    default_retry = retry.Retry()
+    default_timeout = timeout.ConstantTimeout(60)
+    default_compression = grpc.Compression.NoCompression
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, default_retry, default_timeout, default_compression
+    )
+
+    result = wrapped_method(
+        retry=google.api_core.gapic_v1.method.DEFAULT,
+        timeout=google.api_core.gapic_v1.method.DEFAULT,
+        compression=google.api_core.gapic_v1.method.DEFAULT
     )
 
     assert result == 42

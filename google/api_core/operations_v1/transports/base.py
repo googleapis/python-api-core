@@ -26,6 +26,7 @@ from google.auth import credentials as ga_credentials  # type: ignore
 from google.longrunning import operations_pb2
 from google.oauth2 import service_account  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
+from grpc import Compression
 
 
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
@@ -129,7 +130,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
-                default_compression=None,
+                default_compression=Compression.NoCompression,
                 client_info=client_info,
             ),
             self.get_operation: gapic_v1.method.wrap_method(
@@ -144,7 +145,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
-                default_compression=None,
+                default_compression=Compression.NoCompression,
                 client_info=client_info,
             ),
             self.delete_operation: gapic_v1.method.wrap_method(
@@ -159,7 +160,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
-                default_compression=None,
+                default_compression=Compression.NoCompression,
                 client_info=client_info,
             ),
             self.cancel_operation: gapic_v1.method.wrap_method(
@@ -174,7 +175,7 @@ class OperationsTransport(abc.ABC):
                     deadline=10.0,
                 ),
                 default_timeout=10.0,
-                default_compression=None,
+                default_compression=Compression.NoCompression,
                 client_info=client_info,
             ),
         }
