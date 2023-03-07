@@ -308,9 +308,24 @@ def transcode(http_options, message=None, **request_kwargs):
             else:
                 try:
                     if message:
-                        request["body"] = getattr(leftovers, body)
+                        try:
+                            request["body"] = getattr(leftovers, body)
+                        except AttributeError as e:
+                            # gapic-generator-python appends underscores to field names
+                            # that collide with python keywords.
+                            # `_` is stripped away as it is not possible to
+                            # natively define a field with a trailing underscore in protobuf.
+                            # See related issue
+                            # https://github.com/googleapis/python-api-core/issues/227
+                            if hasattr(leftovers, body + "_"):
+                                request["body"] = getattr(leftovers, body + "_")
+                            else:
+                                raise e
                         delete_field(leftovers, body)
                     else:
+                        # gapic-generator-python appends underscores to field names
+                        # that collide with python keywords.
+                        leftovers = {key.rstrip('_') : val for key, val in leftovers.items()}
                         request["body"] = leftovers.pop(body)
                 except (KeyError, AttributeError):
                     continue

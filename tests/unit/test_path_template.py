@@ -413,6 +413,13 @@ def test_transcode_with_wildcard(
             {"data": {"id": 1, "info": "some info"}, "foo": "bar"},
             ["post", "/v1/no/template", {"id": 1, "info": "some info"}, {"foo": "bar"}],
         ],
+        # Single field body with trailing underscore
+        [
+            [["post", "/v1/no/template", "data"]],
+            None,
+            {"data": {"id": 1, "info": "some info"}, "foo_": "bar"},
+            ["post", "/v1/no/template", {"id": 1, "info": "some info"}, {"foo": "bar"}],
+        ],
         [
             [["post", "/v1/no/template", "oauth"]],
             auth_pb2.AuthenticationRule(
