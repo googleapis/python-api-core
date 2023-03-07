@@ -626,6 +626,14 @@ def test_transcode_with_additional_bindings(
             auth_pb2.AuthenticationRule(selector="first"),
             {},
         ],
+        # Test trailing underscore in body is removed during transcoding
+        # See https://github.com/googleapis/python-api-core/issues/490
+        [[["post", "/v1/{name}", "data"]], None, {"name": "first/last"}],
+        [
+            [["post", "/v1/{selector}", "data_"]],
+            auth_pb2.AuthenticationRule(selector="first"),
+            {},
+        ],
         [[["post", "/v1/{first_name}", "data"]], None, {"last_name": "last"}],
         [
             [["post", "/v1/{first_name}", ""]],
