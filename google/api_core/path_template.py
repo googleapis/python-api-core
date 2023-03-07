@@ -310,6 +310,7 @@ def transcode(http_options, message=None, **request_kwargs):
                     if message:
                         try:
                             request["body"] = getattr(leftovers, body)
+                            delete_field(leftovers, body)
                         except AttributeError as e:
                             # gapic-generator-python appends underscores to field names
                             # that collide with python keywords.
@@ -319,9 +320,9 @@ def transcode(http_options, message=None, **request_kwargs):
                             # https://github.com/googleapis/python-api-core/issues/227
                             if hasattr(leftovers, body + "_"):
                                 request["body"] = getattr(leftovers, body + "_")
+                                delete_field(leftovers, body + "_")
                             else:
                                 raise e
-                        delete_field(leftovers, body)
                     else:
                         # gapic-generator-python appends underscores to field names
                         # that collide with python keywords.

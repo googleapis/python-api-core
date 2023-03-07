@@ -17,8 +17,18 @@ from __future__ import unicode_literals
 import mock
 import pytest
 
+import proto
+
 from google.api import auth_pb2
 from google.api_core import path_template
+
+
+class Breakpoint(proto.Message):
+    name = proto.Field(proto.STRING, number=1)
+
+class SomeMessage(proto.Message):
+    breakpoint_ = proto.Field(Breakpoint, number=1)
+    debuggee_id = proto.Field(proto.STRING, number=2)
 
 
 @pytest.mark.parametrize(
@@ -419,6 +429,13 @@ def test_transcode_with_wildcard(
             None,
             {"data": {"id": 1, "info": "some info"}, "foo_": "bar"},
             ["post", "/v1/no/template", {"id": 1, "info": "some info"}, {"foo": "bar"}],
+        ],
+        # Single field body with reserved keyword, using message where field name has trailing underscore
+        [
+            [["post", "/v1/no/template", "breakpoint"]],
+            SomeMessage(breakpoint_=Breakpoint(name="test"),debuggee_id="test")._pb,
+            {},
+            ["post", "/v1/no/template", Breakpoint(name="test")._pb, SomeMessage(debuggee_id="test")._pb],
         ],
         [
             [["post", "/v1/no/template", "oauth"]],
