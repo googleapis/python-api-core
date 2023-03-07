@@ -325,7 +325,9 @@ def transcode(http_options, message=None, **request_kwargs):
                     else:
                         # gapic-generator-python appends underscores to field names
                         # that collide with python keywords.
-                        leftovers = {key.rstrip('_') : val for key, val in leftovers.items()}
+                        leftovers = {
+                            key.rstrip("_"): val for key, val in leftovers.items()
+                        }
                         request["body"] = leftovers.pop(body)
                 except (KeyError, AttributeError):
                     continue
