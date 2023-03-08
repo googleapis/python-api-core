@@ -298,6 +298,15 @@ def transcode(http_options, message=None, **request_kwargs):
         # Assign body and query params
         body = http_option.get("body")
 
+        # gapic-generator-python appends underscores to field names
+        # that collide with python keywords.
+        # `_` is stripped away as it is not possible to
+        # natively define a field with a trailing underscore in protobuf.
+        # See related issue
+        # https://github.com/googleapis/python-api-core/issues/227
+        if isinstance(leftovers, dict):
+            leftovers = {key.rstrip("_"): val for key, val in leftovers.items()}
+
         if body:
             if body == "*":
                 request["body"] = leftovers
@@ -308,27 +317,18 @@ def transcode(http_options, message=None, **request_kwargs):
             else:
                 try:
                     if message:
-                        try:
-                            request["body"] = getattr(leftovers, body)
-                            delete_field(leftovers, body)
-                        except AttributeError as e:
-                            # gapic-generator-python appends underscores to field names
-                            # that collide with python keywords.
-                            # `_` is stripped away as it is not possible to
-                            # natively define a field with a trailing underscore in protobuf.
-                            # See related issue
-                            # https://github.com/googleapis/python-api-core/issues/227
-                            if hasattr(leftovers, body + "_"):
-                                request["body"] = getattr(leftovers, body + "_")
-                                delete_field(leftovers, body + "_")
-                            else:
-                                raise e
-                    else:
                         # gapic-generator-python appends underscores to field names
                         # that collide with python keywords.
-                        leftovers = {
-                            key.rstrip("_"): val for key, val in leftovers.items()
-                        }
+                        # `_` is stripped away as it is not possible to
+                        # natively define a field with a trailing underscore in protobuf.
+                        # See related issue
+                        # https://github.com/googleapis/python-api-core/issues/227
+                        field_suffix = ""
+                        if hasattr(leftovers, body + "_"):
+                            field_suffix = "_"
+                        request["body"] = getattr(leftovers, f"{body}{field_suffix}")
+                        delete_field(leftovers, f"{body}{field_suffix}")
+                    else:
                         request["body"] = leftovers.pop(body)
                 except (KeyError, AttributeError):
                     continue
