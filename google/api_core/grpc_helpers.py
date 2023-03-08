@@ -16,31 +16,37 @@
 
 import collections
 import functools
+import warnings
 
 import grpc
-import pkg_resources
 
 from google.api_core import exceptions
 import google.auth
 import google.auth.credentials
 import google.auth.transport.grpc
 import google.auth.transport.requests
+import google.protobuf
 
-try:
-    import grpc_gcp
+PROTOBUF_VERSION = google.protobuf.__version__
 
-    HAS_GRPC_GCP = True
-except ImportError:
+# The grpcio-gcp package only has support for protobuf < 4
+if PROTOBUF_VERSION[0:2] == "3.":  # pragma: NO COVER
+    try:
+        import grpc_gcp
+
+        warnings.warn(
+            """Support for grpcio-gcp is deprecated. This feature will be
+            removed from `google-api-core` after January 1, 2024. If you need to
+            continue to use this feature, please pin to a specific version of
+            `google-api-core`.""",
+            DeprecationWarning,
+        )
+        HAS_GRPC_GCP = True
+    except ImportError:
+        HAS_GRPC_GCP = False
+else:
     HAS_GRPC_GCP = False
 
-try:
-    # google.auth.__version__ was added in 1.26.0
-    _GOOGLE_AUTH_VERSION = google.auth.__version__
-except AttributeError:
-    try:  # try pkg_resources if it is available
-        _GOOGLE_AUTH_VERSION = pkg_resources.get_distribution("google-auth").version
-    except pkg_resources.DistributionNotFound:  # pragma: NO COVER
-        _GOOGLE_AUTH_VERSION = None
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
@@ -246,7 +252,9 @@ def _create_composite_credentials(
 
     # Create the metadata plugin for inserting the authorization header.
     metadata_plugin = google.auth.transport.grpc.AuthMetadataPlugin(
-        credentials, request, default_host=default_host,
+        credentials,
+        request,
+        default_host=default_host,
     )
 
     # Create a set of grpc.CallCredentials using the metadata plugin.
@@ -291,6 +299,7 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
+            Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
 
     Returns:
         grpc.Channel: The created channel.
@@ -309,12 +318,9 @@ def create_channel(
         default_host=default_host,
     )
 
-    if HAS_GRPC_GCP:
-        # If grpc_gcp module is available use grpc_gcp.secure_channel,
-        # otherwise, use grpc.secure_channel to create grpc channel.
+    if HAS_GRPC_GCP:  # pragma: NO COVER
         return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-    else:
-        return grpc.secure_channel(target, composite_credentials, **kwargs)
+    return grpc.secure_channel(target, composite_credentials, **kwargs)
 
 
 _MethodCall = collections.namedtuple(

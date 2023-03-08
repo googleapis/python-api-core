@@ -20,7 +20,7 @@ import pytest
 
 try:
     import grpc  # noqa: F401
-except ImportError:
+except ImportError:  # pragma: NO COVER
     pytest.skip("No GRPC", allow_module_level=True)
 from requests import Response  # noqa I201
 from requests.sessions import Session
@@ -121,7 +121,7 @@ def test_operations_client_from_service_account_info(client_class):
         assert client.transport._credentials == creds
         assert isinstance(client, client_class)
 
-        assert client.transport._host == "longrunning.googleapis.com:443"
+        assert client.transport._host == "https://longrunning.googleapis.com"
 
 
 @pytest.mark.parametrize(
@@ -160,7 +160,7 @@ def test_operations_client_from_service_account_file(client_class):
         assert client.transport._credentials == creds
         assert isinstance(client, client_class)
 
-        assert client.transport._host == "longrunning.googleapis.com:443"
+        assert client.transport._host == "https://longrunning.googleapis.com"
 
 
 def test_operations_client_get_transport_class():
@@ -399,7 +399,9 @@ def test_operations_client_client_options_scopes(
     client_class, transport_class, transport_name
 ):
     # Check the case scopes are provided.
-    options = client_options.ClientOptions(scopes=["1", "2"],)
+    options = client_options.ClientOptions(
+        scopes=["1", "2"],
+    )
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
         client = client_class(client_options=options)
@@ -463,10 +465,7 @@ def test_list_operations_rest(
 
         actual_args = req.call_args
         assert actual_args.args[0] == "GET"
-        assert (
-            actual_args.args[1]
-            == "https://longrunning.googleapis.com:443/v3/operations"
-        )
+        assert actual_args.args[1] == "https://longrunning.googleapis.com/v3/operations"
         assert actual_args.kwargs["params"] == [
             ("filter", "my_filter"),
             ("pageSize", 10),
@@ -513,10 +512,12 @@ def test_list_operations_rest_pager():
                 next_page_token="abc",
             ),
             operations_pb2.ListOperationsResponse(
-                operations=[], next_page_token="def",
+                operations=[],
+                next_page_token="def",
             ),
             operations_pb2.ListOperationsResponse(
-                operations=[operations_pb2.Operation()], next_page_token="ghi",
+                operations=[operations_pb2.Operation()],
+                next_page_token="ghi",
             ),
             operations_pb2.ListOperationsResponse(
                 operations=[operations_pb2.Operation(), operations_pb2.Operation()],
@@ -553,7 +554,9 @@ def test_get_operation_rest(
     with mock.patch.object(Session, "request") as req:
         # Designate an appropriate value for the returned response.
         return_value = operations_pb2.Operation(
-            name="operations/sample1", done=True, error=status_pb2.Status(code=411),
+            name="operations/sample1",
+            done=True,
+            error=status_pb2.Status(code=411),
         )
 
         # Wrap the value into a proper Response obj
@@ -568,7 +571,7 @@ def test_get_operation_rest(
     assert actual_args.args[0] == "GET"
     assert (
         actual_args.args[1]
-        == "https://longrunning.googleapis.com:443/v3/operations/sample1"
+        == "https://longrunning.googleapis.com/v3/operations/sample1"
     )
 
     # Establish that the response is the type that we expect.
@@ -585,13 +588,11 @@ def test_get_operation_rest_failure():
         response_value.status_code = 400
         mock_request = mock.MagicMock()
         mock_request.method = "GET"
-        mock_request.url = (
-            "https://longrunning.googleapis.com:443/v1/operations/sample1"
-        )
+        mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
-            client.get_operation("operations/sample1")
+            client.get_operation("sample0/operations/sample1")
 
 
 def test_delete_operation_rest(
@@ -613,7 +614,7 @@ def test_delete_operation_rest(
         assert actual_args.args[0] == "DELETE"
         assert (
             actual_args.args[1]
-            == "https://longrunning.googleapis.com:443/v3/operations/sample1"
+            == "https://longrunning.googleapis.com/v3/operations/sample1"
         )
 
 
@@ -625,13 +626,11 @@ def test_delete_operation_rest_failure():
         response_value.status_code = 400
         mock_request = mock.MagicMock()
         mock_request.method = "DELETE"
-        mock_request.url = (
-            "https://longrunning.googleapis.com:443/v1/operations/sample1"
-        )
+        mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
-            client.delete_operation(name="operations/sample1")
+            client.delete_operation(name="sample0/operations/sample1")
 
 
 def test_cancel_operation_rest(transport: str = "rest"):
@@ -651,7 +650,7 @@ def test_cancel_operation_rest(transport: str = "rest"):
         assert actual_args.args[0] == "POST"
         assert (
             actual_args.args[1]
-            == "https://longrunning.googleapis.com:443/v3/operations/sample1:cancel"
+            == "https://longrunning.googleapis.com/v3/operations/sample1:cancel"
         )
 
 
@@ -664,12 +663,12 @@ def test_cancel_operation_rest_failure():
         mock_request = mock.MagicMock()
         mock_request.method = "POST"
         mock_request.url = (
-            "https://longrunning.googleapis.com:443/v1/operations/sample1:cancel"
+            "https://longrunning.googleapis.com/v1/operations/sample1:cancel"
         )
         response_value.request = mock_request
         req.return_value = response_value
         with pytest.raises(core_exceptions.GoogleAPIError):
-            client.cancel_operation(name="operations/sample1")
+            client.cancel_operation(name="sample0/operations/sample1")
 
 
 def test_credentials_transport_error():
@@ -679,7 +678,8 @@ def test_credentials_transport_error():
     )
     with pytest.raises(ValueError):
         AbstractOperationsClient(
-            credentials=ga_credentials.AnonymousCredentials(), transport=transport,
+            credentials=ga_credentials.AnonymousCredentials(),
+            transport=transport,
         )
 
     # It is an error to provide a credentials file and a transport instance.
@@ -698,7 +698,8 @@ def test_credentials_transport_error():
     )
     with pytest.raises(ValueError):
         AbstractOperationsClient(
-            client_options={"scopes": ["1", "2"]}, transport=transport,
+            client_options={"scopes": ["1", "2"]},
+            transport=transport,
         )
 
 
@@ -765,7 +766,8 @@ def test_operations_base_transport_with_credentials_file():
         Transport.return_value = None
         load_creds.return_value = (ga_credentials.AnonymousCredentials(), None)
         transports.OperationsTransport(
-            credentials_file="credentials.json", quota_project_id="octopus",
+            credentials_file="credentials.json",
+            quota_project_id="octopus",
         )
         load_creds.assert_called_once_with(
             "credentials.json",
@@ -792,7 +794,9 @@ def test_operations_auth_adc():
         adc.return_value = (ga_credentials.AnonymousCredentials(), None)
         AbstractOperationsClient()
         adc.assert_called_once_with(
-            scopes=None, default_scopes=(), quota_project_id=None,
+            scopes=None,
+            default_scopes=(),
+            quota_project_id=None,
         )
 
 
@@ -814,7 +818,7 @@ def test_operations_host_no_port():
             api_endpoint="longrunning.googleapis.com"
         ),
     )
-    assert client.transport._host == "longrunning.googleapis.com:443"
+    assert client.transport._host == "https://longrunning.googleapis.com"
 
 
 def test_operations_host_with_port():
@@ -824,7 +828,7 @@ def test_operations_host_with_port():
             api_endpoint="longrunning.googleapis.com:8000"
         ),
     )
-    assert client.transport._host == "longrunning.googleapis.com:8000"
+    assert client.transport._host == "https://longrunning.googleapis.com:8000"
 
 
 def test_common_billing_account_path():
@@ -849,7 +853,9 @@ def test_parse_common_billing_account_path():
 
 def test_common_folder_path():
     folder = "whelk"
-    expected = "folders/{folder}".format(folder=folder,)
+    expected = "folders/{folder}".format(
+        folder=folder,
+    )
     actual = AbstractOperationsClient.common_folder_path(folder)
     assert expected == actual
 
@@ -867,7 +873,9 @@ def test_parse_common_folder_path():
 
 def test_common_organization_path():
     organization = "oyster"
-    expected = "organizations/{organization}".format(organization=organization,)
+    expected = "organizations/{organization}".format(
+        organization=organization,
+    )
     actual = AbstractOperationsClient.common_organization_path(organization)
     assert expected == actual
 
@@ -885,7 +893,9 @@ def test_parse_common_organization_path():
 
 def test_common_project_path():
     project = "cuttlefish"
-    expected = "projects/{project}".format(project=project,)
+    expected = "projects/{project}".format(
+        project=project,
+    )
     actual = AbstractOperationsClient.common_project_path(project)
     assert expected == actual
 
@@ -905,7 +915,8 @@ def test_common_location_path():
     project = "winkle"
     location = "nautilus"
     expected = "projects/{project}/locations/{location}".format(
-        project=project, location=location,
+        project=project,
+        location=location,
     )
     actual = AbstractOperationsClient.common_location_path(project, location)
     assert expected == actual
@@ -930,7 +941,8 @@ def test_client_withDEFAULT_CLIENT_INFO():
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
         AbstractOperationsClient(
-            credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
+            credentials=ga_credentials.AnonymousCredentials(),
+            client_info=client_info,
         )
         prep.assert_called_once_with(client_info)
 
@@ -939,6 +951,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
     ) as prep:
         transport_class = AbstractOperationsClient.get_transport_class()
         transport_class(
-            credentials=ga_credentials.AnonymousCredentials(), client_info=client_info,
+            credentials=ga_credentials.AnonymousCredentials(),
+            client_info=client_info,
         )
         prep.assert_called_once_with(client_info)

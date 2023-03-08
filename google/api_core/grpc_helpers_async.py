@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AsyncIO helpers for :mod:`grpc` supporting 3.6+.
+"""AsyncIO helpers for :mod:`grpc` supporting 3.7+.
 
 Please combine more detailed docstring in grpc_helpers.py to use following
 functions. This module is implementing the same surface with AsyncIO semantics.
@@ -26,9 +26,6 @@ from grpc import aio
 
 from google.api_core import exceptions, grpc_helpers
 
-
-# TODO(lidiz) Support gRPC GCP wrapper
-HAS_GRPC_GCP = False
 
 # NOTE(lidiz) Alternatively, we can hack "__getattribute__" to perform
 # automatic patching for us. But that means the overhead of creating an

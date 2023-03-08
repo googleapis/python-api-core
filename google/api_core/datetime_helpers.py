@@ -151,7 +151,7 @@ def from_rfc3339(value):
         micros = 0
     else:
         scale = 9 - len(fraction)
-        nanos = int(fraction) * (10 ** scale)
+        nanos = int(fraction) * (10**scale)
         micros = nanos // 1000
 
     return bare_seconds.replace(microsecond=micros, tzinfo=datetime.timezone.utc)
@@ -170,7 +170,7 @@ def to_rfc3339(value, ignore_zone=True):
             datetime object is ignored and the datetime is treated as UTC.
 
     Returns:
-        str: The RFC3339 formated string representing the datetime.
+        str: The RFC3339 formatted string representing the datetime.
     """
     if not ignore_zone and value.tzinfo is not None:
         # Convert to UTC and remove the time zone info.
@@ -245,7 +245,7 @@ class DatetimeWithNanoseconds(datetime.datetime):
             nanos = 0
         else:
             scale = 9 - len(fraction)
-            nanos = int(fraction) * (10 ** scale)
+            nanos = int(fraction) * (10**scale)
         return cls(
             bare.year,
             bare.month,

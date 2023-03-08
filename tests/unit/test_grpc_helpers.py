@@ -17,7 +17,7 @@ import pytest
 
 try:
     import grpc
-except ImportError:
+except ImportError:  # pragma: NO COVER
     pytest.skip("No GRPC", allow_module_level=True)
 
 from google.api_core import exceptions
@@ -222,7 +222,7 @@ def test_wrap_stream_prefetch_disabled():
     callable_.assert_called_once_with(1, 2, three="four")
 
 
-def test_wrap_stream_iterable_iterface():
+def test_wrap_stream_iterable_interface():
     response_iter = mock.create_autospec(grpc.Call, instance=True)
     callable_ = mock.Mock(spec=["__call__"], return_value=response_iter)
 
@@ -352,7 +352,7 @@ def test_wrap_errors_streaming(wrap_stream_errors):
 @mock.patch(
     "google.auth.default",
     autospec=True,
-    return_value=(mock.sentinel.credentials, mock.sentinel.projet),
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
 )
 @mock.patch("grpc.secure_channel")
 def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_call):
@@ -365,7 +365,7 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
 
     default.assert_called_once_with(scopes=None, default_scopes=None)
 
-    if grpc_helpers.HAS_GRPC_GCP:
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -400,7 +400,7 @@ def test_create_channel_implicit_with_default_host(
         mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host
     )
 
-    if grpc_helpers.HAS_GRPC_GCP:
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -410,7 +410,7 @@ def test_create_channel_implicit_with_default_host(
 @mock.patch(
     "google.auth.default",
     autospec=True,
-    return_value=(mock.sentinel.credentials, mock.sentinel.projet),
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
 )
 @mock.patch("grpc.secure_channel")
 def test_create_channel_implicit_with_ssl_creds(
@@ -426,7 +426,8 @@ def test_create_channel_implicit_with_ssl_creds(
 
     composite_creds_call.assert_called_once_with(ssl_creds, mock.ANY)
     composite_creds = composite_creds_call.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -436,7 +437,7 @@ def test_create_channel_implicit_with_ssl_creds(
 @mock.patch(
     "google.auth.default",
     autospec=True,
-    return_value=(mock.sentinel.credentials, mock.sentinel.projet),
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
 )
 @mock.patch("grpc.secure_channel")
 def test_create_channel_implicit_with_scopes(
@@ -451,7 +452,7 @@ def test_create_channel_implicit_with_scopes(
 
     default.assert_called_once_with(scopes=["one", "two"], default_scopes=None)
 
-    if grpc_helpers.HAS_GRPC_GCP:
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -461,7 +462,7 @@ def test_create_channel_implicit_with_scopes(
 @mock.patch(
     "google.auth.default",
     autospec=True,
-    return_value=(mock.sentinel.credentials, mock.sentinel.projet),
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
 )
 @mock.patch("grpc.secure_channel")
 def test_create_channel_implicit_with_default_scopes(
@@ -476,7 +477,7 @@ def test_create_channel_implicit_with_default_scopes(
 
     default.assert_called_once_with(scopes=None, default_scopes=["three", "four"])
 
-    if grpc_helpers.HAS_GRPC_GCP:
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -507,7 +508,8 @@ def test_create_channel_explicit(grpc_secure_channel, auth_creds, composite_cred
     )
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -530,7 +532,8 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
     credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -557,7 +560,8 @@ def test_create_channel_explicit_default_scopes(
     )
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -582,7 +586,8 @@ def test_create_channel_explicit_with_quota_project(
     credentials.with_quota_project.assert_called_once_with("project-foo")
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -610,7 +615,8 @@ def test_create_channel_with_credentials_file(
     )
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -641,7 +647,8 @@ def test_create_channel_with_credentials_file_and_scopes(
     )
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -672,7 +679,8 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     )
 
     assert channel is grpc_secure_channel.return_value
-    if grpc_helpers.HAS_GRPC_GCP:
+
+    if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
         grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(target, composite_creds)
@@ -682,7 +690,7 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     not grpc_helpers.HAS_GRPC_GCP, reason="grpc_gcp module not available"
 )
 @mock.patch("grpc_gcp.secure_channel")
-def test_create_channel_with_grpc_gcp(grpc_gcp_secure_channel):
+def test_create_channel_with_grpc_gcp(grpc_gcp_secure_channel):  # pragma: NO COVER
     target = "example.com:443"
     scopes = ["test_scope"]
 
