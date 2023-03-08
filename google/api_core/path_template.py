@@ -298,7 +298,7 @@ def transcode(http_options, message=None, **request_kwargs):
         # Assign body and query params
         body = http_option.get("body")
 
-        # gapic-generator-python appends underscores to field names
+        # gapic-generator-python appends an underscore to field names
         # that collide with python keywords.
         # `_` is stripped away as it is not possible to
         # natively define a field with a trailing underscore in protobuf.
@@ -317,7 +317,7 @@ def transcode(http_options, message=None, **request_kwargs):
             else:
                 try:
                     if message:
-                        # gapic-generator-python appends underscores to field names
+                        # gapic-generator-python append an underscores to field names
                         # that collide with python keywords.
                         # `_` is stripped away as it is not possible to
                         # natively define a field with a trailing underscore in protobuf.
