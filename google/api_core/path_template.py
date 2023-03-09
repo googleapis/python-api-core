@@ -318,7 +318,7 @@ def transcode(http_options, message=None, **request_kwargs):
                 try:
                     if message:
                         # See above comment where gapic-generator-python appends
-                        # underscores to field names that are python reserved words
+                        # underscores to field names that are python reserved words.
                         # If the message has an attribute with an underscore suffix, 
                         # use that instead.
                         field_suffix = ""
