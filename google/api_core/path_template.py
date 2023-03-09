@@ -317,12 +317,10 @@ def transcode(http_options, message=None, **request_kwargs):
             else:
                 try:
                     if message:
-                        # gapic-generator-python append an underscores to field names
-                        # that collide with python keywords.
-                        # `_` is stripped away as it is not possible to
-                        # natively define a field with a trailing underscore in protobuf.
-                        # See related issue
-                        # https://github.com/googleapis/python-api-core/issues/227
+                        # See above comment where gapic-generator-python appends
+                        # underscores to field names that are python reserved words
+                        # If the message has an attribute with an underscore suffix, 
+                        # use that instead.
                         field_suffix = ""
                         if hasattr(leftovers, body + "_"):
                             field_suffix = "_"
