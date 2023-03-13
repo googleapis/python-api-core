@@ -69,6 +69,9 @@ class ClientInfo(object):
         client_library_version=None,
         user_agent=None,
         rest_version=None,
+        auth_version=None,
+        auth_request_type=None,
+        cred_type=None,
     ):
         self.python_version = python_version
         self.grpc_version = grpc_version
@@ -77,6 +80,9 @@ class ClientInfo(object):
         self.client_library_version = client_library_version
         self.user_agent = user_agent
         self.rest_version = rest_version
+        self.auth_version = auth_version
+        self.auth_request_type = auth_request_type
+        self.cred_type = cred_type
 
     def to_user_agent(self):
         """Returns the user-agent string for this client info."""
@@ -103,5 +109,14 @@ class ClientInfo(object):
 
         if self.client_library_version is not None:
             ua += "gccl/{client_library_version} "
+
+        if self.auth_version is not None:
+            ua += "auth/{auth_version} "
+
+        if self.auth_request_type is not None:
+            ua += "auth-request-type/{auth_request_type} "
+
+        if self.cred_type is not None:
+            ua += "cred-type/{cred_type} "
 
         return ua.format(**self.__dict__).strip()

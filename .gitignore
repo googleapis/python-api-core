@@ -51,6 +51,7 @@ docs.metadata
 
 # Virtual environment
 env/
+.python-version
 
 # Test logs
 coverage.xml
