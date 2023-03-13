@@ -147,9 +147,9 @@ def test_repr():
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
 
     assert (
-        repr(options)
-        == "ClientOptions: {'api_endpoint': 'foo.googleapis.com', 'client_cert_source': None, 'client_encrypted_cert_source': None, 'api_key': None}"
-    ) or (
-        repr(options)
-        == "ClientOptions: {'client_encrypted_cert_source': None, 'client_cert_source': None, 'api_endpoint': 'foo.googleapis.com', 'api_key': None}"
+        (repr(options)
+         == "ClientOptions: {'api_endpoint': 'foo.googleapis.com', 'client_cert_source': None, 'client_encrypted_cert_source': None, 'api_key': None}"
+         or
+         (repr(options)
+          == "ClientOptions: {'client_encrypted_cert_source': None, 'client_cert_source': None, 'api_endpoint': 'foo.googleapis.com', 'api_key': None}"))
     )
