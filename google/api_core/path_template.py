@@ -301,6 +301,8 @@ def transcode(http_options, message=None, **request_kwargs):
         # gapic-generator-python appends an underscore to field names
         # that collide with python keywords. See related issue
         # https://github.com/googleapis/python-api-core/issues/227
+        # Make sure that when the fields are REST encoded, the
+        # Python-specific trailing underscore is removed before going on the wire.
         # `leftovers` can either be a dict or protobuf message.
         # When `leftovers` is a dict, the `_` suffix in each key
         # is stripped away as it is not possible to natively define a field
