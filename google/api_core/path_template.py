@@ -299,13 +299,22 @@ def transcode(http_options, message=None, **request_kwargs):
         body = http_option.get("body")
 
         # gapic-generator-python appends an underscore to field names
-        # that collide with python keywords.
-        # `_` is stripped away as it is not possible to
-        # natively define a field with a trailing underscore in protobuf.
-        # See related issue
+        # that collide with python keywords. See related issue
         # https://github.com/googleapis/python-api-core/issues/227
+        # `leftovers` can either be a dict or protobuf message.
+        # When `leftovers` is a dict, the `_` suffix in each key
+        # is stripped away as it is not possible to natively define a field
+        # with a trailing underscore in protobuf.
+        # When `leftovers` is a protobuf message, we need to use an underscore
+        # suffix when accessing the field in the protobuf message when the
+        # field has an underscore suffix.
+        field_suffix = ""
+
         if isinstance(leftovers, dict):
             leftovers = {key.rstrip("_"): val for key, val in leftovers.items()}
+        elif body:
+            if hasattr(leftovers, body + "_"):
+                field_suffix = "_"
 
         if body:
             if body == "*":
@@ -317,13 +326,6 @@ def transcode(http_options, message=None, **request_kwargs):
             else:
                 try:
                     if message:
-                        # See above comment where gapic-generator-python appends
-                        # underscores to field names that are python reserved words.
-                        # If the message has an attribute with an underscore suffix,
-                        # use that instead.
-                        field_suffix = ""
-                        if hasattr(leftovers, body + "_"):
-                            field_suffix = "_"
                         request["body"] = getattr(leftovers, f"{body}{field_suffix}")
                         delete_field(leftovers, f"{body}{field_suffix}")
                     else:
