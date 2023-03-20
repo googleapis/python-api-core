@@ -1,31 +1,34 @@
-Core Library for Google Client Libraries
-========================================
+First create and enable a python virtual env.
 
-|pypi| |versions|
+```
+pyenv virtualenv metric_test
+pyenv local metric_test
+```
 
-This library is not meant to stand-alone. Instead it defines
-common helpers used by all Google API clients. For more information, see the
-`documentation`_.
+Next modify the metadata we want to send. Open `google/api_core/gapic_v1/method.py`,
+at the end of the file before the return statement, set your `user_agent_metadata`.
 
-.. |pypi| image:: https://img.shields.io/pypi/v/google-api_core.svg
-   :target: https://pypi.org/project/google-api_core/
-.. |versions| image:: https://img.shields.io/pypi/pyversions/google-api_core.svg
-   :target: https://pypi.org/project/google-api_core/
-.. _documentation: https://googleapis.dev/python/google-api-core/latest
+Next install libs, 
+```
+python -m pip install -e .
+python -m pip install google-cloud-kms
+python -m pip install google-cloud-compute
+```
 
+Next go to the `metric_sample` folder, open `compute.py` and `kms.py`,
+and change the project to your project.
 
-Supported Python Versions
--------------------------
-Python >= 3.7
+Run the samples and save the log.
 
+kms is grpc GAPIC client, we send two x-goog-api-client headers:
+```
+GRPC_VERBOSITY=debug GRPC_TRACE=http,api python kms.py >& kms.log
+```
 
-Unsupported Python Versions
----------------------------
+compute is http GAPIC client, we try to send both x-goog-api-client and user-agent to simulate gcloud call:
+```
+python compute.py >& compute.log
+```
 
-Python == 2.7, Python == 3.5, Python == 3.6.
+Then open the logs, search for `x-goog-api-client` and `user-agent` headers.
 
-The last version of this library compatible with Python 2.7 and 3.5 is
-`google-api-core==1.31.1`.
-
-The last version of this library compatible with Python 3.6 is
-`google-api-core==2.8.2`.

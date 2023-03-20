@@ -204,6 +204,18 @@ def wrap_method(
         user_agent_metadata = [client_info.to_grpc_metadata()]
     else:
         user_agent_metadata = None
+    
+    import os
+    if os.environ["my_client"] == "http":
+            user_agent_metadata = [
+            ("x-goog-api-client", "gl-python/100 grpc/100, gax/100 gapic/100 gccl/100"),
+            ("user-agent", "google-cloud-sdk gcloud/100 command/gcloud.fake interactive/True python/100")
+        ]
+    else:
+        user_agent_metadata = [
+            ("x-goog-api-client", "gl-python/100 grpc/100"),
+            ("x-goog-api-client", "gax/100 gapic/100 gccl/100")
+        ]
 
     return functools.wraps(func)(
         _GapicCallable(
