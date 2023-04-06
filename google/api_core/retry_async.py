@@ -126,8 +126,7 @@ async def retry_target_generator(
             while True:
                 if remaining_timeout_budget <= 0:
                     raise exceptions.RetryError(
-                        "Timeout of {:.1f}s exceeded".format(timeout),
-                        None
+                        "Timeout of {:.1f}s exceeded".format(timeout), None
                     )
                 ## Read from Subgenerator
                 next_value_routine = subgenerator.asend(sent_in)
@@ -139,7 +138,9 @@ async def retry_target_generator(
                 start_timestamp = datetime_helpers.utcnow()
                 next_value = await next_value_routine
                 if remaining_timeout_budget is not None:
-                    remaining_timeout_budget -= (datetime_helpers.utcnow() - start_timestamp).total_seconds()
+                    remaining_timeout_budget -= (
+                        datetime_helpers.utcnow() - start_timestamp
+                    ).total_seconds()
 
                 ## Yield from Wrapper to caller
                 try:
@@ -165,7 +166,9 @@ async def retry_target_generator(
             last_exc = exc
             # reduce time budget by time spent before exception
             if remaining_timeout_budget is not None:
-                remaining_timeout_budget -= (datetime_helpers.utcnow() - start_timestamp).total_seconds()
+                remaining_timeout_budget -= (
+                    datetime_helpers.utcnow() - start_timestamp
+                ).total_seconds()
         finally:
             if subgenerator is not None:
                 await subgenerator.aclose()
@@ -181,9 +184,7 @@ async def retry_target_generator(
                 # Chains the raising RetryError with the root cause error,
                 # which helps observability and debugability.
                 raise exceptions.RetryError(
-                    "Timeout of {:.1f}s exceeded".format(
-                        timeout
-                    ),
+                    "Timeout of {:.1f}s exceeded".format(timeout),
                     last_exc,
                 ) from last_exc
             else:
@@ -279,6 +280,7 @@ async def retry_target(
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
+
 class AsyncRetry:
     """Exponential retry decorator for async coroutines.
 
@@ -300,7 +302,7 @@ class AsyncRetry:
             target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
-            *not* be caught. When target is a generator function, non-None 
+            *not* be caught. When target is a generator function, non-None
             values returned by `on_error` will be yielded for downstream
             consumers.
 
@@ -336,8 +338,8 @@ class AsyncRetry:
             coroutine or async generator function to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught. When `func` is a generator function, non-None 
-                values returned by `on_error` will be yielded for downstream 
+                *not* be caught. When `func` is a generator function, non-None
+                values returned by `on_error` will be yielded for downstream
                 consumers.
 
 
@@ -386,6 +388,7 @@ class AsyncRetry:
                 timeout=self._timeout,
                 on_error=on_error,
             )
+
         if use_generator:
             return retry_wrapped_generator
         else:

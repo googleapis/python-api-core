@@ -669,7 +669,8 @@ class TestRetry(object):
     def test___call___generator_retry_on_error_yield(self, sleep):
         error_token = "Err"
         retry_ = retry.Retry(
-        on_error=lambda x: error_token, predicate=retry.if_exception_type(ValueError)
+            on_error=lambda x: error_token,
+            predicate=retry.if_exception_type(ValueError),
         )
         generator = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3

@@ -213,9 +213,7 @@ def retry_target_generator(
             )
             if deadline < next_attempt_time:
                 raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded".format(
-                        timeout
-                    ),
+                    "Deadline of {:.1f}s exceeded".format(timeout),
                     last_exc,
                 ) from last_exc
         _LOGGER.debug(
@@ -284,9 +282,7 @@ def retry_target(
             )
             if deadline < next_attempt_time:
                 raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded".format(
-                        timeout
-                    ),
+                    "Deadline of {:.1f}s exceeded".format(timeout),
                     last_exc,
                 ) from last_exc
         _LOGGER.debug(
@@ -295,6 +291,7 @@ def retry_target(
         time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
+
 
 class Retry(object):
     """Exponential retry decorator.
@@ -419,8 +416,8 @@ class Retry(object):
                 a matching retryable generator will be returned.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught. When target is a generator function, non-None 
-                values returned by `on_error` will be yielded for downstream 
+                *not* be caught. When target is a generator function, non-None
+                values returned by `on_error` will be yielded for downstream
                 consumers.
 
         Returns:

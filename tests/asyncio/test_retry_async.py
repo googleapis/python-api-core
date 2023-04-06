@@ -406,7 +406,9 @@ class TestAsyncRetry:
         target.assert_has_calls([mock.call("meep"), mock.call("meep")])
         sleep.assert_any_call(retry_._initial)
 
-    async def _generator_mock(self, num=5, error_on=None, exceptions_seen=None, sleep_time=0):
+    async def _generator_mock(
+        self, num=5, error_on=None, exceptions_seen=None, sleep_time=0
+    ):
         try:
             sent_in = None
             for i in range(num):
@@ -486,7 +488,7 @@ class TestAsyncRetry:
             sleep.side_effect = increase_time
 
             with pytest.raises(exceptions.RetryError):
-                 unpacked = [i async for i in generator]
+                unpacked = [i async for i in generator]
 
         assert on_error.call_count == 4
         # check the delays
@@ -661,7 +663,8 @@ class TestAsyncRetry:
     async def test___call___generator_retry_on_error_yield(self, sleep):
         error_token = "Err"
         retry_ = retry_async.AsyncRetry(
-        on_error=lambda x: error_token, predicate=retry_async.if_exception_type(ValueError)
+            on_error=lambda x: error_token,
+            predicate=retry_async.if_exception_type(ValueError),
         )
         generator = retry_(self._generator_mock)(error_on=3)
         assert inspect.isasyncgen(generator)
