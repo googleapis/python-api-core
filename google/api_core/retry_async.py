@@ -191,6 +191,9 @@ async def retry_target_generator(
             if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
                 raise
             last_exc = exc
+            # reduce time budget by time spent before exception
+            if remaining_timeout_budget is not None:
+                remaining_timeout_budget -= (datetime_helpers.utcnow() - start_timestamp).total_seconds()
         finally:
             if subgenerator is not None:
                 await subgenerator.aclose()
