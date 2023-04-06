@@ -153,7 +153,8 @@ async def retry_target_generator(
                 stream_idx += 1
                 if remaining_timeout_budget <= 0:
                     raise exceptions.RetryError(
-                        "Timeout of {:.1f}s exceeded".format(timeout)
+                        "Timeout of {:.1f}s exceeded".format(timeout),
+                        None
                     )
                 ## Read from Subgenerator
                 next_value_routine = subgenerator.asend(sent_in)
