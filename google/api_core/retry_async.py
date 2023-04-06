@@ -72,25 +72,9 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
-def consistency_filter():
-    stream = []
-
-    def func(new_item, stream_idx, retry_num):
-        should_yield = True
-        if stream_idx < len(stream):
-            prev_value = stream[stream_idx]
-            if prev_value != new_item:
-                raise ValueError(
-                    "Retry stream yielded different value than original stream"
-                )
-            should_yield = False
-        stream.append(new_item)
-        return should_yield
-    return func
-
 
 async def retry_target_generator(
-    target, predicate, sleep_generator, timeout=None, on_error=None, filter_func=None, **kwargs
+    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
 ):
     """Wrap an Asyncrhonous Generator and retstart stream on errors
 
@@ -114,13 +98,6 @@ async def retry_target_generator(
             retryable exception.  Any error raised by this function will *not*
             be caught. Non-None values returned by `on_error` will be yielded
             for downstream consumers.
-        filter_func (Callable[bool]): A function that filters the stream.
-            It receives the next item, the index of the item in the stream,
-            and the retry number. It should return a bool indicating whether
-            the item should be yielded or not.
-            `consistency_filter` is a useful example of this, which ensures 
-            that the stream is consistent across retries, and raises an error
-            if it is not.
 
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
             compatibility, if set it will override the ``timeout`` parameter.
@@ -140,17 +117,13 @@ async def retry_target_generator(
 
     timeout = kwargs.get("deadline", timeout)
     remaining_timeout_budget = timeout if timeout else None
-    retry_num = -1
 
     for sleep in sleep_generator:
         try:
             subgenerator = target()
 
-            retry_num += 1
-            stream_idx = -1
             sent_in = None
             while True:
-                stream_idx += 1
                 if remaining_timeout_budget <= 0:
                     raise exceptions.RetryError(
                         "Timeout of {:.1f}s exceeded".format(timeout),
@@ -168,20 +141,18 @@ async def retry_target_generator(
                 if remaining_timeout_budget is not None:
                     remaining_timeout_budget -= (datetime_helpers.utcnow() - start_timestamp).total_seconds()
 
-                # Check filter_func to see if we should yield
-                if filter_func is None or filter_func(next_value, stream_idx, retry_num):
-                    ## Yield from Wrapper to caller
-                    try:
-                        # yield last value from subgenerator
-                        # exceptions from `athrow` and `aclose` are injected here
-                        sent_in = yield next_value
-                    except GeneratorExit:
-                        # if wrapper received `aclose`, pass to subgenerator and close
-                        await subgenerator.aclose()
-                        return
-                    except:
-                        # if wrapper received `athrow`, pass to subgenerator
-                        await subgenerator.athrow(*sys.exc_info())
+                ## Yield from Wrapper to caller
+                try:
+                    # yield last value from subgenerator
+                    # exceptions from `athrow` and `aclose` are injected here
+                    sent_in = yield next_value
+                except GeneratorExit:
+                    # if wrapper received `aclose`, pass to subgenerator and close
+                    await subgenerator.aclose()
+                    return
+                except:
+                    # if wrapper received `athrow`, pass to subgenerator
+                    await subgenerator.athrow(*sys.exc_info())
             return
         except StopAsyncIteration:
             # if generator exhausted, return
