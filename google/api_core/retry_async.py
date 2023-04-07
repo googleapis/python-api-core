@@ -55,7 +55,6 @@ import asyncio
 import datetime
 import functools
 import logging
-from inspect import isasyncgenfunction
 import sys
 
 from google.api_core import datetime_helpers
@@ -305,6 +304,10 @@ class AsyncRetry:
             *not* be caught. When target is a generator function, non-None
             values returned by `on_error` will be yielded for downstream
             consumers.
+        is_generator (bool): Indicates whether the input function
+            should be treated as a generator function. If True, retries will
+            `yield from` wrapped function. If false, retries will call wrapped
+            function directly. Defaults to False.
 
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
@@ -318,7 +321,7 @@ class AsyncRetry:
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_TIMEOUT,
         on_error=None,
-        is_generator=None,
+        is_generator=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -351,13 +354,6 @@ class AsyncRetry:
         if self._on_error is not None:
             on_error = self._on_error
 
-        # if the target is a generator function, make sure return is also a generator function
-        use_generator = (
-            self._is_generator
-            if self._is_generator is not None
-            else isasyncgenfunction(func)
-        )
-
         @functools.wraps(func)
         async def retry_wrapped_func(*args, **kwargs):
             """A wrapper that calls target function with retry."""
@@ -389,7 +385,7 @@ class AsyncRetry:
                 on_error=on_error,
             )
 
-        if use_generator:
+        if self._is_generator:
             return retry_wrapped_generator
         else:
             return retry_wrapped_func

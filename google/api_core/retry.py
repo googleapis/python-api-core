@@ -61,7 +61,6 @@ import functools
 import logging
 import random
 import time
-from inspect import isgeneratorfunction
 
 import requests.exceptions
 
@@ -379,10 +378,10 @@ class Retry(object):
             a retryable exception. Any error raised by this function will
             *not* be caught. When target is a generator function, non-None values
             returned 1by `on_error` will be yielded for downstream consumers.
-        is_generator (Optional[bool]): Indicates whether the input function
+        is_generator (bool): Indicates whether the input function
             should be treated as a generator function. If True, retries will
             `yield from` wrapped function. If false, retries will call wrapped
-            function directly. If None, function will be auto-detected.
+            function directly. Defaults to False.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
@@ -395,7 +394,7 @@ class Retry(object):
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
-        is_generator=None,
+        is_generator=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -434,13 +433,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            # if the target is a generator function, make sure return is also a generator function
-            use_generator = (
-                self._is_generator
-                if self._is_generator is not None
-                else isgeneratorfunction(func)
-            )
-            retry_func = retry_target_generator if use_generator else retry_target
+            retry_func = retry_target_generator if self._is_generator else retry_target
             return retry_func(
                 target,
                 self._predicate,
