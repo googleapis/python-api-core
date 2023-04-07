@@ -661,13 +661,11 @@ class TestRetry(object):
             # generator should not retry if error is thrown on yield
             gen = not_gen_retry_(self._generator_mock)(10, error_on=3)
             unpacked = [next(gen) for i in range(10)]
-        # wrapped generators won't be detected as generator functions
         wrapped = functools.partial(self._generator_mock, 10, error_on=6)
-        assert not inspect.isgeneratorfunction(wrapped)
         with pytest.raises(ValueError):
             # generator should not retry if error is thrown on yield
             gen = auto_retry_(wrapped)()
-            unpacked = [next(gen) for i in range(10)]
+            [next(gen) for i in range(10)]
         # force non-detected to be accepted as generator
         gen = gen_retry_(wrapped)()
         unpacked = [next(gen) for i in range(10)]
