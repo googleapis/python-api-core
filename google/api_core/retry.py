@@ -411,17 +411,14 @@ class Retry(object):
 
         Args:
             func (Callable): The callable to add retry behavior to.
-                If a generator function is passed in (Callable[..., Generator]),
-                a matching retryable generator will be returned.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught. When target is a generator function, non-None
-                values returned by `on_error` will be yielded for downstream
-                consumers.
-
+                *not* be caught.
+                If `is_generator` is set, non-None values returned by
+                `on_error` will be yielded for downstream consumers.
         Returns:
-            Callable: A callable that will invoke or yield from ``func`` with retry
-                behavior.
+            Callable: A callable that will invoke ``func`` with retry
+                behavior``.
         """
         if self._on_error is not None:
             on_error = self._on_error
