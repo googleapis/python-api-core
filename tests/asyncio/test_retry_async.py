@@ -15,7 +15,6 @@
 import datetime
 import re
 import inspect
-import functools
 import asyncio
 
 import mock
@@ -426,7 +425,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_success(self, sleep):
-        retry_ = retry_async.AsyncRetry()
+        from types import AsyncGeneratorType
+
+        retry_ = retry_async.AsyncRetry(is_generator=True)
 
         decorated = retry_(self._generator_mock)
 
@@ -434,7 +435,8 @@ class TestAsyncRetry:
         generator = decorated(num)
         # check types
         assert inspect.isasyncgen(generator)
-        assert type(decorated(num)) == type(self._generator_mock(num))
+        assert isinstance(decorated(num), AsyncGeneratorType)
+        assert isinstance(self._generator_mock(num), AsyncGeneratorType)
         # check yield contents
         unpacked = [i async for i in generator]
         assert len(unpacked) == num
@@ -448,13 +450,15 @@ class TestAsyncRetry:
     async def test___call___generator_retry(self, sleep):
         on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
-            on_error=on_error, predicate=retry_async.if_exception_type(ValueError)
+            on_error=on_error,
+            predicate=retry_async.if_exception_type(ValueError),
+            is_generator=True,
         )
         generator = retry_(self._generator_mock)(error_on=3)
         assert inspect.isasyncgen(generator)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
-        unpacked = [await anext(generator) for i in range(10)]
+        unpacked = [await generator.__anext__() for i in range(10)]
         assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
         assert on_error.call_count == 3
 
@@ -469,6 +473,7 @@ class TestAsyncRetry:
             maximum=1024.0,
             multiplier=2.0,
             deadline=9.9,
+            is_generator=True,
         )
 
         utcnow = datetime.datetime.utcnow()
@@ -488,7 +493,7 @@ class TestAsyncRetry:
             sleep.side_effect = increase_time
 
             with pytest.raises(exceptions.RetryError):
-                unpacked = [i async for i in generator]
+                [i async for i in generator]
 
         assert on_error.call_count == 4
         # check the delays
@@ -505,6 +510,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
             deadline=0.2,
+            is_generator=True,
         )
         utcnow = datetime.datetime.utcnow()
         utcnow_patcher = mock.patch(
@@ -513,19 +519,19 @@ class TestAsyncRetry:
         # ensure generator times out when awaiting past deadline
         with pytest.raises(exceptions.RetryError):
             infinite_gen = retry_(self._generator_mock, on_error)(sleep_time=60)
-            await anext(infinite_gen)
+            await infinite_gen.__anext__()
         # ensure time between yields isn't counted
         with utcnow_patcher as patched_utcnow:
             generator = retry_(self._generator_mock)(sleep_time=0.05)
-            assert await anext(generator) == 0
+            assert await generator.__anext__() == 0
             patched_utcnow.return_value += datetime.timedelta(20)
-            assert await anext(generator) == 1
+            assert await generator.__anext__() == 1
         # ensure timeout budget is tracked
         generator = retry_(self._generator_mock)(sleep_time=0.07)
-        assert await anext(generator) == 0
-        assert await anext(generator) == 1
+        assert await generator.__anext__() == 0
+        assert await generator.__anext__() == 1
         with pytest.raises(exceptions.RetryError):
-            await anext(generator)
+            await generator.__anext__()
 
     @pytest.mark.asyncio
     async def test___call___generator_await_cancel_retryable(self):
@@ -533,34 +539,32 @@ class TestAsyncRetry:
         cancel calls should be supported as retryable errors
         """
         # test without cancel as retryable
-        timeout_value = 0.1
-        retry_ = retry_async.AsyncRetry()
+        retry_ = retry_async.AsyncRetry(is_generator=True)
         utcnow = datetime.datetime.utcnow()
-        utcnow_patcher = mock.patch(
-            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
-        )
+        mock.patch("google.api_core.datetime_helpers.utcnow", return_value=utcnow)
         generator = retry_(self._generator_mock)(sleep_time=5)
-        await anext(generator) == 0
-        task = asyncio.create_task(anext(generator))
+        await generator.__anext__() == 0
+        task = asyncio.create_task(generator.__anext__())
         await asyncio.sleep(0.1)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await task
         with pytest.raises(StopAsyncIteration):
-            await anext(generator)
+            await generator.__anext__()
         # test with cancel as retryable
         retry_cancel_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(asyncio.CancelledError),
+            is_generator=True,
         )
         generator = retry_cancel_(self._generator_mock)(sleep_time=0.2)
-        await anext(generator) == 0
-        await anext(generator) == 1
-        task = asyncio.create_task(anext(generator))
+        await generator.__anext__() == 0
+        await generator.__anext__() == 1
+        task = asyncio.create_task(generator.__anext__())
         await asyncio.sleep(0.05)
         task.cancel()
         await task
         assert task.result() == 0
-        await anext(generator) == 1
+        await generator.__anext__() == 1
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -568,12 +572,12 @@ class TestAsyncRetry:
         """
         Send should be passed through retry into target generator
         """
-        retry_ = retry_async.AsyncRetry()
+        retry_ = retry_async.AsyncRetry(is_generator=True)
 
         decorated = retry_(self._generator_mock)
 
         generator = decorated(10)
-        result = await anext(generator)
+        result = await generator.__anext__()
         assert result == 0
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
@@ -581,82 +585,54 @@ class TestAsyncRetry:
             recv = await generator.asend(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
-        assert await anext(generator) == 4
-        assert await anext(generator) == 5
+        assert await generator.__anext__() == 4
+        assert await generator.__anext__() == 5
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_close(self, sleep):
-        retry_ = retry_async.AsyncRetry()
+        retry_ = retry_async.AsyncRetry(is_generator=True)
         decorated = retry_(self._generator_mock)
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
         for i in range(2):
-            await anext(generator)
+            await generator.__anext__()
         await generator.aclose()
 
         assert isinstance(exception_list[0], GeneratorExit)
-        assert generator.ag_running == False
+        assert generator.ag_running is False
         with pytest.raises(StopAsyncIteration):
             # calling next on closed generator should raise error
-            await anext(generator)
+            await generator.__anext__()
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_throw(self, sleep):
         retry_ = retry_async.AsyncRetry(
-            predicate=retry_async.if_exception_type(ValueError)
+            predicate=retry_async.if_exception_type(ValueError),
+            is_generator=True,
         )
         decorated = retry_(self._generator_mock)
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
         for i in range(2):
-            await anext(generator)
+            await generator.__anext__()
         with pytest.raises(BufferError):
             await generator.athrow(BufferError("test"))
         assert isinstance(exception_list[0], BufferError)
         with pytest.raises(StopAsyncIteration):
             # calling next on closed generator should raise error
-            await anext(generator)
+            await generator.__anext__()
         # should retry if throw retryable exception
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
         for i in range(2):
-            await anext(generator)
+            await generator.__anext__()
         throw_val = await generator.athrow(ValueError("test"))
         assert throw_val == 0
         assert isinstance(exception_list[0], ValueError)
         # calling next on closed generator should not raise error
-        assert await anext(generator) == 1
-
-    @mock.patch("asyncio.sleep", autospec=True)
-    @pytest.mark.asyncio
-    async def test___call___with_is_generator(self, sleep):
-        gen_retry_ = retry_async.AsyncRetry(
-            is_generator=True, predicate=retry_async.if_exception_type(ValueError)
-        )
-        not_gen_retry_ = retry_async.AsyncRetry(
-            is_generator=False, predicate=retry_async.if_exception_type(ValueError)
-        )
-        auto_retry_ = retry_async.AsyncRetry(
-            predicate=retry_async.if_exception_type(ValueError)
-        )
-        # force generator to act as non-generator
-        with pytest.raises(TypeError):
-            # error will be thrown because gen is coroutine
-            gen = not_gen_retry_(self._generator_mock)(10, error_on=3)
-            unpacked = [await anext(gen) for i in range(10)]
-        # wrapped generators won't be detected as generator functions
-        wrapped = functools.partial(self._generator_mock, 10, error_on=6)
-        assert not inspect.isasyncgenfunction(wrapped)
-        with pytest.raises(TypeError):
-            # error will be thrown because gen is coroutine
-            gen = auto_retry_(wrapped)()
-            unpacked = [next(gen) for i in range(10)]
-        # force non-detected to be accepted as generator
-        gen = gen_retry_(wrapped)()
-        unpacked = [await anext(gen) for i in range(10)]
-        assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
+        assert await generator.__anext__() == 1
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -665,10 +641,11 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(
             on_error=lambda x: error_token,
             predicate=retry_async.if_exception_type(ValueError),
+            is_generator=True,
         )
         generator = retry_(self._generator_mock)(error_on=3)
         assert inspect.isasyncgen(generator)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
-        unpacked = [await anext(generator) for i in range(10)]
+        unpacked = [await generator.__anext__() for i in range(10)]
         assert unpacked == [0, 1, 2, error_token, 0, 1, 2, error_token, 0, 1]

@@ -488,6 +488,8 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_success(self, sleep):
+        import types
+
         retry_ = retry.Retry()
 
         decorated = retry_(self._generator_mock)
@@ -496,7 +498,8 @@ class TestRetry(object):
         result = decorated(num)
         # check types
         assert inspect.isgenerator(result)
-        assert type(decorated(num)) == type(self._generator_mock(num))
+        assert isinstance(decorated(num), types.GeneratorType)
+        assert isinstance(self._generator_mock(num), types.GeneratorType)
         # check yield contents
         unpacked = [i for i in result]
         assert len(unpacked) == num
@@ -508,7 +511,9 @@ class TestRetry(object):
     def test___call___generator_retry(self, sleep):
         on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
-            on_error=on_error, predicate=retry.if_exception_type(ValueError)
+            on_error=on_error,
+            predicate=retry.if_exception_type(ValueError),
+            is_generator=True,
         )
         result = retry_(self._generator_mock)(error_on=3)
         assert inspect.isgenerator(result)
@@ -528,6 +533,7 @@ class TestRetry(object):
             maximum=1024.0,
             multiplier=2.0,
             deadline=30.9,
+            is_generator=True,
         )
 
         utcnow = datetime.datetime.utcnow()
@@ -545,7 +551,7 @@ class TestRetry(object):
 
             sleep.side_effect = increase_time
             with pytest.raises(exceptions.RetryError):
-                unpacked = [i for i in generator]
+                [i for i in generator]
 
         assert on_error.call_count == 5
         # check the delays
@@ -614,7 +620,9 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_throw(self, sleep):
-        retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
+        retry_ = retry.Retry(
+            predicate=retry.if_exception_type(ValueError), is_generator=True
+        )
         decorated = retry_(self._generator_mock)
 
         exception_list = []
@@ -671,6 +679,7 @@ class TestRetry(object):
         retry_ = retry.Retry(
             on_error=lambda x: error_token,
             predicate=retry.if_exception_type(ValueError),
+            is_generator=True,
         )
         generator = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3

@@ -150,7 +150,8 @@ async def retry_target_generator(
                     # if wrapper received `aclose`, pass to subgenerator and close
                     await subgenerator.aclose()
                     return
-                except:
+                # bare except used to delegate all exceptions to subgenerator
+                except:  # noqa: E722
                     # if wrapper received `athrow`, pass to subgenerator
                     await subgenerator.athrow(*sys.exc_info())
             return
