@@ -118,12 +118,17 @@ async def retry_target_generator(
     remaining_timeout_budget = timeout if timeout else None
 
     for sleep in sleep_generator:
+        # Start a new retry loop
         try:
             subgenerator = target()
 
             sent_in = None
             while True:
-                if remaining_timeout_budget <= 0:
+                # Check for expiration before starting
+                if (
+                    remaining_timeout_budget is not None
+                    and remaining_timeout_budget <= 0
+                ):
                     raise exceptions.RetryError(
                         "Timeout of {:.1f}s exceeded".format(timeout), None
                     )
@@ -136,6 +141,7 @@ async def retry_target_generator(
                     )
                 start_timestamp = datetime_helpers.utcnow()
                 next_value = await next_value_routine
+
                 if remaining_timeout_budget is not None:
                     remaining_timeout_budget -= (
                         datetime_helpers.utcnow() - start_timestamp
@@ -150,16 +156,16 @@ async def retry_target_generator(
                     # if wrapper received `aclose`, pass to subgenerator and close
                     await subgenerator.aclose()
                     return
-                # bare except used to delegate all exceptions to subgenerator
                 except:  # noqa: E722
-                    # if wrapper received `athrow`, pass to subgenerator
+                    # bare except catches any exception passed to `athrow`
+                    # delegate error handling to subgenerator
                     await subgenerator.athrow(*sys.exc_info())
             return
         except StopAsyncIteration:
             # if generator exhausted, return
             return
         # pylint: disable=broad-except
-        # This function explicitly must deal with broad exceptions.
+        # This function handles exceptions thrown by subgenerator
         except (Exception, asyncio.CancelledError) as exc:
             if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
                 raise

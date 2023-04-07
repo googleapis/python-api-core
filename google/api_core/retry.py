@@ -188,11 +188,12 @@ def retry_target_generator(
     last_exc = None
     subgenerator = None
     for sleep in sleep_generator:
+        # Start a new retry loop
         try:
             # create and yeild from a new instance of the generator from input generator function
             subgenerator = target()
             return (yield from subgenerator)
-
+        # handle exceptions raised by the subgenerator
         except Exception as exc:
             if not predicate(exc):
                 raise
