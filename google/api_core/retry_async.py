@@ -302,9 +302,7 @@ class AsyncRetry:
             target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
-            *not* be caught. When target is a generator function, non-None
-            values returned by `on_error` will be yielded for downstream
-            consumers.
+            *not* be caught.
         is_stream (bool): Indicates whether the input function
             should be treated as an iterable function. If True,
             the retries will be `yield from` wrapped function. If false,

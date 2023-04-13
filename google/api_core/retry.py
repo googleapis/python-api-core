@@ -384,10 +384,9 @@ class Retry(object):
         timeout (float): How long to keep retrying, in seconds.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
-            *not* be caught. When target is a generator function, non-None values
-            returned 1by `on_error` will be yielded for downstream consumers.
+            *not* be caught.
         is_stream (bool): Indicates whether the input function
-            should be treated as a generator function. If True, retries will
+            should be treated as an iterable function. If True, retries will
             `yield from` wrapped function. If false, retries will call wrapped
             function directly. Defaults to False.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
