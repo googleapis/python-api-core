@@ -421,8 +421,6 @@ class Retry(object):
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
-                If `is_stream` is set, non-None values returned by
-                `on_error` will be yielded for downstream consumers.
         Returns:
             Callable: A callable that will invoke ``func`` with retry
                 behavior.
