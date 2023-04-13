@@ -61,6 +61,7 @@ import functools
 import logging
 import random
 import time
+from collections.abc import Generator
 
 import requests.exceptions
 
@@ -145,84 +146,78 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
         delay = min(delay * multiplier, maximum)
 
 
-def retry_target_generator(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
-):
-    """Wrap a generator object and retry if it fails.
+class RetryableGenerator(Generator):
 
-    This is the lowest-level retry helper. Generally, you'll use the
-    higher-level retry helper :class:`Retry`.
+    def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
+        self.subgenerator_fn = target
+        self.subgenerator = self.subgenerator_fn()
+        self.predicate = predicate
+        self.sleep_generator = sleep_generator
+        self.on_error = on_error
+        self.timeout = timeout
+        if self.timeout is not None:
+            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=self.timeout)
+        else:
+            self.deadline = None
 
-    Args:
-        target(Callable[None, Generator]): A generator function to yield from.
-            This must be a nullary function - apply arguments with `functools.partial`.
-        predicate (Callable[Exception]): A callable used to determine if an
-            exception raised by the target should be considered retryable.
-            It should return True to retry or False otherwise.
-        sleep_generator (Iterable[float]): An infinite iterator that determines
-            how long to sleep between retries.
-        timeout (float): How long to keep retrying the target.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception. Non-None values returned by `on_error` will be
-            yielded for downstream consumers. Any error raised by this function
-            will *not* be caught.
-        deadline (float): DEPRECATED: use ``timeout`` instead. For backward
-            compatibility, if specified it will override ``timeout`` parameter.
+    def __iter__(self):
+        return self
 
-    Returns:
-        Generator: returns a generator that wraps the target in retry logic.
-
-    Raises:
-        google.api_core.RetryError: If the deadline is exceeded while retrying.
-        ValueError: If the sleep generator stops yielding values.
-        Exception: If the target raises a method that isn't retryable.
-    """
-
-    timeout = kwargs.get("deadline", timeout)
-
-    if timeout is not None:
-        deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout)
-    else:
-        deadline = None
-
-    last_exc = None
-    subgenerator = None
-    for sleep in sleep_generator:
-        # Start a new retry loop
-        try:
-            # create and yeild from a new instance of the generator from input generator function
-            subgenerator = target()
-            return (yield from subgenerator)
-        # handle exceptions raised by the subgenerator
-        except Exception as exc:
-            if not predicate(exc):
-                raise
-            last_exc = exc
-        finally:
-            if subgenerator is not None:
-                subgenerator.close()
-
-        if on_error is not None:
-            error_result = on_error(last_exc)
-            if error_result is not None:
-                yield error_result
-
-        if deadline is not None:
-            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=sleep
+    def _handle_exception(self, exc):
+        if not self.predicate(exc):
+            raise exc
+        else:
+            if self.on_error:
+                self.on_error(exc)
+            try:
+                next_sleep = next(self.sleep_generator)
+            except StopIteration:
+                raise ValueError('Sleep generator stopped yielding sleep values')
+            if self.deadline is not None:
+                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(seconds=next_sleep)
+                if self.deadline < next_attempt:
+                    raise exceptions.RetryError(f"Deadline of {self.timeout:.1f} seconds exceeded", exc) from exc
+            _LOGGER.debug(
+                "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
-            if deadline < next_attempt_time:
-                raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded".format(timeout),
-                    last_exc,
-                ) from last_exc
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        time.sleep(sleep)
+            time.sleep(next_sleep)
+            self.subgenerator = self.subgenerator_fn()
 
-    raise ValueError("Sleep generator stopped yielding sleep values.")
+    def __next__(self):
+        try:
+            return next(self.subgenerator)
+        except Exception as exc:
+            self._handle_exception(exc)
+        # if retryable exception was handled, try again with new subgenerator
+        return self.__next__()
 
+    def close(self):
+        if getattr(self.subgenerator, "close", None):
+            return self.subgenerator.close()
+        else:
+            raise NotImplementedError("close() not implemented for {}".format(self.subgenerator))
+
+    def send(self, value):
+        if getattr(self.subgenerator, "send", None):
+            try:
+                return self.subgenerator.send(value)
+            except Exception as exc:
+                self._handle_exception(exc)
+            # if retryable exception was handled, try again with new subgenerator
+            return self.send(value)
+        else:
+            raise NotImplementedError("send() not implemented for {}".format(self.subgenerator))
+
+    def throw(self, typ, val=None, tb=None):
+        if getattr(self.subgenerator, "throw", None):
+            try:
+                return self.subgenerator.throw(typ, val, tb)
+            except Exception as exc:
+                self._handle_exception(exc)
+            # if retryable exception was handled, return next from new subgenerator
+            return self.__next__()
+        else:
+            raise NotImplementedError("throw() not implemented for {}".format(self.subgenerator))
 
 def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -431,7 +426,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = retry_target_generator if self._is_generator else retry_target
+            retry_func = RetryableGenerator if self._is_generator else retry_target
             return retry_func(
                 target,
                 self._predicate,

@@ -62,6 +62,7 @@ from google.api_core import exceptions
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
+from google.api_core.retry import RetryableGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,137 +72,114 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
+from collections.abc import AsyncGenerator
 
-async def retry_target_generator(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
-):
-    """Wrap an Asyncrhonous Generator and retstart stream on errors
+class AsyncRetryableGenerator(AsyncGenerator):
 
-    This is the lowest-level retry helper. Generally, you'll use the
-    higher-level retry helper :class:`Retry`.
+    def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
+        self.subgenerator_fn = target
+        self.subgenerator = self.subgenerator_fn()
+        self.predicate = predicate
+        self.sleep_generator = sleep_generator
+        self.on_error = on_error
+        self.timeout = timeout
+        self.remaining_timeout_budget = timeout if timeout else None
 
-    Args:
-        target(Callable[None, AsynchronousGenerator]): An asynchronous
-            generator function to yield from. This must be a nullary
-            function - apply arguments with `functools.partial`.
-        predicate (Callable[Exception]): A callable used to determine if an
-            exception raised by the target should be considered retryable.
-            It should return True to retry or False otherwise.
-        sleep_generator (Iterable[float]): An infinite iterator that determines
-            how long to sleep between retries.
-        timeout (float): How long to keep retrying the target, in seconds.
-            Because generator execution isn't continuous, only time spent
-            waiting on the target generator or sleeping between retries
-            is counted towards the timeout.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught. Non-None values returned by `on_error` will be yielded
-            for downstream consumers.
+    def __aiter__(self):
+        return self
 
-        deadline (float): DEPRECATED use ``timeout`` instead. For backward
-            compatibility, if set it will override the ``timeout`` parameter.
-    Returns:
-        AsynchronousGenerator: This function spawns new asynchronous generator
-            instances when called.
+    async def _handle_exception(self, exc):
+        if not self.predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
+            raise exc
+        else:
+            if self.on_error:
+                self.on_error(exc)
+            try:
+                next_sleep = next(self.sleep_generator)
+            except StopIteration:
+                raise ValueError('Sleep generator stopped yielding sleep values')
 
-    Generator Raises:
-        google.api_core.RetryError: If the deadline is exceeded while retrying.
-        ValueError: If the sleep generator stops yielding values.
-        Exception: If the target raises a method that isn't retryable.
-        StopAsyncIteration: If the generator is exhausted
-    """
-
-    last_exc = None
-    subgenerator = None
-
-    timeout = kwargs.get("deadline", timeout)
-    remaining_timeout_budget = timeout if timeout else None
-
-    for sleep in sleep_generator:
-        # Start a new retry loop
-        try:
-            subgenerator = target()
-
-            sent_in = None
-            while True:
-                # Check for expiration before starting
-                if (
-                    remaining_timeout_budget is not None
-                    and remaining_timeout_budget <= 0
-                ):
+            if self.remaining_timeout_budget is not None:
+                if self.remaining_timeout_budget <= next_sleep:
                     raise exceptions.RetryError(
-                        "Timeout of {:.1f}s exceeded".format(timeout), None
-                    )
-                ## Read from Subgenerator
-                next_value_routine = subgenerator.asend(sent_in)
-                if timeout is not None:
-                    next_value_routine = asyncio.wait_for(
-                        subgenerator.asend(sent_in),
-                        timeout=remaining_timeout_budget,
-                    )
-                start_timestamp = datetime_helpers.utcnow()
-                next_value = await next_value_routine
+                        "Timeout of {:.1f}s exceeded".format(self.timeout),
+                        exc,
+                    ) from exc
+                else:
+                    self.remaining_timeout_budget -= next_sleep
+            _LOGGER.debug(
+                "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
+            )
+            await asyncio.sleep(next_sleep)
+            self.subgenerator = self.subgenerator_fn()
 
-                if remaining_timeout_budget is not None:
-                    remaining_timeout_budget -= (
-                        datetime_helpers.utcnow() - start_timestamp
-                    ).total_seconds()
+    def _subtract_time_from_budget(self, start_timestamp):
+        if self.remaining_timeout_budget is not None:
+            self.remaining_timeout_budget -= (
+                datetime_helpers.utcnow() - start_timestamp
+            ).total_seconds()
 
-                ## Yield from Wrapper to caller
-                try:
-                    # yield last value from subgenerator
-                    # exceptions from `athrow` and `aclose` are injected here
-                    sent_in = yield next_value
-                except GeneratorExit:
-                    # if wrapper received `aclose`, pass to subgenerator and close
-                    await subgenerator.aclose()
-                    return
-                except:  # noqa: E722
-                    # bare except catches any exception passed to `athrow`
-                    # delegate error handling to subgenerator
-                    await subgenerator.athrow(*sys.exc_info())
-            return
-        except StopAsyncIteration:
-            # if generator exhausted, return
-            return
-        # pylint: disable=broad-except
-        # This function handles exceptions thrown by subgenerator
+    async def __anext__(self):
+        if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
+            raise exceptions.RetryError(
+                "Timeout of {:.1f}s exceeded".format(self.timeout),
+                None,
+            )
+        try:
+            start_timestamp = datetime_helpers.utcnow()
+            next_val_routine = asyncio.wait_for(
+                self.subgenerator.__anext__(),
+                self.remaining_timeout_budget
+            )
+            next_val = await next_val_routine
+            self._subtract_time_from_budget(start_timestamp)
+            return next_val
         except (Exception, asyncio.CancelledError) as exc:
-            if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
-                raise
-            last_exc = exc
-            # reduce time budget by time spent before exception
-            if remaining_timeout_budget is not None:
-                remaining_timeout_budget -= (
-                    datetime_helpers.utcnow() - start_timestamp
-                ).total_seconds()
-        finally:
-            if subgenerator is not None:
-                await subgenerator.aclose()
+            self._subtract_time_from_budget(start_timestamp)
+            await self._handle_exception(exc)
+        # if retryable exception was handled, try again with new subgenerator
+        return await self.__anext__()
 
-        if on_error is not None:
-            error_result = on_error(last_exc)
-            if error_result is not None:
-                yield error_result
+    async def aclose(self):
+        if getattr(self.subgenerator, "aclose", None):
+            return await self.subgenerator.aclose()
+        else:
+            raise NotImplementedError("aclose is not implemented for retried stream")
 
-        # sleep and adjust timeout budget
-        if remaining_timeout_budget is not None:
-            if remaining_timeout_budget <= sleep:
-                # Chains the raising RetryError with the root cause error,
-                # which helps observability and debugability.
+    async def asend(self, value):
+        if getattr(self.subgenerator, "asend", None):
+            if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
                 raise exceptions.RetryError(
-                    "Timeout of {:.1f}s exceeded".format(timeout),
-                    last_exc,
-                ) from last_exc
-            else:
-                remaining_timeout_budget -= sleep
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        await asyncio.sleep(sleep)
+                    "Timeout of {:.1f}s exceeded".format(self.timeout),
+                    None,
+                )
+            try:
+                start_timestamp = datetime_helpers.utcnow()
+                next_val_routine = asyncio.wait_for(
+                    self.subgenerator.asend(value),
+                    self.remaining_timeout_budget
+                )
+                next_val = await next_val_routine
+                self._subtract_time_from_budget(start_timestamp)
+                return next_val
+            except (Exception, asyncio.CancelledError) as exc:
+                self._subtract_time_from_budget(start_timestamp)
+                await self._handle_exception(exc)
+            # if retryable exception was handled, try again with new subgenerator
+            return await self.__asend__(value)
+        else:
+            raise NotImplementedError("asend is not implemented for retried stream")
 
-    raise ValueError("Sleep generator stopped yielding sleep values.")
-
+    async def athrow(self, typ, val=None, tb=None):
+        if getattr(self.subgenerator, "athrow", None):
+            try:
+                return await self.subgenerator.athrow(typ, val, tb)
+            except Exception as exc:
+                await self._handle_exception(exc)
+            # if retryable exception was handled, return next from new subgenerator
+            return await self.__anext__()
+        else:
+            raise NotImplementedError("athrow is not implemented for retried stream")
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -384,7 +362,7 @@ class AsyncRetry:
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             # if the target is a generator function, make sure return is also a generator function
-            return retry_target_generator(
+            return AsyncRetryableGenerator(
                 target,
                 self._predicate,
                 sleep_generator,

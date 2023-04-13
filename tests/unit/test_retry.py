@@ -1,4 +1,3 @@
-# Copyright 2017 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +14,6 @@
 import datetime
 import itertools
 import re
-import inspect
 import functools
 
 import mock
@@ -489,6 +487,7 @@ class TestRetry(object):
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_success(self, sleep):
         import types
+        import collections
 
         retry_ = retry.Retry()
 
@@ -497,8 +496,9 @@ class TestRetry(object):
         num = 10
         result = decorated(num)
         # check types
-        assert inspect.isgenerator(result)
+        assert isinstance(decorated(num), collections.abc.Iterable)
         assert isinstance(decorated(num), types.GeneratorType)
+        assert isinstance(self._generator_mock(num), collections.abc.Iterable)
         assert isinstance(self._generator_mock(num), types.GeneratorType)
         # check yield contents
         unpacked = [i for i in result]
@@ -516,7 +516,6 @@ class TestRetry(object):
             is_generator=True,
         )
         result = retry_(self._generator_mock)(error_on=3)
-        assert inspect.isgenerator(result)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
         unpacked = [next(result) for i in range(10)]
@@ -613,7 +612,6 @@ class TestRetry(object):
             next(generator)
         generator.close()
         assert isinstance(exception_list[0], GeneratorExit)
-        assert inspect.getgeneratorstate(generator) == "GEN_CLOSED"
         with pytest.raises(StopIteration):
             # calling next on closed generator should raise error
             next(generator)
@@ -632,7 +630,6 @@ class TestRetry(object):
         with pytest.raises(BufferError):
             generator.throw(BufferError("test"))
         assert isinstance(exception_list[0], BufferError)
-        assert inspect.getgeneratorstate(generator) == "GEN_CLOSED"
         with pytest.raises(StopIteration):
             # calling next on closed generator should raise error
             next(generator)
@@ -671,15 +668,3 @@ class TestRetry(object):
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
 
-    @mock.patch("time.sleep", autospec=True)
-    def test___call___generator_retry_on_error_yield(self, sleep):
-        error_token = "Err"
-        retry_ = retry.Retry(
-            on_error=lambda x: error_token,
-            predicate=retry.if_exception_type(ValueError),
-            is_generator=True,
-        )
-        generator = retry_(self._generator_mock)(error_on=3)
-        # error thrown on 3
-        unpacked = [next(generator) for i in range(10)]
-        assert unpacked == [0, 1, 2, error_token, 0, 1, 2, error_token, 0, 1]
