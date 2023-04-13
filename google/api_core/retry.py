@@ -374,7 +374,7 @@ class Retry(object):
             a retryable exception. Any error raised by this function will
             *not* be caught. When target is a generator function, non-None values
             returned 1by `on_error` will be yielded for downstream consumers.
-        is_generator (bool): Indicates whether the input function
+        is_stream (bool): Indicates whether the input function
             should be treated as a generator function. If True, retries will
             `yield from` wrapped function. If false, retries will call wrapped
             function directly. Defaults to False.
@@ -390,7 +390,7 @@ class Retry(object):
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
-        is_generator=False,
+        is_stream=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -400,7 +400,7 @@ class Retry(object):
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
-        self._is_generator = is_generator
+        self._is_stream = is_stream
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -410,7 +410,7 @@ class Retry(object):
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
-                If `is_generator` is set, non-None values returned by
+                If `is_stream` is set, non-None values returned by
                 `on_error` will be yielded for downstream consumers.
         Returns:
             Callable: A callable that will invoke ``func`` with retry
@@ -426,7 +426,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = RetryableGenerator if self._is_generator else retry_target
+            retry_func = RetryableGenerator if self._is_stream else retry_target
             return retry_func(
                 target,
                 self._predicate,

@@ -513,7 +513,7 @@ class TestRetry(object):
         retry_ = retry.Retry(
             on_error=on_error,
             predicate=retry.if_exception_type(ValueError),
-            is_generator=True,
+            is_stream=True,
         )
         result = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3
@@ -532,7 +532,7 @@ class TestRetry(object):
             maximum=1024.0,
             multiplier=2.0,
             deadline=30.9,
-            is_generator=True,
+            is_stream=True,
         )
 
         utcnow = datetime.datetime.utcnow()
@@ -565,7 +565,7 @@ class TestRetry(object):
         """
         Send should be passed through retry into target generator
         """
-        retry_ = retry.Retry(is_generator=True)
+        retry_ = retry.Retry(is_stream=True)
 
         decorated = retry_(self._generator_mock)
 
@@ -586,7 +586,7 @@ class TestRetry(object):
         """
         Send, Throw, and Close should raise AttributeErrors
         """
-        retry_ = retry.Retry(is_generator=True)
+        retry_ = retry.Retry(is_stream=True)
 
         def iterable_fn(n):
             return iter(range(n))
@@ -644,7 +644,7 @@ class TestRetry(object):
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_throw(self, sleep):
         retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError), is_generator=True
+            predicate=retry.if_exception_type(ValueError), is_stream=True
         )
         decorated = retry_(self._generator_mock)
 
@@ -670,12 +670,12 @@ class TestRetry(object):
         assert next(generator) == 1
 
     @mock.patch("time.sleep", autospec=True)
-    def test___call___with_is_generator(self, sleep):
+    def test___call___with_is_stream(self, sleep):
         gen_retry_ = retry.Retry(
-            is_generator=True, predicate=retry.if_exception_type(ValueError)
+            is_stream=True, predicate=retry.if_exception_type(ValueError)
         )
         not_gen_retry_ = retry.Retry(
-            is_generator=False, predicate=retry.if_exception_type(ValueError)
+            is_stream=False, predicate=retry.if_exception_type(ValueError)
         )
         auto_retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
         # force generator to act as non-generator

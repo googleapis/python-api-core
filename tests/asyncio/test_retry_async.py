@@ -426,7 +426,7 @@ class TestAsyncRetry:
     async def test___call___generator_success(self, sleep):
         from collections.abc import AsyncGenerator
 
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
 
         decorated = retry_(self._generator_mock)
 
@@ -450,7 +450,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
-            is_generator=True,
+            is_stream=True,
         )
         generator = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3
@@ -470,7 +470,7 @@ class TestAsyncRetry:
             maximum=1024.0,
             multiplier=2.0,
             deadline=9.9,
-            is_generator=True,
+            is_stream=True,
         )
 
         utcnow = datetime.datetime.utcnow()
@@ -507,7 +507,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
             deadline=0.2,
-            is_generator=True,
+            is_stream=True,
         )
         utcnow = datetime.datetime.utcnow()
         utcnow_patcher = mock.patch(
@@ -536,7 +536,7 @@ class TestAsyncRetry:
         cancel calls should be supported as retryable errors
         """
         # test without cancel as retryable
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
         utcnow = datetime.datetime.utcnow()
         mock.patch("google.api_core.datetime_helpers.utcnow", return_value=utcnow)
         generator = retry_(self._generator_mock)(sleep_time=0.2)
@@ -551,7 +551,7 @@ class TestAsyncRetry:
         # test with cancel as retryable
         retry_cancel_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(asyncio.CancelledError),
-            is_generator=True,
+            is_stream=True,
         )
         generator = retry_cancel_(self._generator_mock)(sleep_time=0.2)
         await generator.__anext__() == 0
@@ -569,7 +569,7 @@ class TestAsyncRetry:
         """
         Send should be passed through retry into target generator
         """
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
 
         decorated = retry_(self._generator_mock)
 
@@ -588,7 +588,7 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_close(self, sleep):
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
         decorated = retry_(self._generator_mock)
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
@@ -606,7 +606,7 @@ class TestAsyncRetry:
     async def test___call___with_generator_throw(self, sleep):
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
-            is_generator=True,
+            is_stream=True,
         )
         decorated = retry_(self._generator_mock)
         exception_list = []
@@ -637,7 +637,7 @@ class TestAsyncRetry:
         Send, Throw, and Close should raise AttributeErrors when target is a coroutine that
         produces an iterable
         """
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
 
         async def iterable_fn(n):
             class CustomIterator:
@@ -677,7 +677,7 @@ class TestAsyncRetry:
         Send, Throw, and Close should raise AttributeErrors when target is a
         function that produces an iterable
         """
-        retry_ = retry_async.AsyncRetry(is_generator=True)
+        retry_ = retry_async.AsyncRetry(is_stream=True)
 
         def iterable_fn(n):
             class CustomIterator:

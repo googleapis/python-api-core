@@ -301,10 +301,10 @@ class AsyncRetry:
             *not* be caught. When target is a generator function, non-None
             values returned by `on_error` will be yielded for downstream
             consumers.
-        is_generator (bool): Indicates whether the input function
-            should be treated as a generator function. If True, retries will
-            `yield from` wrapped function. If false, retries will call wrapped
-            function directly. Defaults to False.
+        is_stream (bool): Indicates whether the input function
+            should be treated as an iterable function. If True,
+            the retries will be `yield from` wrapped function. If false,
+            retries will call wrapped function directly. Defaults to False.
 
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
@@ -318,7 +318,7 @@ class AsyncRetry:
         multiplier=_DEFAULT_DELAY_MULTIPLIER,
         timeout=_DEFAULT_TIMEOUT,
         on_error=None,
-        is_generator=False,
+        is_stream=False,
         **kwargs
     ):
         self._predicate = predicate
@@ -328,7 +328,7 @@ class AsyncRetry:
         self._timeout = kwargs.get("deadline", timeout)
         self._deadline = self._timeout
         self._on_error = on_error
-        self._is_generator = is_generator
+        self._is_stream = is_stream
 
     def __call__(self, func, on_error=None):
         """Wrap a callable with retry behavior.
@@ -367,13 +367,13 @@ class AsyncRetry:
             )
 
         @functools.wraps(func)
-        def retry_wrapped_generator(*args, deadline_dt=None, **kwargs):
+        def retry_wrapped_stream(*args, deadline_dt=None, **kwargs):
             """A wrapper that yields through target generator with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            # if the target is a generator function, make sure return is also a generator function
+            # if the target is a generator or iterable function, make sure return is also a generator function
             return AsyncRetryableGenerator(
                 target,
                 self._predicate,
@@ -382,8 +382,8 @@ class AsyncRetry:
                 on_error=on_error,
             )
 
-        if self._is_generator:
-            return retry_wrapped_generator
+        if self._is_stream:
+            return retry_wrapped_stream
         else:
             return retry_wrapped_func
 
