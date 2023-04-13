@@ -75,7 +75,6 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
 
 class AsyncRetryableGenerator(AsyncGenerator):
-
     def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
         self.subgenerator_fn = target
         self.subgenerator = None
@@ -104,7 +103,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             try:
                 next_sleep = next(self.sleep_generator)
             except StopIteration:
-                raise ValueError('Sleep generator stopped yielding sleep values')
+                raise ValueError("Sleep generator stopped yielding sleep values")
 
             if self.remaining_timeout_budget is not None:
                 if self.remaining_timeout_budget <= next_sleep:
@@ -129,7 +128,10 @@ class AsyncRetryableGenerator(AsyncGenerator):
 
     async def __anext__(self):
         await self._ensure_subgenerator()
-        if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
+        if (
+            self.remaining_timeout_budget is not None
+            and self.remaining_timeout_budget <= 0
+        ):
             raise exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(self.timeout),
                 None,
@@ -137,8 +139,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         try:
             start_timestamp = datetime_helpers.utcnow()
             next_val_routine = asyncio.wait_for(
-                self.subgenerator.__anext__(),
-                self.remaining_timeout_budget
+                self.subgenerator.__anext__(), self.remaining_timeout_budget
             )
             next_val = await next_val_routine
             self._subtract_time_from_budget(start_timestamp)
@@ -159,7 +160,10 @@ class AsyncRetryableGenerator(AsyncGenerator):
     async def asend(self, value):
         await self._ensure_subgenerator()
         if getattr(self.subgenerator, "asend", None):
-            if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
+            if (
+                self.remaining_timeout_budget is not None
+                and self.remaining_timeout_budget <= 0
+            ):
                 raise exceptions.RetryError(
                     "Timeout of {:.1f}s exceeded".format(self.timeout),
                     None,
@@ -167,8 +171,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             try:
                 start_timestamp = datetime_helpers.utcnow()
                 next_val_routine = asyncio.wait_for(
-                    self.subgenerator.asend(value),
-                    self.remaining_timeout_budget
+                    self.subgenerator.asend(value), self.remaining_timeout_budget
                 )
                 next_val = await next_val_routine
                 self._subtract_time_from_budget(start_timestamp)
@@ -192,6 +195,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             return await self.__anext__()
         else:
             raise AttributeError("athrow is not implemented for retried stream")
+
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs

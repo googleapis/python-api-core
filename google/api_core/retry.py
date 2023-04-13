@@ -147,7 +147,6 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
 
 
 class RetryableGenerator(Generator):
-
     def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
         self.subgenerator_fn = target
         self.subgenerator = self.subgenerator_fn()
@@ -156,7 +155,9 @@ class RetryableGenerator(Generator):
         self.on_error = on_error
         self.timeout = timeout
         if self.timeout is not None:
-            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=self.timeout)
+            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=self.timeout
+            )
         else:
             self.deadline = None
 
@@ -172,11 +173,15 @@ class RetryableGenerator(Generator):
             try:
                 next_sleep = next(self.sleep_generator)
             except StopIteration:
-                raise ValueError('Sleep generator stopped yielding sleep values')
+                raise ValueError("Sleep generator stopped yielding sleep values")
             if self.deadline is not None:
-                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(seconds=next_sleep)
+                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
+                    seconds=next_sleep
+                )
                 if self.deadline < next_attempt:
-                    raise exceptions.RetryError(f"Deadline of {self.timeout:.1f} seconds exceeded", exc) from exc
+                    raise exceptions.RetryError(
+                        f"Deadline of {self.timeout:.1f} seconds exceeded", exc
+                    ) from exc
             _LOGGER.debug(
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
@@ -195,7 +200,9 @@ class RetryableGenerator(Generator):
         if getattr(self.subgenerator, "close", None):
             return self.subgenerator.close()
         else:
-            raise AttributeError("close() not implemented for {}".format(self.subgenerator))
+            raise AttributeError(
+                "close() not implemented for {}".format(self.subgenerator)
+            )
 
     def send(self, value):
         if getattr(self.subgenerator, "send", None):
@@ -206,7 +213,9 @@ class RetryableGenerator(Generator):
             # if retryable exception was handled, try again with new subgenerator
             return self.send(value)
         else:
-            raise AttributeError("send() not implemented for {}".format(self.subgenerator))
+            raise AttributeError(
+                "send() not implemented for {}".format(self.subgenerator)
+            )
 
     def throw(self, typ, val=None, tb=None):
         if getattr(self.subgenerator, "throw", None):
@@ -217,7 +226,10 @@ class RetryableGenerator(Generator):
             # if retryable exception was handled, return next from new subgenerator
             return self.__next__()
         else:
-            raise AttributeError("throw() not implemented for {}".format(self.subgenerator))
+            raise AttributeError(
+                "throw() not implemented for {}".format(self.subgenerator)
+            )
+
 
 def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
@@ -391,7 +403,7 @@ class Retry(object):
         timeout=_DEFAULT_DEADLINE,
         on_error=None,
         is_stream=False,
-        **kwargs
+        **kwargs,
     ):
         self._predicate = predicate
         self._initial = initial

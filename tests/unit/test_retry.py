@@ -692,4 +692,3 @@ class TestRetry(object):
         gen = gen_retry_(wrapped)()
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
-

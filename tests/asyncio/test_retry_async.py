@@ -653,6 +653,7 @@ class TestAsyncRetry:
                         raise StopAsyncIteration
                     self.i += 1
                     return self.i - 1
+
             return CustomIterator(n)
 
         decorated = retry_(iterable_fn)
@@ -693,6 +694,7 @@ class TestAsyncRetry:
                         raise StopAsyncIteration
                     self.i += 1
                     return self.i - 1
+
             return CustomIterator(n)
 
         decorated = retry_(iterable_fn)
