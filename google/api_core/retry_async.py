@@ -55,14 +55,15 @@ import asyncio
 import datetime
 import functools
 import logging
-import sys
+import inspect
+
+from collections.abc import AsyncGenerator
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
-from google.api_core.retry import RetryableGenerator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,18 +73,24 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
-from collections.abc import AsyncGenerator
 
 class AsyncRetryableGenerator(AsyncGenerator):
 
     def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
         self.subgenerator_fn = target
-        self.subgenerator = self.subgenerator_fn()
+        self.subgenerator = None
         self.predicate = predicate
         self.sleep_generator = sleep_generator
         self.on_error = on_error
         self.timeout = timeout
         self.remaining_timeout_budget = timeout if timeout else None
+
+    async def _ensure_subgenerator(self):
+        if not self.subgenerator:
+            if inspect.iscoroutinefunction(self.subgenerator_fn):
+                self.subgenerator = await self.subgenerator_fn()
+            else:
+                self.subgenerator = self.subgenerator_fn()
 
     def __aiter__(self):
         return self
@@ -111,7 +118,8 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
             await asyncio.sleep(next_sleep)
-            self.subgenerator = self.subgenerator_fn()
+            self.subgenerator = None
+            await self._ensure_subgenerator()
 
     def _subtract_time_from_budget(self, start_timestamp):
         if self.remaining_timeout_budget is not None:
@@ -120,6 +128,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             ).total_seconds()
 
     async def __anext__(self):
+        await self._ensure_subgenerator()
         if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
             raise exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(self.timeout),
@@ -141,12 +150,14 @@ class AsyncRetryableGenerator(AsyncGenerator):
         return await self.__anext__()
 
     async def aclose(self):
+        await self._ensure_subgenerator()
         if getattr(self.subgenerator, "aclose", None):
             return await self.subgenerator.aclose()
         else:
-            raise NotImplementedError("aclose is not implemented for retried stream")
+            raise AttributeError("aclose is not implemented for retried stream")
 
     async def asend(self, value):
+        await self._ensure_subgenerator()
         if getattr(self.subgenerator, "asend", None):
             if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
                 raise exceptions.RetryError(
@@ -168,9 +179,10 @@ class AsyncRetryableGenerator(AsyncGenerator):
             # if retryable exception was handled, try again with new subgenerator
             return await self.__asend__(value)
         else:
-            raise NotImplementedError("asend is not implemented for retried stream")
+            raise AttributeError("asend is not implemented for retried stream")
 
     async def athrow(self, typ, val=None, tb=None):
+        await self._ensure_subgenerator()
         if getattr(self.subgenerator, "athrow", None):
             try:
                 return await self.subgenerator.athrow(typ, val, tb)
@@ -179,7 +191,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             # if retryable exception was handled, return next from new subgenerator
             return await self.__anext__()
         else:
-            raise NotImplementedError("athrow is not implemented for retried stream")
+            raise AttributeError("athrow is not implemented for retried stream")
 
 async def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs

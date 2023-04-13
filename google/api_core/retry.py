@@ -195,7 +195,7 @@ class RetryableGenerator(Generator):
         if getattr(self.subgenerator, "close", None):
             return self.subgenerator.close()
         else:
-            raise NotImplementedError("close() not implemented for {}".format(self.subgenerator))
+            raise AttributeError("close() not implemented for {}".format(self.subgenerator))
 
     def send(self, value):
         if getattr(self.subgenerator, "send", None):
@@ -206,7 +206,7 @@ class RetryableGenerator(Generator):
             # if retryable exception was handled, try again with new subgenerator
             return self.send(value)
         else:
-            raise NotImplementedError("send() not implemented for {}".format(self.subgenerator))
+            raise AttributeError("send() not implemented for {}".format(self.subgenerator))
 
     def throw(self, typ, val=None, tb=None):
         if getattr(self.subgenerator, "throw", None):
@@ -217,7 +217,7 @@ class RetryableGenerator(Generator):
             # if retryable exception was handled, return next from new subgenerator
             return self.__next__()
         else:
-            raise NotImplementedError("throw() not implemented for {}".format(self.subgenerator))
+            raise AttributeError("throw() not implemented for {}".format(self.subgenerator))
 
 def retry_target(
     target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs

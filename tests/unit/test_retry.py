@@ -565,7 +565,7 @@ class TestRetry(object):
         """
         Send should be passed through retry into target generator
         """
-        retry_ = retry.Retry()
+        retry_ = retry.Retry(is_generator=True)
 
         decorated = retry_(self._generator_mock)
 
@@ -580,6 +580,31 @@ class TestRetry(object):
         assert in_messages == out_messages
         assert next(generator) == 4
         assert next(generator) == 5
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_iterable_send_close_throw(self, sleep):
+        """
+        Send, Throw, and Close should raise AttributeErrors
+        """
+        retry_ = retry.Retry(is_generator=True)
+
+        def iterable_fn(n):
+            return iter(range(n))
+
+        decorated = retry_(iterable_fn)
+
+        retryable = decorated(10)
+        result = next(retryable)
+        assert result == 0
+        with pytest.raises(AttributeError):
+            retryable.send("test")
+        assert next(retryable) == 1
+        with pytest.raises(AttributeError):
+            retryable.close()
+        assert next(retryable) == 2
+        with pytest.raises(AttributeError):
+            retryable.throw(ValueError)
+        assert next(retryable) == 3
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_return(self, sleep):
