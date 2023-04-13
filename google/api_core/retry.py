@@ -425,7 +425,7 @@ class Retry(object):
                 `on_error` will be yielded for downstream consumers.
         Returns:
             Callable: A callable that will invoke ``func`` with retry
-                behavior``.
+                behavior.
         """
         if self._on_error is not None:
             on_error = self._on_error
