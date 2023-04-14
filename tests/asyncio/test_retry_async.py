@@ -544,13 +544,13 @@ class TestAsyncRetry:
         generator = retry_(self._generator_mock)(sleep_time=0.07)
         assert await generator.__anext__() == 0
         assert await generator.__anext__() == 1
-        with pytest.raises(exceptions.RetryError) as exc_info:
+        with pytest.raises(exceptions.RetryError) as exc:
             await generator.__anext__()
-            assert "Timeout of 0.2s exceeded" in str(exc_info.value)
+            assert "Timeout of 0.2s exceeded" in str(exc.value)
         # subsequent calls should also return a RetryError
-        with pytest.raises(exceptions.RetryError) as excinfo:
+        with pytest.raises(exceptions.RetryError) as exc:
             await generator.__anext__()
-            assert "Timeout of 0.2s exceeded" in str(exc_info.value)
+            assert "Timeout of 0.2s exceeded" in str(exc.value)
 
     @pytest.mark.asyncio
     async def test___call___generator_await_cancel_retryable(self):
