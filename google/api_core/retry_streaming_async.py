@@ -129,10 +129,8 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 datetime_helpers.utcnow() - start_timestamp
             ).total_seconds()
 
-    async def _iteration_helper(self, 
-        iteration_fn:Callable[..., Awaitable],
-        try_again_fn: Callable,
-        *args
+    async def _iteration_helper(
+        self, iteration_fn: Callable[..., Awaitable], try_again_fn: Callable, *args
     ):
         """
         Helper function for sharing logic between __anext__ and asend.
@@ -150,6 +148,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         if (
             self.remaining_timeout_budget is not None
             and self.remaining_timeout_budget <= 0
+            and self.timeout is not None
         ):
             raise exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(self.timeout),
