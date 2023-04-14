@@ -61,12 +61,12 @@ import functools
 import logging
 import random
 import time
-from collections.abc import Generator
 
 import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
+from google.api_core.retry_streaming import RetryableGenerator
 from google.auth import exceptions as auth_exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -144,91 +144,6 @@ def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULT
     while True:
         yield random.uniform(0.0, delay)
         delay = min(delay * multiplier, maximum)
-
-
-class RetryableGenerator(Generator):
-    def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
-        self.subgenerator_fn = target
-        self.subgenerator = self.subgenerator_fn()
-        self.predicate = predicate
-        self.sleep_generator = sleep_generator
-        self.on_error = on_error
-        self.timeout = timeout
-        if self.timeout is not None:
-            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=self.timeout
-            )
-        else:
-            self.deadline = None
-
-    def __iter__(self):
-        return self
-
-    def _handle_exception(self, exc):
-        if not self.predicate(exc):
-            raise exc
-        else:
-            if self.on_error:
-                self.on_error(exc)
-            try:
-                next_sleep = next(self.sleep_generator)
-            except StopIteration:
-                raise ValueError("Sleep generator stopped yielding sleep values")
-            if self.deadline is not None:
-                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
-                    seconds=next_sleep
-                )
-                if self.deadline < next_attempt:
-                    raise exceptions.RetryError(
-                        f"Deadline of {self.timeout:.1f} seconds exceeded", exc
-                    ) from exc
-            _LOGGER.debug(
-                "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
-            )
-            time.sleep(next_sleep)
-            self.subgenerator = self.subgenerator_fn()
-
-    def __next__(self):
-        try:
-            return next(self.subgenerator)
-        except Exception as exc:
-            self._handle_exception(exc)
-        # if retryable exception was handled, try again with new subgenerator
-        return self.__next__()
-
-    def close(self):
-        if getattr(self.subgenerator, "close", None):
-            return self.subgenerator.close()
-        else:
-            raise AttributeError(
-                "close() not implemented for {}".format(self.subgenerator)
-            )
-
-    def send(self, value):
-        if getattr(self.subgenerator, "send", None):
-            try:
-                return self.subgenerator.send(value)
-            except Exception as exc:
-                self._handle_exception(exc)
-            # if retryable exception was handled, try again with new subgenerator
-            return self.send(value)
-        else:
-            raise AttributeError(
-                "send() not implemented for {}".format(self.subgenerator)
-            )
-
-    def throw(self, typ, val=None, tb=None):
-        if getattr(self.subgenerator, "throw", None):
-            try:
-                return self.subgenerator.throw(typ, val, tb)
-            except Exception as exc:
-                self._handle_exception(exc)
-            # if retryable exception was handled, return next from new subgenerator
-            return self.__next__()
-        else:
-            raise AttributeError(
-                "throw() not implemented for {}".format(self.subgenerator)
-            )
 
 
 def retry_target(
