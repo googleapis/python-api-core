@@ -555,7 +555,7 @@ def test_create_channel_with_credentials_file_and_scopes(
         credentials_file, scopes=scopes, default_scopes=None
     )
     assert channel is grpc_secure_channel.return_value
-    grpc_secure_channel.assert_called_once_with(target, composite_creds)
+    grpc_secure_channel.assert_called_once_with(target, composite_creds, compression=None)
 
 
 @mock.patch("grpc.composite_channel_credentials")

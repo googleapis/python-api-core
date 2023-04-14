@@ -102,7 +102,7 @@ async def test_wrap_method_with_no_compression():
 
     await wrapped_method(1, 2, meep="moop", compression=None)
 
-    method.assert_called_once_with(1, 2, meep="moop", compression=None)
+    method.assert_called_once_with(1, 2, meep="moop", metadata = mock.ANY)
 
 
 @pytest.mark.asyncio
