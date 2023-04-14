@@ -369,7 +369,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         page_token: Optional[str] = None,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] =  gapic_v1.method.DEFAULT,
+        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListOperationsPager:
         r"""Lists operations that match the specified filter in the request.
