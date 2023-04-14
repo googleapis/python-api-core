@@ -81,7 +81,7 @@ async def retry_target(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target: The function to call and retry. This must be a
+        target(Callable): The function to call and retry. This must be a
             nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
@@ -181,10 +181,9 @@ class AsyncRetry:
         is_stream (bool): Indicates whether the input function
             should be treated as an stream function (i.e. an AsyncGenerator,
             or function or coroutine that returns an AsyncIterable).
-            If ``is_stream`` is True, the iterable will be wrapped with retry
-            logic, and any failed outputs will restart the stream. If False,
-            only the input function call itself will be retried.
-            Defaults to False.
+            If True, the iterable will be wrapped with retry logic, and any
+            failed outputs will restart the stream. If False, only the input
+            function call itself will be retried. Defaults to False.
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
     """
