@@ -212,16 +212,14 @@ class AsyncRetry:
         """Wrap a callable with retry behavior.
 
         Args:
-            func (Callable[..., Union[Coroutine, AsynchronousGenerator]]): The
-            coroutine or async generator function to add retry behavior to.
+            func (Callable): The callable or stream to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
 
         Returns:
-            Union[Coroutine, AsynchronousGenerator]:
-                - An AsynchronousGenerator that yields from ``func`` if ``is_stream``
-                - A couroutine that will invoke ``func`` if ``func`` if not ``is_stream``
+            Callable: A callable that will invoke ``func`` with retry
+                behavior.
         """
         if self._on_error is not None:
             on_error = self._on_error
