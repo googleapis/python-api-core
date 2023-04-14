@@ -529,6 +529,7 @@ class TestRetry(object):
             on_error=on_error,
             predicate=retry.if_exception_type(ValueError),
             is_stream=True,
+            timeout=None,
         )
         result = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3
@@ -584,7 +585,7 @@ class TestRetry(object):
 
         decorated = retry_(self._generator_mock)
 
-        generator = decorated(10)
+        generator = decorated(5)
         result = next(generator)
         assert result == 0
         in_messages = ["test_1", "hello", "world"]
@@ -594,7 +595,30 @@ class TestRetry(object):
             out_messages.append(recv)
         assert in_messages == out_messages
         assert next(generator) == 4
-        assert next(generator) == 5
+        with pytest.raises(StopIteration):
+            generator.send("should be exhausted")
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_generator_send_retry(self, sleep):
+        """
+        Send should support retries like next
+        """
+        on_error = mock.Mock(return_value=None)
+        retry_ = retry.Retry(
+            on_error=on_error,
+            predicate=retry.if_exception_type(ValueError),
+            is_stream=True,
+            timeout=None,
+        )
+        result = retry_(self._generator_mock)(error_on=3)
+        with pytest.raises(TypeError) as exc_info:
+            result.send("can not send to fresh generator")
+            assert exc_info.match("can't send non-None value")
+        # error thrown on 3
+        # generator should contain 0, 1, 2 looping
+        unpacked = [result.send(None) for i in range(10)]
+        assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+        assert on_error.call_count == 3
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_iterable_send_close_throw(self, sleep):
@@ -642,7 +666,7 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_close(self, sleep):
-        retry_ = retry.Retry()
+        retry_ = retry.Retry(is_stream=True)
 
         decorated = retry_(self._generator_mock)
 
