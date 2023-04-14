@@ -129,11 +129,24 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 datetime_helpers.utcnow() - start_timestamp
             ).total_seconds()
 
-    async def __anext__(self):
+    async def _iteration_helper(self, 
+        iteration_fn:Callable[..., Awaitable],
+        try_again_fn: Callable,
+        *args
+    ):
         """
-        Implement the async iterator protocol.
+        Helper function for sharing logic between __anext__ and asend.
+
+        Args:
+          - iteration_fn: The function to call to get the next value from the
+                iterator (e.g. __anext__ or asend)
+          - try_again_fn: The function to call after a retryable exception is
+                encountered, to get a value from the new active_target
+                (e.g. self.__anext__ or self.asend)
+          - *args: Any additional arguments to pass to iteration_fn and
+                try_again_fn (e.g. the value to send to asend)
         """
-        await self._ensure_active_target()
+        # check for expired timeouts before attempting to iterate
         if (
             self.remaining_timeout_budget is not None
             and self.remaining_timeout_budget <= 0
@@ -143,18 +156,31 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 None,
             )
         try:
+            # start the timer for the current operation
             start_timestamp = datetime_helpers.utcnow()
+            # grab the next value from the active_target
             next_val_routine = asyncio.wait_for(
-                self.active_target.__anext__(), self.remaining_timeout_budget
+                iteration_fn(*args), self.remaining_timeout_budget
             )
             next_val = await next_val_routine
+            # subtract the time spent waiting for the next value from the
+            # remaining timeout budget
             self._subtract_time_from_budget(start_timestamp)
             return next_val
         except (Exception, asyncio.CancelledError) as exc:
             self._subtract_time_from_budget(start_timestamp)
             await self._handle_exception(exc)
         # if retryable exception was handled, try again with new active_target
-        return await self.__anext__()
+        return await try_again_fn(*args)
+
+    async def __anext__(self):
+        """
+        Implement the async iterator protocol.
+        """
+        await self._ensure_active_target()
+        return await self._iteration_helper(
+            self.active_target.__anext__, self.__anext__
+        )
 
     async def aclose(self):
         """
@@ -163,7 +189,6 @@ class AsyncRetryableGenerator(AsyncGenerator):
         Raises:
           - AttributeError if the active_target does not have a aclose() method
         """
-
         await self._ensure_active_target()
         if getattr(self.active_target, "aclose", None):
             return await self.active_target.aclose()
@@ -187,27 +212,9 @@ class AsyncRetryableGenerator(AsyncGenerator):
         """
         await self._ensure_active_target()
         if getattr(self.active_target, "asend", None):
-            if (
-                self.remaining_timeout_budget is not None
-                and self.remaining_timeout_budget <= 0
-            ):
-                raise exceptions.RetryError(
-                    "Timeout of {:.1f}s exceeded".format(self.timeout),
-                    None,
-                )
-            try:
-                start_timestamp = datetime_helpers.utcnow()
-                next_val_routine = asyncio.wait_for(
-                    self.active_target.asend(value), self.remaining_timeout_budget
-                )
-                next_val = await next_val_routine
-                self._subtract_time_from_budget(start_timestamp)
-                return next_val
-            except (Exception, asyncio.CancelledError) as exc:
-                self._subtract_time_from_budget(start_timestamp)
-                await self._handle_exception(exc)
-            # if retryable exception was handled, try again with new active_target
-            return await self.__asend__(value)
+            return await self._iteration_helper(
+                self.active_target.asend, self.asend, value
+            )
         else:
             raise AttributeError(
                 "asend() not implemented for {}".format(self.active_target)
