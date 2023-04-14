@@ -421,7 +421,12 @@ class TestAsyncRetry:
         sleep.assert_any_call(retry_._initial)
 
     async def _generator_mock(
-        self, num=5, error_on=None, exceptions_seen=None, sleep_time=0
+        self,
+        num=5,
+        error_on=None,
+        exceptions_seen=None,
+        sleep_time=0,
+        ignore_sent=False,
     ):
         try:
             sent_in = None
@@ -431,6 +436,8 @@ class TestAsyncRetry:
                 if error_on and i == error_on:
                     raise ValueError("generator mock error")
                 sent_in = yield (sent_in if sent_in else i)
+                if ignore_sent:
+                    sent_in = None
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
             if exceptions_seen is not None:
@@ -606,6 +613,28 @@ class TestAsyncRetry:
         assert in_messages == out_messages
         assert await generator.__anext__() == 4
         assert await generator.__anext__() == 5
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___generator_send_retry(self, sleep):
+        on_error = mock.Mock(return_value=None)
+        retry_ = retry_async.AsyncRetry(
+            on_error=on_error,
+            predicate=retry_async.if_exception_type(ValueError),
+            is_stream=True,
+            timeout=None,
+        )
+        generator = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        with pytest.raises(TypeError) as exc_info:
+            await generator.asend("can not send to fresh generator")
+            assert exc_info.match("can't send non-None value")
+
+        # error thrown on 3
+        # generator should contain 0, 1, 2 looping
+        assert await generator.__anext__() == 0
+        unpacked = [await generator.asend(i) for i in range(10)]
+        assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
+        assert on_error.call_count == 3
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio

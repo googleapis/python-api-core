@@ -128,20 +128,13 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 datetime_helpers.utcnow() - start_timestamp
             ).total_seconds()
 
-    async def _iteration_helper(
-        self, iteration_fn: Callable[..., Awaitable], try_again_fn: Callable, *args
-    ):
+    async def _iteration_helper(self, iteration_routine: Awaitable):
         """
         Helper function for sharing logic between __anext__ and asend.
 
         Args:
-          - iteration_fn: The function to call to get the next value from the
-                iterator (e.g. __anext__ or asend)
-          - try_again_fn: The function to call after a retryable exception is
-                encountered, to get a value from the new active_target
-                (e.g. self.__anext__ or self.asend)
-          - *args: Any additional arguments to pass to iteration_fn and
-                try_again_fn (e.g. the value to send to asend)
+          - iteration_routine: The coroutine to await to get the next value
+                from the iterator (e.g. __anext__ or asend)
         """
         # check for expired timeouts before attempting to iterate
         if (
@@ -158,7 +151,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             start_timestamp = datetime_helpers.utcnow()
             # grab the next value from the active_target
             next_val_routine = asyncio.wait_for(
-                iteration_fn(*args), self.remaining_timeout_budget
+                iteration_routine, self.remaining_timeout_budget
             )
             next_val = await next_val_routine
             # subtract the time spent waiting for the next value from the
@@ -168,8 +161,8 @@ class AsyncRetryableGenerator(AsyncGenerator):
         except (Exception, asyncio.CancelledError) as exc:
             self._subtract_time_from_budget(start_timestamp)
             await self._handle_exception(exc)
-        # if retryable exception was handled, try again with new active_target
-        return await try_again_fn(*args)
+        # if retryable exception was handled, find the next value to return
+        return await self.__anext__()
 
     async def __anext__(self):
         """
@@ -177,7 +170,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         """
         await self._ensure_active_target()
         return await self._iteration_helper(
-            self.active_target.__anext__, self.__anext__
+            self.active_target.__anext__(),
         )
 
     async def aclose(self):
@@ -210,9 +203,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         """
         await self._ensure_active_target()
         if getattr(self.active_target, "asend", None):
-            return await self._iteration_helper(
-                self.active_target.asend, self.asend, value
-            )
+            return await self._iteration_helper(self.active_target.asend(value))
         else:
             raise AttributeError(
                 "asend() not implemented for {}".format(self.active_target)

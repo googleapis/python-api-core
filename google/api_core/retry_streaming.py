@@ -151,8 +151,8 @@ class RetryableGenerator(Generator):
                 return self.active_target.send(value)
             except Exception as exc:
                 self._handle_exception(exc)
-            # if retryable exception was handled, try again with new active_target
-            return self.send(value)
+            # if exception was retryable, use new target for return value
+            return self.__next__()
         else:
             raise AttributeError(
                 "send() not implemented for {}".format(self.active_target)

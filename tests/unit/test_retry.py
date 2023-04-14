@@ -484,7 +484,12 @@ class TestRetry(object):
         sleep.assert_any_call(retry_._initial)
 
     def _generator_mock(
-        self, num=5, error_on=None, return_val=None, exceptions_seen=None
+        self,
+        num=5,
+        error_on=None,
+        return_val=None,
+        exceptions_seen=None,
+        ignore_sent=False,
     ):
         try:
             sent_in = None
@@ -492,6 +497,8 @@ class TestRetry(object):
                 if error_on and i == error_on:
                     raise ValueError("generator mock error")
                 sent_in = yield (sent_in if sent_in else i)
+                if ignore_sent:
+                    sent_in = None
             return return_val
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
@@ -610,14 +617,16 @@ class TestRetry(object):
             is_stream=True,
             timeout=None,
         )
-        result = retry_(self._generator_mock)(error_on=3)
+        result = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
         with pytest.raises(TypeError) as exc_info:
             result.send("can not send to fresh generator")
             assert exc_info.match("can't send non-None value")
+        # initiate iteration with None
+        assert result.send(None) == 0
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
-        unpacked = [result.send(None) for i in range(10)]
-        assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+        unpacked = [result.send(i) for i in range(10)]
+        assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
         assert on_error.call_count == 3
 
     @mock.patch("time.sleep", autospec=True)
