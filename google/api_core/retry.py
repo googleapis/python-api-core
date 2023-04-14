@@ -306,9 +306,11 @@ class Retry(object):
             a retryable exception. Any error raised by this function will
             *not* be caught.
         is_stream (bool): Indicates whether the input function
-            should be treated as an iterable function. If True, retries will
-            `yield from` wrapped function. If false, retries will call wrapped
-            function directly. Defaults to False.
+            should be treated as an stream function (i.e. a Generator,
+            or function that returns an Iterable). If True, the iterable
+            will be wrapped with retry logic, and any failed outputs will
+            restart the stream. If False, only the input function call itself
+            will be retried. Defaults to False.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
