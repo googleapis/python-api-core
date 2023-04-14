@@ -56,7 +56,6 @@ import datetime
 import functools
 import logging
 
-
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
 from google.api_core.retry import exponential_sleep_generator
@@ -216,13 +215,10 @@ class AsyncRetry:
             coroutine or async generator function to add retry behavior to.
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
-                *not* be caught. When `func` is a generator function, non-None
-                values returned by `on_error` will be yielded for downstream
-                consumers.
-
+                *not* be caught.
 
         Returns:
-            Coroutine | AsynchronousGenerator:
+            Union[Coroutine, AsynchronousGenerator]:
                 - An AsynchronousGenerator that yields from ``func`` if ``is_stream``
                 - A couroutine that will invoke ``func`` if ``func`` if not ``is_stream``
         """
