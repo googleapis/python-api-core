@@ -241,12 +241,11 @@ class AsyncRetry:
 
         @functools.wraps(func)
         def retry_wrapped_stream(*args, deadline_dt=None, **kwargs):
-            """A wrapper that yields through target generator with retry."""
+            """A wrapper that iterates over target stream with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            # if the target is a generator or iterable function, make sure return is also a generator function
             return AsyncRetryableGenerator(
                 target,
                 self._predicate,
