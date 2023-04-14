@@ -298,7 +298,7 @@ class AsyncRetry:
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
         timeout (float): How long to keep retrying in seconds.
-            When the target is a generator, only time spent waiting on the
+            When ``is_stream``, only time spent waiting on the
             target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
@@ -346,9 +346,9 @@ class AsyncRetry:
 
 
         Returns:
-            Union[Coroutine, AsynchronousGenerator]: One of:
-                - A couroutine that will invoke ``func`` if ``func`` is a coroutine function
-                - An AsynchronousGenerator that yields from ``func`` if ``func`` is an AsynchronousGenerator function.
+            Coroutine | AsynchronousGenerator: One of:
+                - An AsynchronousGenerator that yields from ``func`` if ``is_stream``
+                - A couroutine that will invoke ``func`` if ``func`` if not ``is_stream``
         """
         if self._on_error is not None:
             on_error = self._on_error
