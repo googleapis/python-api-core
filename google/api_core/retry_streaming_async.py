@@ -14,6 +14,8 @@
 
 """Helpers for retries for async streaming APIs."""
 
+from typing import Callable, Optional, Iterable, AsyncIterable, Awaitable, Union
+
 import asyncio
 import inspect
 import logging
@@ -32,36 +34,71 @@ class AsyncRetryableGenerator(AsyncGenerator):
     streaming APIs.
     """
 
-    def __init__(self, target, predicate, sleep_generator, timeout=None, on_error=None):
-        self.subgenerator_fn = target
-        self.subgenerator = None
+    def __init__(
+        self,
+        target: Union[
+            Callable[[], AsyncIterable], Callable[[], Awaitable[AsyncIterable]]
+        ],
+        predicate: Callable[[Exception], bool],
+        sleep_generator: Iterable[float],
+        timeout: Optional[float] = None,
+        on_error: Optional[Callable[[Exception], None]] = None,
+    ):
+        """
+        Args:
+            target: The function to call to produce iterables for each retry.
+                This must be a nullary function - apply arguments with
+                `functools.partial`.
+            predicate: A callable used to determine if an
+                exception raised by the target should be considered retryable.
+                It should return True to retry or False otherwise.
+            sleep_generator: An infinite iterator that determines
+                how long to sleep between retries.
+            timeout: How long to keep retrying the target.
+            on_error: A function to call while processing a
+                retryable exception.  Any error raised by this function will *not*
+                be caught.
+        """
+        self.target_fn = target
+        # active target must be populated in an async context
+        self.active_target: Optional[AsyncIterable] = None
         self.predicate = predicate
         self.sleep_generator = sleep_generator
         self.on_error = on_error
         self.timeout = timeout
         self.remaining_timeout_budget = timeout if timeout else None
 
-    async def _ensure_subgenerator(self):
-        if not self.subgenerator:
-            if inspect.iscoroutinefunction(self.subgenerator_fn):
-                self.subgenerator = await self.subgenerator_fn()
+    async def _ensure_active_target(self):
+        """
+        Ensure that the active target is populated and ready to be iterated over.
+        """
+        if not self.active_target:
+            if inspect.iscoroutinefunction(self.target_fn):
+                self.active_target = await self.target_fn()
             else:
-                self.subgenerator = self.subgenerator_fn()
+                self.active_target = self.target_fn()
 
     def __aiter__(self):
+        """Implement the async iterator protocol."""
         return self
 
     async def _handle_exception(self, exc):
+        """
+        When an exception is raised while iterating over the active_target,
+        check if it is retryable. If so, create a new active_target and
+        continue iterating. If not, raise the exception.
+        """
         if not self.predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
             raise exc
         else:
+            # run on_error callback if provided
             if self.on_error:
                 self.on_error(exc)
             try:
                 next_sleep = next(self.sleep_generator)
             except StopIteration:
-                raise ValueError('Sleep generator stopped yielding sleep values')
-
+                raise ValueError("Sleep generator stopped yielding sleep values")
+            # if time budget is exceeded, raise RetryError
             if self.remaining_timeout_budget is not None:
                 if self.remaining_timeout_budget <= next_sleep:
                     raise exceptions.RetryError(
@@ -73,19 +110,34 @@ class AsyncRetryableGenerator(AsyncGenerator):
             _LOGGER.debug(
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
+            # sleep before retrying
             await asyncio.sleep(next_sleep)
-            self.subgenerator = None
-            await self._ensure_subgenerator()
+            self.active_target = None
+            await self._ensure_active_target()
 
     def _subtract_time_from_budget(self, start_timestamp):
+        """
+        Subtract the time elapsed since start_timestamp from the remaining
+        timeout budget.
+
+        Args:
+        - start_timestamp (datetime): The time at which the last operation
+            started.
+        """
         if self.remaining_timeout_budget is not None:
             self.remaining_timeout_budget -= (
                 datetime_helpers.utcnow() - start_timestamp
             ).total_seconds()
 
     async def __anext__(self):
-        await self._ensure_subgenerator()
-        if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
+        """
+        Implement the async iterator protocol.
+        """
+        await self._ensure_active_target()
+        if (
+            self.remaining_timeout_budget is not None
+            and self.remaining_timeout_budget <= 0
+        ):
             raise exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(self.timeout),
                 None,
@@ -93,8 +145,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         try:
             start_timestamp = datetime_helpers.utcnow()
             next_val_routine = asyncio.wait_for(
-                self.subgenerator.__anext__(),
-                self.remaining_timeout_budget
+                self.active_target.__anext__(), self.remaining_timeout_budget
             )
             next_val = await next_val_routine
             self._subtract_time_from_budget(start_timestamp)
@@ -102,20 +153,44 @@ class AsyncRetryableGenerator(AsyncGenerator):
         except (Exception, asyncio.CancelledError) as exc:
             self._subtract_time_from_budget(start_timestamp)
             await self._handle_exception(exc)
-        # if retryable exception was handled, try again with new subgenerator
+        # if retryable exception was handled, try again with new active_target
         return await self.__anext__()
 
     async def aclose(self):
-        await self._ensure_subgenerator()
-        if getattr(self.subgenerator, "aclose", None):
-            return await self.subgenerator.aclose()
+        """
+        Close the active_target if supported. (e.g. target is an async generator)
+
+        Raises:
+          - AttributeError if the active_target does not have a aclose() method
+        """
+
+        await self._ensure_active_target()
+        if getattr(self.active_target, "aclose", None):
+            return await self.active_target.aclose()
         else:
-            raise AttributeError("aclose is not implemented for retried stream")
+            raise AttributeError(
+                "aclose() not implemented for {}".format(self.active_target)
+            )
 
     async def asend(self, value):
-        await self._ensure_subgenerator()
-        if getattr(self.subgenerator, "asend", None):
-            if self.remaining_timeout_budget is not None and self.remaining_timeout_budget <= 0:
+        """
+        Call asend on the active_target if supported. (e.g. target is an async generator)
+
+        If an exception is raised, a retry may be attempted before returning
+        a result.
+
+        Returns:
+          - the result of calling asend() on the active_target
+
+        Raises:
+          - AttributeError if the active_target does not have a asend() method
+        """
+        await self._ensure_active_target()
+        if getattr(self.active_target, "asend", None):
+            if (
+                self.remaining_timeout_budget is not None
+                and self.remaining_timeout_budget <= 0
+            ):
                 raise exceptions.RetryError(
                     "Timeout of {:.1f}s exceeded".format(self.timeout),
                     None,
@@ -123,8 +198,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             try:
                 start_timestamp = datetime_helpers.utcnow()
                 next_val_routine = asyncio.wait_for(
-                    self.subgenerator.asend(value),
-                    self.remaining_timeout_budget
+                    self.active_target.asend(value), self.remaining_timeout_budget
                 )
                 next_val = await next_val_routine
                 self._subtract_time_from_budget(start_timestamp)
@@ -132,20 +206,33 @@ class AsyncRetryableGenerator(AsyncGenerator):
             except (Exception, asyncio.CancelledError) as exc:
                 self._subtract_time_from_budget(start_timestamp)
                 await self._handle_exception(exc)
-            # if retryable exception was handled, try again with new subgenerator
+            # if retryable exception was handled, try again with new active_target
             return await self.__asend__(value)
         else:
-            raise AttributeError("asend is not implemented for retried stream")
+            raise AttributeError(
+                "asend() not implemented for {}".format(self.active_target)
+            )
 
     async def athrow(self, typ, val=None, tb=None):
-        await self._ensure_subgenerator()
-        if getattr(self.subgenerator, "athrow", None):
+        """
+        Call athrow on the active_target if supported. (e.g. target is an async generator)
+
+        If an exception is raised, a retry may be attempted before returning
+
+        Returns:
+          - the result of calling athrow() on the active_target
+        Raises:
+          - AttributeError if the active_target does not have a athrow() method
+        """
+        await self._ensure_active_target()
+        if getattr(self.active_target, "athrow", None):
             try:
-                return await self.subgenerator.athrow(typ, val, tb)
+                return await self.active_target.athrow(typ, val, tb)
             except Exception as exc:
                 await self._handle_exception(exc)
-            # if retryable exception was handled, return next from new subgenerator
+            # if retryable exception was handled, return next from new active_target
             return await self.__anext__()
         else:
-            raise AttributeError("athrow is not implemented for retried stream")
-
+            raise AttributeError(
+                "athrow() not implemented for {}".format(self.active_target)
+            )
