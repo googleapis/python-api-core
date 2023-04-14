@@ -98,11 +98,11 @@ async def test_wrap_method_with_no_compression():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = gapic_v1.method_async.wrap_method(method, compression=None)
+    wrapped_method = gapic_v1.method_async.wrap_method(method)
 
-    await wrapped_method(1, 2, meep="moop")
+    await wrapped_method(1, 2, meep="moop", compression=None)
 
-    method.assert_called_once_with(1, 2, meep="moop")
+    method.assert_called_once_with(1, 2, meep="moop", compression=None)
 
 
 @pytest.mark.asyncio
@@ -111,9 +111,9 @@ async def test_wrap_method_with_custom_compression():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
 
-    wrapped_method = gapic_v1.method_async.wrap_method(method, compression=compression)
+    wrapped_method = gapic_v1.method_async.wrap_method(method)
 
-    await wrapped_method(1, 2, meep="moop")
+    await wrapped_method(1, 2, meep="moop", compression=compression)
 
     method.assert_called_once_with(1, 2, meep="moop", compression=compression)
 

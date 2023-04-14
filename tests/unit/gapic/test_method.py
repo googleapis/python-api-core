@@ -165,7 +165,7 @@ def test_wrap_method_with_overriding_retry_timeout_compression(unused_sleep):
     method = mock.Mock(spec=["__call__"], side_effect=[exceptions.NotFound(None), 42])
     default_retry = retry.Retry()
     default_timeout = timeout.ConstantTimeout(60)
-    default_compression = grpc.Compression.NoCompression
+    default_compression = grpc.Compression.Gzip
     wrapped_method = google.api_core.gapic_v1.method.wrap_method(
         method, default_retry, default_timeout, default_compression
     )
@@ -173,12 +173,12 @@ def test_wrap_method_with_overriding_retry_timeout_compression(unused_sleep):
     result = wrapped_method(
         retry=retry.Retry(retry.if_exception_type(exceptions.NotFound)),
         timeout=timeout.ConstantTimeout(22),
-        compression=grpc.Compression.NoCompression
+        compression=default_compression
     )
 
     assert result == 42
     assert method.call_count == 2
-    method.assert_called_with(timeout=22, metadata=mock.ANY)
+    method.assert_called_with(timeout=22, compression=default_compression, metadata=mock.ANY)
 
 
 def test_wrap_method_with_overriding_timeout_as_a_number():

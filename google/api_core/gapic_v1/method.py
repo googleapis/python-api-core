@@ -15,7 +15,7 @@
 """Helpers for wrapping low-level gRPC methods with common functionality.
 
 This is used by gapic clients to provide common error mapping, retry, timeout,
-pagination, and long-running operations to gRPC methods.
+compression, pagination, and long-running operations to gRPC methods.
 """
 
 import enum
@@ -73,11 +73,13 @@ class _GapicCallable(object):
             after its start, not to be confused with deadline). If ``None``,
             this callable will not specify a timeout argument to the low-level
             RPC method.
+        compression (grpc.Compression): The default compression for the callable.
+            If ``None``, this callable will not specify a compression argument
+            to the low-level RPC method.
         metadata (Sequence[Tuple[str, str]]): Additional metadata that is
             provided to the RPC method on every invocation. This is merged with
             any metadata specified during invocation. If ``None``, no
             additional metadata will be passed to the RPC method.
-        compression (grpc.Compression): Indicates the compression method to be used for an RPC.
     """
 
     def __init__(
@@ -85,7 +87,7 @@ class _GapicCallable(object):
         target,
         retry,
         timeout,
-        compression=Compression.NoCompression,
+        compression,
         metadata=None,
     ):
         self._target = target
@@ -112,7 +114,7 @@ class _GapicCallable(object):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
 
         # Apply all applicable decorators.
-        wrapped_func = _apply_decorators(self._target, [retry, timeout, compression])
+        wrapped_func = _apply_decorators(self._target, [retry, timeout])
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
@@ -124,6 +126,8 @@ class _GapicCallable(object):
             metadata = list(metadata)
             metadata.extend(self._metadata)
             kwargs["metadata"] = metadata
+        if self._compression is not None:
+            kwargs["compression"] = compression
 
         return wrapped_func(*args, **kwargs)
 
@@ -132,7 +136,7 @@ def wrap_method(
     func,
     default_retry=None,
     default_timeout=None,
-    default_compression=Compression.NoCompression,
+    default_compression=None,
     client_info=client_info.DEFAULT_CLIENT_INFO,
 ):
     """Wrap an RPC method with common behavior.
@@ -146,6 +150,7 @@ def wrap_method(
         import google.api_core.gapic_v1.method
         from google.api_core import retry
         from google.api_core import timeout
+        from grpc import Compression
 
         # The original RPC method.
         def get_topic(name, timeout=None):
@@ -154,6 +159,7 @@ def wrap_method(
 
         default_retry = retry.Retry(deadline=60)
         default_timeout = timeout.Timeout(deadline=60)
+        default_compression = Compression.NoCompression
         wrapped_get_topic = google.api_core.gapic_v1.method.wrap_method(
             get_topic, default_retry)
 
@@ -203,7 +209,8 @@ def wrap_method(
             timeout strategy. Can also be specified as an int or float. If
             ``None``, the method will not have timeout specified by default.
         default_compression (Optional[grpc.Compression]): The default
-            grpc.Compression.
+            grpc.Compression. If ``None``, the method will not have
+            compression specified by default.
         client_info
             (Optional[google.api_core.gapic_v1.client_info.ClientInfo]):
                 Client information used to create a user-agent string that's
@@ -212,12 +219,12 @@ def wrap_method(
                 metadata will be provided to the RPC method.
 
     Returns:
-        Callable: A new callable that takes optional ``retry`` and ``timeout``
-            arguments and applies the common error mapping, retry, timeout,
+        Callable: A new callable that takes optional ``retry``, ``timeout``,
+            and ``compression``
+            arguments and applies the common error mapping, retry, timeout, compression,
             and metadata behavior to the low-level RPC method.
     """
     func = grpc_helpers.wrap_errors(func)
-
     if client_info is not None:
         user_agent_metadata = [client_info.to_grpc_metadata()]
     else:

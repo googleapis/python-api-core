@@ -109,7 +109,7 @@ class OperationsClient(object):
         name,
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
-        compression=Compression.NoCompression,
+        compression=gapic_v1.method.DEFAULT,
         metadata=None,
     ):
         """Gets the latest state of a long-running operation.
@@ -170,7 +170,7 @@ class OperationsClient(object):
         filter_,
         retry=gapic_v1.method.DEFAULT,
         timeout=gapic_v1.method.DEFAULT,
-        compression=Compression.NoCompression,
+        compression=gapic_v1.method.DEFAULT,
         metadata=None,
     ):
         """

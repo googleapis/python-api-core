@@ -29,7 +29,7 @@ from google.api_core import gapic_v1, page_iterator_async
 from google.api_core import retry as retries
 from google.api_core import timeout as timeouts
 from google.longrunning import operations_pb2
-
+import grpc
 
 class OperationsAsyncClient:
     """Async client for interacting with long-running operations.
@@ -59,32 +59,34 @@ class OperationsAsyncClient:
         )
         default_timeout = timeouts.TimeToDeadlineTimeout(timeout=600.0)
 
+        default_compression = grpc.Compression.NoCompression
+
         self._get_operation = gapic_v1.method_async.wrap_method(
             self.operations_stub.GetOperation,
             default_retry=default_retry,
             default_timeout=default_timeout,
-            default_compression=method_configs["GetOperation"].compression,
+            default_compression=default_compression,
         )
 
         self._list_operations = gapic_v1.method_async.wrap_method(
             self.operations_stub.ListOperations,
             default_retry=default_retry,
             default_timeout=default_timeout,
-            default_compression=method_configs["ListOperations"].compression,
+            default_compression=default_compression,
         )
 
         self._cancel_operation = gapic_v1.method_async.wrap_method(
             self.operations_stub.CancelOperation,
             default_retry=default_retry,
             default_timeout=default_timeout,
-            default_compression=method_configs["CancelOperation"].compression,
+            default_compression=default_compression,
         )
 
         self._delete_operation = gapic_v1.method_async.wrap_method(
             self.operations_stub.DeleteOperation,
             default_retry=default_retry,
             default_timeout=default_timeout,
-            default_compression=method_configs["DeleteOperation"].compression,
+            default_compression=default_compression,
         )
 
     async def get_operation(
@@ -92,7 +94,7 @@ class OperationsAsyncClient:
         name,
         retry=gapic_v1.method_async.DEFAULT,
         timeout=gapic_v1.method_async.DEFAULT,
-        compression=None,
+        compression=gapic_v1.method_async.DEFAULT,
         metadata=None,
     ):
         """Gets the latest state of a long-running operation.
@@ -153,7 +155,7 @@ class OperationsAsyncClient:
         filter_,
         retry=gapic_v1.method_async.DEFAULT,
         timeout=gapic_v1.method_async.DEFAULT,
-        compression=None,
+        compression=gapic_v1.method_async.DEFAULT,
         metadata=None,
     ):
         """
@@ -239,7 +241,7 @@ class OperationsAsyncClient:
         name,
         retry=gapic_v1.method_async.DEFAULT,
         timeout=gapic_v1.method_async.DEFAULT,
-        compression=None,
+        compression=gapic_v1.method_async.DEFAULT,
         metadata=None,
     ):
         """Starts asynchronous cancellation on a long-running operation.
@@ -305,7 +307,7 @@ class OperationsAsyncClient:
         name,
         retry=gapic_v1.method_async.DEFAULT,
         timeout=gapic_v1.method_async.DEFAULT,
-        compression=None,
+        compression=gapic_v1.method_async.DEFAULT,
         metadata=None,
     ):
         """Deletes a long-running operation.
