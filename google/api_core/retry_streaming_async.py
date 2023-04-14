@@ -73,10 +73,9 @@ class AsyncRetryableGenerator(AsyncGenerator):
         Ensure that the active target is populated and ready to be iterated over.
         """
         if not self.active_target:
-            if inspect.iscoroutinefunction(self.target_fn):
-                self.active_target = await self.target_fn()
-            else:
-                self.active_target = self.target_fn()
+            self.active_target = self.target_fn()
+            if inspect.iscoroutine(self.active_target):
+                self.active_target = await self.active_target
 
     def __aiter__(self):
         """Implement the async iterator protocol."""
