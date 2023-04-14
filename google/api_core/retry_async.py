@@ -131,7 +131,7 @@ async def retry_target(
                 raise
             last_exc = exc
             if on_error is not None:
-                on_error(last_exc)
+                on_error(exc)
 
         now = datetime_helpers.utcnow()
 

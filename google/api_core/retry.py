@@ -186,6 +186,7 @@ def retry_target(
         deadline = None
 
     last_exc = None
+
     for sleep in sleep_generator:
         try:
             return target()
@@ -196,17 +197,21 @@ def retry_target(
             if not predicate(exc):
                 raise
             last_exc = exc
-        if on_error is not None:
-            on_error(last_exc)
+            if on_error is not None:
+                on_error(exc)
+
         if deadline is not None:
             next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
                 seconds=sleep
             )
             if deadline < next_attempt_time:
                 raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded".format(timeout),
+                    "Deadline of {:.1f}s exceeded while calling target function".format(
+                        timeout
+                    ),
                     last_exc,
                 ) from last_exc
+
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
         )
@@ -336,6 +341,7 @@ class Retry(object):
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
+
         Returns:
             Callable: A callable that will invoke ``func`` with retry
                 behavior.
