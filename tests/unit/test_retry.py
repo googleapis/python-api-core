@@ -162,6 +162,21 @@ def test_retry_target_bad_sleep_generator():
         retry.retry_target(mock.sentinel.target, mock.sentinel.predicate, [], None)
 
 
+def test_retry_streaming_target_bad_sleep_generator():
+    from google.api_core.retry_streaming import RetryableGenerator
+
+    def target_fn():
+        def inner_gen():
+            raise RuntimeError("initiate retry")
+            yield None
+
+        return inner_gen()
+
+    with pytest.raises(ValueError, match="Sleep generator"):
+        gen = RetryableGenerator(target_fn, lambda x: True, [], None)
+        next(gen)
+
+
 class TestRetry(object):
     def test_constructor_defaults(self):
         retry_ = retry.Retry()

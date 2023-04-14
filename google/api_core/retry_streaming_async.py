@@ -63,7 +63,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
         # active target must be populated in an async context
         self.active_target: Optional[AsyncIterable] = None
         self.predicate = predicate
-        self.sleep_generator = sleep_generator
+        self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
         self.timeout = timeout
         self.remaining_timeout_budget = timeout if timeout else None

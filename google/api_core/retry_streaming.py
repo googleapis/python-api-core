@@ -60,7 +60,7 @@ class RetryableGenerator(Generator):
         self.target_fn = target
         self.active_target: Iterable = self.target_fn()
         self.predicate = predicate
-        self.sleep_generator = sleep_generator
+        self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
         self.timeout = timeout
         if self.timeout is not None:
