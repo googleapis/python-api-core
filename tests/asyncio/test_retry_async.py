@@ -467,6 +467,7 @@ class TestAsyncRetry:
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
             is_stream=True,
+            timeout=None,
         )
         generator = retry_(self._generator_mock)(error_on=3)
         # error thrown on 3
@@ -661,9 +662,6 @@ class TestAsyncRetry:
                     self.n = n
                     self.i = 0
 
-                def __aiter__(self):
-                    return self
-
                 async def __anext__(self):
                     if self.i == self.n:
                         raise StopAsyncIteration
@@ -674,7 +672,7 @@ class TestAsyncRetry:
 
         decorated = retry_(iterable_fn)
 
-        retryable = decorated(10)
+        retryable = decorated(4)
         result = await retryable.__anext__()
         assert result == 0
         with pytest.raises(AttributeError):
@@ -686,6 +684,8 @@ class TestAsyncRetry:
         with pytest.raises(AttributeError):
             await retryable.athrow(ValueError("test"))
         assert await retryable.__anext__() == 3
+        with pytest.raises(StopAsyncIteration):
+            await retryable.__anext__()
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -702,9 +702,6 @@ class TestAsyncRetry:
                     self.n = n
                     self.i = 0
 
-                def __aiter__(self):
-                    return self
-
                 async def __anext__(self):
                     if self.i == self.n:
                         raise StopAsyncIteration
@@ -715,7 +712,7 @@ class TestAsyncRetry:
 
         decorated = retry_(iterable_fn)
 
-        retryable = decorated(10)
+        retryable = decorated(4)
         result = await retryable.__anext__()
         assert result == 0
         with pytest.raises(AttributeError):
@@ -727,3 +724,5 @@ class TestAsyncRetry:
         with pytest.raises(AttributeError):
             await retryable.athrow(ValueError("test"))
         assert await retryable.__anext__() == 3
+        with pytest.raises(StopAsyncIteration):
+            await retryable.__anext__()
