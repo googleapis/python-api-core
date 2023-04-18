@@ -144,16 +144,18 @@ def test_from_dict_bad_argument():
 
 
 def test_repr():
-    expected_keys = set([
-        "api_endpoint",
-        "client_cert_source",
-        "client_encrypted_cert_source",
-        "quota_project_id",
-        "credentials_file",
-        "scopes",
-        "api_key",
-        "api_audience"
-    ])
+    expected_keys = set(
+        [
+            "api_endpoint",
+            "client_cert_source",
+            "client_encrypted_cert_source",
+            "quota_project_id",
+            "credentials_file",
+            "scopes",
+            "api_key",
+            "api_audience",
+        ]
+    )
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
     options_keys = vars(options).keys()
 
