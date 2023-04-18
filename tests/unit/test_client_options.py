@@ -161,3 +161,6 @@ def test_repr():
 
     assert options_keys == expected_keys
     assert options.api_endpoint == "foo.googleapis.com"
+    # Assert options default to None.
+    assert options.client_encrypted_cert_source is None
+    assert options.api_key is None
