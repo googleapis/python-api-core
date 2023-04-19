@@ -147,5 +147,5 @@ def test_from_dict_bad_argument():
 def test_repr():
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
     options_repr = repr(options)
-    assert match(r'ClientOptions:', options_repr)
-    assert match(r'.*api_endpoint.*foo.googleapis.com', options_repr)
+    assert match(r"ClientOptions:", options_repr)
+    assert match(r".*api_endpoint.*foo.googleapis.com", options_repr)
