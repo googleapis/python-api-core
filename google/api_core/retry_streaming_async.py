@@ -14,21 +14,35 @@
 
 """Helpers for retries for async streaming APIs."""
 
-from typing import Callable, Optional, Iterable, AsyncIterable, Awaitable, Union
+from typing import (
+    cast,
+    Callable,
+    Optional,
+    Iterable,
+    AsyncIterator,
+    AsyncIterable,
+    Awaitable,
+    Union,
+    Any,
+    TypeVar,
+    AsyncGenerator,
+)
 
 import asyncio
 import inspect
 import logging
+import datetime
 
-from collections.abc import AsyncGenerator
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 _LOGGER = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-class AsyncRetryableGenerator(AsyncGenerator):
+
+class AsyncRetryableGenerator(AsyncGenerator[T, None]):
     """
     Helper class for retrying AsyncIterator and AsyncGenerator-based
     streaming APIs.
@@ -37,7 +51,8 @@ class AsyncRetryableGenerator(AsyncGenerator):
     def __init__(
         self,
         target: Union[
-            Callable[[], AsyncIterable], Callable[[], Awaitable[AsyncIterable]]
+            Callable[[], AsyncIterable[T]],
+            Callable[[], Awaitable[AsyncIterable[T]]],
         ],
         predicate: Callable[[Exception], bool],
         sleep_generator: Iterable[float],
@@ -61,27 +76,32 @@ class AsyncRetryableGenerator(AsyncGenerator):
         """
         self.target_fn = target
         # active target must be populated in an async context
-        self.active_target: Optional[AsyncIterable] = None
+        self.active_target: Optional[AsyncIterator[T]] = None
         self.predicate = predicate
         self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
         self.timeout = timeout
         self.remaining_timeout_budget = timeout if timeout else None
 
-    async def _ensure_active_target(self):
+    async def _ensure_active_target(self) -> AsyncIterator[T]:
         """
         Ensure that the active target is populated and ready to be iterated over.
+
+        Returns:
+          - The active_target iterable
         """
         if not self.active_target:
-            self.active_target = self.target_fn()
-            if inspect.iscoroutine(self.active_target):
-                self.active_target = await self.active_target
+            new_iterable = self.target_fn()
+            if isinstance(new_iterable, Awaitable):
+                new_iterable = await new_iterable
+            self.active_target = new_iterable.__aiter__()
+        return self.active_target
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncIterator[T]:
         """Implement the async iterator protocol."""
         return self
 
-    async def _handle_exception(self, exc):
+    async def _handle_exception(self, exc) -> None:
         """
         When an exception is raised while iterating over the active_target,
         check if it is retryable. If so, create a new active_target and
@@ -114,7 +134,7 @@ class AsyncRetryableGenerator(AsyncGenerator):
             self.active_target = None
             await self._ensure_active_target()
 
-    def _subtract_time_from_budget(self, start_timestamp):
+    def _subtract_time_from_budget(self, start_timestamp: datetime.datetime) -> None:
         """
         Subtract the time elapsed since start_timestamp from the remaining
         timeout budget.
@@ -128,13 +148,15 @@ class AsyncRetryableGenerator(AsyncGenerator):
                 datetime_helpers.utcnow() - start_timestamp
             ).total_seconds()
 
-    async def _iteration_helper(self, iteration_routine: Awaitable):
+    async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
         """
         Helper function for sharing logic between __anext__ and asend.
 
         Args:
           - iteration_routine: The coroutine to await to get the next value
                 from the iterator (e.g. __anext__ or asend)
+        Returns:
+          - The next value from the active_target iterator.
         """
         # check for expired timeouts before attempting to iterate
         if (
@@ -164,16 +186,19 @@ class AsyncRetryableGenerator(AsyncGenerator):
         # if retryable exception was handled, find the next value to return
         return await self.__anext__()
 
-    async def __anext__(self):
+    async def __anext__(self) -> T:
         """
         Implement the async iterator protocol.
+
+        Returns:
+          - The next value from the active_target iterator.
         """
-        await self._ensure_active_target()
+        iterable = await self._ensure_active_target()
         return await self._iteration_helper(
-            self.active_target.__anext__(),
+            iterable.__anext__(),
         )
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         """
         Close the active_target if supported. (e.g. target is an async generator)
 
@@ -182,48 +207,57 @@ class AsyncRetryableGenerator(AsyncGenerator):
         """
         await self._ensure_active_target()
         if getattr(self.active_target, "aclose", None):
-            return await self.active_target.aclose()
+            casted_target = cast(AsyncGenerator[T, None], self.active_target)
+            return await casted_target.aclose()
         else:
             raise AttributeError(
                 "aclose() not implemented for {}".format(self.active_target)
             )
 
-    async def asend(self, value):
+    async def asend(self, *args, **kwargs) -> T:
         """
         Call asend on the active_target if supported. (e.g. target is an async generator)
 
         If an exception is raised, a retry may be attempted before returning
         a result.
 
-        Returns:
-          - the result of calling asend() on the active_target
 
+        Args:
+          - *args: arguments to pass to the wrapped generator's asend method
+          - **kwargs: keyword arguments to pass to the wrapped generator's asend method
+        Returns:
+          - the next value of the active_target iterator after calling asend
         Raises:
           - AttributeError if the active_target does not have a asend() method
         """
         await self._ensure_active_target()
         if getattr(self.active_target, "asend", None):
-            return await self._iteration_helper(self.active_target.asend(value))
+            casted_target = cast(AsyncGenerator[T, None], self.active_target)
+            return await self._iteration_helper(casted_target.asend(*args, **kwargs))
         else:
             raise AttributeError(
                 "asend() not implemented for {}".format(self.active_target)
             )
 
-    async def athrow(self, typ, val=None, tb=None):
+    async def athrow(self, *args, **kwargs) -> T:
         """
         Call athrow on the active_target if supported. (e.g. target is an async generator)
 
         If an exception is raised, a retry may be attempted before returning
 
+        Args:
+          - *args: arguments to pass to the wrapped generator's athrow method
+          - **kwargs: keyword arguments to pass to the wrapped generator's athrow method
         Returns:
-          - the result of calling athrow() on the active_target
+          - the next value of the active_target iterator after calling athrow
         Raises:
           - AttributeError if the active_target does not have a athrow() method
         """
         await self._ensure_active_target()
         if getattr(self.active_target, "athrow", None):
+            casted_target = cast(AsyncGenerator[T, None], self.active_target)
             try:
-                return await self.active_target.athrow(typ, val, tb)
+                return await casted_target.athrow(*args, **kwargs)
             except Exception as exc:
                 await self._handle_exception(exc)
             # if retryable exception was handled, return next from new active_target
