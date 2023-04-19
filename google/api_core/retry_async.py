@@ -240,7 +240,7 @@ class AsyncRetry:
             )
 
         @functools.wraps(func)
-        def retry_wrapped_stream(*args, deadline_dt=None, **kwargs):
+        def retry_wrapped_stream(*args, **kwargs):
             """A wrapper that iterates over target stream with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(

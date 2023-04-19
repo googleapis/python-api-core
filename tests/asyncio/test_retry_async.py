@@ -428,6 +428,10 @@ class TestAsyncRetry:
         sleep_time=0,
         ignore_sent=False,
     ):
+        """
+        Helper to create a mock generator that yields a number of values
+        Generator can optionally raise an exception on a specific iteration
+        """
         try:
             sent_in = None
             for i in range(num):
@@ -447,6 +451,10 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_success(self, sleep):
+        """
+        Test that a retry-decorated generator yields values as expected
+        This test checks a generator with no issues
+        """
         from collections.abc import AsyncGenerator
 
         retry_ = retry_async.AsyncRetry(is_stream=True)
@@ -469,6 +477,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry(self, sleep):
+        """
+        Tests that a retry-decorated generator will retry on errors
+        """
         on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
             on_error=on_error,
@@ -487,6 +498,10 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
+        """
+        Tests that a retry-decorated generator will throw a RetryError
+        after using the time budget
+        """
         on_error = mock.Mock()
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -527,6 +542,10 @@ class TestAsyncRetry:
 
     @pytest.mark.asyncio
     async def test___call___generator_timeout_cancellations(self):
+        """
+        Tests that a retry-decorated generator will throw a RetryError
+        after using its time budget
+        """
         on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -617,6 +636,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___generator_send_retry(self, sleep):
+        """
+        Send should be retried if target generator raises an error
+        """
         on_error = mock.Mock(return_value=None)
         retry_ = retry_async.AsyncRetry(
             on_error=on_error,
@@ -639,6 +661,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_close(self, sleep):
+        """
+        Close should be passed through retry into target generator
+        """
         retry_ = retry_async.AsyncRetry(is_stream=True)
         decorated = retry_(self._generator_mock)
         exception_list = []
@@ -655,6 +680,9 @@ class TestAsyncRetry:
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_generator_throw(self, sleep):
+        """
+        Throw should be passed through retry into target generator
+        """
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
             is_stream=True,
@@ -691,10 +719,13 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
         async def iterable_fn(n):
-            class CustomIterator:
+            class CustomIterable:
                 def __init__(self, n):
                     self.n = n
                     self.i = 0
+
+                def __aiter__(self):
+                    return self
 
                 async def __anext__(self):
                     if self.i == self.n:
@@ -702,7 +733,7 @@ class TestAsyncRetry:
                     self.i += 1
                     return self.i - 1
 
-            return CustomIterator(n)
+            return CustomIterable(n)
 
         decorated = retry_(iterable_fn)
 
@@ -731,10 +762,13 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
         def iterable_fn(n):
-            class CustomIterator:
+            class CustomIterable:
                 def __init__(self, n):
                     self.n = n
                     self.i = 0
+
+                def __aiter__(self):
+                    return self
 
                 async def __anext__(self):
                     if self.i == self.n:
@@ -742,7 +776,7 @@ class TestAsyncRetry:
                     self.i += 1
                     return self.i - 1
 
-            return CustomIterator(n)
+            return CustomIterable(n)
 
         decorated = retry_(iterable_fn)
 

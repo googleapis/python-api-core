@@ -1,3 +1,4 @@
+# Copyright 2017 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -493,6 +494,10 @@ class TestRetry(object):
         exceptions_seen=None,
         ignore_sent=False,
     ):
+        """
+        Helper to create a mock generator that yields a number of values
+        Generator can optionally raise an exception on a specific iteration
+        """
         try:
             sent_in = None
             for i in range(num):
@@ -510,6 +515,10 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_success(self, sleep):
+        """
+        Test that a retry-decorated generator yields values as expected
+        This test checks a generator with no issues
+        """
         import types
         import collections
 
@@ -533,6 +542,9 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_retry(self, sleep):
+        """
+        Tests that a retry-decorated generator will retry on errors
+        """
         on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
             on_error=on_error,
@@ -550,6 +562,10 @@ class TestRetry(object):
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
     def test___call___generator_retry_hitting_deadline(self, sleep, uniform):
+        """
+        Tests that a retry-decorated generator will throw a RetryError
+        after using the time budget
+        """
         on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
@@ -677,6 +693,9 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_close(self, sleep):
+        """
+        Close should be passed through retry into target generator
+        """
         retry_ = retry.Retry(is_stream=True)
 
         decorated = retry_(self._generator_mock)
@@ -693,6 +712,9 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_throw(self, sleep):
+        """
+        Throw should be passed through retry into target generator
+        """
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError), is_stream=True
         )
@@ -721,6 +743,10 @@ class TestRetry(object):
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_is_stream(self, sleep):
+        """
+        is_stream should determine if the target is wrapped as a
+        generator or as a callable
+        """
         gen_retry_ = retry.Retry(
             is_stream=True, predicate=retry.if_exception_type(ValueError)
         )
