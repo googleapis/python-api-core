@@ -143,7 +143,7 @@ def test_from_dict_bad_argument():
         )
 
 
-def test_repr():
+def test_vars():
     expected_keys = set(
         [
             "api_endpoint",
