@@ -172,7 +172,9 @@ def test_retry_streaming_target_bad_sleep_generator():
 
         return inner_gen()
 
-    with pytest.raises(ValueError, match="Sleep generator stopped yielding sleep values"):
+    with pytest.raises(
+        ValueError, match="Sleep generator stopped yielding sleep values"
+    ):
         gen = RetryableGenerator(target_fn, lambda x: True, [], None)
         next(gen)
 
