@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from re import match
 import pytest
 
 from google.api_core import client_options
@@ -143,24 +144,8 @@ def test_from_dict_bad_argument():
         )
 
 
-def test_vars():
-    expected_keys = set(
-        [
-            "api_endpoint",
-            "client_cert_source",
-            "client_encrypted_cert_source",
-            "quota_project_id",
-            "credentials_file",
-            "scopes",
-            "api_key",
-            "api_audience",
-        ]
-    )
+def test_repr():
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
-    options_keys = vars(options).keys()
-
-    assert options_keys == expected_keys
-    assert options.api_endpoint == "foo.googleapis.com"
-    # Assert options default to None.
-    assert options.client_encrypted_cert_source is None
-    assert options.api_key is None
+    options_repr = repr(options)
+    assert match(r'ClientOptions:', options_repr)
+    assert match(r'.*api_endpoint.*foo.googleapis.com', options_repr)
