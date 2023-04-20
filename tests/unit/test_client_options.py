@@ -145,7 +145,21 @@ def test_from_dict_bad_argument():
 
 
 def test_repr():
+    expected_keys = set(
+        [
+            "api_endpoint",
+            "client_cert_source",
+            "client_encrypted_cert_source",
+            "quota_project_id",
+            "credentials_file",
+            "scopes",
+            "api_key",
+            "api_audience",
+        ]
+    )
     options = client_options.ClientOptions(api_endpoint="foo.googleapis.com")
     options_repr = repr(options)
+    options_keys = vars(options).keys()
     assert match(r"ClientOptions:", options_repr)
     assert match(r".*'api_endpoint': 'foo.googleapis.com'.*", options_repr)
+    assert options_keys == expected_keys
