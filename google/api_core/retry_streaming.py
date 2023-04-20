@@ -58,7 +58,7 @@ class RetryableGenerator(Generator[T, Any, None]):
                 be caught.
         """
         self.target_fn = target
-        self.active_target: Iterator = self.target_fn().__iter__()
+        self.active_target: Iterator[T] = self.target_fn().__iter__()
         self.predicate = predicate
         self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
@@ -106,7 +106,7 @@ class RetryableGenerator(Generator[T, Any, None]):
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
             time.sleep(next_sleep)
-            self.active_target = self.target_fn()
+            self.active_target = self.target_fn().__iter__()
 
     def __next__(self) -> T:
         """
@@ -130,7 +130,8 @@ class RetryableGenerator(Generator[T, Any, None]):
           - AttributeError if the active_target does not have a close() method
         """
         if getattr(self.active_target, "close", None):
-            return self.active_target.close()
+            casted_target = cast(Generator, self.active_target)
+            return casted_target.close()
         else:
             raise AttributeError(
                 "close() not implemented for {}".format(self.active_target)

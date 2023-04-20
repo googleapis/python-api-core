@@ -23,13 +23,11 @@ from typing import (
     AsyncIterable,
     Awaitable,
     Union,
-    Any,
     TypeVar,
     AsyncGenerator,
 )
 
 import asyncio
-import inspect
 import logging
 import datetime
 
@@ -118,7 +116,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             except StopIteration:
                 raise ValueError("Sleep generator stopped yielding sleep values")
             # if time budget is exceeded, raise RetryError
-            if self.remaining_timeout_budget is not None:
+            if self.remaining_timeout_budget is not None and self.timeout is not None:
                 if self.remaining_timeout_budget <= next_sleep:
                     raise exceptions.RetryError(
                         "Timeout of {:.1f}s exceeded".format(self.timeout),
