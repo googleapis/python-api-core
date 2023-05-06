@@ -16,6 +16,7 @@
 
 import collections
 import functools
+import logging
 import warnings
 
 import grpc
@@ -277,7 +278,7 @@ def create_channel(
     default_scopes=None,
     default_host=None,
     compression=None,
-    **kwargs
+    **kwargs,
 ):
     """Create a secure channel with credentials.
 
@@ -321,6 +322,10 @@ def create_channel(
         quota_project_id=quota_project_id,
         default_host=default_host,
     )
+    logging.log(
+        logging.WARNING, f"creating secure_channels with compression={compression}"
+    )
+    logging.log(logging.WARNING, f"creating secure_channels with kwargs={kwargs}")
 
     if HAS_GRPC_GCP:  # pragma: NO COVER
         return grpc_gcp.secure_channel(
@@ -359,12 +364,13 @@ class _CallableStub(object):
         """List[protobuf.Message]: All requests sent to this callable."""
         self.calls = []
         """List[Tuple]: All invocations of this callable. Each tuple is the
-        request, timeout, metadata, and credentials."""
+        request, timeout, metadata, compression, and credentials."""
 
     def __call__(
         self, request, timeout=None, metadata=None, credentials=None, compression=None
     ):
         self._channel.requests.append(_ChannelRequest(self._method, request))
+        logging.log(logging.WARNING, f"__call__ called with compression={compression}")
         self.calls.append(
             _MethodCall(request, timeout, metadata, credentials, compression)
         )

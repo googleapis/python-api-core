@@ -431,6 +431,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 
@@ -493,6 +494,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 
@@ -545,6 +547,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 

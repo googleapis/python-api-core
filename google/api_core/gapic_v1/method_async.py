@@ -37,7 +37,7 @@ def wrap_method(
 
     Returns:
         Callable: A new callable that takes optional ``retry``, ``timeout``,
-            and compression arguments and applies the common error mapping,
+            and ``compression`` arguments and applies the common error mapping,
             retry, timeout, metadata, and compression behavior to the low-level RPC method.
     """
     func = grpc_helpers_async.wrap_errors(func)

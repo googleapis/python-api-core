@@ -29,7 +29,7 @@ from google.api_core import gapic_v1, page_iterator_async
 from google.api_core import retry as retries
 from google.api_core import timeout as timeouts
 from google.longrunning import operations_pb2
-import grpc
+from grpc import Compression
 
 
 class OperationsAsyncClient:
@@ -60,7 +60,7 @@ class OperationsAsyncClient:
         )
         default_timeout = timeouts.TimeToDeadlineTimeout(timeout=600.0)
 
-        default_compression = grpc.Compression.NoCompression
+        default_compression = Compression.NoCompression
 
         self._get_operation = gapic_v1.method_async.wrap_method(
             self.operations_stub.GetOperation,

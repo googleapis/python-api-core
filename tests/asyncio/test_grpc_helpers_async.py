@@ -390,14 +390,14 @@ def test_create_channel_implicit_with_default_scopes(
     composite_creds = composite_creds_call.return_value
 
     channel = grpc_helpers_async.create_channel(
-        target, default_scopes=["three", "four"]
+        target, default_scopes=["three", "four"], compression=grpc.Compression.Gzip
     )
 
     assert channel is grpc_secure_channel.return_value
 
     default.assert_called_once_with(scopes=None, default_scopes=["three", "four"])
     grpc_secure_channel.assert_called_once_with(
-        target, composite_creds, compression=None
+        target, composite_creds, compression=grpc.Compression.Gzip
     )
 
 
@@ -422,7 +422,7 @@ def test_create_channel_explicit(grpc_secure_channel, auth_creds, composite_cred
     composite_creds = composite_creds_call.return_value
 
     channel = grpc_helpers_async.create_channel(
-        target, credentials=mock.sentinel.credentials
+        target, credentials=mock.sentinel.credentials, compression=grpc.Compression.Gzip
     )
 
     auth_creds.assert_called_once_with(
@@ -430,7 +430,7 @@ def test_create_channel_explicit(grpc_secure_channel, auth_creds, composite_cred
     )
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(
-        target, composite_creds, compression=None
+        target, composite_creds, compression=grpc.Compression.Gzip
     )
 
 
@@ -445,13 +445,16 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
     credentials.requires_scopes = True
 
     channel = grpc_helpers_async.create_channel(
-        target, credentials=credentials, scopes=scopes
+        target,
+        credentials=credentials,
+        scopes=scopes,
+        compression=grpc.Compression.Gzip,
     )
 
     credentials.with_scopes.assert_called_once_with(scopes, default_scopes=None)
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(
-        target, composite_creds, compression=None
+        target, composite_creds, compression=grpc.Compression.Gzip
     )
 
 
@@ -468,7 +471,10 @@ def test_create_channel_explicit_default_scopes(
     credentials.requires_scopes = True
 
     channel = grpc_helpers_async.create_channel(
-        target, credentials=credentials, default_scopes=default_scopes
+        target,
+        credentials=credentials,
+        default_scopes=default_scopes,
+        compression=grpc.Compression.Gzip,
     )
 
     credentials.with_scopes.assert_called_once_with(
@@ -476,7 +482,7 @@ def test_create_channel_explicit_default_scopes(
     )
     assert channel is grpc_secure_channel.return_value
     grpc_secure_channel.assert_called_once_with(
-        target, composite_creds, compression=None
+        target, composite_creds, compression=grpc.Compression.Gzip
     )
 
 
@@ -555,7 +561,9 @@ def test_create_channel_with_credentials_file_and_scopes(
         credentials_file, scopes=scopes, default_scopes=None
     )
     assert channel is grpc_secure_channel.return_value
-    grpc_secure_channel.assert_called_once_with(target, composite_creds, compression=None)
+    grpc_secure_channel.assert_called_once_with(
+        target, composite_creds, compression=None
+    )
 
 
 @mock.patch("grpc.composite_channel_credentials")

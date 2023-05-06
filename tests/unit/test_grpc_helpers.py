@@ -359,17 +359,19 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
     target = "example.com:443"
     composite_creds = composite_creds_call.return_value
 
-    channel = grpc_helpers.create_channel(target)
+    channel = grpc_helpers.create_channel(target, compression=grpc.Compression.Gzip)
 
     assert channel is grpc_secure_channel.return_value
 
     default.assert_called_once_with(scopes=None, default_scopes=None)
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(
+            target, composite_creds, None, compression=grpc.Compression.Gzip
+        )
     else:
         grpc_secure_channel.assert_called_once_with(
-            target, composite_creds, compression=None
+            target, composite_creds, compression=grpc.Compression.Gzip
         )
 
 

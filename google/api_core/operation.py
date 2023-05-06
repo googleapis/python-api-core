@@ -395,4 +395,11 @@ def from_gapic(
         metadata=grpc_metadata,
         compression=grpc_compression,
     )
-    return Operation(operation, refresh, cancel, result_type, **kwargs)
+    return Operation(
+        operation,
+        refresh,
+        cancel,
+        result_type,
+        compression_type=grpc_compression,
+        **kwargs
+    )
