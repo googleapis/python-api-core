@@ -45,7 +45,6 @@ from google.api_core.future import polling
 from google.longrunning import operations_pb2
 from google.protobuf import json_format
 from google.rpc import code_pb2
-from grpc import Compression
 
 
 class Operation(polling.PollingFuture):
@@ -62,7 +61,6 @@ class Operation(polling.PollingFuture):
             result.
         metadata_type (func:`type`): The protobuf type for the operation's
             metadata.
-        compression_type (Compression): The compression method for an operation.
         polling (google.api_core.retry.Retry): The configuration used for polling.
             This parameter controls how often :meth:`done` is polled. If the
             ``timeout`` argument is specified in the :meth:`result` method, it will
@@ -79,7 +77,6 @@ class Operation(polling.PollingFuture):
         cancel,
         result_type,
         metadata_type=None,
-        compression_type=Compression.NoCompression,
         polling=polling.DEFAULT_POLLING,
         **kwargs
     ):
@@ -89,7 +86,6 @@ class Operation(polling.PollingFuture):
         self._cancel = cancel
         self._result_type = result_type
         self._metadata_type = metadata_type
-        self._compression_type = compression_type
         self._completion_lock = threading.Lock()
         # Invoke this in case the operation came back already complete.
         self._set_result_from_operation()
@@ -108,14 +104,6 @@ class Operation(polling.PollingFuture):
         return protobuf_helpers.from_any_pb(
             self._metadata_type, self._operation.metadata
         )
-
-    @property
-    def compression(self):
-        """Compression: the current operation compression."""
-        if not self._operation.HasField("compression"):
-            return None
-
-        return self._compression_type
 
     @classmethod
     def deserialize(self, payload):
@@ -303,14 +291,7 @@ def _cancel_grpc(operations_stub, operation_name):
     operations_stub.CancelOperation(request_pb)
 
 
-def from_grpc(
-    operation,
-    operations_stub,
-    result_type,
-    grpc_compression=Compression.NoCompression,
-    grpc_metadata=None,
-    **kwargs
-):
+def from_grpc(operation, operations_stub, result_type, grpc_metadata=None, **kwargs):
     """Create an operation future using a gRPC client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -327,7 +308,6 @@ def from_grpc(
         result_type (:func:`type`): The protobuf result type.
         grpc_metadata (Optional[List[Tuple[str, str]]]): Additional metadata to pass
             to the rpc.
-        grpc_compression (grpc.Compression): Type of compression for the rpc.
         kwargs: Keyword args passed into the :class:`Operation` constructor.
 
     Returns:
@@ -338,27 +318,18 @@ def from_grpc(
         _refresh_grpc,
         operations_stub,
         operation.name,
-        compression=grpc_compression,
         metadata=grpc_metadata,
     )
     cancel = functools.partial(
         _cancel_grpc,
         operations_stub,
         operation.name,
-        compression=grpc_compression,
         metadata=grpc_metadata,
     )
     return Operation(operation, refresh, cancel, result_type, **kwargs)
 
 
-def from_gapic(
-    operation,
-    operations_client,
-    result_type,
-    grpc_metadata=None,
-    grpc_compression=Compression.NoCompression,
-    **kwargs
-):
+def from_gapic(operation, operations_client, result_type, grpc_metadata=None, **kwargs):
     """Create an operation future from a gapic client.
 
     This interacts with the long-running operations `service`_ (specific
@@ -375,8 +346,6 @@ def from_gapic(
         result_type (:func:`type`): The protobuf result type.
         grpc_metadata (Optional[List[Tuple[str, str]]]): Additional metadata to pass
             to the rpc.
-        grpc_compression (grpc.Comression): Additional metadata to pass
-            to the rpc.
         kwargs: Keyword args passed into the :class:`Operation` constructor.
 
     Returns:
@@ -387,19 +356,10 @@ def from_gapic(
         operations_client.get_operation,
         operation.name,
         metadata=grpc_metadata,
-        compression=grpc_compression,
     )
     cancel = functools.partial(
         operations_client.cancel_operation,
         operation.name,
         metadata=grpc_metadata,
-        compression=grpc_compression,
     )
-    return Operation(
-        operation,
-        refresh,
-        cancel,
-        result_type,
-        compression_type=grpc_compression,
-        **kwargs
-    )
+    return Operation(operation, refresh, cancel, result_type, **kwargs)
