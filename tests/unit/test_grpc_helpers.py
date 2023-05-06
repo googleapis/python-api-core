@@ -366,9 +366,7 @@ def test_create_channel_implicit(grpc_secure_channel, default, composite_creds_c
     default.assert_called_once_with(scopes=None, default_scopes=None)
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(
-            target, composite_creds, None, compression=grpc.Compression.Gzip
-        )
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=grpc.Compression.Gzip
@@ -405,7 +403,7 @@ def test_create_channel_implicit_with_default_host(
     )
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -434,7 +432,7 @@ def test_create_channel_implicit_with_ssl_creds(
     composite_creds = composite_creds_call.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -461,7 +459,7 @@ def test_create_channel_implicit_with_scopes(
     default.assert_called_once_with(scopes=["one", "two"], default_scopes=None)
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -488,7 +486,7 @@ def test_create_channel_implicit_with_default_scopes(
     default.assert_called_once_with(scopes=None, default_scopes=["three", "four"])
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -522,7 +520,7 @@ def test_create_channel_explicit(grpc_secure_channel, auth_creds, composite_cred
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -548,7 +546,7 @@ def test_create_channel_explicit_scoped(grpc_secure_channel, composite_creds_cal
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -578,7 +576,7 @@ def test_create_channel_explicit_default_scopes(
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -606,7 +604,7 @@ def test_create_channel_explicit_with_quota_project(
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -637,7 +635,7 @@ def test_create_channel_with_credentials_file(
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -671,7 +669,7 @@ def test_create_channel_with_credentials_file_and_scopes(
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None
@@ -705,7 +703,7 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     assert channel is grpc_secure_channel.return_value
 
     if grpc_helpers.HAS_GRPC_GCP:  # pragma: NO COVER
-        grpc_secure_channel.assert_called_once_with(target, composite_creds, None, None)
+        grpc_secure_channel.assert_called_once_with(target, composite_creds, None)
     else:
         grpc_secure_channel.assert_called_once_with(
             target, composite_creds, compression=None

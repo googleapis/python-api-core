@@ -52,6 +52,8 @@ else:
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def _patch_callable_name(callable_):
     """Fix-up gRPC callable attributes.
@@ -322,15 +324,13 @@ def create_channel(
         quota_project_id=quota_project_id,
         default_host=default_host,
     )
-    logging.log(
-        logging.WARNING, f"creating secure_channels with compression={compression}"
-    )
-    logging.log(logging.WARNING, f"creating secure_channels with kwargs={kwargs}")
 
     if HAS_GRPC_GCP:  # pragma: NO COVER
-        return grpc_gcp.secure_channel(
-            target, composite_credentials, compression=compression, **kwargs
-        )
+        if compression is not None and compression != grpc.Compression.NoCompression:
+            _LOGGER.debug(
+                "Compression argument is being ignored for grpc_gcp.secure_channel creation."
+            )
+        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
     return grpc.secure_channel(
         target, composite_credentials, compression=compression, **kwargs
     )
@@ -370,7 +370,6 @@ class _CallableStub(object):
         self, request, timeout=None, metadata=None, credentials=None, compression=None
     ):
         self._channel.requests.append(_ChannelRequest(self._method, request))
-        logging.log(logging.WARNING, f"__call__ called with compression={compression}")
         self.calls.append(
             _MethodCall(request, timeout, metadata, credentials, compression)
         )
