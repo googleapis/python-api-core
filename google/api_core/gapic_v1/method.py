@@ -140,7 +140,7 @@ def wrap_method(
 ):
     """Wrap an RPC method with common behavior.
 
-    This applies common error wrapping, retry, timeout, and compression behavior a function.
+    This applies common error wrapping, retry, timeout, and compression behavior to a function.
     The wrapped function will take optional ``retry``, ``timeout``, and ``compression``
     arguments.
 
