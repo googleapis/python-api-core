@@ -541,44 +541,6 @@ class TestAsyncRetry:
         assert total_wait == 7
 
     @pytest.mark.asyncio
-    async def test___call___generator_timeout_cancellations(self):
-        """
-        Tests that a retry-decorated generator will throw a RetryError
-        after using its time budget
-        """
-        on_error = mock.Mock(return_value=None)
-        retry_ = retry_async.AsyncRetry(
-            predicate=retry_async.if_exception_type(ValueError),
-            deadline=0.2,
-            is_stream=True,
-        )
-        utcnow = datetime.datetime.utcnow()
-        utcnow_patcher = mock.patch(
-            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
-        )
-        # ensure generator times out when awaiting past deadline
-        with pytest.raises(exceptions.RetryError):
-            infinite_gen = retry_(self._generator_mock, on_error)(sleep_time=60)
-            await infinite_gen.__anext__()
-        # ensure time between yields isn't counted
-        with utcnow_patcher as patched_utcnow:
-            generator = retry_(self._generator_mock)(sleep_time=0.05)
-            assert await generator.__anext__() == 0
-            patched_utcnow.return_value += datetime.timedelta(20)
-            assert await generator.__anext__() == 1
-        # ensure timeout budget is tracked
-        generator = retry_(self._generator_mock)(sleep_time=0.07)
-        assert await generator.__anext__() == 0
-        assert await generator.__anext__() == 1
-        with pytest.raises(exceptions.RetryError) as exc:
-            await generator.__anext__()
-            assert "Timeout of 0.2s exceeded" in str(exc.value)
-        # subsequent calls should also return a RetryError
-        with pytest.raises(exceptions.RetryError) as exc:
-            await generator.__anext__()
-            assert "Timeout of 0.2s exceeded" in str(exc.value)
-
-    @pytest.mark.asyncio
     async def test___call___generator_await_cancel_retryable(self):
         """
         cancel calls should be supported as retryable errors
@@ -794,3 +756,24 @@ class TestAsyncRetry:
         assert await retryable.__anext__() == 3
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
+
+    @pytest.mark.asyncio
+    async def test_iterate_stream_after_deadline(self):
+        """
+        Streaming retries should raise RetryError when calling next or send after deadline has passed
+        """
+        retry_ = retry_async.AsyncRetry(is_stream=True, deadline=0.01)
+        decorated = retry_(self._generator_mock)
+        generator = decorated(10)
+        starting_time_budget = generator.remaining_timeout_budget
+        assert starting_time_budget == 0.01
+        await generator.__anext__()
+        # ensure budget is used on each call
+        assert generator.remaining_timeout_budget < starting_time_budget
+        # simulate using up budget
+        generator.remaining_timeout_budget = 0
+        with pytest.raises(exceptions.RetryError):
+            await generator.__anext__()
+        with pytest.raises(exceptions.RetryError):
+            await generator.asend("test")
+

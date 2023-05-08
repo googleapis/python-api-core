@@ -170,10 +170,9 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             # start the timer for the current operation
             start_timestamp = datetime_helpers.utcnow()
             # grab the next value from the active_target
-            next_val_routine = asyncio.wait_for(
-                iteration_routine, self.remaining_timeout_budget
-            )
-            next_val = await next_val_routine
+            # Note: interrupting with asyncio.wait_for is expensive,
+            # so we only check  for timeouts at the start of each iteration
+            next_val = await iteration_routine
             # subtract the time spent waiting for the next value from the
             # remaining timeout budget
             self._subtract_time_from_budget(start_timestamp)

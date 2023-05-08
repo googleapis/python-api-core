@@ -304,7 +304,7 @@ class TestRetry(object):
         assert retry_ is not new_retry
         assert new_retry._initial == 1
         assert new_retry._maximum == 4
-        assert new_retry._multiplier == 3
+        assert n ew_retry._multiplier == 3
 
         new_retry = retry_.with_delay(multiplier=4)
         assert retry_ is not new_retry
@@ -768,3 +768,39 @@ class TestRetry(object):
         gen = gen_retry_(wrapped)()
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
+
+    def test_iterate_stream_after_deadline(self):
+        """
+        Streaming retries should raise RetryError when calling next after deadline has passed
+        """
+        from time import sleep
+        retry_ = retry.Retry(
+            predicate=retry.if_exception_type(ValueError),
+            is_stream=True,
+            deadline=0.01,
+        )
+        decorated = retry_(self._generator_mock)
+        generator = decorated(10)
+        next(generator)
+        sleep(0.02)
+        with pytest.raises(exceptions.RetryError):
+            next(generator)
+
+    def test_iterate_stream_send_after_deadline(self):
+        """
+        Streaming retries should raise RetryError when calling send after deadline has passed
+        """
+        from time import sleep
+        retry_ = retry.Retry(
+            predicate=retry.if_exception_type(ValueError),
+            is_stream=True,
+            deadline=0.01,
+        )
+        decorated = retry_(self._generator_mock)
+        generator = decorated(10)
+        next(generator)
+        generator.send("test")
+        sleep(0.02)
+        with pytest.raises(exceptions.RetryError):
+            generator.send("test")
+ 

@@ -97,16 +97,29 @@ class RetryableGenerator(Generator[T, Any, None]):
                 next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
                     seconds=next_sleep
                 )
-                if self.deadline < next_attempt:
-                    raise exceptions.RetryError(
-                        f"Deadline of {self.timeout:.1f} seconds exceeded", exc
-                    ) from exc
+                self._check_timeout(next_attempt, exc)
             # sleep before retrying
             _LOGGER.debug(
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
             time.sleep(next_sleep)
             self.active_target = self.target_fn().__iter__()
+
+    def _check_timeout(self, current_time:float, source_exception: Optional[Exception] = None) -> None:
+        """
+        Helper function to check if the timeout has been exceeded, and raise a RetryError if so.
+
+        Args:
+          - current_time: the timestamp to check against the deadline
+          - source_exception: the exception that triggered the timeout check, if any
+        Raises:
+          - RetryError if the deadline has been exceeded
+        """
+        if self.deadline is not None and self.deadline < current_time:
+            raise exceptions.RetryError(
+                "Timeout of {:.1f}s exceeded".format(self.timeout),
+                source_exception,
+            ) from source_exception
 
     def __next__(self) -> T:
         """
@@ -115,6 +128,8 @@ class RetryableGenerator(Generator[T, Any, None]):
         Returns:
           - the next value of the active_target iterator
         """
+        # check for expired timeouts before attempting to iterate
+        self._check_timeout(datetime_helpers.utcnow())
         try:
             return next(self.active_target)
         except Exception as exc:
@@ -152,6 +167,8 @@ class RetryableGenerator(Generator[T, Any, None]):
         Raises:
           - AttributeError if the active_target does not have a send() method
         """
+        # check for expired timeouts before attempting to iterate
+        self._check_timeout(datetime_helpers.utcnow())
         if getattr(self.active_target, "send", None):
             casted_target = cast(Generator, self.active_target)
             try:
