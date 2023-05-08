@@ -304,7 +304,7 @@ class TestRetry(object):
         assert retry_ is not new_retry
         assert new_retry._initial == 1
         assert new_retry._maximum == 4
-        assert n ew_retry._multiplier == 3
+        assert new_retry._multiplier == 3
 
         new_retry = retry_.with_delay(multiplier=4)
         assert retry_ is not new_retry
@@ -774,6 +774,7 @@ class TestRetry(object):
         Streaming retries should raise RetryError when calling next after deadline has passed
         """
         from time import sleep
+
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
             is_stream=True,
@@ -791,6 +792,7 @@ class TestRetry(object):
         Streaming retries should raise RetryError when calling send after deadline has passed
         """
         from time import sleep
+
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
             is_stream=True,
@@ -803,4 +805,3 @@ class TestRetry(object):
         sleep(0.02)
         with pytest.raises(exceptions.RetryError):
             generator.send("test")
- 

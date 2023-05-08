@@ -776,4 +776,3 @@ class TestAsyncRetry:
             await generator.__anext__()
         with pytest.raises(exceptions.RetryError):
             await generator.asend("test")
-

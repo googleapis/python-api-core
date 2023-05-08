@@ -105,7 +105,9 @@ class RetryableGenerator(Generator[T, Any, None]):
             time.sleep(next_sleep)
             self.active_target = self.target_fn().__iter__()
 
-    def _check_timeout(self, current_time:float, source_exception: Optional[Exception] = None) -> None:
+    def _check_timeout(
+        self, current_time: float, source_exception: Optional[Exception] = None
+    ) -> None:
         """
         Helper function to check if the timeout has been exceeded, and raise a RetryError if so.
 
@@ -115,7 +117,11 @@ class RetryableGenerator(Generator[T, Any, None]):
         Raises:
           - RetryError if the deadline has been exceeded
         """
-        if self.deadline is not None and self.deadline < current_time:
+        if (
+            self.deadline is not None
+            and self.timeout is not None
+            and self.deadline < current_time
+        ):
             raise exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(self.timeout),
                 source_exception,
