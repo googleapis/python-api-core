@@ -155,7 +155,7 @@ def retry_target(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target(Callable[None, Any]): The function to call and retry. This must be a
+        target(Callable[[], Any]): The function to call and retry. This must be a
             nullary function - apply arguments with `functools.partial`.
         predicate (Callable[Exception]): A callable used to determine if an
             exception raised by the target should be considered retryable.
