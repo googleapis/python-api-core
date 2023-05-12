@@ -29,10 +29,9 @@ from typing import (
 
 import asyncio
 import logging
-import datetime
+import time
 
 
-from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,19 +131,19 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             self.active_target = None
             await self._ensure_active_target()
 
-    def _subtract_time_from_budget(self, start_timestamp: datetime.datetime) -> None:
+    def _subtract_time_from_budget(self, start_timestamp: float) -> None:
         """
         Subtract the time elapsed since start_timestamp from the remaining
         timeout budget.
 
         Args:
-        - start_timestamp (datetime): The time at which the last operation
+        - start_timestamp: The timestamp at which the last operation
             started.
         """
         if self.remaining_timeout_budget is not None:
             self.remaining_timeout_budget -= (
-                datetime_helpers.utcnow() - start_timestamp
-            ).total_seconds()
+                time.monotonic() - start_timestamp
+            )
 
     async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
         """
@@ -168,7 +167,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             )
         try:
             # start the timer for the current operation
-            start_timestamp = datetime_helpers.utcnow()
+            start_timestamp = time.monotonic()
             # grab the next value from the active_target
             # Note: interrupting with asyncio.wait_for is expensive,
             # so we only check  for timeouts at the start of each iteration
