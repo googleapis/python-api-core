@@ -141,9 +141,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             started.
         """
         if self.remaining_timeout_budget is not None:
-            self.remaining_timeout_budget -= (
-                time.monotonic() - start_timestamp
-            )
+            self.remaining_timeout_budget -= time.monotonic() - start_timestamp
 
     async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
         """
