@@ -765,14 +765,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True, deadline=0.01)
         decorated = retry_(self._generator_mock)
         generator = decorated(10)
-        starting_time_budget = generator.remaining_timeout_budget
-        assert starting_time_budget == 0.01
         await generator.__anext__()
-        # ensure budget is used on each call
-        assert generator.remaining_timeout_budget < starting_time_budget
-        # simulate using up budget
-        generator.remaining_timeout_budget = 0
+        await asyncio.sleep(0.02)
         with pytest.raises(exceptions.RetryError):
             await generator.__anext__()
-        with pytest.raises(exceptions.RetryError):
-            await generator.asend("test")

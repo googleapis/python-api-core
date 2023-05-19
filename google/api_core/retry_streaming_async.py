@@ -29,9 +29,9 @@ from typing import (
 
 import asyncio
 import logging
-import time
+import datetime
 
-
+from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,7 +78,35 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
         self.timeout = timeout
-        self.remaining_timeout_budget = timeout if timeout else None
+        self.timeout_task = None
+        if self.timeout is not None:
+            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(
+                seconds=self.timeout
+            )
+        else:
+            self.deadline = None
+
+    def _check_timeout(
+        self, current_time: float, source_exception: Optional[Exception] = None
+    ) -> None:
+        """
+        Helper function to check if the timeout has been exceeded, and raise a RetryError if so.
+
+        Args:
+          - current_time: the timestamp to check against the deadline
+          - source_exception: the exception that triggered the timeout check, if any
+        Raises:
+          - RetryError if the deadline has been exceeded
+        """
+        if (
+            self.deadline is not None
+            and self.timeout is not None
+            and self.deadline < current_time
+        ):
+            raise exceptions.RetryError(
+                "Timeout of {:.1f}s exceeded".format(self.timeout),
+                source_exception,
+            ) from source_exception
 
     async def _ensure_active_target(self) -> AsyncIterator[T]:
         """
@@ -114,15 +142,12 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
                 next_sleep = next(self.sleep_generator)
             except StopIteration:
                 raise ValueError("Sleep generator stopped yielding sleep values")
-            # if time budget is exceeded, raise RetryError
-            if self.remaining_timeout_budget is not None and self.timeout is not None:
-                if self.remaining_timeout_budget <= next_sleep:
-                    raise exceptions.RetryError(
-                        "Timeout of {:.1f}s exceeded".format(self.timeout),
-                        exc,
-                    ) from exc
-                else:
-                    self.remaining_timeout_budget -= next_sleep
+            # if deadline is exceeded, raise RetryError
+            if self.deadline is not None:
+                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
+                    seconds=next_sleep
+                )
+                self._check_timeout(next_attempt, exc)
             _LOGGER.debug(
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
             )
@@ -130,18 +155,6 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             await asyncio.sleep(next_sleep)
             self.active_target = None
             await self._ensure_active_target()
-
-    def _subtract_time_from_budget(self, start_timestamp: float) -> None:
-        """
-        Subtract the time elapsed since start_timestamp from the remaining
-        timeout budget.
-
-        Args:
-        - start_timestamp: The timestamp at which the last operation
-            started.
-        """
-        if self.remaining_timeout_budget is not None:
-            self.remaining_timeout_budget -= time.monotonic() - start_timestamp
 
     async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
         """
@@ -154,28 +167,13 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
           - The next value from the active_target iterator.
         """
         # check for expired timeouts before attempting to iterate
-        if (
-            self.remaining_timeout_budget is not None
-            and self.remaining_timeout_budget <= 0
-            and self.timeout is not None
-        ):
-            raise exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded".format(self.timeout),
-                None,
-            )
+        self._check_timeout(datetime_helpers.utcnow())
         try:
-            # start the timer for the current operation
-            start_timestamp = time.monotonic()
             # grab the next value from the active_target
             # Note: interrupting with asyncio.wait_for is expensive,
             # so we only check  for timeouts at the start of each iteration
-            next_val = await iteration_routine
-            # subtract the time spent waiting for the next value from the
-            # remaining timeout budget
-            self._subtract_time_from_budget(start_timestamp)
-            return next_val
+            return await iteration_routine
         except (Exception, asyncio.CancelledError) as exc:
-            self._subtract_time_from_budget(start_timestamp)
             await self._handle_exception(exc)
         # if retryable exception was handled, find the next value to return
         return await self.__anext__()
