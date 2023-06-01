@@ -47,6 +47,8 @@ class CustomOperation:
     error_code: typing.Optional[int] = None
     error_message: typing.Optional[str] = None
     armor_class: typing.Optional[int] = None
+    # Note: `error` can be removed once proposal A from
+    # b/284179390 is implemented.
     error: typing.Optional[LROCustomErrors] = None
 
     # Note: in generated clients, this property must be generated for each

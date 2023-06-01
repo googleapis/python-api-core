@@ -145,6 +145,8 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
         error_msg = "{} {}".format(self.code, self.message)
         if self.details:
             error_msg = "{} {}".format(error_msg, self.details)
+        # Note: This else condition can be removed once proposal A from
+        # b/284179390 is implemented.
         else:
             if self.errors:
                 errors = [

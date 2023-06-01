@@ -158,6 +158,8 @@ class ExtendedOperation(polling.PollingFuture):
                 return
 
             if self.error_code and self.error_message:
+                # Note: `errors` can be removed once proposal A from
+                # b/284179390 is implemented.
                 errors = []
                 if hasattr(self, "error") and hasattr(self.error, "errors"):
                     errors = self.error.errors
