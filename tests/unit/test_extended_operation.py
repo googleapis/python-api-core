@@ -35,11 +35,11 @@ class CustomOperation:
 
     class LROCustomErrors:
         class LROCustomError:
-            def __init__(self, code: str = None, message: str = None):
+            def __init__(self, code: str = "", message: str = ""):
                 self.code = code
                 self.message = message
 
-        def __init__(self, errors: typing.List[LROCustomError] = None):
+        def __init__(self, errors: typing.List[LROCustomError] = []):
             self.errors = errors
 
     name: str
