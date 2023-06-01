@@ -33,11 +33,21 @@ class CustomOperation:
         DONE = 1
         PENDING = 2
 
+    class LROCustomErrors:
+        class LROCustomError:
+            def __init__(self, code: str = None, message: str = None):
+                self.code = code
+                self.message = message
+
+        def __init__(self, errors: typing.List[LROCustomError] = None):
+            self.errors = errors
+
     name: str
     status: StatusCode
     error_code: typing.Optional[int] = None
     error_message: typing.Optional[str] = None
     armor_class: typing.Optional[int] = None
+    error: typing.Optional[LROCustomErrors] = None
 
     # Note: in generated clients, this property must be generated for each
     # extended operation message type.
@@ -155,19 +165,30 @@ def test_done_w_retry():
 
 
 def test_error():
+    _EXCEPTION_CODE = "INCOMPATIBLE_BACKEND_SERVICES"
+    _EXCEPTION_MESSAGE = "Validation failed for instance group"
     responses = [
         CustomOperation(
             name=TEST_OPERATION_NAME,
             status=CustomOperation.StatusCode.DONE,
             error_code=400,
             error_message="Bad request",
+            error=CustomOperation.LROCustomErrors(
+                errors=[
+                    CustomOperation.LROCustomErrors.LROCustomError(
+                        code=_EXCEPTION_CODE, message=_EXCEPTION_MESSAGE
+                    )
+                ]
+            ),
         ),
     ]
 
     ex_op, _, _ = make_extended_operation(responses)
 
     # Defaults to CallError when grpc is not installed
-    with pytest.raises(exceptions.BadRequest):
+    with pytest.raises(
+        exceptions.BadRequest, match=f"{_EXCEPTION_CODE}: {_EXCEPTION_MESSAGE}"
+    ):
         ex_op.result()
 
     # Inconsistent result

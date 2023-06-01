@@ -152,8 +152,7 @@ class GoogleAPICallError(GoogleAPIError, metaclass=_GoogleAPICallErrorMeta):
                     for error in self.errors
                     if hasattr(error, "code") and hasattr(error, "message")
                 ]
-                if len(errors) > 0:
-                    error_msg = "".join(error_msg, "\n".join(errors))
+                error_msg = "{} {}".format(error_msg, "\n".join(errors))
         return error_msg
 
     @property
