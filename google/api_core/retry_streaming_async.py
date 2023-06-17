@@ -170,10 +170,11 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         self._check_timeout(datetime_helpers.utcnow())
         try:
             # grab the next value from the active_target
-            # Note: interrupting with asyncio.wait_for is expensive,
-            # so we only check  for timeouts at the start of each iteration
+            # Note: here would be a good place to add a timeout, like asyncio.wait_for.
+            # But wait_for is expensive, so we only check for timeouts at the
+            # start of each iteration.
             return await iteration_routine
-        except (Exception, asyncio.CancelledError) as exc:
+        except Exception as exc:
             await self._handle_exception(exc)
         # if retryable exception was handled, find the next value to return
         return await self.__anext__()

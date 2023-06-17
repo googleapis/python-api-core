@@ -541,9 +541,9 @@ class TestAsyncRetry:
         assert total_wait == 7
 
     @pytest.mark.asyncio
-    async def test___call___generator_await_cancel_retryable(self):
+    async def test___call___generator_cancellations(self):
         """
-        cancel calls should be supported as retryable errors
+        cancel calls should propagate to the generator
         """
         # test without cancel as retryable
         retry_ = retry_async.AsyncRetry(is_stream=True)
@@ -558,20 +558,6 @@ class TestAsyncRetry:
             await task
         with pytest.raises(StopAsyncIteration):
             await generator.__anext__()
-        # test with cancel as retryable
-        retry_cancel_ = retry_async.AsyncRetry(
-            predicate=retry_async.if_exception_type(asyncio.CancelledError),
-            is_stream=True,
-        )
-        generator = retry_cancel_(self._generator_mock)(sleep_time=0.2)
-        await generator.__anext__() == 0
-        await generator.__anext__() == 1
-        task = asyncio.create_task(generator.__anext__())
-        await asyncio.sleep(0.05)
-        task.cancel()
-        await task
-        assert task.result() == 0
-        await generator.__anext__() == 1
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
