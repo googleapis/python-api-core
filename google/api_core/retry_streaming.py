@@ -51,9 +51,9 @@ class RetryableGenerator(Generator[T, Any, None]):
     There are two ways to build more advanced retry logic for streams:
 
     1. Wrap the target
-        Use a ``target`` that maintains state between retries, and creates a 
-        different generator on each retry call. For example, you can wrap a 
-        network call in a function that modifies the request based on what has 
+        Use a ``target`` that maintains state between retries, and creates a
+        different generator on each retry call. For example, you can wrap a
+        network call in a function that modifies the request based on what has
         already been returned:
 
         ```
