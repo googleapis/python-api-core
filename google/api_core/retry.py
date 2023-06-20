@@ -311,6 +311,9 @@ class Retry(object):
             will be wrapped with retry logic, and any failed outputs will
             restart the stream. If False, only the input function call itself
             will be retried. Defaults to False.
+            To avoid duplicate values, retryable streams should typically be
+            wrapped in additional filter logic before use. For more details, see
+            ``google/api_core/retry_streaming.RetryaleGenerator``.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """

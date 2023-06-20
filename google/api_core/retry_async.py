@@ -173,8 +173,6 @@ class AsyncRetry:
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
         timeout (float): How long to keep retrying in seconds.
-            When ``is_stream``, only time spent waiting on the
-            target or sleeping between retries is counted towards the timeout.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
@@ -184,6 +182,9 @@ class AsyncRetry:
             If True, the iterable will be wrapped with retry logic, and any
             failed outputs will restart the stream. If False, only the input
             function call itself will be retried. Defaults to False.
+            To avoid duplicate values, retryable streams should typically be
+            wrapped in additional filter logic before use. For more details, see
+            ``google.api_core.retry_streaming_async.AsyncRetryableGenerator``.
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
     """
