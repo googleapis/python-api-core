@@ -258,7 +258,8 @@ def docfx(session):
             "sphinx.ext.napoleon,"
             "sphinx.ext.todo,"
             "sphinx.ext.viewcode,"
-            "recommonmark"
+            "recommonmark",
+            "myst_parser"
         ),
         "-b",
         "html",
