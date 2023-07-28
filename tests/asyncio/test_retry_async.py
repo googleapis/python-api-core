@@ -503,6 +503,7 @@ class TestAsyncRetry:
         after using the time budget
         """
         import time
+
         on_error = mock.Mock()
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -515,7 +516,8 @@ class TestAsyncRetry:
 
         time_now = time.monotonic()
         now_patcher = mock.patch(
-            "time.monotonic", return_value=time_now,
+            "time.monotonic",
+            return_value=time_now,
         )
 
         decorated = retry_(self._generator_mock, on_error=on_error)
