@@ -567,6 +567,7 @@ class TestRetry(object):
         after using the time budget
         """
         import time
+
         on_error = mock.Mock(return_value=None)
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
@@ -579,7 +580,8 @@ class TestRetry(object):
 
         timenow = time.monotonic()
         now_patcher = mock.patch(
-            "time.monotonic", return_value=timenow,
+            "time.monotonic",
+            return_value=timenow,
         )
 
         decorated = retry_(self._generator_mock, on_error=on_error)
