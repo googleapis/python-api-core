@@ -29,9 +29,8 @@ from typing import (
 
 import asyncio
 import logging
-import datetime
+import time
 
-from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -144,9 +143,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         self.timeout = timeout
         self.timeout_task = None
         if self.timeout is not None:
-            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=self.timeout
-            )
+            self.deadline = time.monotonic() + self.timeout
         else:
             self.deadline = None
 
@@ -208,9 +205,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
                 raise ValueError("Sleep generator stopped yielding sleep values")
             # if deadline is exceeded, raise RetryError
             if self.deadline is not None:
-                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
-                    seconds=next_sleep
-                )
+                next_attempt = time.monotonic() + next_sleep
                 self._check_timeout(next_attempt, exc)
             _LOGGER.debug(
                 "Retrying due to {}, sleeping {:.1f}s ...".format(exc, next_sleep)
@@ -231,7 +226,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
           - The next value from the active_target iterator.
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(datetime_helpers.utcnow())
+        self._check_timeout(time.monotonic())
         try:
             # grab the next value from the active_target
             # Note: here would be a good place to add a timeout, like asyncio.wait_for.

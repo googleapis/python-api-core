@@ -502,6 +502,7 @@ class TestAsyncRetry:
         Tests that a retry-decorated generator will throw a RetryError
         after using the time budget
         """
+        import time
         on_error = mock.Mock()
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
@@ -512,19 +513,19 @@ class TestAsyncRetry:
             is_stream=True,
         )
 
-        utcnow = datetime.datetime.utcnow()
-        utcnow_patcher = mock.patch(
-            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
+        time_now = time.monotonic()
+        now_patcher = mock.patch(
+            "time.monotonic", return_value=time_now,
         )
 
         decorated = retry_(self._generator_mock, on_error=on_error)
         generator = decorated(error_on=1)
 
-        with utcnow_patcher as patched_utcnow:
+        with now_patcher as patched_now:
             # Make sure that calls to fake asyncio.sleep() also advance the mocked
             # time clock.
             def increase_time(sleep_delay):
-                patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
+                patched_now.return_value += sleep_delay
 
             sleep.side_effect = increase_time
 

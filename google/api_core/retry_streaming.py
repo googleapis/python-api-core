@@ -20,7 +20,6 @@ import datetime
 import logging
 import time
 
-from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -128,9 +127,7 @@ class RetryableGenerator(Generator[T, Any, None]):
         self.on_error = on_error
         self.timeout = timeout
         if self.timeout is not None:
-            self.deadline = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=self.timeout
-            )
+            self.deadline = time.monotonic() + self.timeout
         else:
             self.deadline = None
 
@@ -158,9 +155,7 @@ class RetryableGenerator(Generator[T, Any, None]):
                 raise ValueError("Sleep generator stopped yielding sleep values")
             # if deadline is exceeded, raise RetryError
             if self.deadline is not None:
-                next_attempt = datetime_helpers.utcnow() + datetime.timedelta(
-                    seconds=next_sleep
-                )
+                next_attempt = time.monotonic() + next_sleep
                 self._check_timeout(next_attempt, exc)
             # sleep before retrying
             _LOGGER.debug(
@@ -199,7 +194,7 @@ class RetryableGenerator(Generator[T, Any, None]):
           - the next value of the active_target iterator
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(datetime_helpers.utcnow())
+        self._check_timeout(time.monotonic())
         try:
             return next(self.active_target)
         except Exception as exc:
@@ -238,7 +233,7 @@ class RetryableGenerator(Generator[T, Any, None]):
           - AttributeError if the active_target does not have a send() method
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(datetime_helpers.utcnow())
+        self._check_timeout(time.monotonic())
         if getattr(self.active_target, "send", None):
             casted_target = cast(Generator, self.active_target)
             try:
