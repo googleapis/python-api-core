@@ -97,9 +97,7 @@ def default(session, install_grpc=True):
     session.install(
         "dataclasses",
         "mock",
-        # Revert to just "pytest" once
-        # https://github.com/pytest-dev/pytest/issues/10451 is fixed
-        "pytest<7.2.0",
+        "pytest",
         "pytest-cov",
         "pytest-xdist",
     )
