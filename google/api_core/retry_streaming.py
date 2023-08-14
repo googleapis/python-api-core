@@ -16,7 +16,6 @@
 
 from typing import Callable, Optional, Iterable, Iterator, Generator, TypeVar, Any, cast
 
-import datetime
 import logging
 import time
 
@@ -104,6 +103,7 @@ class RetryableGenerator(Generator[T, Any, None]):
         sleep_generator: Iterable[float],
         timeout: Optional[float] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
+        check_timeout_on_yield=False,
     ):
         """
         Args:
@@ -119,6 +119,11 @@ class RetryableGenerator(Generator[T, Any, None]):
             on_error: A function to call while processing a
                 retryable exception.  Any error raised by this function will *not*
                 be caught.
+            check_timeout_on_yield: If True, the timeout value will be checked
+                after each yield. If the timeout has been exceeded, the generator
+                will raise a RetryError. Note that this adds an overhead to each
+                yield, so it is preferred to add the timeout logic to the wrapped 
+                stream when possible.
         """
         self.target_fn = target
         self.active_target: Iterator[T] = self.target_fn().__iter__()
@@ -130,6 +135,7 @@ class RetryableGenerator(Generator[T, Any, None]):
             self.deadline = time.monotonic() + self.timeout
         else:
             self.deadline = None
+        self._check_timeout_on_yield = check_timeout_on_yield
 
     def __iter__(self) -> Generator[T, Any, None]:
         """
@@ -194,7 +200,8 @@ class RetryableGenerator(Generator[T, Any, None]):
           - the next value of the active_target iterator
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(time.monotonic())
+        if self._check_timeout_on_yield:
+            self._check_timeout(time.monotonic())
         try:
             return next(self.active_target)
         except Exception as exc:
@@ -233,7 +240,8 @@ class RetryableGenerator(Generator[T, Any, None]):
           - AttributeError if the active_target does not have a send() method
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(time.monotonic())
+        if self._check_timeout_on_yield:
+            self._check_timeout(time.monotonic())
         if getattr(self.active_target, "send", None):
             casted_target = cast(Generator, self.active_target)
             try:
