@@ -770,39 +770,38 @@ class TestRetry(object):
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
 
-    def test_iterate_stream_after_deadline(self):
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test_yield_stream_after_deadline(self, sleep, uniform):
         """
-        Streaming retries should raise RetryError when calling next after deadline has passed
-        """
-        from time import sleep
+        By default, if the deadline is hit between yields, the generator will continue.
 
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError),
-            is_stream=True,
-            deadline=0.01,
+        There is a flag that should cause the wrapper to test for the deadline after
+        each yield.
+        """
+        import time
+        from google.api_core.retry_streaming import RetryableGenerator
+        timeout = 2
+        time_now = time.monotonic()
+        now_patcher = mock.patch(
+            "time.monotonic", return_value=time_now,
         )
-        decorated = retry_(self._generator_mock)
-        generator = decorated(10)
-        next(generator)
-        sleep(0.02)
-        with pytest.raises(exceptions.RetryError):
-            next(generator)
 
-    def test_iterate_stream_send_after_deadline(self):
-        """
-        Streaming retries should raise RetryError when calling send after deadline has passed
-        """
-        from time import sleep
+        with now_patcher as patched_now:
+            no_check = RetryableGenerator(self._generator_mock, None, [], timeout=timeout, check_timeout_on_yield=False)
+            assert no_check._check_timeout_on_yield is False
+            check = RetryableGenerator(self._generator_mock, None, [], timeout=timeout, check_timeout_on_yield=True)
+            assert check._check_timeout_on_yield is True
 
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError),
-            is_stream=True,
-            deadline=0.01,
-        )
-        decorated = retry_(self._generator_mock)
-        generator = decorated(10)
-        next(generator)
-        generator.send("test")
-        sleep(0.02)
-        with pytest.raises(exceptions.RetryError):
-            generator.send("test")
+            # first yield should be fine
+            next(check)
+            next(no_check)
+
+            # simulate a delay before next yield
+            patched_now.return_value += timeout + 1
+
+            # second yield should raise when check_timeout_on_yield is True
+            with pytest.raises(exceptions.RetryError):
+                next(check)
+            next(no_check)

@@ -744,15 +744,38 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
 
+    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
+    @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test_iterate_stream_after_deadline(self):
+    async def test_yield_stream_after_deadline(self, sleep, uniform):
         """
-        Streaming retries should raise RetryError when calling next or send after deadline has passed
+        By default, if the deadline is hit between yields, the generator will continue.
+
+        There is a flag that should cause the wrapper to test for the deadline after
+        each yield.
         """
-        retry_ = retry_async.AsyncRetry(is_stream=True, deadline=0.01)
-        decorated = retry_(self._generator_mock)
-        generator = decorated(10)
-        await generator.__anext__()
-        await asyncio.sleep(0.02)
-        with pytest.raises(exceptions.RetryError):
-            await generator.__anext__()
+        import time
+        from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+        timeout = 2
+        time_now = time.monotonic()
+        now_patcher = mock.patch(
+            "time.monotonic", return_value=time_now,
+        )
+
+        with now_patcher as patched_now:
+            no_check = AsyncRetryableGenerator(self._generator_mock, None, [], timeout=timeout, check_timeout_on_yield=False)
+            assert no_check._check_timeout_on_yield is False
+            check = AsyncRetryableGenerator(self._generator_mock, None, [], timeout=timeout, check_timeout_on_yield=True)
+            assert check._check_timeout_on_yield is True
+
+            # first yield should be fine
+            await check.__anext__()
+            await no_check.__anext__()
+
+            # simulate a delay before next yield
+            patched_now.return_value += timeout + 1
+
+            # second yield should raise when check_timeout_on_yield is True
+            with pytest.raises(exceptions.RetryError):
+                await check.__anext__()
+            await no_check.__anext__()

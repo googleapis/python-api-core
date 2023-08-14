@@ -118,6 +118,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         sleep_generator: Iterable[float],
         timeout: Optional[float] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
+        check_timeout_on_yield=False,
     ):
         """
         Args:
@@ -133,6 +134,11 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             on_error: A function to call while processing a
                 retryable exception.  Any error raised by this function will *not*
                 be caught.
+            check_timeout_on_yield: If True, the timeout value will be checked
+                after each yield. If the timeout has been exceeded, the generator
+                will raise a RetryError. Note that this adds an overhead to each
+                yield, so it is preferred to add the timeout logic to the wrapped 
+                stream when possible.
         """
         self.target_fn = target
         # active target must be populated in an async context
@@ -146,6 +152,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             self.deadline = time.monotonic() + self.timeout
         else:
             self.deadline = None
+        self._check_timeout_on_yield = check_timeout_on_yield
 
     def _check_timeout(
         self, current_time: float, source_exception: Optional[Exception] = None
@@ -176,7 +183,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         Returns:
           - The active_target iterable
         """
-        if not self.active_target:
+        if self.active_target is None:
             new_iterable = self.target_fn()
             if isinstance(new_iterable, Awaitable):
                 new_iterable = await new_iterable
@@ -226,7 +233,8 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
           - The next value from the active_target iterator.
         """
         # check for expired timeouts before attempting to iterate
-        self._check_timeout(time.monotonic())
+        if self._check_timeout_on_yield:
+            self._check_timeout(time.monotonic())
         try:
             # grab the next value from the active_target
             # Note: here would be a good place to add a timeout, like asyncio.wait_for.
