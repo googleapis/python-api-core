@@ -747,10 +747,11 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
 
+    @pytest.mark.parametrize("yield_method", ["__anext__", "asend"])
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test_yield_stream_after_deadline(self, sleep, uniform):
+    async def test_yield_stream_after_deadline(self, sleep, uniform, yield_method):
         """
         By default, if the deadline is hit between yields, the generator will continue.
 
@@ -758,6 +759,7 @@ class TestAsyncRetry:
         each yield.
         """
         import time
+        import functools
         from google.api_core.retry_streaming_async import AsyncRetryableGenerator
 
         timeout = 2
@@ -785,17 +787,28 @@ class TestAsyncRetry:
             )
             assert check._check_timeout_on_yield is True
 
-            # first yield should be fine
-            await check.__anext__()
+            # initialize the generator
             await no_check.__anext__()
+            await check.__anext__()
+
+            # use yield_method to advance the generator
+            no_check_yield = getattr(no_check, yield_method)
+            check_yield = getattr(check, yield_method)
+            if yield_method == "asend":
+                no_check_yield = functools.partial(no_check_yield, None)
+                check_yield = functools.partial(check_yield, None)
+
+            # first yield should be fine
+            await check_yield()
+            await no_check_yield()
 
             # simulate a delay before next yield
             patched_now.return_value += timeout + 1
 
             # second yield should raise when check_timeout_on_yield is True
             with pytest.raises(exceptions.RetryError):
-                await check.__anext__()
-            await no_check.__anext__()
+                await check_yield()
+            await no_check_yield()
 
     @pytest.mark.asyncio
     async def test_generator_error_list(self):
