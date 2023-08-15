@@ -766,10 +766,9 @@ class TestAsyncRetry:
             await retryable.__anext__()
 
     @pytest.mark.parametrize("yield_method", ["__anext__", "asend"])
-    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test_yield_stream_after_deadline(self, sleep, uniform, yield_method):
+    async def test_yield_stream_after_deadline(self, sleep, yield_method):
         """
         By default, if the deadline is hit between yields, the generator will continue.
 
@@ -828,8 +827,9 @@ class TestAsyncRetry:
                 await check_yield()
             await no_check_yield()
 
+    @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test_generator_error_list(self):
+    async def test_generator_error_list(self, sleep):
         """
         generator should keep history of errors seen
         """

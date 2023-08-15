@@ -773,9 +773,8 @@ class TestRetry(object):
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
 
     @pytest.mark.parametrize("yield_method", ["__next__", "send"])
-    @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
-    def test_yield_stream_after_deadline(self, sleep, uniform, yield_method):
+    def test_yield_stream_after_deadline(self, sleep, yield_method):
         """
         By default, if the deadline is hit between yields, the generator will continue.
 
@@ -833,7 +832,8 @@ class TestRetry(object):
                 check_yield()
             no_check_yield()
 
-    def test_generator_error_list(self):
+    @mock.patch("asyncio.sleep", autospec=True)
+    def test_generator_error_list(self, sleep):
         """
         generator should keep history of errors seen
         """
