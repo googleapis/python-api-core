@@ -678,55 +678,12 @@ class TestAsyncRetry:
         # calling next on closed generator should not raise error
         assert await generator.__anext__() == 1
 
+    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test___call___with_iterable_coroutine_send_close_throw(self, sleep):
+    async def test___call___with_iterable_send(self, sleep, awaitale_wrapped):
         """
-        Send, Throw, and Close should raise AttributeErrors when target is a coroutine that
-        produces an iterable
-        """
-        retry_ = retry_async.AsyncRetry(is_stream=True)
-
-        async def iterable_fn(n):
-            class CustomIterable:
-                def __init__(self, n):
-                    self.n = n
-                    self.i = 0
-
-                def __aiter__(self):
-                    return self
-
-                async def __anext__(self):
-                    if self.i == self.n:
-                        raise StopAsyncIteration
-                    self.i += 1
-                    return self.i - 1
-
-            return CustomIterable(n)
-
-        decorated = retry_(iterable_fn)
-
-        retryable = decorated(4)
-        result = await retryable.__anext__()
-        assert result == 0
-        with pytest.raises(AttributeError):
-            await retryable.asend("test")
-        assert await retryable.__anext__() == 1
-        with pytest.raises(AttributeError):
-            await retryable.aclose()
-        assert await retryable.__anext__() == 2
-        with pytest.raises(AttributeError):
-            await retryable.athrow(ValueError("test"))
-        assert await retryable.__anext__() == 3
-        with pytest.raises(StopAsyncIteration):
-            await retryable.__anext__()
-
-    @mock.patch("asyncio.sleep", autospec=True)
-    @pytest.mark.asyncio
-    async def test___call___with_iterable_send_close_throw(self, sleep):
-        """
-        Send, Throw, and Close should raise AttributeErrors when target is a
-        function that produces an iterable
+        Send should work like next if the wrapped iterable does not support it
         """
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
@@ -747,22 +704,122 @@ class TestAsyncRetry:
 
             return CustomIterable(n)
 
-        decorated = retry_(iterable_fn)
+        if awaitale_wrapped:
+
+            async def wrapper(n):
+                return iterable_fn(n)
+
+            decorated = retry_(wrapper)
+        else:
+            decorated = retry_(iterable_fn)
 
         retryable = decorated(4)
         result = await retryable.__anext__()
         assert result == 0
-        with pytest.raises(AttributeError):
-            await retryable.asend("test")
-        assert await retryable.__anext__() == 1
-        with pytest.raises(AttributeError):
-            await retryable.aclose()
-        assert await retryable.__anext__() == 2
-        with pytest.raises(AttributeError):
-            await retryable.athrow(ValueError("test"))
-        assert await retryable.__anext__() == 3
+        await retryable.asend("test") == 1
+        await retryable.asend("test2") == 2
+        await retryable.asend("test3") == 3
+
+    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_iterable_close(self, sleep, awaitale_wrapped):
+        """
+        close should be handled by wrapper if wrapped iterable does not support it
+        """
+        retry_ = retry_async.AsyncRetry(is_stream=True)
+
+        def iterable_fn(n):
+            class CustomIterable:
+                def __init__(self, n):
+                    self.n = n
+                    self.i = 0
+
+                def __aiter__(self):
+                    return self
+
+                async def __anext__(self):
+                    if self.i == self.n:
+                        raise StopAsyncIteration
+                    self.i += 1
+                    return self.i - 1
+
+            return CustomIterable(n)
+
+        if awaitale_wrapped:
+
+            async def wrapper(n):
+                return iterable_fn(n)
+
+            decorated = retry_(wrapper)
+        else:
+            decorated = retry_(iterable_fn)
+
+        # try closing active generator
+        retryable = decorated(4)
+        assert await retryable.__anext__() == 0
+        await retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
+        # try closing new generator
+        new_retryable = decorated(4)
+        await new_retryable.aclose()
+        with pytest.raises(StopAsyncIteration):
+            await new_retryable.__anext__()
+
+    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
+    async def test___call___with_iterable_throw(self, sleep, awaitale_wrapped):
+        """
+        Throw should work even if the wrapped iterable does not support it
+        """
+
+        predicate = retry_async.if_exception_type(ValueError)
+        retry_ = retry_async.AsyncRetry(is_stream=True, predicate=predicate)
+
+        def iterable_fn(n):
+            class CustomIterable:
+                def __init__(self, n):
+                    self.n = n
+                    self.i = 0
+
+                def __aiter__(self):
+                    return self
+
+                async def __anext__(self):
+                    if self.i == self.n:
+                        raise StopAsyncIteration
+                    self.i += 1
+                    return self.i - 1
+
+            return CustomIterable(n)
+
+        if awaitale_wrapped:
+
+            async def wrapper(n):
+                return iterable_fn(n)
+
+            decorated = retry_(wrapper)
+        else:
+            decorated = retry_(iterable_fn)
+
+        # try throwing with active generator
+        retryable = decorated(4)
+        assert await retryable.__anext__() == 0
+        # should swallow errors in predicate
+        await retryable.athrow(ValueError("test"))
+        # should raise errors not in predicate
+        with pytest.raises(BufferError):
+            await retryable.athrow(BufferError("test"))
+        with pytest.raises(StopAsyncIteration):
+            await retryable.__anext__()
+        # try throwing with new generator
+        new_retryable = decorated(4)
+        with pytest.raises(BufferError):
+            await new_retryable.athrow(BufferError("test"))
+        with pytest.raises(StopAsyncIteration):
+            await new_retryable.__anext__()
 
     @pytest.mark.parametrize("yield_method", ["__anext__", "asend"])
     @mock.patch("asyncio.sleep", autospec=True)
@@ -789,14 +846,14 @@ class TestAsyncRetry:
             no_check = retry_target_generator(
                 self._generator_mock,
                 None,
-                [0]*10,
+                [0] * 10,
                 timeout=timeout,
                 check_timeout_on_yield=False,
             )
             check = retry_target_generator(
                 self._generator_mock,
                 None,
-                [0]*10,
+                [0] * 10,
                 timeout=timeout,
                 check_timeout_on_yield=True,
             )
@@ -851,10 +908,11 @@ class TestAsyncRetry:
             timeout=timeout,
             exception_factory=factory,
         )
+        # initialize the generator
+        await generator.__anext__()
         # trigger some retryable errors
         await generator.athrow(sent_errors[0])
         await generator.athrow(sent_errors[1])
-        assert generator.error_list == [sent_errors[0], sent_errors[1]]
         # trigger a non-retryable error
         with pytest.raises(expected_final_err.__class__) as exc_info:
             await generator.athrow(sent_errors[2])
@@ -898,6 +956,8 @@ class TestAsyncRetry:
                 exception_factory=factory,
                 check_timeout_on_yield=True,
             )
+            # initialize the generator
+            await generator.__anext__()
             # trigger some retryable errors
             await generator.athrow(sent_errors[0])
             await generator.athrow(sent_errors[1])

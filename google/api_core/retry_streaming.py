@@ -38,6 +38,13 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
+class _TerminalException(Exception):
+    """
+    Exception to bypasses retry logic and raises __cause__ immediately.
+    """
+    pass
+
+
 def _build_timeout_error(
     exc_list: List[Exception], is_timeout: bool, timeout_val: float
 ) -> Tuple[Exception, Optional[Exception]]:

@@ -36,10 +36,12 @@ import sys
 from functools import partial
 
 from google.api_core.retry_streaming import _build_timeout_error
+from google.api_core.retry_streaming import _TerminalException
 
 _LOGGER = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
 
 async def retry_target_generator(
     target: Union[
@@ -71,7 +73,13 @@ async def retry_target_generator(
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
+            # generator may be raw iterator, or wrapped in an awaitable
             subgenerator = target()
+            try:
+                subgenerator = await subgenerator
+            except TypeError:
+                # was not awaitable
+                pass
 
             # if target is a generator, we will advance it using asend
             # otherwise, we will use anext
@@ -82,13 +90,11 @@ async def retry_target_generator(
                 # Check for expiration before starting
                 if check_timeout_on_yield is True and deadline is not None and time.monotonic() > deadline:
                     exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
-                    raise exc from source_exc
+                    exc.__cause__ = source_exc
+                    raise _TerminalException() from exc
                 ## Read from Subgenerator
                 if supports_send:
                     next_value = await subgenerator.asend(sent_in)
-                elif sent_in is not None:
-                    # asend was called on an iterator that does not support it
-                    raise AttributeError(f"asend() not implemented for {target}")
                 else:
                     next_value = await subgenerator.__anext__()
                 ## Yield from Wrapper to caller
@@ -101,7 +107,7 @@ async def retry_target_generator(
                     if bool(getattr(subgenerator, "aclose", None)):
                         await subgenerator.aclose()
                     else:
-                        raise AttributeError(f"aclose() not implemented for {target}")
+                        raise
                     return
                 except:  # noqa: E722
                     # bare except catches any exception passed to `athrow`
@@ -111,6 +117,8 @@ async def retry_target_generator(
                     else:
                         raise
             return
+        except _TerminalException as exc:
+            raise exc.__cause__ from exc.__cause__.__cause__
         except StopAsyncIteration:
             # if generator exhausted, return
             return
