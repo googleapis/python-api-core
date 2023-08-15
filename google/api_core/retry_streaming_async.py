@@ -52,9 +52,7 @@ async def retry_target_generator(
     timeout: Optional[float] = None,
     on_error: Optional[Callable[[Exception], None]] = None,
     exception_factory: Optional[
-        Callable[
-            [List[Exception], bool, float], Tuple[Exception, Optional[Exception]]
-        ]
+        Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
     ] = None,
     **kwargs,
 ) -> AsyncGenerator[T, None]:
@@ -126,7 +124,7 @@ async def retry_target_generator(
             filter_retry_wrapped = retryable_with_filter(target)
             ```
     """
-    subgenerator : Optional[AsyncIterator[T]] = None
+    subgenerator: Optional[AsyncIterator[T]] = None
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
@@ -140,9 +138,11 @@ async def retry_target_generator(
         # Start a new retry loop
         try:
             # generator may be raw iterator, or wrapped in an awaitable
-            gen_instance: Union[AsyncIterable[T], Awaitable[AsyncIterable[T]]] = target()
+            gen_instance: Union[
+                AsyncIterable[T], Awaitable[AsyncIterable[T]]
+            ] = target()
             try:
-                gen_instance = await gen_instance # type: ignore
+                gen_instance = await gen_instance  # type: ignore
             except TypeError:
                 # was not awaitable
                 pass
@@ -156,7 +156,7 @@ async def retry_target_generator(
             while True:
                 ## Read from Subgenerator
                 if supports_send:
-                    next_value = await subgenerator.asend(sent_in) # type: ignore
+                    next_value = await subgenerator.asend(sent_in)  # type: ignore
                 else:
                     next_value = await subgenerator.__anext__()
                 ## Yield from Wrapper to caller
@@ -175,7 +175,9 @@ async def retry_target_generator(
                     # bare except catches any exception passed to `athrow`
                     # delegate error handling to subgenerator
                     if getattr(subgenerator, "athrow", None):
-                        await cast(AsyncGenerator[T, None], subgenerator).athrow(*sys.exc_info())
+                        await cast(AsyncGenerator[T, None], subgenerator).athrow(
+                            *sys.exc_info()
+                        )
                     else:
                         raise
             return

@@ -643,6 +643,7 @@ class TestRetry(object):
             result.send("can not send to fresh generator")
             assert exc_info.match("can't send non-None value")
         # initiate iteration with None
+        result = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
         assert result.send(None) == 0
         # error thrown on 3
         # generator should contain 0, 1, 2 looping

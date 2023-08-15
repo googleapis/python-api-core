@@ -605,6 +605,7 @@ class TestAsyncRetry:
 
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
+        generator = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
         assert await generator.__anext__() == 0
         unpacked = [await generator.asend(i) for i in range(10)]
         assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
