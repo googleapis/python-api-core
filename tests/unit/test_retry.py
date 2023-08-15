@@ -166,11 +166,10 @@ def test_retry_target_bad_sleep_generator():
 def test_retry_streaming_target_bad_sleep_generator():
     from google.api_core.retry_streaming import retry_target_stream
 
-    gen = retry_target_stream(None, lambda x: True, [], None)
     with pytest.raises(
         ValueError, match="Sleep generator stopped yielding sleep values"
     ):
-        next(gen)
+        next(retry_target_stream(None, None, [], None))
 
 
 class TestRetry(object):
