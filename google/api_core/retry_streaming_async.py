@@ -42,7 +42,7 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-async def retry_target_generator(
+async def retry_target_stream(
     target: Union[
         Callable[[], AsyncIterable[T]],
         Callable[[], Awaitable[AsyncIterable[T]]],

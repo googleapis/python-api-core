@@ -164,7 +164,7 @@ def test_retry_target_bad_sleep_generator():
 
 
 def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry_streaming import retry_target_generator
+    from google.api_core.retry_streaming import retry_target_stream
 
     def target_fn():
         def inner_gen():
@@ -176,7 +176,7 @@ def test_retry_streaming_target_bad_sleep_generator():
     with pytest.raises(
         ValueError, match="Sleep generator stopped yielding sleep values"
     ):
-        gen = retry_target_generator(target_fn, lambda x: True, [], None)
+        gen = retry_target_stream(target_fn, lambda x: True, [], None)
         next(gen)
 
 
@@ -826,7 +826,7 @@ class TestRetry(object):
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
-        from google.api_core.retry_streaming import retry_target_generator
+        from google.api_core.retry_streaming import retry_target_stream
 
         timeout = 6
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -840,7 +840,7 @@ class TestRetry(object):
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
-        generator = retry_target_generator(
+        generator = retry_target_stream(
             self._generator_mock,
             retry.if_exception_type(ValueError),
             [0] * 3,
@@ -864,7 +864,7 @@ class TestRetry(object):
         test when timeout is exceeded
         """
         import time
-        from google.api_core.retry_streaming import retry_target_generator
+        from google.api_core.retry_streaming import retry_target_stream
 
         timeout = 2
         time_now = time.monotonic()
@@ -886,7 +886,7 @@ class TestRetry(object):
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 
-            generator = retry_target_generator(
+            generator = retry_target_stream(
                 self._generator_mock,
                 retry.if_exception_type(ValueError),
                 [0] * 3,

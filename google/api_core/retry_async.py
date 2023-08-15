@@ -61,7 +61,7 @@ from google.api_core import exceptions
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
-from google.api_core.retry_streaming_async import retry_target_generator
+from google.api_core.retry_streaming_async import retry_target_stream
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -184,7 +184,7 @@ class AsyncRetry:
             function call itself will be retried. Defaults to False.
             To avoid duplicate values, retryable streams should typically be
             wrapped in additional filter logic before use. For more details, see
-            ``google.api_core.retry_streaming_async.retry_target_generator``.
+            ``google.api_core.retry_streaming_async.retry_target_stream``.
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
     """
@@ -247,7 +247,7 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return retry_target_generator(
+            return retry_target_stream(
                 target,
                 self._predicate,
                 sleep_generator,

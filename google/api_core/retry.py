@@ -66,7 +66,7 @@ import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-from google.api_core.retry_streaming import retry_target_generator
+from google.api_core.retry_streaming import retry_target_stream
 from google.auth import exceptions as auth_exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -313,7 +313,7 @@ class Retry(object):
             will be retried. Defaults to False.
             To avoid duplicate values, retryable streams should typically be
             wrapped in additional filter logic before use. For more details, see
-            ``google.api_core.retry_streaming.retry_target_generator``.
+            ``google.api_core.retry_streaming.retry_target_stream``.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
@@ -361,7 +361,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = retry_target_generator if self._is_stream else retry_target
+            retry_func = retry_target_stream if self._is_stream else retry_target
             return retry_func(
                 target,
                 self._predicate,

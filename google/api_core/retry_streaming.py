@@ -20,7 +20,6 @@ from typing import (
     List,
     Tuple,
     Iterable,
-    Iterator,
     Generator,
     TypeVar,
     Any,
@@ -67,7 +66,7 @@ def _build_timeout_error(
         return exc_list[-1], None
 
 
-def retry_target_generator(
+def retry_target_stream(
     target: Callable[[], Union[Iterable[T], Generator[T, Any, None]]],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],

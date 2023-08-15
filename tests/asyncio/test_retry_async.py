@@ -136,7 +136,7 @@ async def test_retry_target_bad_sleep_generator():
 
 @pytest.mark.asyncio
 async def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry_streaming_async import retry_target_generator
+    from google.api_core.retry_streaming_async import retry_target_stream
 
     async def target_fn():
         async def inner_gen():
@@ -146,7 +146,7 @@ async def test_retry_streaming_target_bad_sleep_generator():
         return inner_gen()
 
     with pytest.raises(ValueError, match="Sleep generator"):
-        gen = retry_target_generator(target_fn, lambda x: True, [], None)
+        gen = retry_target_stream(target_fn, lambda x: True, [], None)
         await gen.__anext__()
 
 
@@ -828,7 +828,7 @@ class TestAsyncRetry:
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
-        from google.api_core.retry_streaming_async import retry_target_generator
+        from google.api_core.retry_streaming_async import retry_target_stream
 
         timeout = 6
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -842,7 +842,7 @@ class TestAsyncRetry:
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
-        generator = retry_target_generator(
+        generator = retry_target_stream(
             self._generator_mock,
             retry_async.if_exception_type(ValueError),
             [0] * 3,
@@ -867,7 +867,7 @@ class TestAsyncRetry:
         test when timeout is exceeded
         """
         import time
-        from google.api_core.retry_streaming_async import retry_target_generator
+        from google.api_core.retry_streaming_async import retry_target_stream
 
         timeout = 2
         time_now = time.monotonic()
@@ -889,7 +889,7 @@ class TestAsyncRetry:
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 
-            generator = retry_target_generator(
+            generator = retry_target_stream(
                 self._generator_mock,
                 retry_async.if_exception_type(ValueError),
                 [0] * 3,
