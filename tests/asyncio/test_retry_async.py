@@ -631,6 +631,24 @@ class TestAsyncRetry:
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
+    async def test___call___with_new_generator_close(self, sleep):
+        """
+        Close should be passed through retry into target generator,
+        even when it hasn't been iterated yet
+        """
+        retry_ = retry_async.AsyncRetry(is_stream=True)
+        decorated = retry_(self._generator_mock)
+        exception_list = []
+        generator = decorated(10, exceptions_seen=exception_list)
+        await generator.aclose()
+        assert generator.error_list == []
+
+        with pytest.raises(StopAsyncIteration):
+            # calling next on closed generator should raise error
+            await generator.__anext__()
+
+    @mock.patch("asyncio.sleep", autospec=True)
+    @pytest.mark.asyncio
     async def test___call___with_generator_throw(self, sleep):
         """
         Throw should be passed through retry into target generator
