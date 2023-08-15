@@ -138,8 +138,8 @@ async def test_retry_target_bad_sleep_generator():
 async def test_retry_streaming_target_bad_sleep_generator():
     from google.api_core.retry_streaming_async import retry_target_stream
 
+    gen = retry_target_stream(None, lambda x: True, [], None)
     with pytest.raises(ValueError, match="Sleep generator"):
-        gen = retry_target_stream(None, lambda x: True, [], None)
         await gen.__anext__()
 
 
@@ -681,33 +681,28 @@ class TestAsyncRetry:
         """
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
-        def iterable_fn(n):
+        def iterable_fn():
             class CustomIterable:
-                def __init__(self, n):
-                    self.n = n
-                    self.i = 0
+                def __init__(self):
+                    self.i = -1
 
                 def __aiter__(self):
                     return self
 
                 async def __anext__(self):
-                    if self.i == self.n:
-                        raise StopAsyncIteration
                     self.i += 1
-                    return self.i - 1
+                    return self.i
 
-            return CustomIterable(n)
+            return CustomIterable()
 
         if awaitale_wrapped:
-
-            async def wrapper(n):
-                return iterable_fn(n)
-
+            async def wrapper():
+                return iterable_fn()
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
 
-        retryable = decorated(4)
+        retryable = decorated()
         result = await retryable.__anext__()
         assert result == 0
         await retryable.asend("test") == 1
@@ -723,40 +718,36 @@ class TestAsyncRetry:
         """
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
-        def iterable_fn(n):
+        def iterable_fn():
             class CustomIterable:
-                def __init__(self, n):
-                    self.n = n
-                    self.i = 0
+                def __init__(self):
+                    self.i = -1
 
                 def __aiter__(self):
                     return self
 
                 async def __anext__(self):
-                    if self.i == self.n:
-                        raise StopAsyncIteration
                     self.i += 1
-                    return self.i - 1
+                    return self.i
 
-            return CustomIterable(n)
+            return CustomIterable()
 
         if awaitale_wrapped:
-
-            async def wrapper(n):
-                return iterable_fn(n)
+            async def wrapper():
+                return iterable_fn()
 
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
 
         # try closing active generator
-        retryable = decorated(4)
+        retryable = decorated()
         assert await retryable.__anext__() == 0
         await retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
         # try closing new generator
-        new_retryable = decorated(4)
+        new_retryable = decorated()
         await new_retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
@@ -772,34 +763,31 @@ class TestAsyncRetry:
         predicate = retry_async.if_exception_type(ValueError)
         retry_ = retry_async.AsyncRetry(is_stream=True, predicate=predicate)
 
-        def iterable_fn(n):
+        def iterable_fn():
             class CustomIterable:
-                def __init__(self, n):
-                    self.n = n
-                    self.i = 0
+                def __init__(self):
+                    self.i = -1
 
                 def __aiter__(self):
                     return self
 
                 async def __anext__(self):
-                    if self.i == self.n:
-                        raise StopAsyncIteration
                     self.i += 1
-                    return self.i - 1
+                    return self.i
 
-            return CustomIterable(n)
+            return CustomIterable()
 
         if awaitale_wrapped:
 
-            async def wrapper(n):
-                return iterable_fn(n)
+            async def wrapper():
+                return iterable_fn()
 
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
 
         # try throwing with active generator
-        retryable = decorated(4)
+        retryable = decorated()
         assert await retryable.__anext__() == 0
         # should swallow errors in predicate
         await retryable.athrow(ValueError("test"))
@@ -809,7 +797,7 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
         # try throwing with new generator
-        new_retryable = decorated(4)
+        new_retryable = decorated()
         with pytest.raises(BufferError):
             await new_retryable.athrow(BufferError("test"))
         with pytest.raises(StopAsyncIteration):
