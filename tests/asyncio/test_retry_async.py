@@ -136,7 +136,7 @@ async def test_retry_target_bad_sleep_generator():
 
 @pytest.mark.asyncio
 async def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+    from google.api_core.retry_streaming_async import retry_target_generator
 
     async def target_fn():
         async def inner_gen():
@@ -146,7 +146,7 @@ async def test_retry_streaming_target_bad_sleep_generator():
         return inner_gen()
 
     with pytest.raises(ValueError, match="Sleep generator"):
-        gen = AsyncRetryableGenerator(target_fn, lambda x: True, [], None)
+        gen = retry_target_generator(target_fn, lambda x: True, [], None)
         await gen.__anext__()
 
 
@@ -641,7 +641,6 @@ class TestAsyncRetry:
         exception_list = []
         generator = decorated(10, exceptions_seen=exception_list)
         await generator.aclose()
-        assert generator.error_list == []
 
         with pytest.raises(StopAsyncIteration):
             # calling next on closed generator should raise error
@@ -777,7 +776,7 @@ class TestAsyncRetry:
         """
         import time
         import functools
-        from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+        from google.api_core.retry_streaming_async import retry_target_generator
 
         timeout = 2
         time_now = time.monotonic()
@@ -787,22 +786,20 @@ class TestAsyncRetry:
         )
 
         with now_patcher as patched_now:
-            no_check = AsyncRetryableGenerator(
+            no_check = retry_target_generator(
                 self._generator_mock,
                 None,
-                [],
+                [0]*10,
                 timeout=timeout,
                 check_timeout_on_yield=False,
             )
-            assert no_check._check_timeout_on_yield is False
-            check = AsyncRetryableGenerator(
+            check = retry_target_generator(
                 self._generator_mock,
                 None,
-                [],
+                [0]*10,
                 timeout=timeout,
                 check_timeout_on_yield=True,
             )
-            assert check._check_timeout_on_yield is True
 
             # initialize the generator
             await no_check.__anext__()
@@ -827,32 +824,13 @@ class TestAsyncRetry:
                 await check_yield()
             await no_check_yield()
 
-    @mock.patch("asyncio.sleep", autospec=True)
-    @pytest.mark.asyncio
-    async def test_generator_error_list(self, sleep):
-        """
-        generator should keep history of errors seen
-        """
-        retry_ = retry_async.AsyncRetry(
-            predicate=retry_async.if_exception_type(ValueError), is_stream=True
-        )
-        decorated = retry_(self._generator_mock)
-
-        generator = decorated(1)
-        err1 = ValueError("test")
-        await generator.athrow(err1)
-        assert generator.error_list == [err1]
-        err2 = ValueError("test2")
-        await generator.athrow(err2)
-        assert generator.error_list == [err1, err2]
-
     @pytest.mark.asyncio
     async def test_exc_factory_non_retryable_error(self):
         """
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
-        from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+        from google.api_core.retry_streaming_async import retry_target_generator
 
         timeout = 6
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -866,7 +844,7 @@ class TestAsyncRetry:
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
-        generator = AsyncRetryableGenerator(
+        generator = retry_target_generator(
             self._generator_mock,
             retry_async.if_exception_type(ValueError),
             [0] * 3,
@@ -890,7 +868,7 @@ class TestAsyncRetry:
         test when timeout is exceeded
         """
         import time
-        from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+        from google.api_core.retry_streaming_async import retry_target_generator
 
         timeout = 2
         time_now = time.monotonic()
@@ -912,7 +890,7 @@ class TestAsyncRetry:
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 
-            generator = AsyncRetryableGenerator(
+            generator = retry_target_generator(
                 self._generator_mock,
                 retry_async.if_exception_type(ValueError),
                 [0] * 3,
@@ -923,7 +901,6 @@ class TestAsyncRetry:
             # trigger some retryable errors
             await generator.athrow(sent_errors[0])
             await generator.athrow(sent_errors[1])
-            assert generator.error_list == [sent_errors[0], sent_errors[1]]
             # trigger a timeout
             patched_now.return_value += timeout + 1
             with pytest.raises(expected_final_err.__class__) as exc_info:

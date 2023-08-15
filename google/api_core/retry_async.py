@@ -61,7 +61,7 @@ from google.api_core import exceptions
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
-from google.api_core.retry_streaming_async import AsyncRetryableGenerator
+from google.api_core.retry_streaming_async import retry_target_generator
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -247,7 +247,7 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return AsyncRetryableGenerator(
+            return retry_target_generator(
                 target,
                 self._predicate,
                 sleep_generator,
