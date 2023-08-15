@@ -14,7 +14,7 @@
 
 """Helpers for retries for streaming APIs."""
 
-from typing import Callable, Optional, Iterable, Iterator, Generator, TypeVar, Any, cast
+from typing import Callable, Optional, List, Tuple, Iterable, Iterator, Generator, TypeVar, Any, cast
 
 import logging
 import time
@@ -27,9 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def _build_timeout_error(
-    exc_list: list[Exception], is_timeout: bool, timeout_val: float
-) -> tuple[Exception, Exception | None]:
+def _build_timeout_error(exc_list:List[Exception], is_timeout:bool, timeout_val:float) -> Tuple[Exception, Optional[Exception]]:
     """
     Default exception_factory implementation. Builds an exception after the retry fails
 
@@ -44,13 +42,10 @@ def _build_timeout_error(
     """
     src_exc = exc_list[-1] if exc_list else None
     if is_timeout:
-        return (
-            exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded".format(timeout_val),
-                src_exc,
-            ),
+        return exceptions.RetryError(
+            "Timeout of {:.1f}s exceeded".format(timeout_val),
             src_exc,
-        )
+        ), src_exc
     else:
         return exc_list[-1], None
 
@@ -132,9 +127,7 @@ class RetryableGenerator(Generator[T, Any, None]):
         sleep_generator: Iterable[float],
         timeout: Optional[float] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
-        exception_factory: Optional[
-            Callable[[list[Exception], bool, float], tuple[Exception, Exception | None]]
-        ] = None,
+        exception_factory: Optional[Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]] = None,
         check_timeout_on_yield: bool = False,
     ):
         """
@@ -170,15 +163,10 @@ class RetryableGenerator(Generator[T, Any, None]):
         self.predicate = predicate
         self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
-        if timeout is not None:
-            self.deadline = time.monotonic() + timeout
-        else:
-            self.deadline = None
+        self.deadline: Optional[float] = time.monotonic() + timeout if timeout else None
         self._check_timeout_on_yield = check_timeout_on_yield
-        self.error_list: list[Exception] = []
-        self._exc_factory = partial(
-            exception_factory or _build_timeout_error, timeout_val=timeout
-        )
+        self.error_list : List[Exception] = []
+        self._exc_factory = partial(exception_factory or _build_timeout_error, timeout_val=timeout)
 
     def __iter__(self) -> Generator[T, Any, None]:
         """
@@ -194,9 +182,7 @@ class RetryableGenerator(Generator[T, Any, None]):
         """
         self.error_list.append(exc)
         if not self.predicate(exc):
-            final_exc, src_exc = self._exc_factory(
-                exc_list=self.error_list, is_timeout=False
-            )
+            final_exc, src_exc = self._exc_factory(exc_list=self.error_list, is_timeout=False)
             raise final_exc from src_exc
         else:
             # run on_error callback if provided
@@ -227,7 +213,10 @@ class RetryableGenerator(Generator[T, Any, None]):
         Raises:
           - Exception from exception_factory if the timeout has been exceeded
         """
-        if self.deadline is not None and self.deadline < current_time:
+        if (
+            self.deadline is not None
+            and self.deadline < current_time
+        ):
             exc, src_exc = self._exc_factory(exc_list=self.error_list, is_timeout=True)
             raise exc from src_exc
 
