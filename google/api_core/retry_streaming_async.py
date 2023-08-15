@@ -32,7 +32,6 @@ import logging
 import time
 from functools import partial
 
-from google.api_core import exceptions
 from google.api_core.retry_streaming import _build_timeout_error
 
 _LOGGER = logging.getLogger(__name__)
@@ -123,7 +122,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         exception_factory: Optional[
             Callable[[list[Exception], bool, float], tuple[Exception, Exception | None]]
         ] = None,
-        check_timeout_on_yield=False,
+        check_timeout_on_yield: bool = False,
     ):
         """
         Args:

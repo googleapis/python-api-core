@@ -135,7 +135,7 @@ class RetryableGenerator(Generator[T, Any, None]):
         exception_factory: Optional[
             Callable[[list[Exception], bool, float], tuple[Exception, Exception | None]]
         ] = None,
-        check_timeout_on_yield=False,
+        check_timeout_on_yield: bool = False,
     ):
         """
         Args:
