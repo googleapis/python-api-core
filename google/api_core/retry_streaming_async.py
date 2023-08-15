@@ -19,6 +19,8 @@ from typing import (
     Callable,
     Optional,
     Iterable,
+    List,
+    Tuple,
     AsyncIterator,
     AsyncIterable,
     Awaitable,
@@ -120,7 +122,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         timeout: Optional[float] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
         exception_factory: Optional[
-            Callable[[list[Exception], bool, float], tuple[Exception, Exception | None]]
+            Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
         ] = None,
         check_timeout_on_yield: bool = False,
     ):
@@ -158,12 +160,9 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         self.predicate = predicate
         self.sleep_generator = iter(sleep_generator)
         self.on_error = on_error
-        if timeout is not None:
-            self.deadline = time.monotonic() + timeout
-        else:
-            self.deadline = None
+        self.deadline: Optional[float] = time.monotonic() + timeout if timeout else None
         self._check_timeout_on_yield = check_timeout_on_yield
-        self.error_list: list[Exception] = []
+        self.error_list: List[Exception] = []
         self._exc_factory = partial(
             exception_factory or _build_timeout_error, timeout_val=timeout
         )
@@ -184,19 +183,14 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             exc, src_exc = self._exc_factory(exc_list=self.error_list, is_timeout=True)
             raise exc from src_exc
 
-    async def _ensure_active_target(self) -> AsyncIterator[T]:
+    async def _new_target(self) -> AsyncIterator[T]:
         """
-        Ensure that the active target is populated and ready to be iterated over.
-
-        Returns:
-          - The active_target iterable
+        Creates and returns a new target iterator from the target function.
         """
-        if self.active_target is None:
-            new_iterable = self.target_fn()
-            if isinstance(new_iterable, Awaitable):
-                new_iterable = await new_iterable
-            self.active_target = new_iterable.__aiter__()
-        return self.active_target
+        new_iterable = self.target_fn()
+        if isinstance(new_iterable, Awaitable):
+            new_iterable = await new_iterable
+        return new_iterable.__aiter__()
 
     def __aiter__(self) -> AsyncIterator[T]:
         """Implement the async iterator protocol."""
@@ -231,8 +225,7 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             )
             # sleep before retrying
             await asyncio.sleep(next_sleep)
-            self.active_target = None
-            await self._ensure_active_target()
+            self.active_target = await self._new_target()
 
     async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
         """
@@ -265,9 +258,10 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         Returns:
           - The next value from the active_target iterator.
         """
-        iterable = await self._ensure_active_target()
+        if self.active_target is None:
+            self.active_target = await self._new_target()
         return await self._iteration_helper(
-            iterable.__anext__(),
+            self.active_target.__anext__(),
         )
 
     async def aclose(self) -> None:
@@ -277,7 +271,8 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         Raises:
           - AttributeError if the active_target does not have a aclose() method
         """
-        await self._ensure_active_target()
+        if self.active_target is None:
+            self.active_target = await self._new_target()
         if getattr(self.active_target, "aclose", None):
             casted_target = cast(AsyncGenerator[T, None], self.active_target)
             return await casted_target.aclose()
@@ -302,7 +297,8 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         Raises:
           - AttributeError if the active_target does not have a asend() method
         """
-        await self._ensure_active_target()
+        if self.active_target is None:
+            self.active_target = await self._new_target()
         if getattr(self.active_target, "asend", None):
             casted_target = cast(AsyncGenerator[T, None], self.active_target)
             return await self._iteration_helper(casted_target.asend(*args, **kwargs))
@@ -325,7 +321,8 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         Raises:
           - AttributeError if the active_target does not have a athrow() method
         """
-        await self._ensure_active_target()
+        if self.active_target is None:
+            self.active_target = await self._new_target()
         if getattr(self.active_target, "athrow", None):
             casted_target = cast(AsyncGenerator[T, None], self.active_target)
             try:
