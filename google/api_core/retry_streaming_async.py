@@ -122,7 +122,9 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         timeout: Optional[float] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
         exception_factory: Optional[
-            Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
+            Callable[
+                [List[Exception], bool, float], Tuple[Exception, Optional[Exception]]
+            ]
         ] = None,
         check_timeout_on_yield: bool = False,
     ):
