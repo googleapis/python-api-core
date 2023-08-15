@@ -164,7 +164,7 @@ def test_retry_target_bad_sleep_generator():
 
 
 def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry_streaming import RetryableGenerator
+    from google.api_core.retry_streaming import retry_target_generator
 
     def target_fn():
         def inner_gen():
@@ -176,7 +176,7 @@ def test_retry_streaming_target_bad_sleep_generator():
     with pytest.raises(
         ValueError, match="Sleep generator stopped yielding sleep values"
     ):
-        gen = RetryableGenerator(target_fn, lambda x: True, [], None)
+        gen = retry_target_generator(target_fn, lambda x: True, [], None)
         next(gen)
 
 
@@ -651,9 +651,28 @@ class TestRetry(object):
         assert on_error.call_count == 3
 
     @mock.patch("time.sleep", autospec=True)
-    def test___call___with_iterable_send_close_throw(self, sleep):
+    def test___call___with_iterable_send(self, sleep):
         """
-        Send, Throw, and Close should raise AttributeErrors
+        send should raise attribute error if wrapped iterator does not support it
+        """
+        retry_ = retry.Retry(is_stream=True)
+
+        def iterable_fn(n):
+            return iter(range(n))
+
+        decorated = retry_(iterable_fn)
+        generator = decorated(5)
+        # initialize
+        next(generator)
+        # call send
+        with pytest.raises(AttributeError):
+            generator.send("test")
+
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_iterable_close(self, sleep):
+        """
+        close should be handled by wrapper if wrapped iterable does not support it
         """
         retry_ = retry.Retry(is_stream=True)
 
@@ -662,18 +681,48 @@ class TestRetry(object):
 
         decorated = retry_(iterable_fn)
 
+        # try closing active generator
         retryable = decorated(10)
-        result = next(retryable)
-        assert result == 0
-        with pytest.raises(AttributeError):
-            retryable.send("test")
+        assert next(retryable) == 0
+        retryable.close()
+        with pytest.raises(StopIteration):
+            next(retryable)
+        # try closing new generator
+        retryable = decorated(10)
+        retryable.close()
+        with pytest.raises(StopIteration):
+            next(retryable)
+
+    @mock.patch("time.sleep", autospec=True)
+    def test___call___with_iterable_throw(self, sleep):
+        """
+        Throw should work even if the wrapped iterable does not support it
+        """
+        predicate = retry.if_exception_type(ValueError)
+        retry_ = retry.Retry(is_stream=True, predicate=predicate)
+
+        def iterable_fn(n):
+            return iter(range(n))
+
+        decorated = retry_(iterable_fn)
+
+        # try throwing with active generator
+        retryable = decorated(10)
+        assert next(retryable) == 0
+        # should swallow errors in predicate
+        retryable.throw(ValueError)
         assert next(retryable) == 1
-        with pytest.raises(AttributeError):
-            retryable.close()
-        assert next(retryable) == 2
-        with pytest.raises(AttributeError):
+        # should raise on other errors
+        with pytest.raises(TypeError):
+            retryable.throw(TypeError)
+        with pytest.raises(StopIteration):
+            next(retryable)
+        # try throwing with new generator
+        retryable = decorated(10)
+        with pytest.raises(ValueError):
             retryable.throw(ValueError)
-        assert next(retryable) == 3
+        with pytest.raises(StopIteration):
+            next(retryable)
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_return(self, sleep):
@@ -772,90 +821,12 @@ class TestRetry(object):
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
 
-    @pytest.mark.parametrize("yield_method", ["__next__", "send"])
-    @mock.patch("asyncio.sleep", autospec=True)
-    def test_yield_stream_after_deadline(self, sleep, yield_method):
-        """
-        By default, if the deadline is hit between yields, the generator will continue.
-
-        There is a flag that should cause the wrapper to test for the deadline after
-        each yield.
-        """
-        import time
-        from google.api_core.retry_streaming import RetryableGenerator
-
-        timeout = 2
-        time_now = time.monotonic()
-        now_patcher = mock.patch(
-            "time.monotonic",
-            return_value=time_now,
-        )
-
-        with now_patcher as patched_now:
-            no_check = RetryableGenerator(
-                self._generator_mock,
-                None,
-                [],
-                timeout=timeout,
-                check_timeout_on_yield=False,
-            )
-            assert no_check._check_timeout_on_yield is False
-            check = RetryableGenerator(
-                self._generator_mock,
-                None,
-                [],
-                timeout=timeout,
-                check_timeout_on_yield=True,
-            )
-            assert check._check_timeout_on_yield is True
-
-            # initialize generator
-            next(no_check)
-            next(check)
-
-            # use the yield method to advance the generator
-            check_yield = getattr(check, yield_method)
-            no_check_yield = getattr(no_check, yield_method)
-            if yield_method == "send":
-                # bind variable to send method
-                check_yield = functools.partial(check_yield, None)
-                no_check_yield = functools.partial(no_check_yield, None)
-            # first yield should be fine
-            check_yield()
-            no_check_yield()
-
-            # simulate a delay before next yield
-            patched_now.return_value += timeout + 1
-
-            # second yield should raise when check_timeout_on_yield is True
-            with pytest.raises(exceptions.RetryError):
-                check_yield()
-            no_check_yield()
-
-    @mock.patch("asyncio.sleep", autospec=True)
-    def test_generator_error_list(self, sleep):
-        """
-        generator should keep history of errors seen
-        """
-        retry_ = retry.Retry(
-            predicate=retry.if_exception_type(ValueError), is_stream=True
-        )
-        decorated = retry_(self._generator_mock)
-
-        generator = decorated(1)
-        err1 = ValueError("test")
-        generator.throw(err1)
-        assert generator.error_list == [err1]
-        err2 = ValueError("test2")
-        generator.throw(err2)
-        assert generator.error_list == [err1, err2]
-
     def test_exc_factory_non_retryable_error(self):
         """
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
-        from google.api_core.retry_streaming import RetryableGenerator
+        from google.api_core.retry_streaming import retry_target_generator
 
         timeout = 6
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -869,17 +840,18 @@ class TestRetry(object):
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
-        generator = RetryableGenerator(
+        generator = retry_target_generator(
             self._generator_mock,
             retry.if_exception_type(ValueError),
             [0] * 3,
             timeout=timeout,
             exception_factory=factory,
         )
+        # initialize generator
+        next(generator)
         # trigger some retryable errors
         generator.throw(sent_errors[0])
         generator.throw(sent_errors[1])
-        assert generator.error_list == [sent_errors[0], sent_errors[1]]
         # trigger a non-retryable error
         with pytest.raises(expected_final_err.__class__) as exc_info:
             generator.throw(sent_errors[2])
@@ -892,7 +864,7 @@ class TestRetry(object):
         test when timeout is exceeded
         """
         import time
-        from google.api_core.retry_streaming import RetryableGenerator
+        from google.api_core.retry_streaming import retry_target_generator
 
         timeout = 2
         time_now = time.monotonic()
@@ -903,7 +875,7 @@ class TestRetry(object):
 
         with now_patcher as patched_now:
             timeout = 2
-            sent_errors = [ValueError("test"), ValueError("test2")]
+            sent_errors = [ValueError("test"), ValueError("test2"), ValueError("test3")]
             expected_final_err = RuntimeError("done")
             expected_source_err = ZeroDivisionError("test4")
 
@@ -914,7 +886,7 @@ class TestRetry(object):
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 
-            generator = RetryableGenerator(
+            generator = retry_target_generator(
                 self._generator_mock,
                 retry.if_exception_type(ValueError),
                 [0] * 3,
@@ -922,13 +894,14 @@ class TestRetry(object):
                 exception_factory=factory,
                 check_timeout_on_yield=True,
             )
+            # initialize generator
+            next(generator)
             # trigger some retryable errors
             generator.throw(sent_errors[0])
             generator.throw(sent_errors[1])
-            assert generator.error_list == [sent_errors[0], sent_errors[1]]
             # trigger a timeout
             patched_now.return_value += timeout + 1
             with pytest.raises(expected_final_err.__class__) as exc_info:
-                next(generator)
+                generator.throw(sent_errors[2])
             assert exc_info.value == expected_final_err
             assert exc_info.value.__cause__ == expected_source_err

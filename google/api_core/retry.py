@@ -66,7 +66,7 @@ import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-from google.api_core.retry_streaming import RetryableGenerator
+from google.api_core.retry_streaming import retry_target_generator
 from google.auth import exceptions as auth_exceptions
 
 _LOGGER = logging.getLogger(__name__)
@@ -361,7 +361,7 @@ class Retry(object):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = RetryableGenerator if self._is_stream else retry_target
+            retry_func = retry_target_generator if self._is_stream else retry_target
             return retry_func(
                 target,
                 self._predicate,
