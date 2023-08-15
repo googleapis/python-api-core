@@ -705,10 +705,8 @@ class TestAsyncRetry:
             return CustomIterable(n)
 
         if awaitale_wrapped:
-
             async def wrapper(n):
                 return iterable_fn(n)
-
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -719,6 +717,7 @@ class TestAsyncRetry:
         await retryable.asend("test") == 1
         await retryable.asend("test2") == 2
         await retryable.asend("test3") == 3
+
 
     @pytest.mark.parametrize("awaitale_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
@@ -745,12 +744,9 @@ class TestAsyncRetry:
                     return self.i - 1
 
             return CustomIterable(n)
-
         if awaitale_wrapped:
-
             async def wrapper(n):
                 return iterable_fn(n)
-
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -766,6 +762,7 @@ class TestAsyncRetry:
         await new_retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
+
 
     @pytest.mark.parametrize("awaitale_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
@@ -794,12 +791,9 @@ class TestAsyncRetry:
                     return self.i - 1
 
             return CustomIterable(n)
-
         if awaitale_wrapped:
-
             async def wrapper(n):
                 return iterable_fn(n)
-
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -820,66 +814,6 @@ class TestAsyncRetry:
             await new_retryable.athrow(BufferError("test"))
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
-
-    @pytest.mark.parametrize("yield_method", ["__anext__", "asend"])
-    @mock.patch("asyncio.sleep", autospec=True)
-    @pytest.mark.asyncio
-    async def test_yield_stream_after_deadline(self, sleep, yield_method):
-        """
-        By default, if the deadline is hit between yields, the generator will continue.
-
-        There is a flag that should cause the wrapper to test for the deadline after
-        each yield.
-        """
-        import time
-        import functools
-        from google.api_core.retry_streaming_async import retry_target_generator
-
-        timeout = 2
-        time_now = time.monotonic()
-        now_patcher = mock.patch(
-            "time.monotonic",
-            return_value=time_now,
-        )
-
-        with now_patcher as patched_now:
-            no_check = retry_target_generator(
-                self._generator_mock,
-                None,
-                [0] * 10,
-                timeout=timeout,
-                check_timeout_on_yield=False,
-            )
-            check = retry_target_generator(
-                self._generator_mock,
-                None,
-                [0] * 10,
-                timeout=timeout,
-                check_timeout_on_yield=True,
-            )
-
-            # initialize the generator
-            await no_check.__anext__()
-            await check.__anext__()
-
-            # use yield_method to advance the generator
-            no_check_yield = getattr(no_check, yield_method)
-            check_yield = getattr(check, yield_method)
-            if yield_method == "asend":
-                no_check_yield = functools.partial(no_check_yield, None)
-                check_yield = functools.partial(check_yield, None)
-
-            # first yield should be fine
-            await check_yield()
-            await no_check_yield()
-
-            # simulate a delay before next yield
-            patched_now.return_value += timeout + 1
-
-            # second yield should raise when check_timeout_on_yield is True
-            with pytest.raises(exceptions.RetryError):
-                await check_yield()
-            await no_check_yield()
 
     @pytest.mark.asyncio
     async def test_exc_factory_non_retryable_error(self):
@@ -937,7 +871,7 @@ class TestAsyncRetry:
 
         with now_patcher as patched_now:
             timeout = 2
-            sent_errors = [ValueError("test"), ValueError("test2")]
+            sent_errors = [ValueError("test"), ValueError("test2"), ValueError("test3")]
             expected_final_err = RuntimeError("done")
             expected_source_err = ZeroDivisionError("test4")
 
@@ -954,7 +888,6 @@ class TestAsyncRetry:
                 [0] * 3,
                 timeout=timeout,
                 exception_factory=factory,
-                check_timeout_on_yield=True,
             )
             # initialize the generator
             await generator.__anext__()
@@ -964,6 +897,6 @@ class TestAsyncRetry:
             # trigger a timeout
             patched_now.return_value += timeout + 1
             with pytest.raises(expected_final_err.__class__) as exc_info:
-                await generator.__anext__()
+                await generator.athrow(sent_errors[2])
             assert exc_info.value == expected_final_err
             assert exc_info.value.__cause__ == expected_source_err

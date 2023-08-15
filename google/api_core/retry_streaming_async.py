@@ -57,7 +57,6 @@ async def retry_target_generator(
             [List[Exception], bool, float], Tuple[Exception, Optional[Exception]]
         ]
     ] = None,
-    check_timeout_on_yield: bool = False,
     **kwargs,
 ) -> AsyncGenerator[T, None]:
     subgenerator = None
@@ -87,11 +86,6 @@ async def retry_target_generator(
 
             sent_in = None
             while True:
-                # Check for expiration before starting
-                if check_timeout_on_yield is True and deadline is not None and time.monotonic() > deadline:
-                    exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
-                    exc.__cause__ = source_exc
-                    raise _TerminalException() from exc
                 ## Read from Subgenerator
                 if supports_send:
                     next_value = await subgenerator.asend(sent_in)
