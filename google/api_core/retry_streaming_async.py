@@ -229,30 +229,6 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
             await asyncio.sleep(next_sleep)
             self.active_target = await self._new_target()
 
-    async def _iteration_helper(self, iteration_routine: Awaitable) -> T:
-        """
-        Helper function for sharing logic between __anext__ and asend.
-
-        Args:
-          - iteration_routine: The coroutine to await to get the next value
-                from the iterator (e.g. __anext__ or asend)
-        Returns:
-          - The next value from the active_target iterator.
-        """
-        # check for expired timeouts before attempting to iterate
-        if self._check_timeout_on_yield:
-            self._check_timeout(time.monotonic())
-        try:
-            # grab the next value from the active_target
-            # Note: here would be a good place to add a timeout, like asyncio.wait_for.
-            # But wait_for is expensive, so we only check for timeouts at the
-            # start of each iteration.
-            return await iteration_routine
-        except Exception as exc:
-            await self._handle_exception(exc)
-        # if retryable exception was handled, find the next value to return
-        return await self.__anext__()
-
     async def __anext__(self) -> T:
         """
         Implement the async iterator protocol.
@@ -262,9 +238,18 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         """
         if self.active_target is None:
             self.active_target = await self._new_target()
-        return await self._iteration_helper(
-            self.active_target.__anext__(),
-        )
+        if self._check_timeout_on_yield:
+            self._check_timeout(time.monotonic())
+        try:
+            # grab the next value from the active_target
+            # Note: here would be a good place to add a timeout, like asyncio.wait_for.
+            # But wait_for is expensive, so we only check for timeouts at the
+            # start of each iteration.
+            return await self.active_target.__anext__()
+        except Exception as exc:
+            await self._handle_exception(exc)
+        # if retryable exception was handled, find the next value to return
+        return await self.__anext__()
 
     async def aclose(self) -> None:
         """
@@ -301,9 +286,15 @@ class AsyncRetryableGenerator(AsyncGenerator[T, None]):
         """
         if self.active_target is None:
             self.active_target = await self._new_target()
+        if self._check_timeout_on_yield:
+            self._check_timeout(time.monotonic())
         if getattr(self.active_target, "asend", None):
             casted_target = cast(AsyncGenerator[T, None], self.active_target)
-            return await self._iteration_helper(casted_target.asend(*args, **kwargs))
+            try:
+                return await casted_target.asend(*args, **kwargs)
+            except Exception as exc:
+                await self._handle_exception(exc)
+            return await self.__anext__()
         else:
             raise AttributeError(
                 "asend() not implemented for {}".format(self.active_target)

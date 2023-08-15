@@ -772,9 +772,10 @@ class TestRetry(object):
         unpacked = [next(gen) for i in range(10)]
         assert unpacked == [0, 1, 2, 3, 4, 5, 0, 1, 2, 3]
 
+    @pytest.mark.parametrize("yield_method", ["__next__", "send"])
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
-    def test_yield_stream_after_deadline(self, sleep, uniform):
+    def test_yield_stream_after_deadline(self, sleep, uniform, yield_method):
         """
         By default, if the deadline is hit between yields, the generator will continue.
 
@@ -809,17 +810,28 @@ class TestRetry(object):
             )
             assert check._check_timeout_on_yield is True
 
-            # first yield should be fine
-            next(check)
+            # initialize generator
             next(no_check)
+            next(check)
+
+            # use the yield method to advance the generator
+            check_yield = getattr(check, yield_method)
+            no_check_yield = getattr(no_check, yield_method)
+            if yield_method == "send":
+                # bind variable to send method
+                check_yield = functools.partial(check_yield, None)
+                no_check_yield = functools.partial(no_check_yield, None)
+            # first yield should be fine
+            check_yield()
+            no_check_yield()
 
             # simulate a delay before next yield
             patched_now.return_value += timeout + 1
 
             # second yield should raise when check_timeout_on_yield is True
             with pytest.raises(exceptions.RetryError):
-                next(check)
-            next(no_check)
+                check_yield()
+            no_check_yield()
 
     def test_generator_error_list(self):
         """
