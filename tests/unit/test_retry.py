@@ -668,7 +668,6 @@ class TestRetry(object):
         with pytest.raises(AttributeError):
             generator.send("test")
 
-
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_iterable_close(self, sleep):
         """

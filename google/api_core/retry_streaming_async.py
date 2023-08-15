@@ -42,13 +42,6 @@ _LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class _TerminalException(Exception):
-    """
-    Exception to bypasses retry logic and raises __cause__ immediately.
-    """
-    pass
-
-
 async def retry_target_generator(
     target: Union[
         Callable[[], AsyncIterable[T]],
@@ -133,12 +126,12 @@ async def retry_target_generator(
             filter_retry_wrapped = retryable_with_filter(target)
             ```
     """
-    subgenerator = None
-
+    subgenerator : Optional[AsyncIterator[T]] = None
     timeout = kwargs.get("deadline", timeout)
-
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
+    # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: List[Exception] = []
+    # override exception_factory to build a more complex exception
     exc_factory = partial(
         exception_factory or _build_timeout_error, timeout_val=timeout
     )
@@ -147,12 +140,13 @@ async def retry_target_generator(
         # Start a new retry loop
         try:
             # generator may be raw iterator, or wrapped in an awaitable
-            subgenerator = target()
+            gen_instance: Union[AsyncIterable[T], Awaitable[AsyncIterable[T]]] = target()
             try:
-                subgenerator = await subgenerator
+                gen_instance = await gen_instance # type: ignore
             except TypeError:
                 # was not awaitable
                 pass
+            subgenerator = cast(AsyncIterable[T], gen_instance).__aiter__()
 
             # if target is a generator, we will advance it using asend
             # otherwise, we will use anext
@@ -162,7 +156,7 @@ async def retry_target_generator(
             while True:
                 ## Read from Subgenerator
                 if supports_send:
-                    next_value = await subgenerator.asend(sent_in)
+                    next_value = await subgenerator.asend(sent_in) # type: ignore
                 else:
                     next_value = await subgenerator.__anext__()
                 ## Yield from Wrapper to caller
@@ -173,7 +167,7 @@ async def retry_target_generator(
                 except GeneratorExit:
                     # if wrapper received `aclose`, pass to subgenerator and close
                     if bool(getattr(subgenerator, "aclose", None)):
-                        await subgenerator.aclose()
+                        await cast(AsyncGenerator[T, None], subgenerator).aclose()
                     else:
                         raise
                     return
@@ -181,12 +175,10 @@ async def retry_target_generator(
                     # bare except catches any exception passed to `athrow`
                     # delegate error handling to subgenerator
                     if getattr(subgenerator, "athrow", None):
-                        await subgenerator.athrow(*sys.exc_info())
+                        await cast(AsyncGenerator[T, None], subgenerator).athrow(*sys.exc_info())
                     else:
                         raise
             return
-        except _TerminalException as exc:
-            raise exc.__cause__ from exc.__cause__.__cause__
         except StopAsyncIteration:
             # if generator exhausted, return
             return
@@ -201,12 +193,12 @@ async def retry_target_generator(
                 on_error(exc)
         finally:
             if subgenerator is not None and getattr(subgenerator, "aclose", None):
-                await subgenerator.aclose()
+                await cast(AsyncGenerator[T, None], subgenerator).aclose()
 
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:
-            exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
-            raise exc from source_exc
+            final_exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
+            raise final_exc from source_exc
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)
         )

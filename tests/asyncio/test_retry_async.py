@@ -705,8 +705,10 @@ class TestAsyncRetry:
             return CustomIterable(n)
 
         if awaitale_wrapped:
+
             async def wrapper(n):
                 return iterable_fn(n)
+
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -717,7 +719,6 @@ class TestAsyncRetry:
         await retryable.asend("test") == 1
         await retryable.asend("test2") == 2
         await retryable.asend("test3") == 3
-
 
     @pytest.mark.parametrize("awaitale_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
@@ -744,9 +745,12 @@ class TestAsyncRetry:
                     return self.i - 1
 
             return CustomIterable(n)
+
         if awaitale_wrapped:
+
             async def wrapper(n):
                 return iterable_fn(n)
+
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -762,7 +766,6 @@ class TestAsyncRetry:
         await new_retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
-
 
     @pytest.mark.parametrize("awaitale_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
@@ -791,9 +794,12 @@ class TestAsyncRetry:
                     return self.i - 1
 
             return CustomIterable(n)
+
         if awaitale_wrapped:
+
             async def wrapper(n):
                 return iterable_fn(n)
+
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
