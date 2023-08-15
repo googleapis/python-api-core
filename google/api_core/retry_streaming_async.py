@@ -73,6 +73,10 @@ async def retry_target_generator(
         try:
             subgenerator = target()
 
+            # if target is a generator, we will advance it using asend
+            # otherwise, we will use anext
+            supports_send = bool(getattr(subgenerator, "asend", None))
+
             sent_in = None
             while True:
                 # Check for expiration before starting
@@ -80,7 +84,13 @@ async def retry_target_generator(
                     exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
                     raise exc from source_exc
                 ## Read from Subgenerator
-                next_value = await subgenerator.asend(sent_in)
+                if supports_send:
+                    next_value = await subgenerator.asend(sent_in)
+                elif sent_in is not None:
+                    # asend was called on an iterator that does not support it
+                    raise AttributeError(f"asend() not implemented for {target}")
+                else:
+                    next_value = await subgenerator.__anext__()
                 ## Yield from Wrapper to caller
                 try:
                     # yield last value from subgenerator
@@ -88,12 +98,18 @@ async def retry_target_generator(
                     sent_in = yield next_value
                 except GeneratorExit:
                     # if wrapper received `aclose`, pass to subgenerator and close
-                    await subgenerator.aclose()
+                    if bool(getattr(subgenerator, "aclose", None)):
+                        await subgenerator.aclose()
+                    else:
+                        raise AttributeError(f"aclose() not implemented for {target}")
                     return
                 except:  # noqa: E722
                     # bare except catches any exception passed to `athrow`
                     # delegate error handling to subgenerator
-                    await subgenerator.athrow(*sys.exc_info())
+                    if getattr(subgenerator, "athrow", None):
+                        await subgenerator.athrow(*sys.exc_info())
+                    else:
+                        raise
             return
         except StopAsyncIteration:
             # if generator exhausted, return
@@ -108,7 +124,7 @@ async def retry_target_generator(
             if on_error is not None:
                 on_error(exc)
         finally:
-            if subgenerator is not None:
+            if subgenerator is not None and getattr(subgenerator, "aclose", None):
                 await subgenerator.aclose()
 
         # sleep and adjust timeout budget
