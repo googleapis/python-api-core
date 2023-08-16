@@ -11,8 +11,74 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Generator wrapper for retryable streaming RPCs.
+This function will be used when initilizing a retry with
+``AsyncRetry(is_stream=True)``.
 
-"""Helpers for retries for async streaming APIs."""
+When ``is_stream=False``, the target is treated as a coroutine,
+and will retry when the coroutine returns an error. When ``is_stream=True``,
+the target will be treated as a callable that retruns an AsyncIterable. Instead
+of just wrapping the initial call in retry logic, the entire iterable is
+wrapped, with each yield passing through the retryable generatpr. If any yield
+in the stream raises a retryable exception, the entire stream will be
+retried.
+
+Important Note: when a stream is encounters a retryable error, it will
+silently construct a fresh iterator instance in the background
+and continue yielding (likely duplicate) values as if no error occurred.
+This is the most general way to retry a stream, but it often is not the
+desired behavior. Example: iter([1, 2, 1/0]) -> [1, 2, 1, 2, ...]
+
+There are two ways to build more advanced retry logic for streams:
+
+1. Wrap the target
+    Use a ``target`` that maintains state between retries, and creates a
+    different generator on each retry call. For example, you can wrap a
+    grpc call in a function that modifies the request based on what has
+    already been returned:
+
+    ```
+    async def attempt_with_modified_request(target, request, seen_items=[]):
+        # remove seen items from request on each attempt
+        new_request = modify_request(request, seen_items)
+        new_generator = await target(new_request)
+        async for item in new_generator:
+            yield item
+            seen_items.append(item)
+
+    retry_wrapped = AsyncRetry(is_stream=True)(attempt_with_modified_request, target, request, [])
+    ```
+
+    2. Wrap the retry generator
+        Alternatively, you can wrap the retryable generator itself before
+        passing it to the end-user to add a filter on the stream. For
+        example, you can keep track of the items that were successfully yielded
+        in previous retry attempts, and only yield new items when the
+        new attempt surpasses the previous ones:
+
+        ``
+        async def retryable_with_filter(target):
+            stream_idx = 0
+            # reset stream_idx when the stream is retried
+            def on_error(e):
+                nonlocal stream_idx
+                stream_idx = 0
+            # build retryable
+            retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
+            # keep track of what has been yielded out of filter
+            yielded_items = []
+            async for item in retryable_gen:
+                if stream_idx >= len(yielded_items):
+                    yield item
+                    yielded_items.append(item)
+                elif item != previous_stream[stream_idx]:
+                    raise ValueError("Stream differs from last attempt")"
+                stream_idx += 1
+
+        filter_retry_wrapped = retryable_with_filter(target)
+        ```
+"""
 
 from typing import (
     cast,
@@ -56,74 +122,45 @@ async def retry_target_stream(
     ] = None,
     **kwargs,
 ) -> AsyncGenerator[T, None]:
+    """Create a generator wrapper that retries the wrapped stream if it fails.
+
+    This is the lowest-level retry helper. Generally, you'll use the
+    higher-level retry helper :class:`Retry`.
+
+    Args:
+        target: The generator function to call and retry. This must be a
+            nullary function - apply arguments with `functools.partial`.
+        predicate: A callable used to determine if an
+            exception raised by the target should be considered retryable.
+            It should return True to retry or False otherwise.
+        sleep_generator: An infinite iterator that determines
+            how long to sleep between retries.
+        timeout: How long to keep retrying the target.
+            Note: timeout is only checked before initiating a retry, so the target may
+            run past the timeout value as long as it is healthy.
+        on_error: A function to call while processing a
+            retryable exception.  Any error raised by this function will *not*
+            be caught.
+        exception_factory: A function that is called when the retryable reaches
+            a terminal failure state, used to construct an exception to be raised.
+            It it given a list of all exceptions encountered, a boolean indicating
+            whether the failure was due to a timeout, and the original timeout value
+            as arguments. It should return a tuple of the exception to be raised,
+            along with the cause exception if any.
+            If not provided, a default implementation will raise a RetryError
+            on timeout, or the last exception encountered otherwise.
+
+    Returns:
+        AssyncGenerator: A retryable generator that wraps the target generator function.
+
+    Raises:
+        ValueError: If the sleep generator stops yielding values.
+        Exception: a custom exception specified by the exception_factory if provided.
+            If no exception_factory is provided:
+                google.api_core.RetryError: If the deadline is exceeded while retrying.
+                Exception: If the target raises an error that isn't retryable.
     """
-    Generator wrapper for retryable streaming RPCs.
-    This function will be used when initilizing a retry with
-    ``AsyncRetry(is_stream=True)``.
 
-    When ``is_stream=False``, the target is treated as a coroutine,
-    and will retry when the coroutine returns an error. When ``is_stream=True``,
-    the target will be treated as a callable that retruns an AsyncIterable. Instead
-    of just wrapping the initial call in retry logic, the entire iterable is
-    wrapped, with each yield passing through the retryable generatpr. If any yield
-    in the stream raises a retryable exception, the entire stream will be
-    retried.
-
-    Important Note: when a stream is encounters a retryable error, it will
-    silently construct a fresh iterator instance in the background
-    and continue yielding (likely duplicate) values as if no error occurred.
-    This is the most general way to retry a stream, but it often is not the
-    desired behavior. Example: iter([1, 2, 1/0]) -> [1, 2, 1, 2, ...]
-
-    There are two ways to build more advanced retry logic for streams:
-
-    1. Wrap the target
-        Use a ``target`` that maintains state between retries, and creates a
-        different generator on each retry call. For example, you can wrap a
-        grpc call in a function that modifies the request based on what has
-        already been returned:
-
-        ```
-        async def attempt_with_modified_request(target, request, seen_items=[]):
-            # remove seen items from request on each attempt
-            new_request = modify_request(request, seen_items)
-            new_generator = await target(new_request)
-            async for item in new_generator:
-                yield item
-                seen_items.append(item)
-
-        retry_wrapped = AsyncRetry(is_stream=True)(attempt_with_modified_request, target, request, [])
-        ```
-
-        2. Wrap the retry generator
-            Alternatively, you can wrap the retryable generator itself before
-            passing it to the end-user to add a filter on the stream. For
-            example, you can keep track of the items that were successfully yielded
-            in previous retry attempts, and only yield new items when the
-            new attempt surpasses the previous ones:
-
-            ``
-            async def retryable_with_filter(target):
-                stream_idx = 0
-                # reset stream_idx when the stream is retried
-                def on_error(e):
-                    nonlocal stream_idx
-                    stream_idx = 0
-                # build retryable
-                retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
-                # keep track of what has been yielded out of filter
-                yielded_items = []
-                async for item in retryable_gen:
-                    if stream_idx >= len(yielded_items):
-                        yield item
-                        yielded_items.append(item)
-                    elif item != previous_stream[stream_idx]:
-                        raise ValueError("Stream differs from last attempt")"
-                    stream_idx += 1
-
-            filter_retry_wrapped = retryable_with_filter(target)
-            ```
-    """
     subgenerator: Optional[AsyncIterator[T]] = None
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
