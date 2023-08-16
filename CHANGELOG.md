@@ -4,6 +4,23 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.12.0.dev1](https://github.com/googleapis/python-api-core/compare/v2.11.0...development-build-2.12.0.dev0) (2023-06-21)
+
+
+### Features
+
+* improved performance of streaming retries ([#495](https://github.com/googleapis/python-api-core/pull/495))
+* support custom exception factory callback for streaming retry failures ([#495](https://github.com/googleapis/python-api-core/pull/495))
+
+
+## [2.12.0.dev0](https://github.com/googleapis/python-api-core/compare/v2.11.0...development-build-2.12.0.dev0) (2023-06-21)
+
+
+### Features
+
+* retry and retry_async support streaming rpcs ([#495](https://github.com/googleapis/python-api-core/pull/495))
+
+
 ## [2.11.1](https://github.com/googleapis/python-api-core/compare/v2.11.0...v2.11.1) (2023-06-12)
 
 
