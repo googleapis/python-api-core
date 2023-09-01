@@ -25,7 +25,7 @@ wrapped, with each yield passing through the retryable generator. If any yield
 in the stream raises a retryable exception, the entire stream will be
 retried.
 
-Important Note: when a stream is encounters a retryable error, it will
+NOTE: when a stream encounters a retryable error, it will
 silently construct a fresh iterator instance in the background
 and continue yielding (likely duplicate) values as if no error occurred.
 This is the most general way to retry a stream, but it often is not the
