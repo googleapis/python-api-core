@@ -221,8 +221,9 @@ async def retry_target_stream(
         except StopAsyncIteration:
             # if generator exhausted, return
             return
+        # handle exceptions raised by the subgenerator
         # pylint: disable=broad-except
-        # This function handles exceptions thrown by subgenerator
+        # This function explicitly must deal with broad exceptions.
         except (Exception, asyncio.CancelledError) as exc:
             error_list.append(exc)
             if not predicate(exc):

@@ -201,6 +201,8 @@ def retry_target_stream(
             subgenerator = target()
             return (yield from subgenerator)
         # handle exceptions raised by the subgenerator
+        # pylint: disable=broad-except
+        # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             error_list.append(exc)
             if not predicate(exc):
