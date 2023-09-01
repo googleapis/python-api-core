@@ -61,6 +61,19 @@ def test_exponential_sleep_generator_base_2(uniform):
     assert result == [1, 2, 4, 8, 16, 32, 60, 60]
 
 
+def test__build_retry_error_empty_list():
+    """
+    attempt to build a retry error with no errors encountered
+    should return a generic RetryError
+    """
+    from google.api_core.retry_streaming import _build_retry_error
+
+    src, cause = _build_retry_error([], False, 10)
+    assert isinstance(src, exceptions.RetryError)
+    assert cause is None
+    assert src.message == "Unknown error"
+
+
 @mock.patch("time.sleep", autospec=True)
 @mock.patch(
     "google.api_core.datetime_helpers.utcnow",
