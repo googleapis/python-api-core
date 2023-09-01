@@ -192,7 +192,7 @@ def retry_target_stream(
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
-            # create and yeild from a new instance of the generator from input generator function
+            # create and yield from a new instance of the generator from input generator function
             subgenerator = target()
             return (yield from subgenerator)
         # handle exceptions raised by the subgenerator
