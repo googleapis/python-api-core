@@ -226,13 +226,14 @@ class AsyncRetry:
             on_error = self._on_error
 
         @functools.wraps(func)
-        async def retry_wrapped_func(*args, **kwargs):
+        def retry_wrapped_func(*args, **kwargs):
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            return await retry_target(
+            retry_func = retry_target if not self._is_stream else retry_target_stream
+            return retry_func(
                 target,
                 self._predicate,
                 sleep_generator,
@@ -240,25 +241,7 @@ class AsyncRetry:
                 on_error=on_error,
             )
 
-        @functools.wraps(func)
-        def retry_wrapped_stream(*args, **kwargs):
-            """A wrapper that iterates over target stream with retry."""
-            target = functools.partial(func, *args, **kwargs)
-            sleep_generator = exponential_sleep_generator(
-                self._initial, self._maximum, multiplier=self._multiplier
-            )
-            return retry_target_stream(
-                target,
-                self._predicate,
-                sleep_generator,
-                timeout=self._timeout,
-                on_error=on_error,
-            )
-
-        if self._is_stream:
-            return retry_wrapped_stream
-        else:
-            return retry_wrapped_func
+        return retry_wrapped_func
 
     def _replace(
         self,
