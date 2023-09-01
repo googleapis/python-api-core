@@ -92,6 +92,7 @@ from typing import (
     Any,
     Union,
     cast,
+    TYPE_CHECKING,
 )
 
 import logging
@@ -100,9 +101,10 @@ from functools import partial
 
 from google.api_core import exceptions
 
-_LOGGER = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    _Y = TypeVar("_Y")
 
-T = TypeVar("T")
+_LOGGER = logging.getLogger(__name__)
 
 
 def _build_timeout_error(
@@ -134,7 +136,7 @@ def _build_timeout_error(
 
 
 def retry_target_stream(
-    target: Callable[[], Union[Iterable[T], Generator[T, Any, None]]],
+    target: Callable[[], Iterable[_Y]],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],
     timeout: Optional[float] = None,
@@ -143,7 +145,7 @@ def retry_target_stream(
         Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
     ] = None,
     **kwargs,
-) -> Generator[T, Any, None]:
+) -> Generator[_Y, Any, None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the

@@ -62,7 +62,16 @@ import logging
 import random
 import sys
 import time
-from typing import Any, Callable, TypeVar, TYPE_CHECKING
+from typing import (
+    Any,
+    Callable,
+    TypeVar,
+    Union,
+    Generator,
+    Iterable,
+    cast,
+    TYPE_CHECKING,
+)
 
 import requests.exceptions
 
@@ -77,8 +86,9 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import ParamSpec
 
-    _P = ParamSpec("_P")
-    _R = TypeVar("_R")
+    _P = ParamSpec("_P")  # target function call parameters
+    _R = TypeVar("_R")  # target function returned value
+    _Y = TypeVar("_Y")  # target stream yielded values
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
@@ -353,9 +363,9 @@ class Retry(object):
 
     def __call__(
         self,
-        func: Callable[_P, _R],
+        func: Callable[_P, _R | Iterable[_Y]],
         on_error: Callable[[BaseException], Any] | None = None,
-    ) -> Callable[_P, _R]:
+    ) -> Callable[_P, _R | Generator[_Y, Any, None]]:
         """Wrap a callable with retry behavior.
 
         Args:
@@ -372,20 +382,21 @@ class Retry(object):
             on_error = self._on_error
 
         @functools.wraps(func)
-        def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        def retry_wrapped_func(
+            *args: _P.args, **kwargs: _P.kwargs
+        ) -> _R | Generator[_Y, Any, None]:
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = retry_target_stream if self._is_stream else retry_target
-            return retry_func(
-                target,
-                self._predicate,
-                sleep_generator,
-                self._timeout,
-                on_error=on_error,
-            )
+            retry_args = (self._predicate, sleep_generator, self._timeout, on_error)
+            if self._is_stream:
+                # when stream is enabled, assume target returns an iterable that yields _Y
+                stream_target = cast(Callable[[], Iterable[_Y]], target)
+                return retry_target_stream(stream_target, *retry_args)
+            else:
+                return retry_target(target, *retry_args)
 
         return retry_wrapped_func
 
