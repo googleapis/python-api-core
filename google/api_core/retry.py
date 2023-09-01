@@ -16,7 +16,7 @@
 
 The :class:`Retry` decorator can be used to retry functions that raise
 exceptions using exponential backoff. Because a exponential sleep algorithm is
-used, the retry is limited by a `deadline`. The deadline is the maxmimum amount
+used, the retry is limited by a `deadline`. The deadline is the maximum amount
 of time a method can block. This is used instead of total number of retries
 because it is difficult to ascertain the amount of time a function can block
 when using total number of retries and exponential backoff.
@@ -54,19 +54,30 @@ a ``retry`` parameter that allows you to configure the behavior:
 
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import datetime
 import functools
 import logging
 import random
+import sys
 import time
+from typing import Any, Callable, TypeVar, TYPE_CHECKING
 
 import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
 from google.auth import exceptions as auth_exceptions
+
+if TYPE_CHECKING:
+    if sys.version_info >= (3, 10):
+        from typing import ParamSpec
+    else:
+        from typing_extensions import ParamSpec
+
+    _P = ParamSpec("_P")
+    _R = TypeVar("_R")
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
@@ -75,7 +86,9 @@ _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 
 
-def if_exception_type(*exception_types):
+def if_exception_type(
+    *exception_types: type[BaseException],
+) -> Callable[[BaseException], bool]:
     """Creates a predicate to check if the exception is of a given type.
 
     Args:
@@ -87,7 +100,7 @@ def if_exception_type(*exception_types):
             exception is of the given type(s).
     """
 
-    def if_exception_type_predicate(exception):
+    def if_exception_type_predicate(exception: BaseException) -> bool:
         """Bound predicate for checking an exception type."""
         return isinstance(exception, exception_types)
 
@@ -265,7 +278,7 @@ class Retry(object):
 
     RPC Timeout: a value supplied by the client to the server so
     that the server side knows the maximum amount of time it is expected to
-    spend handling that specifc RPC. For example, in the case of gRPC transport,
+    spend handling that specific RPC. For example, in the case of gRPC transport,
     RPC Timeout is represented by setting "grpc-timeout" header in the HTTP2
     request. The `timeout` property of this class normally never represents the
     RPC Timeout as it is handled separately by the ``google.api_core.timeout``
@@ -285,7 +298,7 @@ class Retry(object):
 
     With the actual timeout types being defined above, the client libraries
     often refer to just Timeout without clarifying which type specifically
-    that is. In that case the actual timeout type (sometimes also refered to as
+    that is. In that case the actual timeout type (sometimes also referred to as
     Logical Timeout) can be determined from the context. If it is a unary rpc
     call (i.e. a regular one) Timeout usually stands for the RPC Timeout (if
     provided directly as a standalone value) or Retry Timeout (if provided as
@@ -307,14 +320,14 @@ class Retry(object):
 
     def __init__(
         self,
-        predicate=if_transient_error,
-        initial=_DEFAULT_INITIAL_DELAY,
-        maximum=_DEFAULT_MAXIMUM_DELAY,
-        multiplier=_DEFAULT_DELAY_MULTIPLIER,
-        timeout=_DEFAULT_DEADLINE,
-        on_error=None,
-        **kwargs
-    ):
+        predicate: Callable[[BaseException], bool] = if_transient_error,
+        initial: float = _DEFAULT_INITIAL_DELAY,
+        maximum: float = _DEFAULT_MAXIMUM_DELAY,
+        multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
+        timeout: float = _DEFAULT_DEADLINE,
+        on_error: Callable[[BaseException], Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         self._predicate = predicate
         self._initial = initial
         self._multiplier = multiplier
@@ -323,7 +336,11 @@ class Retry(object):
         self._deadline = self._timeout
         self._on_error = on_error
 
-    def __call__(self, func, on_error=None):
+    def __call__(
+        self,
+        func: Callable[_P, _R],
+        on_error: Callable[[BaseException], Any] | None = None,
+    ) -> Callable[_P, _R]:
         """Wrap a callable with retry behavior.
 
         Args:
@@ -340,7 +357,7 @@ class Retry(object):
             on_error = self._on_error
 
         @functools.wraps(func)
-        def retry_wrapped_func(*args, **kwargs):
+        def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(

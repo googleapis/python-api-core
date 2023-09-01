@@ -101,7 +101,7 @@ class ExtendedOperation(polling.PollingFuture):
     #     optional http_error_code = proto.Field(proto.INT32, number=3)
     #     optional http_error_msg = proto.Field(proto.STRING, number=4)
     #
-    # the ExtendedOperation subclass would provide property overrrides that map
+    # the ExtendedOperation subclass would provide property overrides that map
     # to these (poorly named) fields.
     @property
     def name(self):
@@ -158,10 +158,16 @@ class ExtendedOperation(polling.PollingFuture):
                 return
 
             if self.error_code and self.error_message:
+                # Note: `errors` can be removed once proposal A from
+                # b/284179390 is implemented.
+                errors = []
+                if hasattr(self, "error") and hasattr(self.error, "errors"):
+                    errors = self.error.errors
                 exception = exceptions.from_http_status(
                     status_code=self.error_code,
                     message=self.error_message,
                     response=self._extended_operation,
+                    errors=errors,
                 )
                 self.set_exception(exception)
             elif self.error_code or self.error_message:

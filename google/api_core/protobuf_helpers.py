@@ -288,10 +288,10 @@ def field_mask(original, modified):
 
     Args:
         original (~google.protobuf.message.Message): the original message.
-            If set to None, this field will be interpretted as an empty
+            If set to None, this field will be interpreted as an empty
             message.
         modified (~google.protobuf.message.Message): the modified message.
-            If set to None, this field will be interpretted as an empty
+            If set to None, this field will be interpreted as an empty
             message.
 
     Returns:
@@ -313,7 +313,7 @@ def field_mask(original, modified):
         modified = copy.deepcopy(original)
         modified.Clear()
 
-    if type(original) != type(modified):
+    if not isinstance(original, type(modified)):
         raise ValueError(
             "expected that both original and modified should be of the "
             'same type, received "{!r}" and "{!r}".'.format(
