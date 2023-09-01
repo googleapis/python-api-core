@@ -191,9 +191,7 @@ def retry_target_stream(
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
-    exc_factory = partial(
-        exception_factory or _build_retry_error, timeout_val=timeout
-    )
+    exc_factory = partial(exception_factory or _build_retry_error, timeout_val=timeout)
 
     for sleep in sleep_generator:
         # Start a new retry loop

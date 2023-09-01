@@ -167,9 +167,7 @@ async def retry_target_stream(
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: List[Exception] = []
     # override exception_factory to build a more complex exception
-    exc_factory = partial(
-        exception_factory or _build_retry_error, timeout_val=timeout
-    )
+    exc_factory = partial(exception_factory or _build_retry_error, timeout_val=timeout)
 
     for sleep in sleep_generator:
         # Start a new retry loop
