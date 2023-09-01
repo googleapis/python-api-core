@@ -51,34 +51,34 @@ There are two ways to build more advanced retry logic for streams:
     retry_wrapped = Retry(is_stream=True)(attempt_with_modified_request, target, request, [])
     ```
 
-    2. Wrap the retry generator
-        Alternatively, you can wrap the retryable generator itself before
-        passing it to the end-user to add a filter on the stream. For
-        example, you can keep track of the items that were successfully yielded
-        in previous retry attempts, and only yield new items when the
-        new attempt surpasses the previous ones:
+2. Wrap the retry generator
+    Alternatively, you can wrap the retryable generator itself before
+    passing it to the end-user to add a filter on the stream. For
+    example, you can keep track of the items that were successfully yielded
+    in previous retry attempts, and only yield new items when the
+    new attempt surpasses the previous ones:
 
-        ``
-        def retryable_with_filter(target):
+    ``
+    def retryable_with_filter(target):
+        stream_idx = 0
+        # reset stream_idx when the stream is retried
+        def on_error(e):
+            nonlocal stream_idx
             stream_idx = 0
-            # reset stream_idx when the stream is retried
-            def on_error(e):
-                nonlocal stream_idx
-                stream_idx = 0
-            # build retryable
-            retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
-            # keep track of what has been yielded out of filter
-            yielded_items = []
-            for item in retryable_gen:
-                if stream_idx >= len(yielded_items):
-                    yield item
-                    yielded_items.append(item)
-                elif item != previous_stream[stream_idx]:
-                    raise ValueError("Stream differs from last attempt")"
-                stream_idx += 1
+        # build retryable
+        retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
+        # keep track of what has been yielded out of filter
+        yielded_items = []
+        for item in retryable_gen:
+            if stream_idx >= len(yielded_items):
+                yield item
+                yielded_items.append(item)
+            elif item != previous_stream[stream_idx]:
+                raise ValueError("Stream differs from last attempt")"
+            stream_idx += 1
 
-        filter_retry_wrapped = retryable_with_filter(target)
-        ```
+    filter_retry_wrapped = retryable_with_filter(target)
+    ```
 """
 
 from typing import (
