@@ -364,6 +364,8 @@ class Retry(object):
             on_error (Callable[Exception]): A function to call while processing
                 a retryable exception. Any error raised by this function will
                 *not* be caught.
+                If on_error was specified in the constructor, this value will
+                be ignored.
 
         Returns:
             Callable: A callable that will invoke ``func`` with retry
