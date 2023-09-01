@@ -211,9 +211,6 @@ def retry_target_stream(
                 raise final_exc from source_exc
             if on_error is not None:
                 on_error(exc)
-        finally:
-            if subgenerator is not None and getattr(subgenerator, "close", None):
-                cast(Generator, subgenerator).close()
 
         if deadline is not None and time.monotonic() + sleep > deadline:
             final_exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
