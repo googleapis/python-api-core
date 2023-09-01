@@ -19,7 +19,7 @@ This function will be used when initilizing a retry with
 
 When ``is_stream=False``, the target is treated as a callable,
 and will retry when the callable returns an error. When ``is_stream=True``,
-the target will be treated as a callable that retruns an iterable. Instead
+the target will be treated as a callable that returns an iterable. Instead
 of just wrapping the initial call in retry logic, the entire iterable is
 wrapped, with each yield passing through the retryable generator. If any yield
 in the stream raises a retryable exception, the entire stream will be
