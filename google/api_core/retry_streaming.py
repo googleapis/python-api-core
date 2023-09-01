@@ -101,8 +101,7 @@ from functools import partial
 
 from google.api_core import exceptions
 
-if TYPE_CHECKING:
-    _Y = TypeVar("_Y")
+_Y = TypeVar("_Y")
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -393,7 +393,7 @@ class Retry(object):
             retry_args = (self._predicate, sleep_generator, self._timeout, on_error)
             if self._is_stream:
                 # when stream is enabled, assume target returns an iterable that yields _Y
-                stream_target = cast(Callable[[], Iterable[_Y]], target)
+                stream_target = cast(Callable[[], Iterable["_Y"]], target)
                 return retry_target_stream(stream_target, *retry_args)
             else:
                 return retry_target(target, *retry_args)
