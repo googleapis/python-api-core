@@ -101,7 +101,7 @@ import time
 import sys
 from functools import partial
 
-from google.api_core.retry_streaming import _build_timeout_error
+from google.api_core.retry_streaming import _build_retry_error
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ async def retry_target_stream(
     error_list: List[Exception] = []
     # override exception_factory to build a more complex exception
     exc_factory = partial(
-        exception_factory or _build_timeout_error, timeout_val=timeout
+        exception_factory or _build_retry_error, timeout_val=timeout
     )
 
     for sleep in sleep_generator:

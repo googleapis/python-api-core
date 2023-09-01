@@ -104,7 +104,7 @@ _Y = TypeVar("_Y")  # yielded values
 _LOGGER = logging.getLogger(__name__)
 
 
-def _build_timeout_error(
+def _build_retry_error(
     exc_list: List[Exception], is_timeout: bool, timeout_val: float
 ) -> Tuple[Exception, Optional[Exception]]:
     """
@@ -119,8 +119,9 @@ def _build_timeout_error(
     Returns:
       - tuple[Exception, Exception|None]: a tuple of the exception to be raised, and the cause exception if any
     """
-    src_exc = exc_list[-1] if exc_list else None
     if is_timeout:
+        # return RetryError with the most recent exception as the cause
+        src_exc = exc_list[-1] if exc_list else None
         return (
             exceptions.RetryError(
                 "Timeout of {:.1f}s exceeded".format(timeout_val),
@@ -128,8 +129,12 @@ def _build_timeout_error(
             ),
             src_exc,
         )
-    else:
+    elif exc_list:
+        # return most recent exception encountered
         return exc_list[-1], None
+    else:
+        # no exceptions were given in exc_list. Raise generic RetryError
+        return exceptions.RetryError("Unknown error", None), None
 
 
 def retry_target_stream(
@@ -186,7 +191,7 @@ def retry_target_stream(
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
     exc_factory = partial(
-        exception_factory or _build_timeout_error, timeout_val=timeout
+        exception_factory or _build_retry_error, timeout_val=timeout
     )
 
     for sleep in sleep_generator:
