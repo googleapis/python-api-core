@@ -69,12 +69,12 @@ There are two ways to build more advanced retry logic for streams:
         retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
         # keep track of what has been yielded out of filter
         yielded_items = []
-        for item in retryable_gen:
+        for item in retryable_gen():
             if stream_idx >= len(yielded_items):
-                yield item
                 yielded_items.append(item)
-            elif item != previous_stream[stream_idx]:
-                raise ValueError("Stream differs from last attempt")"
+                yield item
+            elif item != yielded_items[stream_idx]:
+                raise ValueError("Stream differs from last attempt")
             stream_idx += 1
 
     filter_retry_wrapped = retryable_with_filter(target)
