@@ -48,7 +48,8 @@ There are two ways to build more advanced retry logic for streams:
             yield item
             seen_items.append(item)
 
-    retry_wrapped = Retry(is_stream=True)(attempt_with_modified_request, target, request, [])
+    retry_wrapped_fn = Retry(is_stream=True)(attempt_with_modified_request)
+    retryable_generator = retry_wrapped_fn(target, request)
     ```
 
 2. Wrap the retry generator
