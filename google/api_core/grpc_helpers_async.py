@@ -236,7 +236,6 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         compression (grpc.Compression): An optional value indicating the
             compression method to be used over the lifetime of the channel.
-            This is an EXPERIMENTAL option.
         kwargs: Additional key-word args passed to :func:`aio.secure_channel`.
 
     Returns:
