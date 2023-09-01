@@ -90,9 +90,7 @@ from typing import (
     Generator,
     TypeVar,
     Any,
-    Union,
     cast,
-    TYPE_CHECKING,
 )
 
 import logging
@@ -101,7 +99,7 @@ from functools import partial
 
 from google.api_core import exceptions
 
-_Y = TypeVar("_Y")
+_Y = TypeVar("_Y")  # yielded values
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -62,16 +62,7 @@ import logging
 import random
 import sys
 import time
-from typing import (
-    Any,
-    Callable,
-    TypeVar,
-    Union,
-    Generator,
-    Iterable,
-    cast,
-    TYPE_CHECKING,
-)
+from typing import Any, Callable, TypeVar, Generator, Iterable, cast, TYPE_CHECKING
 
 import requests.exceptions
 
