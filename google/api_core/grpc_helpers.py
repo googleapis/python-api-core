@@ -303,7 +303,6 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         compression (grpc.Compression): An optional value indicating the
             compression method to be used over the lifetime of the channel.
-            This is an EXPERIMENTAL option.
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
             Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
