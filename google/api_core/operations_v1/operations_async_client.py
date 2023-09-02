@@ -284,7 +284,7 @@ class OperationsAsyncClient:
                 while invoking the RPC, the appropriate ``GoogleAPICallError``
                 subclass will be raised.
             compression (grpc.Compression): An element of grpc.compression
-                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
+                e.g. grpc.compression.Gzip.
             metadata (Optional[List[Tuple[str, str]]]): Additional gRPC
                 metadata.
         """
