@@ -123,7 +123,7 @@ class OperationsAsyncClient:
                 configuration is used. If ``None``, then the RPC method will
                 not time out.
             compression (grpc.Compression): An element of grpc.compression
-                e.g. grpc.compression.Gzip. This is an EXPERIMENTAL option.
+                e.g. grpc.compression.Gzip.
             metadata (Optional[List[Tuple[str, str]]]):
                 Additional gRPC metadata.
 
