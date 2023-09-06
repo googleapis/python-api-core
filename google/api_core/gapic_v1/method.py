@@ -81,23 +81,26 @@ class _GapicCallable(object):
     def __init__(self, target, retry, timeout, metadata=None):
         self._target = target
         self._retry = retry
+        if isinstance(timeout, (int, float)):
+            timeout = TimeToDeadlineTimeout(timeout=timeout)
         self._timeout = timeout
         self._metadata = metadata
 
     def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, **kwargs):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
 
+        wrapped_func = self._target
         if retry is DEFAULT:
             retry = self._retry
+        if retry is not None:
+            wrapped_func = retry(wrapped_func)
 
         if timeout is DEFAULT:
             timeout = self._timeout
-
-        if isinstance(timeout, (int, float)):
+        elif isinstance(timeout, (int, float)):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
-
-        # Apply all applicable decorators.
-        wrapped_func = _apply_decorators(self._target, [retry, timeout])
+        if timeout is not None:
+            wrapped_func = timeout(wrapped_func)
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
