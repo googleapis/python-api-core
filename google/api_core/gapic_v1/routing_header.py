@@ -25,6 +25,8 @@ from enum import Enum
 from urllib.parse import urlencode
 
 ROUTING_METADATA_KEY = "x-goog-request-params"
+# use caching to avoid repeated computation
+ROUTING_PARAM_CACHE_SIZE = 32
 
 
 def to_routing_header(params, qualified_enums=True):
@@ -54,7 +56,7 @@ def to_routing_header(params, qualified_enums=True):
     )
 
 
-@functools.lru_cache(32)
+@functools.lru_cache(ROUTING_PARAM_CACHE_SIZE)
 def to_grpc_metadata(params, qualified_enums=True):
     """Returns the gRPC metadata containing the routing headers for the given
     request parameters.
