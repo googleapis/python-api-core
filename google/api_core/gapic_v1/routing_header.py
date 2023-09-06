@@ -20,6 +20,7 @@ requests, especially for services that are regional.
 Generally, these headers are specified as gRPC metadata.
 """
 
+import functools
 from enum import Enum
 from urllib.parse import urlencode
 
@@ -53,6 +54,7 @@ def to_routing_header(params, qualified_enums=True):
     )
 
 
+@functools.lru_cache(32)
 def to_grpc_metadata(params, qualified_enums=True):
     """Returns the gRPC metadata containing the routing headers for the given
     request parameters.
