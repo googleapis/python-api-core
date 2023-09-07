@@ -149,6 +149,8 @@ class _WrappedStreamStreamCall(
 
 def _wrap_unary_errors(callable_):
     """Map errors for Unary-Unary async callables."""
+    grpc_helpers._patch_callable_name(callable_)
+
     @functools.wraps(callable_)
     def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
@@ -157,13 +159,25 @@ def _wrap_unary_errors(callable_):
     return error_remapped_callable
 
 
-def _wrap_stream_errors(callable_, wrapper_type):
+def _wrap_stream_errors(callable_):
     """Map errors for streaming RPC async callables."""
+    grpc_helpers._patch_callable_name(callable_)
+
     @functools.wraps(callable_)
     async def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
+
+        if isinstance(call, aio.UnaryStreamCall):
+            call = _WrappedUnaryStreamCall().with_call(call)
+        elif isinstance(call, aio.StreamUnaryCall):
+            call = _WrappedStreamUnaryCall().with_call(call)
+        elif isinstance(call, aio.StreamStreamCall):
+            call = _WrappedStreamStreamCall().with_call(call)
+        else:
+            raise TypeError("Unexpected type of call %s" % type(call))
+
         await call.wait_for_connection()
-        return wrapper_type().with_call(call)
+        return call
 
     return error_remapped_callable
 
@@ -183,17 +197,10 @@ def wrap_errors(callable_):
 
     Returns: Callable: The wrapped gRPC callable.
     """
-    grpc_helpers._patch_callable_name(callable_)
     if isinstance(callable_, aio.UnaryUnaryMultiCallable):
+        return _wrap_unary_errors(callable_)
     else:
-        if isinstance(callable_, aio.UnaryStreamMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedUnaryStreamCall)
-        elif isinstance(callable_, aio.StreamUnaryMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedStreamUnaryCall)
-        elif isinstance(callable_, aio.StreamStreamMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
-        else:
-            raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
+        return _wrap_stream_errors(callable_)
 
 
 def create_channel(
