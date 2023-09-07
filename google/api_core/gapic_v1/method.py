@@ -109,9 +109,7 @@ class _GapicCallable(object):
             # as not specified.
             if metadata is None:
                 metadata = []
-            metadata = list(metadata)
-            metadata.extend(self._metadata)
-            kwargs["metadata"] = metadata
+            kwargs["metadata"] = (*self._metadata, *metadata)
 
         return wrapped_func(*args, **kwargs)
 
