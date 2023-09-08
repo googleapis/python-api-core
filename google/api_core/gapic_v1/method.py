@@ -85,22 +85,14 @@ class _GapicCallable(object):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
         self._timeout = timeout
         self._metadata = metadata
-
+        self._default_wrapped_fn = target
+        if retry is not None:
+            self._default_wrapped_fn = retry(target)
+        if timeout is not None:
+            self._default_wrapped_fn = timeout(target)
+            
     def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, **kwargs):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
-
-        wrapped_func = self._target
-        if retry is DEFAULT:
-            retry = self._retry
-        if retry is not None:
-            wrapped_func = retry(wrapped_func)
-
-        if timeout is DEFAULT:
-            timeout = self._timeout
-        elif isinstance(timeout, (int, float)):
-            timeout = TimeToDeadlineTimeout(timeout=timeout)
-        if timeout is not None:
-            wrapped_func = timeout(wrapped_func)
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
@@ -110,7 +102,25 @@ class _GapicCallable(object):
             if metadata is None:
                 metadata = []
             kwargs["metadata"] = (*self._metadata, *metadata)
-
+       
+        if retry is DEFAULT and timeout is DEFAULT:
+            # if default timeout and retry is passed, use cached callable
+            wrapped_func = self._default_wrapped_fn
+        else:
+            # otherwise, construct wrapped function
+            wrapped_func = self._target
+            if retry is DEFAULT:
+                retry = self._retry
+            if retry is not None:
+                wrapped_func = retry(wrapped_func)
+    
+            if timeout is DEFAULT:
+                timeout = self._timeout
+            elif isinstance(timeout, (int, float)):
+                timeout = TimeToDeadlineTimeout(timeout=timeout)
+            if timeout is not None:
+                wrapped_func = timeout(wrapped_func)
+    
         return wrapped_func(*args, **kwargs)
 
 
