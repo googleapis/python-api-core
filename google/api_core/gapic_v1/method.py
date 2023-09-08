@@ -88,8 +88,8 @@ class _GapicCallable(object):
 
     def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, **kwargs):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
-       
-        # onstruct wrapped function
+
+        # construct wrapped function
         wrapped_func = self._target
         if timeout is DEFAULT:
             timeout = self._timeout
