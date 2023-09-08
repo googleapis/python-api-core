@@ -85,7 +85,7 @@ class _GapicCallable(object):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
         self._timeout = timeout
         self._metadata = metadata
-            
+
     def __call__(self, *args, timeout=DEFAULT, retry=DEFAULT, **kwargs):
         """Invoke the low-level RPC with retry, timeout, and metadata."""
        
