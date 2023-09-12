@@ -51,10 +51,22 @@ a ``retry`` parameter that allows you to configure the behavior:
 
 """
 
+from __future__ import annotations
+
 import asyncio
 import datetime
 import functools
 import logging
+from typing import (
+    Awaitable,
+    Any,
+    Callable,
+    TypeVar,
+    AsyncGenerator,
+    AsyncIterable,
+    cast,
+    TYPE_CHECKING,
+)
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
@@ -63,6 +75,17 @@ from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
 from google.api_core.retry_streaming_async import retry_target_stream
 
+if TYPE_CHECKING:
+    import sys
+
+    if sys.version_info >= (3, 10):
+        from typing import ParamSpec
+    else:
+        from typing_extensions import ParamSpec
+
+    _P = ParamSpec("_P")  # target function call parameters
+    _R = TypeVar("_R")  # target function returned value
+    _Y = TypeVar("_Y")  # target stream yielded values
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
@@ -191,14 +214,14 @@ class AsyncRetry:
 
     def __init__(
         self,
-        predicate=if_transient_error,
-        initial=_DEFAULT_INITIAL_DELAY,
-        maximum=_DEFAULT_MAXIMUM_DELAY,
-        multiplier=_DEFAULT_DELAY_MULTIPLIER,
-        timeout=_DEFAULT_TIMEOUT,
-        on_error=None,
-        is_stream=False,
-        **kwargs
+        predicate: Callable[[BaseException], bool] = if_transient_error,
+        initial: float = _DEFAULT_INITIAL_DELAY,
+        maximum: float = _DEFAULT_MAXIMUM_DELAY,
+        multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
+        timeout: float = _DEFAULT_TIMEOUT,
+        on_error: Callable[[BaseException], Any] | None = None,
+        is_stream: bool = False,
+        **kwargs,
     ):
         self._predicate = predicate
         self._initial = initial
@@ -209,7 +232,13 @@ class AsyncRetry:
         self._on_error = on_error
         self._is_stream = is_stream
 
-    def __call__(self, func, on_error=None):
+    def __call__(
+        self,
+        func: Callable[
+            ..., Awaitable[_R] | AsyncIterable[_Y] | Awaitable[AsyncIterable[_Y]]
+        ],
+        on_error: Callable[[BaseException], Any] | None = None,
+    ) -> Callable[_P, Awaitable[_R | AsyncGenerator[_Y, None]]]:
         """Wrap a callable with retry behavior.
 
         Args:
@@ -226,22 +255,20 @@ class AsyncRetry:
             on_error = self._on_error
 
         # @functools.wraps(func)
-        async def retry_wrapped_func(*args, **kwargs):
+        async def retry_wrapped_func(
+            *args: _P.args, **kwargs: _P.kwargs
+        ) -> _R | AsyncGenerator[_Y, None]:
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_func = retry_target if not self._is_stream else retry_target_stream
-            fn_result = retry_func(
-                target,
-                self._predicate,
-                sleep_generator,
-                timeout=self._timeout,
-                on_error=on_error,
-            )
-            # if the target is not a stream, await the result before returning
-            return await fn_result if not self._is_stream else fn_result
+            retry_args = (self._predicate, sleep_generator, self._timeout, on_error)
+            if self._is_stream:
+                stream_target = cast(Callable[[], AsyncIterable[_Y]], target)
+                return retry_target_stream(stream_target, *retry_args)
+            else:
+                return await retry_target(target, *retry_args)
 
         return retry_wrapped_func
 
