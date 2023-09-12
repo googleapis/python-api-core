@@ -451,13 +451,12 @@ class TestAsyncRetry:
         from collections.abc import AsyncGenerator
 
         retry_ = retry_async.AsyncRetry(is_stream=True)
-
         decorated = retry_(self._generator_mock)
 
         num = 10
-        generator = decorated(num)
+        generator = await decorated(num)
         # check types
-        assert isinstance(decorated(num), AsyncGenerator)
+        assert isinstance(generator, AsyncGenerator)
         assert isinstance(self._generator_mock(num), AsyncGenerator)
         # check yield contents
         unpacked = [i async for i in generator]
@@ -480,7 +479,7 @@ class TestAsyncRetry:
             is_stream=True,
             timeout=None,
         )
-        generator = retry_(self._generator_mock)(error_on=3)
+        generator = await retry_(self._generator_mock)(error_on=3)
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
         unpacked = [await generator.__anext__() for i in range(10)]
@@ -514,7 +513,7 @@ class TestAsyncRetry:
         )
 
         decorated = retry_(self._generator_mock, on_error=on_error)
-        generator = decorated(error_on=1)
+        generator = await decorated(error_on=1)
 
         with now_patcher as patched_now:
             # Make sure that calls to fake asyncio.sleep() also advance the mocked
@@ -545,7 +544,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True)
         utcnow = datetime.datetime.utcnow()
         mock.patch("google.api_core.datetime_helpers.utcnow", return_value=utcnow)
-        generator = retry_(self._generator_mock)(sleep_time=0.2)
+        generator = await retry_(self._generator_mock)(sleep_time=0.2)
         await generator.__anext__() == 0
         task = asyncio.create_task(generator.__anext__())
         await asyncio.sleep(0.1)
@@ -565,7 +564,7 @@ class TestAsyncRetry:
 
         decorated = retry_(self._generator_mock)
 
-        generator = decorated(10)
+        generator = await decorated(10)
         result = await generator.__anext__()
         assert result == 0
         in_messages = ["test_1", "hello", "world"]
@@ -590,14 +589,14 @@ class TestAsyncRetry:
             is_stream=True,
             timeout=None,
         )
-        generator = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        generator = await retry_(self._generator_mock)(error_on=3, ignore_sent=True)
         with pytest.raises(TypeError) as exc_info:
             await generator.asend("can not send to fresh generator")
             assert exc_info.match("can't send non-None value")
 
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
-        generator = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        generator = await retry_(self._generator_mock)(error_on=3, ignore_sent=True)
         assert await generator.__anext__() == 0
         unpacked = [await generator.asend(i) for i in range(10)]
         assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
@@ -612,7 +611,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True)
         decorated = retry_(self._generator_mock)
         exception_list = []
-        generator = decorated(10, exceptions_seen=exception_list)
+        generator = await decorated(10, exceptions_seen=exception_list)
         for i in range(2):
             await generator.__anext__()
         await generator.aclose()
@@ -632,7 +631,7 @@ class TestAsyncRetry:
         retry_ = retry_async.AsyncRetry(is_stream=True)
         decorated = retry_(self._generator_mock)
         exception_list = []
-        generator = decorated(10, exceptions_seen=exception_list)
+        generator = await decorated(10, exceptions_seen=exception_list)
         await generator.aclose()
 
         with pytest.raises(StopAsyncIteration):
@@ -651,7 +650,7 @@ class TestAsyncRetry:
         )
         decorated = retry_(self._generator_mock)
         exception_list = []
-        generator = decorated(10, exceptions_seen=exception_list)
+        generator = await decorated(10, exceptions_seen=exception_list)
         for i in range(2):
             await generator.__anext__()
         with pytest.raises(BufferError):
@@ -662,7 +661,7 @@ class TestAsyncRetry:
             await generator.__anext__()
         # should retry if throw retryable exception
         exception_list = []
-        generator = decorated(10, exceptions_seen=exception_list)
+        generator = await decorated(10, exceptions_seen=exception_list)
         for i in range(2):
             await generator.__anext__()
         throw_val = await generator.athrow(ValueError("test"))
@@ -703,7 +702,7 @@ class TestAsyncRetry:
         else:
             decorated = retry_(iterable_fn)
 
-        retryable = decorated()
+        retryable = await decorated()
         result = await retryable.__anext__()
         assert result == 0
         await retryable.asend("test") == 1
@@ -743,13 +742,13 @@ class TestAsyncRetry:
             decorated = retry_(iterable_fn)
 
         # try closing active generator
-        retryable = decorated()
+        retryable = await decorated()
         assert await retryable.__anext__() == 0
         await retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
         # try closing new generator
-        new_retryable = decorated()
+        new_retryable = await decorated()
         await new_retryable.aclose()
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
@@ -789,7 +788,7 @@ class TestAsyncRetry:
             decorated = retry_(iterable_fn)
 
         # try throwing with active generator
-        retryable = decorated()
+        retryable = await decorated()
         assert await retryable.__anext__() == 0
         # should swallow errors in predicate
         await retryable.athrow(ValueError("test"))
@@ -799,7 +798,7 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             await retryable.__anext__()
         # try throwing with new generator
-        new_retryable = decorated()
+        new_retryable = await decorated()
         with pytest.raises(BufferError):
             await new_retryable.athrow(BufferError("test"))
         with pytest.raises(StopAsyncIteration):
