@@ -112,8 +112,8 @@ _LOGGER = logging.getLogger(__name__)
 
 async def retry_target_stream(
     target: Union[
-        Callable[[], AsyncIterable[_Y]],
-        Callable[[], Awaitable[AsyncIterable[_Y]]],
+        Callable[[], AsyncIterable["_Y"]],
+        Callable[[], Awaitable[AsyncIterable["_Y"]]],
     ],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],
@@ -123,7 +123,7 @@ async def retry_target_stream(
         Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
     ] = None,
     **kwargs,
-) -> AsyncGenerator[_Y, None]:
+) -> AsyncGenerator["_Y", None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
@@ -183,7 +183,7 @@ async def retry_target_stream(
             except TypeError:
                 # was not awaitable
                 pass
-            subgenerator = cast(AsyncIterable[_Y], gen_instance).__aiter__()
+            subgenerator = cast(AsyncIterable["_Y"], gen_instance).__aiter__()
 
             # if target is a generator, we will advance it using asend
             # otherwise, we will use anext
@@ -204,7 +204,7 @@ async def retry_target_stream(
                 except GeneratorExit:
                     # if wrapper received `aclose`, pass to subgenerator and close
                     if bool(getattr(subgenerator, "aclose", None)):
-                        await cast(AsyncGenerator[_Y, None], subgenerator).aclose()
+                        await cast(AsyncGenerator["_Y", None], subgenerator).aclose()
                     else:
                         raise
                     return
@@ -212,7 +212,7 @@ async def retry_target_stream(
                     # bare except catches any exception passed to `athrow`
                     # delegate error handling to subgenerator
                     if getattr(subgenerator, "athrow", None):
-                        await cast(AsyncGenerator[_Y, None], subgenerator).athrow(
+                        await cast(AsyncGenerator["_Y", None], subgenerator).athrow(
                             *sys.exc_info()
                         )
                     else:
@@ -233,7 +233,7 @@ async def retry_target_stream(
                 on_error(exc)
         finally:
             if subgenerator is not None and getattr(subgenerator, "aclose", None):
-                await cast(AsyncGenerator[_Y, None], subgenerator).aclose()
+                await cast(AsyncGenerator["_Y", None], subgenerator).aclose()
 
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:

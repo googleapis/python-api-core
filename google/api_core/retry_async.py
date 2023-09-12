@@ -265,7 +265,7 @@ class AsyncRetry:
             )
             retry_args = (self._predicate, sleep_generator, self._timeout, on_error)
             if self._is_stream:
-                stream_target = cast(Callable[[], AsyncIterable[_Y]], target)
+                stream_target = cast(Callable[[], AsyncIterable["_Y"]], target)
                 return retry_target_stream(stream_target, *retry_args)
             else:
                 return await retry_target(target, *retry_args)
