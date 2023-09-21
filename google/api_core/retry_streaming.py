@@ -94,7 +94,9 @@ def retry_target_stream(
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
-    exc_factory = partial(exception_factory or retries._build_retry_error, timeout_val=timeout)
+    exc_factory = partial(
+        exception_factory or retries._build_retry_error, timeout_val=timeout
+    )
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -109,14 +111,17 @@ def retry_target_stream(
             error_list.append(exc)
             if not predicate(exc):
                 final_exc, source_exc = exc_factory(
-                    exc_list=error_list, reason=retries.RetryFailureReason.NON_RETRYABLE_ERROR
+                    exc_list=error_list,
+                    reason=retries.RetryFailureReason.NON_RETRYABLE_ERROR,
                 )
                 raise final_exc from source_exc
             if on_error is not None:
                 on_error(exc)
 
         if deadline is not None and time.monotonic() + sleep > deadline:
-            final_exc, source_exc = exc_factory(exc_list=error_list, reason=retries.RetryFailureReason.TIMEOUT)
+            final_exc, source_exc = exc_factory(
+                exc_list=error_list, reason=retries.RetryFailureReason.TIMEOUT
+            )
             raise final_exc from source_exc
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)
