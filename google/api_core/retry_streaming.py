@@ -33,7 +33,6 @@ import logging
 import time
 from functools import partial
 
-from google.api_core import exceptions
 import google.api_core.retry as retries
 
 _Y = TypeVar("_Y")  # yielded values

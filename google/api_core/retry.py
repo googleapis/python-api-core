@@ -376,18 +376,18 @@ class Retry(object):
         network call in a function that modifies the request based on what has
         already been returned:
 
-        ```
-        def attempt_with_modified_request(target, request, seen_items=[]):
-            # remove seen items from request on each attempt
-            new_request = modify_request(request, seen_items)
-            new_generator = target(new_request)
-            for item in new_generator:
-                yield item
-                seen_items.append(item)
+        .. code-block:: python
 
-        retry_wrapped_fn = Retry(is_stream=True)(attempt_with_modified_request)
-        retryable_generator = retry_wrapped_fn(target, request)
-        ```
+            def attempt_with_modified_request(target, request, seen_items=[]):
+                # remove seen items from request on each attempt
+                new_request = modify_request(request, seen_items)
+                new_generator = target(new_request)
+                for item in new_generator:
+                    yield item
+                    seen_items.append(item)
+
+            retry_wrapped_fn = Retry(is_stream=True)(attempt_with_modified_request)
+            retryable_generator = retry_wrapped_fn(target, request)
 
     2. Wrap the retry generator
         Alternatively, you can wrap the retryable generator itself before
@@ -396,27 +396,27 @@ class Retry(object):
         in previous retry attempts, and only yield new items when the
         new attempt surpasses the previous ones:
 
-        ```
-        def retryable_with_filter(target):
-            stream_idx = 0
-            # reset stream_idx when the stream is retried
-            def on_error(e):
-                nonlocal stream_idx
-                stream_idx = 0
-            # build retryable
-            retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
-            # keep track of what has been yielded out of filter
-            yielded_items = []
-            for item in retryable_gen():
-                if stream_idx >= len(yielded_items):
-                    yielded_items.append(item)
-                    yield item
-                elif item != yielded_items[stream_idx]:
-                    raise ValueError("Stream differs from last attempt")
-                stream_idx += 1
+        .. code-block:: python
 
-        filter_retry_wrapped = retryable_with_filter(target)
-        ```
+            def retryable_with_filter(target):
+                stream_idx = 0
+                # reset stream_idx when the stream is retried
+                def on_error(e):
+                    nonlocal stream_idx
+                    stream_idx = 0
+                # build retryable
+                retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
+                # keep track of what has been yielded out of filter
+                yielded_items = []
+                for item in retryable_gen():
+                    if stream_idx >= len(yielded_items):
+                        yielded_items.append(item)
+                        yield item
+                    elif item != yielded_items[stream_idx]:
+                        raise ValueError("Stream differs from last attempt")
+                    stream_idx += 1
+
+            filter_retry_wrapped = retryable_with_filter(target)
 
     Args:
         predicate (Callable[Exception]): A callable that should return ``True``

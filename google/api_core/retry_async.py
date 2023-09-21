@@ -210,17 +210,17 @@ class AsyncRetry:
         grpc call in a function that modifies the request based on what has
         already been returned:
 
-        ```
-        async def attempt_with_modified_request(target, request, seen_items=[]):
-            # remove seen items from request on each attempt
-            new_request = modify_request(request, seen_items)
-            new_generator = await target(new_request)
-            async for item in new_generator:
-                yield item
-                seen_items.append(item)
+        .. code-block:: python
 
-        retry_wrapped = AsyncRetry(is_stream=True)(attempt_with_modified_request, target, request, [])
-        ```
+            async def attempt_with_modified_request(target, request, seen_items=[]):
+                # remove seen items from request on each attempt
+                new_request = modify_request(request, seen_items)
+                new_generator = await target(new_request)
+                async for item in new_generator:
+                    yield item
+                    seen_items.append(item)
+
+            retry_wrapped = AsyncRetry(is_stream=True)(attempt_with_modified_request, target, request, [])
 
         2. Wrap the retry generator
             Alternatively, you can wrap the retryable generator itself before
@@ -229,27 +229,27 @@ class AsyncRetry:
             in previous retry attempts, and only yield new items when the
             new attempt surpasses the previous ones:
 
-            ``
-            async def retryable_with_filter(target):
-                stream_idx = 0
-                # reset stream_idx when the stream is retried
-                def on_error(e):
-                    nonlocal stream_idx
-                    stream_idx = 0
-                # build retryable
-                retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
-                # keep track of what has been yielded out of filter
-                yielded_items = []
-                async for item in retryable_gen:
-                    if stream_idx >= len(yielded_items):
-                        yield item
-                        yielded_items.append(item)
-                    elif item != previous_stream[stream_idx]:
-                        raise ValueError("Stream differs from last attempt")"
-                    stream_idx += 1
+            .. code-block:: python
 
-            filter_retry_wrapped = retryable_with_filter(target)
-            ```
+                async def retryable_with_filter(target):
+                    stream_idx = 0
+                    # reset stream_idx when the stream is retried
+                    def on_error(e):
+                        nonlocal stream_idx
+                        stream_idx = 0
+                    # build retryable
+                    retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
+                    # keep track of what has been yielded out of filter
+                    yielded_items = []
+                    async for item in retryable_gen:
+                        if stream_idx >= len(yielded_items):
+                            yield item
+                            yielded_items.append(item)
+                        elif item != previous_stream[stream_idx]:
+                            raise ValueError("Stream differs from last attempt")"
+                        stream_idx += 1
+
+                filter_retry_wrapped = retryable_with_filter(target)
 
     Args:
         predicate (Callable[Exception]): A callable that should return ``True``
