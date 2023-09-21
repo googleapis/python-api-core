@@ -66,7 +66,7 @@ def test__build_retry_error_empty_list():
     attempt to build a retry error with no errors encountered
     should return a generic RetryError
     """
-    from google.api_core.retry_streaming import _build_retry_error
+    from google.api_core.retry import _build_retry_error
 
     src, cause = _build_retry_error([], False, 10)
     assert isinstance(src, exceptions.RetryError)
@@ -831,6 +831,7 @@ class TestRetry(object):
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
+        from google.api_core.retry import RetryFailureReason
         from google.api_core.retry_streaming import retry_target_stream
 
         timeout = 6
@@ -841,7 +842,7 @@ class TestRetry(object):
         def factory(*args, **kwargs):
             assert len(args) == 0
             assert kwargs["exc_list"] == sent_errors
-            assert kwargs["is_timeout"] is False
+            assert kwargs["reason"] == RetryFailureReason.NON_RETRYABLE_ERROR
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
@@ -869,6 +870,7 @@ class TestRetry(object):
         test when timeout is exceeded
         """
         import time
+        from google.api_core.retry import RetryFailureReason
         from google.api_core.retry_streaming import retry_target_stream
 
         timeout = 2
@@ -887,7 +889,7 @@ class TestRetry(object):
             def factory(*args, **kwargs):
                 assert len(args) == 0
                 assert kwargs["exc_list"] == sent_errors
-                assert kwargs["is_timeout"] is True
+                assert kwargs["reason"] == RetryFailureReason.TIMEOUT
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 

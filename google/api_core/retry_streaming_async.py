@@ -39,7 +39,8 @@ import time
 import sys
 from functools import partial
 
-from google.api_core.retry_streaming import _build_retry_error
+from google.api_core.retry import _build_retry_error
+from google.api_core.retry import RetryFailureReason
 
 if TYPE_CHECKING:
     _Y = TypeVar("_Y")  # yielded values
@@ -164,7 +165,7 @@ async def retry_target_stream(
         except (Exception, asyncio.CancelledError) as exc:
             error_list.append(exc)
             if not predicate(exc):
-                exc, source_exc = exc_factory(exc_list=error_list, is_timeout=False)
+                exc, source_exc = exc_factory(exc_list=error_list, reason=RetryFailureReason.NON_RETRYABLE_ERROR)
                 raise exc from source_exc
             if on_error is not None:
                 on_error(exc)
@@ -174,7 +175,7 @@ async def retry_target_stream(
 
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:
-            final_exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
+            final_exc, source_exc = exc_factory(exc_list=error_list, reason=RetryFailureReason.TIMEOUT)
             raise final_exc from source_exc
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)

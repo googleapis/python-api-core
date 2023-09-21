@@ -810,6 +810,7 @@ class TestAsyncRetry:
         generator should give the option to override exception creation logic
         test when non-retryable error is thrown
         """
+        from google.api_core.retry import RetryFailureReason
         from google.api_core.retry_streaming_async import retry_target_stream
 
         timeout = 6
@@ -820,7 +821,7 @@ class TestAsyncRetry:
         def factory(*args, **kwargs):
             assert len(args) == 0
             assert kwargs["exc_list"] == sent_errors
-            assert kwargs["is_timeout"] is False
+            assert kwargs["reason"] == RetryFailureReason.NON_RETRYABLE_ERROR
             assert kwargs["timeout_val"] == timeout
             return expected_final_err, expected_source_err
 
@@ -849,6 +850,7 @@ class TestAsyncRetry:
         test when timeout is exceeded
         """
         import time
+        from google.api_core.retry import RetryFailureReason
         from google.api_core.retry_streaming_async import retry_target_stream
 
         timeout = 2
@@ -867,7 +869,7 @@ class TestAsyncRetry:
             def factory(*args, **kwargs):
                 assert len(args) == 0
                 assert kwargs["exc_list"] == sent_errors
-                assert kwargs["is_timeout"] is True
+                assert kwargs["reason"] == RetryFailureReason.TIMEOUT
                 assert kwargs["timeout_val"] == timeout
                 return expected_final_err, expected_source_err
 

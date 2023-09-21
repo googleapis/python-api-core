@@ -34,43 +34,11 @@ import time
 from functools import partial
 
 from google.api_core import exceptions
+import google.api_core.retry as retries
 
 _Y = TypeVar("_Y")  # yielded values
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _build_retry_error(
-    exc_list: List[Exception], is_timeout: bool, timeout_val: float
-) -> Tuple[Exception, Optional[Exception]]:
-    """
-    Default exception_factory implementation. Builds an exception after the retry fails
-
-    Args:
-      - exc_list (list[Exception]): list of exceptions that occurred during the retry
-      - is_timeout (bool): whether the failure is due to the timeout value being exceeded,
-          or due to a non-retryable exception
-      - timeout_val (float): the original timeout value for the retry, for use in the exception message
-
-    Returns:
-      - tuple[Exception, Exception|None]: a tuple of the exception to be raised, and the cause exception if any
-    """
-    if is_timeout:
-        # return RetryError with the most recent exception as the cause
-        src_exc = exc_list[-1] if exc_list else None
-        return (
-            exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded".format(timeout_val),
-                src_exc,
-            ),
-            src_exc,
-        )
-    elif exc_list:
-        # return most recent exception encountered
-        return exc_list[-1], None
-    else:
-        # no exceptions were given in exc_list. Raise generic RetryError
-        return exceptions.RetryError("Unknown error", None), None
 
 
 def retry_target_stream(
@@ -126,7 +94,7 @@ def retry_target_stream(
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
-    exc_factory = partial(exception_factory or _build_retry_error, timeout_val=timeout)
+    exc_factory = partial(exception_factory or retries._build_retry_error, timeout_val=timeout)
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -141,14 +109,14 @@ def retry_target_stream(
             error_list.append(exc)
             if not predicate(exc):
                 final_exc, source_exc = exc_factory(
-                    exc_list=error_list, is_timeout=False
+                    exc_list=error_list, reason=retries.RetryFailureReason.NON_RETRYABLE_ERROR
                 )
                 raise final_exc from source_exc
             if on_error is not None:
                 on_error(exc)
 
         if deadline is not None and time.monotonic() + sleep > deadline:
-            final_exc, source_exc = exc_factory(exc_list=error_list, is_timeout=True)
+            final_exc, source_exc = exc_factory(exc_list=error_list, reason=retries.RetryFailureReason.TIMEOUT)
             raise final_exc from source_exc
         _LOGGER.debug(
             "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)

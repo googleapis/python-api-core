@@ -62,13 +62,14 @@ import logging
 import random
 import sys
 import time
+from enum import Enum
 from typing import Any, Callable, TypeVar, Generator, Iterable, cast, TYPE_CHECKING
 
 import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-from google.api_core.retry_streaming import retry_target_stream
+import google.api_core.retry_streaming as retry_streaming
 from google.auth import exceptions as auth_exceptions
 
 if TYPE_CHECKING:
@@ -86,6 +87,47 @@ _DEFAULT_INITIAL_DELAY = 1.0  # seconds
 _DEFAULT_MAXIMUM_DELAY = 60.0  # seconds
 _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
+
+
+class RetryFailureReason(Enum):
+    """
+    The cause of a failed retry, used when building exceptions
+    """
+    TIMEOUT = "TIMEOUT"
+    NON_RETRYABLE_ERROR = "NON_RETRYABLE_ERROR"
+
+
+def _build_retry_error(
+    exc_list: list[Exception], reason: RetryFailureReason, timeout_val: float, **kwargs: Any
+) -> tuple[Exception, Exception | None]:
+    """
+    Default exception_factory implementation. Builds an exception after the retry fails
+
+    Args:
+      - exc_list (list[Exception]): list of exceptions that occurred during the retry
+      - reason (google.api_core.retry.RetryFailureReason): reason for the retry failure. 
+            Can be TIMEOUT or NON_RETRYABLE_ERROR
+      - timeout_val (float): the original timeout value for the retry, for use in the exception message
+
+    Returns:
+      - tuple[Exception, Exception|None]: a tuple of the exception to be raised, and the cause exception if any
+    """
+    if reason == RetryFailureReason.TIMEOUT:
+        # return RetryError with the most recent exception as the cause
+        src_exc = exc_list[-1] if exc_list else None
+        return (
+            exceptions.RetryError(
+                "Timeout of {:.1f}s exceeded".format(timeout_val),
+                src_exc,
+            ),
+            src_exc,
+        )
+    elif exc_list:
+        # return most recent exception encountered
+        return exc_list[-1], None
+    else:
+        # no exceptions were given in exc_list. Raise generic RetryError
+        return exceptions.RetryError("Unknown error", None), None
 
 
 def if_exception_type(
@@ -451,7 +493,7 @@ class Retry(object):
             if self._is_stream:
                 # when stream is enabled, assume target returns an iterable that yields _Y
                 stream_target = cast(Callable[[], Iterable["_Y"]], target)
-                return retry_target_stream(stream_target, *retry_args)
+                return retry_streaming.retry_target_stream(stream_target, *retry_args)
             else:
                 return retry_target(target, *retry_args)
 
