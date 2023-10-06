@@ -45,7 +45,7 @@ def to_routing_header(params, qualified_enums=True):
     tuples = params.items() if isinstance(params, dict) else params
     if not qualified_enums:
         tuples = [(x[0], x[1].name) if isinstance(x[1], Enum) else x for x in tuples]
-    return _urlencode_params(*tuples)
+    return "&".join([_urlencode_param(*t) for t in tuples])
 
 
 def to_grpc_metadata(params, qualified_enums=True):
@@ -67,18 +67,18 @@ def to_grpc_metadata(params, qualified_enums=True):
 
 
 @functools.lru_cache(ROUTING_PARAM_CACHE_SIZE)
-def _urlencode_params(*params):
+def _urlencode_param(key, value):
     """Cacheable wrapper over urlencode
 
     Args:
-        *params ([Tuple[str, str | bytes | Enum]): the reqyest parameters
-            used for routing.
+        key (str): The key of the parameter to encode.
+        value (str | bytes | Enum): The value of the parameter to encode.
 
     Returns:
-        str: The routing header string.
+        str: The encoded parameter.
     """
     return urlencode(
-        params,
+        {key: value},
         # Per Google API policy (go/api-url-encoding), / is not encoded.
         safe="/",
     )
