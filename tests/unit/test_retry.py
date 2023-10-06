@@ -514,7 +514,9 @@ class TestRetry(object):
             return return_val
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
-            if exceptions_seen is not None:
+            if not exceptions_seen:
+               exceptions_seen = []
+            exceptions_seen.append(e)
                 exceptions_seen.append(e)
             raise
 
