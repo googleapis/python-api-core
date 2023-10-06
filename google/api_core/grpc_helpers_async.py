@@ -149,6 +149,7 @@ class _WrappedStreamStreamCall(
 
 def _wrap_unary_errors(callable_):
     """Map errors for Unary-Unary async callables."""
+
     @functools.wraps(callable_)
     def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
@@ -159,6 +160,7 @@ def _wrap_unary_errors(callable_):
 
 def _wrap_stream_errors(callable_, wrapper_type):
     """Map errors for streaming RPC async callables."""
+
     @functools.wraps(callable_)
     async def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
@@ -184,16 +186,14 @@ def wrap_errors(callable_):
     Returns: Callable: The wrapped gRPC callable.
     """
     grpc_helpers._patch_callable_name(callable_)
-    if isinstance(callable_, aio.UnaryUnaryMultiCallable):
+    if isinstance(callable_, aio.UnaryStreamMultiCallable):
+        return _wrap_stream_errors(callable_, _WrappedUnaryStreamCall)
+    elif isinstance(callable_, aio.StreamUnaryMultiCallable):
+        return _wrap_stream_errors(callable_, _WrappedStreamUnaryCall)
+    elif isinstance(callable_, aio.StreamStreamMultiCallable):
+        return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
     else:
-        if isinstance(callable_, aio.UnaryStreamMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedUnaryStreamCall)
-        elif isinstance(callable_, aio.StreamUnaryMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedStreamUnaryCall)
-        elif isinstance(callable_, aio.StreamStreamMultiCallable):
-            return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
-        else:
-            raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
+        raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
 
 
 def create_channel(
