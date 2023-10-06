@@ -539,7 +539,7 @@ class TestRetry(object):
         # check yield contents
         unpacked = [i for i in result]
         assert len(unpacked) == num
-        for a, b in zip(decorated(num), self._generator_mock(num)):
+        for a, b in zip(unpacked, self._generator_mock(num)):
             assert a == b
         sleep.assert_not_called()
 
@@ -612,6 +612,7 @@ class TestRetry(object):
         """
         Send should be passed through retry into target generator
         """
+
         def _mock_send_gen():
             """
             always yield whatever was sent in
@@ -626,7 +627,7 @@ class TestRetry(object):
 
         generator = decorated()
         result = next(generator)
-        # first call should be None
+        # first yield should be None
         assert result is None
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
@@ -634,7 +635,6 @@ class TestRetry(object):
             recv = generator.send(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
-
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_send_retry(self, sleep):

@@ -555,6 +555,7 @@ class TestAsyncRetry:
         """
         Send should be passed through retry into target generator
         """
+
         async def _mock_send_gen():
             """
             always yield whatever was sent in
@@ -562,6 +563,7 @@ class TestAsyncRetry:
             in_ = yield
             while True:
                 in_ = yield in_
+
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
         decorated = retry_(_mock_send_gen)
