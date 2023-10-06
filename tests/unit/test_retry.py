@@ -497,20 +497,16 @@ class TestRetry(object):
         error_on=None,
         return_val=None,
         exceptions_seen=None,
-        ignore_sent=False,
     ):
         """
         Helper to create a mock generator that yields a number of values
         Generator can optionally raise an exception on a specific iteration
         """
         try:
-            sent_in = None
             for i in range(num):
                 if error_on and i == error_on:
                     raise ValueError("generator mock error")
-                sent_in = yield (sent_in if sent_in else i)
-                if ignore_sent:
-                    sent_in = None
+                yield i
             return return_val
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
@@ -616,22 +612,29 @@ class TestRetry(object):
         """
         Send should be passed through retry into target generator
         """
+        def _mock_send_gen():
+            """
+            always yield whatever was sent in
+            """
+            in_ = yield
+            while True:
+                in_ = yield in_
+
         retry_ = retry.Retry(is_stream=True)
 
-        decorated = retry_(self._generator_mock)
+        decorated = retry_(_mock_send_gen)
 
-        generator = decorated(5)
+        generator = decorated()
         result = next(generator)
-        assert result == 0
+        # first call should be None
+        assert result is None
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
         for msg in in_messages:
             recv = generator.send(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
-        assert next(generator) == 4
-        with pytest.raises(StopIteration):
-            generator.send("should be exhausted")
+
 
     @mock.patch("time.sleep", autospec=True)
     def test___call___with_generator_send_retry(self, sleep):
@@ -645,12 +648,12 @@ class TestRetry(object):
             is_stream=True,
             timeout=None,
         )
-        result = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        result = retry_(self._generator_mock)(error_on=3)
         with pytest.raises(TypeError) as exc_info:
             result.send("can not send to fresh generator")
             assert exc_info.match("can't send non-None value")
         # initiate iteration with None
-        result = retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        result = retry_(self._generator_mock)(error_on=3)
         assert result.send(None) == 0
         # error thrown on 3
         # generator should contain 0, 1, 2 looping

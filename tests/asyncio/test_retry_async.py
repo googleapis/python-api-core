@@ -418,23 +418,18 @@ class TestAsyncRetry:
         error_on=None,
         exceptions_seen=None,
         sleep_time=0,
-        ignore_sent=False,
     ):
         """
         Helper to create a mock generator that yields a number of values
         Generator can optionally raise an exception on a specific iteration
         """
         try:
-            sent_in = None
             for i in range(num):
                 if sleep_time:
                     await asyncio.sleep(sleep_time)
                 if error_on and i == error_on:
                     raise ValueError("generator mock error")
-
-                sent_in = yield (sent_in if sent_in else i)
-                if ignore_sent:
-                    sent_in = None
+                yield i
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
             if exceptions_seen is not None:
@@ -560,21 +555,27 @@ class TestAsyncRetry:
         """
         Send should be passed through retry into target generator
         """
+        async def _mock_send_gen():
+            """
+            always yield whatever was sent in
+            """
+            in_ = yield
+            while True:
+                in_ = yield in_
         retry_ = retry_async.AsyncRetry(is_stream=True)
 
-        decorated = retry_(self._generator_mock)
+        decorated = retry_(_mock_send_gen)
 
-        generator = await decorated(10)
+        generator = await decorated()
         result = await generator.__anext__()
-        assert result == 0
+        # fist yield should be None
+        assert result is None
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
         for msg in in_messages:
             recv = await generator.asend(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
-        assert await generator.__anext__() == 4
-        assert await generator.__anext__() == 5
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -589,14 +590,14 @@ class TestAsyncRetry:
             is_stream=True,
             timeout=None,
         )
-        generator = await retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        generator = await retry_(self._generator_mock)(error_on=3)
         with pytest.raises(TypeError) as exc_info:
             await generator.asend("can not send to fresh generator")
             assert exc_info.match("can't send non-None value")
 
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
-        generator = await retry_(self._generator_mock)(error_on=3, ignore_sent=True)
+        generator = await retry_(self._generator_mock)(error_on=3)
         assert await generator.__anext__() == 0
         unpacked = [await generator.asend(i) for i in range(10)]
         assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
