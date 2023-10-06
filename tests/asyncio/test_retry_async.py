@@ -422,6 +422,12 @@ class TestAsyncRetry:
         """
         Helper to create a mock generator that yields a number of values
         Generator can optionally raise an exception on a specific iteration
+
+        Args:
+          - num (int): the number of values to yield
+          - error_on (int): if given, the generator will raise a ValueError on the specified iteration
+          - exceptions_seen (list): if given, the generator will append any exceptions to this list before raising
+          - sleep_time (int): if given, the generator will asyncio.sleep for this many seconds before yielding each value
         """
         try:
             for i in range(num):

@@ -501,6 +501,12 @@ class TestRetry(object):
         """
         Helper to create a mock generator that yields a number of values
         Generator can optionally raise an exception on a specific iteration
+
+        Args:
+          - num (int): the number of values to yield. After this, the generator will return `return_val`
+          - error_on (int): if given, the generator will raise a ValueError on the specified iteration
+          - return_val (any): if given, the generator will return this value after yielding num values
+          - exceptions_seen (list): if given, the generator will append any exceptions to this list before raising
         """
         try:
             for i in range(num):
@@ -510,9 +516,7 @@ class TestRetry(object):
             return return_val
         except (Exception, BaseException, GeneratorExit) as e:
             # keep track of exceptions seen by generator
-            if not exceptions_seen:
-               exceptions_seen = []
-            exceptions_seen.append(e)
+            if exceptions_seen is not None:
                 exceptions_seen.append(e)
             raise
 
