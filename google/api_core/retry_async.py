@@ -240,11 +240,11 @@ class AsyncRetry:
                     # build retryable
                     retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
                     # keep track of what has been yielded out of filter
-                    yielded_items = []
+                    seen_items = []
                     async for item in retryable_gen:
-                        if stream_idx >= len(yielded_items):
+                        if stream_idx >= len(seen_items):
                             yield item
-                            yielded_items.append(item)
+                            seen_items.append(item)
                         elif item != previous_stream[stream_idx]:
                             raise ValueError("Stream differs from last attempt")"
                         stream_idx += 1

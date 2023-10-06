@@ -411,12 +411,12 @@ class Retry(object):
                 # build retryable
                 retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
                 # keep track of what has been yielded out of filter
-                yielded_items = []
+                seen_items = []
                 for item in retryable_gen():
-                    if stream_idx >= len(yielded_items):
-                        yielded_items.append(item)
+                    if stream_idx >= len(seen_items):
+                        seen_items.append(item)
                         yield item
-                    elif item != yielded_items[stream_idx]:
+                    elif item != seen_items[stream_idx]:
                         raise ValueError("Stream differs from last attempt")
                     stream_idx += 1
 
