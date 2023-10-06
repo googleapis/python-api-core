@@ -78,9 +78,9 @@ async def retry_target_stream(
         timeout: How long to keep retrying the target.
             Note: timeout is only checked before initiating a retry, so the target may
             run past the timeout value as long as it is healthy.
-        on_error: A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
+        on_error: If given, the on_error callback will be called with each
+            retryable exception raised by the target. Any error raised by this
+            function will *not* be caught.
         exception_factory: A function that is called when the retryable reaches
             a terminal failure state, used to construct an exception to be raised.
             It it given a list of all exceptions encountered, a boolean indicating

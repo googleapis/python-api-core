@@ -222,10 +222,10 @@ def retry_target(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        timeout (float): How long to keep retrying the target.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
+        timeout (Optional[float]): How long to keep retrying the target.
+        on_error (Optional[Callable[Exception]]): If given, the on_error
+            callback will be called with each retryable exception raised by the
+            target. Any error raised by this function will *not* be caught.
         deadline (float): DEPRECATED: use ``timeout`` instead. For backward
             compatibility, if specified it will override ``timeout`` parameter.
 
@@ -475,11 +475,11 @@ class Retry(object):
 
         Args:
             func (Callable): The callable to add retry behavior to.
-            on_error (Callable[Exception]): A function to call while processing
-                a retryable exception. Any error raised by this function will
-                *not* be caught.
-                If on_error was specified in the constructor, this value will
-                be ignored.
+            on_error (Optional[Callable[Exception]]): If given, the
+                on_error callback will be called with each retryable exception
+                raised by the wrapped function. Any error raised by this
+                function will *not* be caught. If on_error was specified in the
+                constructor, this value will be ignored.
 
         Returns:
             Callable: A callable that will invoke ``func`` with retry
@@ -506,7 +506,9 @@ class Retry(object):
             if self._is_stream:
                 # when stream is enabled, assume target returns an iterable that yields _Y
                 stream_target = cast(Callable[[], Iterable["_Y"]], target)
-                return retry_streaming.retry_target_stream(stream_target, **retry_kwargs)
+                return retry_streaming.retry_target_stream(
+                    stream_target, **retry_kwargs
+                )
             else:
                 return retry_target(target, **retry_kwargs)
 

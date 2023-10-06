@@ -111,10 +111,10 @@ async def retry_target(
             It should return True to retry or False otherwise.
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
-        timeout (float): How long to keep retrying the target, in seconds.
-        on_error (Callable[Exception]): A function to call while processing a
-            retryable exception.  Any error raised by this function will *not*
-            be caught.
+        timeout (Optional[float]): How long to keep retrying the target, in seconds.
+        on_error (Optional[Callable[Exception]]): If given, the on_error
+            callback will be called with each retryable exception raised by the
+            target. Any error raised by this function will *not* be caught.
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
         compatibility, if set it will override the ``timeout`` parameter.
 
@@ -258,8 +258,8 @@ class AsyncRetry:
             must be greater than 0.
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
-        timeout (float): How long to keep retrying in seconds.
-        on_error (Callable[Exception]): A function to call while processing
+        timeout (Optional[float]): How long to keep retrying in seconds.
+        on_error (Optional[Callable[Exception]]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
         is_stream (bool): Indicates whether the input function
@@ -306,9 +306,12 @@ class AsyncRetry:
 
         Args:
             func (Callable): The callable or stream to add retry behavior to.
-            on_error (Callable[Exception]): A function to call while processing
-                a retryable exception. Any error raised by this function will
-                *not* be caught.
+            on_error (Optional[Callable[Exception]]): If given, the
+                on_error callback will be called with each retryable exception
+                raised by the wrapped function. Any error raised by this
+                function will *not* be caught. If on_error was specified in the
+                constructor, this value will be ignored.
+
 
         Returns:
             Callable: A callable that will invoke ``func`` with retry
