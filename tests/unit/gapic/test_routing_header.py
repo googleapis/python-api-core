@@ -71,19 +71,25 @@ def test_to_grpc_metadata():
     metadata = routing_header.to_grpc_metadata(params)
     assert metadata == (routing_header.ROUTING_METADATA_KEY, "name=meep&book.read=1")
 
-@pytest.mark.parametrize("key,value,expected", [
-    ("book.read", "1", "book.read=1"),
-    ("name", "me/ep", "name=me/ep"),
-    ("\\", "=", "%5C=%3D"),
-    (b"hello", "world", "hello=world"),
-    ("✔️", "✌️", "%E2%9C%94%EF%B8%8F=%E2%9C%8C%EF%B8%8F"),
-])
+
+@pytest.mark.parametrize(
+    "key,value,expected",
+    [
+        ("book.read", "1", "book.read=1"),
+        ("name", "me/ep", "name=me/ep"),
+        ("\\", "=", "%5C=%3D"),
+        (b"hello", "world", "hello=world"),
+        ("✔️", "✌️", "%E2%9C%94%EF%B8%8F=%E2%9C%8C%EF%B8%8F"),
+    ],
+)
 def test__urlencode_param(key, value, expected):
     result = routing_header._urlencode_param(key, value)
     assert result == expected
 
+
 def test__urlencode_param_caching():
     import time
+
     key = "key" * 100
     value = "value" * 100
     # time with empty cache
