@@ -326,12 +326,17 @@ class AsyncRetry:
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_args = (self._predicate, sleep_generator, self._timeout, on_error)
+            retry_kwargs = {
+                "predicate": self._predicate,
+                "sleep_generator": sleep_generator,
+                "timeout": self._timeout,
+                "on_error": on_error,
+            }
             if self._is_stream:
                 stream_target = cast(Callable[[], AsyncIterable["_Y"]], target)
-                return retry_target_stream(stream_target, *retry_args)
+                return retry_target_stream(stream_target, **retry_kwargs)
             else:
-                return await retry_target(target, *retry_args)
+                return await retry_target(target, **retry_kwargs)
 
         return retry_wrapped_func
 
