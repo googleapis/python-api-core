@@ -342,7 +342,11 @@ class Retry(object):
     expected to succeed (its errors are supposed to be handled by the retry
     logic). The decision as to whether a new polling attempt needs to be made is based
     not on the RPC status code but  on the status of the returned
-    status of an operation. In other words: we will poll a long-running operation until the operation is done or the polling timeout expires. Each poll will inform us of the status of the operation. The poll consists of an RPC to the server that may itself be retried as per the poll-specific retry settings in case of errors. The operation-level retry settings do NOT apply to polling-RPC retries.
+    status of an operation. In other words: we will poll a long-running operation until
+    the operation is done or the polling timeout expires. Each poll will inform us of
+    the status of the operation. The poll consists of an RPC to the server that may
+    itself be retried as per the poll-specific retry settings in case of errors. The
+    operation-level retry settings do NOT apply to polling-RPC retries.
 
     With the actual timeout types being defined above, the client libraries
     often refer to just Timeout without clarifying which type specifically
