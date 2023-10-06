@@ -33,7 +33,7 @@ def to_routing_header(params, qualified_enums=True):
     """Returns a routing header string for the given request parameters.
 
     Args:
-        params (Mapping[str, Any]): A dictionary containing the request
+        params (Mapping[str, str | bytes | Enum]): A dictionary containing the request
             parameters used for routing.
         qualified_enums (bool): Whether to represent enum values
             as their type-qualified symbol names instead of as their
@@ -41,28 +41,19 @@ def to_routing_header(params, qualified_enums=True):
 
     Returns:
         str: The routing header string.
-
     """
+    tuples = params.items() if isinstance(params, dict) else params
     if not qualified_enums:
-        if isinstance(params, dict):
-            tuples = params.items()
-        else:
-            tuples = params
-        params = [(x[0], x[1].name) if isinstance(x[1], Enum) else x for x in tuples]
-    return urlencode(
-        params,
-        # Per Google API policy (go/api-url-encoding), / is not encoded.
-        safe="/",
-    )
+        tuples = [(x[0], x[1].name) if isinstance(x[1], Enum) else x for x in tuples]
+    return _urlencode_params(*tuples)
 
 
-@functools.lru_cache(ROUTING_PARAM_CACHE_SIZE)
 def to_grpc_metadata(params, qualified_enums=True):
     """Returns the gRPC metadata containing the routing headers for the given
     request parameters.
 
     Args:
-        params (Mapping[str, Any]): A dictionary containing the request
+        params (Mapping[str, str | bytes | Enum]): A dictionary containing the request
             parameters used for routing.
         qualified_enums (bool): Whether to represent enum values
             as their type-qualified symbol names instead of as their
@@ -73,3 +64,21 @@ def to_grpc_metadata(params, qualified_enums=True):
             and value.
     """
     return (ROUTING_METADATA_KEY, to_routing_header(params, qualified_enums))
+
+
+@functools.lru_cache(ROUTING_PARAM_CACHE_SIZE)
+def _urlencode_params(*params):
+    """Cacheable wrapper over urlencode
+
+    Args:
+        *params ([Tuple[str, str | bytes | Enum]): the reqyest parameters
+            used for routing.
+
+    Returns:
+        str: The routing header string.
+    """
+    return urlencode(
+        params,
+        # Per Google API policy (go/api-url-encoding), / is not encoded.
+        safe="/",
+    )
