@@ -66,7 +66,8 @@ def to_grpc_metadata(params, qualified_enums=True):
     return (ROUTING_METADATA_KEY, to_routing_header(params, qualified_enums))
 
 
-@functools.lru_cache(ROUTING_PARAM_CACHE_SIZE)
+# use caching to avoid repeated computation
+@functools.lru_cache(maxsize=ROUTING_PARAM_CACHE_SIZE)
 def _urlencode_param(key, value):
     """Cacheable wrapper over urlencode
 
