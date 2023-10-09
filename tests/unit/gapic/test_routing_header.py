@@ -87,7 +87,7 @@ def test__urlencode_param(key, value, expected):
     assert result == expected
 
 
-def test__urlencode_param_caching():
+def test__urlencode_param_caching_performance():
     import time
 
     key = "key" * 100
