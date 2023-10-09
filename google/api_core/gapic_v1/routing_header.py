@@ -25,7 +25,9 @@ from enum import Enum
 from urllib.parse import urlencode
 
 ROUTING_METADATA_KEY = "x-goog-request-params"
-# use caching to avoid repeated computation
+# This is the value for the `maxsize` argument of @functools.lru_cache
+# https://docs.python.org/3/library/functools.html#functools.lru_cache
+# This represents the number of recent function calls to store.
 ROUTING_PARAM_CACHE_SIZE = 32
 
 
