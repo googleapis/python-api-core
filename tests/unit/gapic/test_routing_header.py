@@ -96,8 +96,8 @@ def test__urlencode_param_caching_performance():
     start_time = time.perf_counter()
     routing_header._urlencode_param(key, value)
     duration = time.perf_counter() - start_time
-    # second call should be much faster
     second_start_time = time.perf_counter()
     routing_header._urlencode_param(key, value)
     second_duration = time.perf_counter() - second_start_time
+    # second call should be approximately 10 times faster
     assert second_duration < duration / 10
