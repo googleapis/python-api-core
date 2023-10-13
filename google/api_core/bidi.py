@@ -262,6 +262,10 @@ class BidiRpc(object):
         self._callbacks.append(callback)
 
     def _on_call_done(self, future):
+        # This occurs when the RPC errors or is successfully terminated.
+        # Note that grpc's "future" here can also be a grpc.RpcError.
+        # See note in https://github.com/grpc/grpc/issues/10885#issuecomment-302651331
+        # that `grpc.RpcError` is also `grpc.call`.
         for callback in self._callbacks:
             callback(future)
 
@@ -276,7 +280,9 @@ class BidiRpc(object):
         try:
             call = self._start_rpc(iter(request_generator), metadata=self._rpc_metadata)
         except exceptions.GoogleAPICallError as exc:
-            self._on_call_done(exc)
+            # The original `grpc.RpcError` (which is usually also a `grpc.Call`) is
+            # available from the ``response`` property on the mapped exception.
+            self._on_call_done(exc.response)
             raise
 
         request_generator.call = call

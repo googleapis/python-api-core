@@ -805,7 +805,7 @@ class TestBackgroundConsumer(object):
             pass
 
     def test_rpc_callback_fires_when_consumer_start_fails(self):
-        expected_exception = exceptions.InvalidArgument("test")
+        expected_exception = exceptions.InvalidArgument("test", response=grpc.StatusCode.INVALID_ARGUMENT)
         callback = mock.Mock(spec=["__call__"])
 
         rpc, _ = make_rpc()
@@ -815,7 +815,7 @@ class TestBackgroundConsumer(object):
 
         consumer = bidi.BackgroundConsumer(bidi_rpc, on_response=None)
         consumer.start()
-        assert callback.call_args.args[0] == expected_exception
+        assert callback.call_args.args[0] == grpc.StatusCode.INVALID_ARGUMENT
 
     def test_consumer_expected_error(self, caplog):
         caplog.set_level(logging.DEBUG)
