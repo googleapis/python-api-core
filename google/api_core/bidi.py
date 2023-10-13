@@ -92,10 +92,7 @@ class _RequestQueueGenerator(object):
         # Note: there is a possibility that this starts *before* the call
         # property is set. So we have to check if self.call is set before
         # seeing if it's active.
-        if self.call is not None and not self.call.is_active():
-            return False
-        else:
-            return True
+        return self.call is not None and self.call.is_active()
 
     def __iter__(self):
         if self._initial_request is not None:
