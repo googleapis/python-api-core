@@ -265,6 +265,9 @@ class BidiRpc(object):
         self._callbacks.append(callback)
 
     def _on_call_done(self, future):
+        # Note that grpc's "future" here is also a grpc.RpcError.
+        # `grpc.RpcError` is also `grpc.call` based on
+        # https://github.com/grpc/grpc/issues/10885#issuecomment-302651331
         for callback in self._callbacks:
             callback(future)
 
