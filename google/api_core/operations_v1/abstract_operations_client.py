@@ -292,11 +292,12 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         if client_options is None:
             client_options = client_options_lib.ClientOptions()
 
-
         # Create SSL credentials for mutual TLS if needed.
         use_client_cert = os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
         if use_client_cert.lower() not in ("true", "false"):
-            raise ValueError("Environment variable `GOOGLE_API_USE_CLIENT_CERTIFICATE` must be either `true` or `false`")
+            raise ValueError(
+                "Environment variable `GOOGLE_API_USE_CLIENT_CERTIFICATE` must be either `true` or `false`"
+            )
         client_cert_source_func = None
         is_mtls = False
         if use_client_cert.lower() == "true":
