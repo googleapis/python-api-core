@@ -140,6 +140,7 @@ async def test_retry_target_warning_for_retry(utcnow, sleep):
     target = mock.AsyncMock(spec=["__call__"])
 
     with pytest.warns(Warning) as exc_info:
+        # Note: predicate is just a filler and doesn't affect the test
         retry.retry_target(target, predicate, range(10), None)
     
     assert len(exc_info) == 2
