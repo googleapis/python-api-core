@@ -91,6 +91,7 @@ class ClientOptions(object):
         scopes=None,
         api_key=None,
         api_audience=None,
+        universe_domain=None
     ):
         if client_cert_source and client_encrypted_cert_source:
             raise ValueError(
@@ -106,6 +107,7 @@ class ClientOptions(object):
         self.scopes = scopes
         self.api_key = api_key
         self.api_audience = api_audience
+        self.universe_domain = universe_domain
 
     def __repr__(self):
         return "ClientOptions: " + repr(self.__dict__)
