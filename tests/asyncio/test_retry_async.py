@@ -706,8 +706,10 @@ class TestAsyncRetry:
             return CustomIterable()
 
         if awaitable_wrapped:
+
             async def wrapper():
                 return iterable_fn()
+
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
