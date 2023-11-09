@@ -721,7 +721,8 @@ class TestRetry(object):
         retryable.close()
         with pytest.raises(StopIteration):
             next(retryable)
-        # try closing new generator
+            
+        # try closing a new generator
         retryable = decorated(10)
         retryable.close()
         with pytest.raises(StopIteration):
@@ -751,7 +752,8 @@ class TestRetry(object):
             retryable.throw(TypeError)
         with pytest.raises(StopIteration):
             next(retryable)
-        # try throwing with new generator
+            
+        # try throwing with a new generator
         retryable = decorated(10)
         with pytest.raises(ValueError):
             retryable.throw(ValueError)

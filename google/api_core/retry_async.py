@@ -220,7 +220,7 @@ class AsyncRetry:
                     yield item
                     seen_items.append(item)
 
-            retry_wrapped = AsyncRetry(is_stream=True)(attempt_with_modified_request, target, request, [])
+            retry_wrapped = AsyncRetry(is_stream=True,...)(attempt_with_modified_request, target, request, [])
 
         2. Wrap the retry generator
             Alternatively, you can wrap the retryable generator itself before
@@ -238,7 +238,7 @@ class AsyncRetry:
                         nonlocal stream_idx
                         stream_idx = 0
                     # build retryable
-                    retryable_gen = AsyncRetry(is_stream=True, on_error=on_error, ...)(target)
+                    retryable_gen = AsyncRetry(is_stream=True, ...)(target)
                     # keep track of what has been yielded out of filter
                     seen_items = []
                     async for item in retryable_gen:
@@ -263,7 +263,7 @@ class AsyncRetry:
             a retryable exception. Any error raised by this function will
             *not* be caught.
         is_stream (bool): Indicates whether the input function
-            should be treated as an stream function (i.e. an AsyncGenerator,
+            should be treated as a stream function (i.e. an AsyncGenerator,
             or function or coroutine that returns an AsyncIterable).
             If True, the iterable will be wrapped with retry logic, and any
             failed outputs will restart the stream. If False, only the input

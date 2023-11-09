@@ -415,7 +415,7 @@ class Retry(object):
                     nonlocal stream_idx
                     stream_idx = 0
                 # build retryable
-                retryable_gen = Retry(is_stream=True, on_error=on_error, ...)(target)
+                retryable_gen = Retry(is_stream=True,...)(target)
                 # keep track of what has been yielded out of filter
                 seen_items = []
                 for item in retryable_gen():
@@ -440,7 +440,7 @@ class Retry(object):
             a retryable exception. Any error raised by this function will
             *not* be caught.
         is_stream (bool): Indicates whether the input function
-            should be treated as an stream function (i.e. a Generator,
+            should be treated as a stream function (i.e. a Generator,
             or function that returns an Iterable). If True, the iterable
             will be wrapped with retry logic, and any failed outputs will
             restart the stream. If False, only the input function call itself

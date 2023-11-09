@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Generator wrapper for retryable streaming RPCs.
 This function will be used when initilizing a retry with
@@ -65,7 +66,7 @@ async def retry_target_stream(
     """Create a generator wrapper that retries the wrapped stream if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
-    higher-level retry helper :class:`Retry`.
+    higher-level retry helper :class:`AsyncRetry`.
 
     Args:
         target: The generator function to call and retry. This must be a
@@ -91,7 +92,7 @@ async def retry_target_stream(
             on timeout, or the last exception encountered otherwise.
 
     Returns:
-        AssyncGenerator: A retryable generator that wraps the target generator function.
+        AsyncGenerator: A retryable generator that wraps the target generator function.
 
     Raises:
         ValueError: If the sleep generator stops yielding values.

@@ -576,7 +576,7 @@ class TestAsyncRetry:
 
         generator = await decorated()
         result = await generator.__anext__()
-        # fist yield should be None
+        # first yield should be None
         assert result is None
         in_messages = ["test_1", "hello", "world"]
         out_messages = []
@@ -600,7 +600,7 @@ class TestAsyncRetry:
         )
         generator = await retry_(self._generator_mock)(error_on=3)
         with pytest.raises(TypeError) as exc_info:
-            await generator.asend("can not send to fresh generator")
+            await generator.asend("cannot send to fresh generator")
             assert exc_info.match("can't send non-None value")
 
         # error thrown on 3
@@ -653,6 +653,8 @@ class TestAsyncRetry:
         """
         Throw should be passed through retry into target generator
         """
+
+        # The generator should not retry when it encounters a non-retryable error
         retry_ = retry_async.AsyncRetry(
             predicate=retry_async.if_exception_type(ValueError),
             is_stream=True,
@@ -668,7 +670,8 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             # calling next on closed generator should raise error
             await generator.__anext__()
-        # should retry if throw retryable exception
+
+        # In contrast, the generator should retry if we throw a retryable exception
         exception_list = []
         generator = await decorated(10, exceptions_seen=exception_list)
         for i in range(2):
@@ -679,7 +682,7 @@ class TestAsyncRetry:
         # calling next on closed generator should not raise error
         assert await generator.__anext__() == 1
 
-    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
+    @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_iterable_send(self, sleep, awaitale_wrapped):
@@ -702,11 +705,9 @@ class TestAsyncRetry:
 
             return CustomIterable()
 
-        if awaitale_wrapped:
-
+        if awaitable_wrapped:
             async def wrapper():
                 return iterable_fn()
-
             decorated = retry_(wrapper)
         else:
             decorated = retry_(iterable_fn)
@@ -718,7 +719,7 @@ class TestAsyncRetry:
         await retryable.asend("test2") == 2
         await retryable.asend("test3") == 3
 
-    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
+    @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_iterable_close(self, sleep, awaitale_wrapped):
@@ -762,7 +763,7 @@ class TestAsyncRetry:
         with pytest.raises(StopAsyncIteration):
             await new_retryable.__anext__()
 
-    @pytest.mark.parametrize("awaitale_wrapped", [True, False])
+    @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
     async def test___call___with_iterable_throw(self, sleep, awaitale_wrapped):
