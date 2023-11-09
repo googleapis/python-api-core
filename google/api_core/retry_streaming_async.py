@@ -102,7 +102,7 @@ async def retry_target_stream(
                 Exception: If the target raises an error that isn't retryable.
     """
 
-    async_iterator: Optional[AsyncIterator[_Y]] = None
+    target_iterator: Optional[AsyncIterator[_Y]] = None
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
@@ -124,21 +124,21 @@ async def retry_target_stream(
             except TypeError:
                 # was not awaitable, continue
                 pass
-            async_iterator = cast(AsyncIterable["_Y"], target_output).__aiter__()
+            target_iterator = cast(AsyncIterable["_Y"], target_output).__aiter__()
 
             if target_is_generator is None:
                 # Check if target supports generator features (asend, athrow, aclose)
-                target_is_generator = bool(getattr(async_iterator, "asend", None))
+                target_is_generator = bool(getattr(target_iterator, "asend", None))
 
             sent_in = None
             while True:
-                ## Read from async_iterator
+                ## Read from target_iterator
                 # If the target is a generator, we will advance it with `asend`
                 # otherwise, we will use `anext`
                 if target_is_generator:
-                    next_value = await async_iterator.asend(sent_in)  # type: ignore
+                    next_value = await target_iterator.asend(sent_in)  # type: ignore
                 else:
-                    next_value = await async_iterator.__anext__()
+                    next_value = await target_iterator.__anext__()
                 ## Yield from Wrapper to caller
                 try:
                     # yield latest value from target
@@ -148,16 +148,16 @@ async def retry_target_stream(
                     # if wrapper received `aclose` while waiting on yield,
                     # it will raise GeneratorExit here
                     if target_is_generator:
-                        # pass to inner async_iterator for handling
-                        await cast(AsyncGenerator["_Y", None], async_iterator).aclose()
+                        # pass to inner target_iterator for handling
+                        await cast(AsyncGenerator["_Y", None], target_iterator).aclose()
                     else:
                         raise
                     return
                 except:  # noqa: E722
                     # bare except catches any exception passed to `athrow`
                     if target_is_generator:
-                        # delegate error handling to async_iterator
-                        await cast(AsyncGenerator["_Y", None], async_iterator).athrow(
+                        # delegate error handling to target_iterator
+                        await cast(AsyncGenerator["_Y", None], target_iterator).athrow(
                             *sys.exc_info()
                         )
                     else:
@@ -166,7 +166,7 @@ async def retry_target_stream(
         except StopAsyncIteration:
             # if iterator exhausted, return
             return
-        # handle exceptions raised by the async_iterator
+        # handle exceptions raised by the target_iterator
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except (Exception, asyncio.CancelledError) as exc:
@@ -179,8 +179,8 @@ async def retry_target_stream(
             if on_error is not None:
                 on_error(exc)
         finally:
-            if target_is_generator and async_iterator is not None:
-                await cast(AsyncGenerator["_Y", None], async_iterator).aclose()
+            if target_is_generator and target_iterator is not None:
+                await cast(AsyncGenerator["_Y", None], target_iterator).aclose()
 
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:
