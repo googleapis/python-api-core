@@ -217,7 +217,7 @@ def test_wrap_method_with_call():
 
 def test_wrap_method_with_call_not_supported():
     """Raises an error if wrapped callable doesn't have with_call method."""
-    method = lambda: None
+    method = lambda: None  # noqa: E731
 
     with pytest.raises(ValueError) as exc_info:
         google.api_core.gapic_v1.method.wrap_method(method, with_call=True)
