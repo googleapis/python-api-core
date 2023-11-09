@@ -113,14 +113,15 @@ async def retry_target_stream(
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
-            # generator may be raw iterator, or wrapped in an awaitable
             gen_instance: Union[
                 AsyncIterable[_Y], Awaitable[AsyncIterable[_Y]]
             ] = target()
             try:
+                # gapic functions return the generator behind an awaitable
+                # unwrap the awaitable so we can work with the generator directly
                 gen_instance = await gen_instance  # type: ignore
             except TypeError:
-                # was not awaitable
+                # was not awaitable, continue
                 pass
             subgenerator = cast(AsyncIterable["_Y"], gen_instance).__aiter__()
 
