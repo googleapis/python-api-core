@@ -202,6 +202,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
     assert result == 42
     method.assert_called_once_with(timeout=22, metadata=mock.ANY)
 
+
 def test_wrap_method_with_call():
     method = mock.Mock()
     mock_call = mock.Mock()
@@ -212,6 +213,7 @@ def test_wrap_method_with_call():
     assert len(result) == 2
     assert result[0] == 42
     assert result[1] == mock_call
+
 
 def test_wrap_method_with_call_not_supported():
     """Raises an error if wrapped callable doesn't have with_call method."""
