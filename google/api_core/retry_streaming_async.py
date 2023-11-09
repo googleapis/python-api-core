@@ -132,7 +132,7 @@ async def retry_target_stream(
 
             sent_in = None
             while True:
-                ## Read from Subgenerator
+                ## Read from async_iterator
                 # If the target is a generator, we will advance it with `asend`
                 # otherwise, we will use `anext`
                 if target_is_generator:
@@ -141,20 +141,22 @@ async def retry_target_stream(
                     next_value = await async_iterator.__anext__()
                 ## Yield from Wrapper to caller
                 try:
-                    # yield last value from subgenerator
+                    # yield latest value from target
                     # exceptions from `athrow` and `aclose` are injected here
                     sent_in = yield next_value
                 except GeneratorExit:
-                    # if wrapper received `aclose`, pass to subgenerator and close
+                    # if wrapper received `aclose` while waiting on yield,
+                    # it will raise GeneratorExit here
                     if target_is_generator:
+                        # pass to inner async_iterator for handling
                         await cast(AsyncGenerator["_Y", None], async_iterator).aclose()
                     else:
                         raise
                     return
                 except:  # noqa: E722
                     # bare except catches any exception passed to `athrow`
-                    # delegate error handling to subgenerator
                     if target_is_generator:
+                        # delegate error handling to async_iterator
                         await cast(AsyncGenerator["_Y", None], async_iterator).athrow(
                             *sys.exc_info()
                         )
@@ -162,9 +164,9 @@ async def retry_target_stream(
                         raise
             return
         except StopAsyncIteration:
-            # if generator exhausted, return
+            # if iterator exhausted, return
             return
-        # handle exceptions raised by the subgenerator
+        # handle exceptions raised by the async_iterator
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except (Exception, asyncio.CancelledError) as exc:
