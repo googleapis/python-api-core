@@ -678,7 +678,7 @@ class TestAsyncRetry:
         throw_val = await generator.athrow(ValueError("test"))
         assert throw_val == 0
         assert isinstance(exception_list[0], ValueError)
-        # calling next on closed generator should not raise error
+        # calling next on generator should not raise error, because it was retried
         assert await generator.__anext__() == 1
 
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
