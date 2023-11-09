@@ -102,33 +102,33 @@ async def retry_target_stream(
                 Exception: If the target raises an error that isn't retryable.
     """
 
-    subgenerator: Optional[AsyncIterator[_Y]] = None
+    async_iterator: Optional[AsyncIterator[_Y]] = None
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: List[Exception] = []
     # override exception_factory to build a more complex exception
     exc_factory = partial(exception_factory or _build_retry_error, timeout_val=timeout)
-    target_is_generator: bool | None = None
+    target_is_generator: Optional[bool] = None
 
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
-            gen_instance: Union[
+            target_output: Union[
                 AsyncIterable[_Y], Awaitable[AsyncIterable[_Y]]
             ] = target()
             try:
                 # gapic functions return the generator behind an awaitable
                 # unwrap the awaitable so we can work with the generator directly
-                gen_instance = await gen_instance  # type: ignore
+                target_output = await target_output  # type: ignore
             except TypeError:
                 # was not awaitable, continue
                 pass
-            subgenerator = cast(AsyncIterable["_Y"], gen_instance).__aiter__()
+            async_iterator = cast(AsyncIterable["_Y"], target_output).__aiter__()
 
             if target_is_generator is None:
                 # Check if target supports generator features (asend, athrow, aclose)
-                target_is_generator = bool(getattr(subgenerator, "asend", None))
+                target_is_generator = bool(getattr(async_iterator, "asend", None))
 
             sent_in = None
             while True:
@@ -136,9 +136,9 @@ async def retry_target_stream(
                 # If the target is a generator, we will advance it with `asend`
                 # otherwise, we will use `anext`
                 if target_is_generator:
-                    next_value = await subgenerator.asend(sent_in)  # type: ignore
+                    next_value = await async_iterator.asend(sent_in)  # type: ignore
                 else:
-                    next_value = await subgenerator.__anext__()
+                    next_value = await async_iterator.__anext__()
                 ## Yield from Wrapper to caller
                 try:
                     # yield last value from subgenerator
@@ -147,7 +147,7 @@ async def retry_target_stream(
                 except GeneratorExit:
                     # if wrapper received `aclose`, pass to subgenerator and close
                     if target_is_generator:
-                        await cast(AsyncGenerator["_Y", None], subgenerator).aclose()
+                        await cast(AsyncGenerator["_Y", None], async_iterator).aclose()
                     else:
                         raise
                     return
@@ -155,7 +155,7 @@ async def retry_target_stream(
                     # bare except catches any exception passed to `athrow`
                     # delegate error handling to subgenerator
                     if target_is_generator:
-                        await cast(AsyncGenerator["_Y", None], subgenerator).athrow(
+                        await cast(AsyncGenerator["_Y", None], async_iterator).athrow(
                             *sys.exc_info()
                         )
                     else:
@@ -177,8 +177,8 @@ async def retry_target_stream(
             if on_error is not None:
                 on_error(exc)
         finally:
-            if target_is_generator:
-                await cast(AsyncGenerator["_Y", None], subgenerator).aclose()
+            if target_is_generator and async_iterator is not None:
+                await cast(AsyncGenerator["_Y", None], async_iterator).aclose()
 
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:
