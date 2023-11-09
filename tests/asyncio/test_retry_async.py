@@ -548,7 +548,6 @@ class TestAsyncRetry:
         generator = await retry_(self._generator_mock)(sleep_time=0.2)
         await generator.__anext__() == 0
         task = asyncio.create_task(generator.__anext__())
-        await asyncio.sleep(0.1)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await task
@@ -685,7 +684,7 @@ class TestAsyncRetry:
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test___call___with_iterable_send(self, sleep, awaitale_wrapped):
+    async def test___call___with_iterable_send(self, sleep, awaitable_wrapped):
         """
         Send should work like next if the wrapped iterable does not support it
         """
@@ -724,7 +723,7 @@ class TestAsyncRetry:
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test___call___with_iterable_close(self, sleep, awaitale_wrapped):
+    async def test___call___with_iterable_close(self, sleep, awaitable_wrapped):
         """
         close should be handled by wrapper if wrapped iterable does not support it
         """
@@ -744,7 +743,7 @@ class TestAsyncRetry:
 
             return CustomIterable()
 
-        if awaitale_wrapped:
+        if awaitable_wrapped:
 
             async def wrapper():
                 return iterable_fn()
@@ -768,7 +767,7 @@ class TestAsyncRetry:
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
-    async def test___call___with_iterable_throw(self, sleep, awaitale_wrapped):
+    async def test___call___with_iterable_throw(self, sleep, awaitable_wrapped):
         """
         Throw should work even if the wrapped iterable does not support it
         """
@@ -790,7 +789,7 @@ class TestAsyncRetry:
 
             return CustomIterable()
 
-        if awaitale_wrapped:
+        if awaitable_wrapped:
 
             async def wrapper():
                 return iterable_fn()
