@@ -81,7 +81,7 @@ class _WrappedCall(aio.Call):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-class _WrappedUnaryResponseMixin(_WrappedCall, Generic[U]):
+class _WrappedUnaryResponseMixin(Generic[U], _WrappedCall):
     def __await__(self) -> Generator[Any, None, U]:
         try:
             response = yield from self._call.__await__()
@@ -90,7 +90,7 @@ class _WrappedUnaryResponseMixin(_WrappedCall, Generic[U]):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
-class _WrappedStreamResponseMixin(_WrappedCall, Generic[S]):
+class _WrappedStreamResponseMixin(Generic[S], _WrappedCall):
     def __init__(self):
         self._wrapped_async_generator = None
 
@@ -154,7 +154,7 @@ class _WrappedStreamStreamCall(
 
 
 # public type denoting the return type of streaming gapic calls
-AwaitableGrpcAsyncStream = Union[_WrappedUnaryStreamCall[S], _WrappedStreamStreamCall[S]]
+AwaitableGrpcStream = Union[_WrappedUnaryStreamCall[S], _WrappedStreamStreamCall[S]]
 # public type denoting the return type of unary gapic calls
 AwaitableGrpcCall = Union[_WrappedUnaryUnaryCall[U], _WrappedStreamUnaryCall[U]]
 
