@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Helpers for :mod:`grpc`."""
+from typing import Generic, TypeVar, Iterator
 
 import collections
 import functools
@@ -54,6 +55,8 @@ _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCal
 
 _LOGGER = logging.getLogger(__name__)
 
+# denotes the type yielded from streaming calls
+S = TypeVar("S")
 
 def _patch_callable_name(callable_):
     """Fix-up gRPC callable attributes.
@@ -79,7 +82,7 @@ def _wrap_unary_errors(callable_):
     return error_remapped_callable
 
 
-class _StreamingResponseIterator(grpc.Call):
+class GrpcStream(grpc.Call, Generic[S]):
     def __init__(self, wrapped, prefetch_first_result=True):
         self._wrapped = wrapped
 
@@ -97,11 +100,11 @@ class _StreamingResponseIterator(grpc.Call):
             # ignore stop iteration at this time. This should be handled outside of retry.
             pass
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[S]:
         """This iterator is also an iterable that returns itself."""
         return self
 
-    def __next__(self):
+    def __next__(self) -> S:
         """Get the next response from the stream.
 
         Returns:
@@ -162,7 +165,7 @@ def _wrap_stream_errors(callable_):
             # hidden flag to see if pre-fetching is disabled.
             # https://github.com/googleapis/python-pubsub/issues/93#issuecomment-630762257
             prefetch_first = getattr(callable_, "_prefetch_first_result_", True)
-            return _StreamingResponseIterator(
+            return GrpcStream(
                 result, prefetch_first_result=prefetch_first
             )
         except grpc.RpcError as exc:
