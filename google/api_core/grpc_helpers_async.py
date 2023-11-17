@@ -154,9 +154,9 @@ class _WrappedStreamStreamCall(
     """Wrapped StreamStreamCall to map exceptions."""
 
 
-# public type denoting the return type of streaming gapic calls
+# public type alias denoting the return type of streaming gapic calls
 GrpcAsyncStream = _WrappedStreamResponseMixin[S]
-# public type denoting the return type of unary gapic calls
+# public type alias denoting the return type of unary gapic calls
 AwaitableGrpcCall = _WrappedUnaryResponseMixin[U]
 
 
