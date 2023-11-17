@@ -155,9 +155,9 @@ class _WrappedStreamStreamCall(
 
 
 # public type denoting the return type of streaming gapic calls
-AwaitableGrpcStream = Union[_WrappedUnaryStreamCall[S], _WrappedStreamStreamCall[S]]
+GrpcAsyncStream = _WrappedStreamResponseMixin[S]
 # public type denoting the return type of unary gapic calls
-AwaitableGrpcCall = Union[_WrappedUnaryUnaryCall[U], _WrappedStreamUnaryCall[U]]
+AwaitableGrpcCall = _WrappedUnaryResponseMixin[U]
 
 
 def _wrap_unary_errors(callable_):
