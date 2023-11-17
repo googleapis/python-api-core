@@ -196,7 +196,6 @@ class Test_StreamingResponseIterator:
 
 
 class TestGrpcStream(Test_StreamingResponseIterator):
-
     @staticmethod
     def _make_one(wrapped, **kw):
         return grpc_helpers.GrpcStream(wrapped, **kw)

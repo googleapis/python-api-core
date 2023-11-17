@@ -58,6 +58,7 @@ _LOGGER = logging.getLogger(__name__)
 # denotes the type yielded from streaming calls
 S = TypeVar("S")
 
+
 def _patch_callable_name(callable_):
     """Fix-up gRPC callable attributes.
 
