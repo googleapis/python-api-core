@@ -148,6 +148,7 @@ class _StreamingResponseIterator(grpc.Call, Generic[S]):
         return self._wrapped.trailing_metadata()
 
 
+# public type alias denoting the return type of streaming gapic calls
 GrpcStream = _StreamingResponseIterator[S]
 
 
