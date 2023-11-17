@@ -268,7 +268,7 @@ def test_wrap_errors_non_streaming(wrap_unary_errors):
 
 def test_grpc_async_stream():
     """
-    GrpcAsyncStream type be both an AsyncIterator and a grpc.aio.Call.
+    GrpcAsyncStream type should be both an AsyncIterator and a grpc.aio.Call.
     """
     instance = grpc_helpers_async.GrpcAsyncStream[int]()
     assert isinstance(instance, grpc.aio.Call)
