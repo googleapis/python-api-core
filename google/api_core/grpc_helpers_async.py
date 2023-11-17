@@ -81,6 +81,7 @@ class _WrappedCall(aio.Call):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
+
 class _WrappedUnaryResponseMixin(Generic[U], _WrappedCall):
     def __await__(self) -> Generator[Any, None, U]:
         try:

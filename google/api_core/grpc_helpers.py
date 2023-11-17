@@ -58,6 +58,7 @@ _LOGGER = logging.getLogger(__name__)
 # denotes the type yielded from streaming calls
 S = TypeVar("S")
 
+
 def _patch_callable_name(callable_):
     """Fix-up gRPC callable attributes.
 
@@ -165,9 +166,7 @@ def _wrap_stream_errors(callable_):
             # hidden flag to see if pre-fetching is disabled.
             # https://github.com/googleapis/python-pubsub/issues/93#issuecomment-630762257
             prefetch_first = getattr(callable_, "_prefetch_first_result_", True)
-            return GrpcStream(
-                result, prefetch_first_result=prefetch_first
-            )
+            return GrpcStream(result, prefetch_first_result=prefetch_first)
         except grpc.RpcError as exc:
             raise exceptions.from_grpc_error(exc) from exc
 
