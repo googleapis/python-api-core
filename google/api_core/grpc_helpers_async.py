@@ -21,7 +21,7 @@ functions. This module is implementing the same surface with AsyncIO semantics.
 import asyncio
 import functools
 
-from typing import Generic, Generator, AsyncGenerator, Awaitable, TypeVar, Any, Union
+from typing import Generic, Iterator, AsyncGenerator, Awaitable, TypeVar, Any, Union
 
 import grpc
 from grpc import aio
@@ -83,7 +83,7 @@ class _WrappedCall(aio.Call):
 
 
 class _WrappedUnaryResponseMixin(Generic[U], _WrappedCall):
-    def __await__(self) -> Generator[Any, None, U]:
+    def __await__(self) -> Iterator[U]:
         try:
             response = yield from self._call.__await__()
             return response
