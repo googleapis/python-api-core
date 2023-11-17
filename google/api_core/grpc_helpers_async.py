@@ -21,7 +21,7 @@ functions. This module is implementing the same surface with AsyncIO semantics.
 import asyncio
 import functools
 
-from typing import Generic, Iterator, AsyncGenerator, Awaitable, TypeVar, Any, Union
+from typing import Generic, Iterator, AsyncGenerator, TypeVar
 
 import grpc
 from grpc import aio
