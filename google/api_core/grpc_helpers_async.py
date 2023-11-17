@@ -28,15 +28,12 @@ from grpc import aio
 
 from google.api_core import exceptions, grpc_helpers
 
+# denotes the proto response type for grpc calls
+P = TypeVar("P")
 
 # NOTE(lidiz) Alternatively, we can hack "__getattribute__" to perform
 # automatic patching for us. But that means the overhead of creating an
 # extra Python function spreads to every single send and receive.
-
-# denotes the type returned from unary calls
-U = TypeVar("U")
-# denotes the type yielded from streaming calls
-S = TypeVar("S")
 
 
 class _WrappedCall(aio.Call):
@@ -82,8 +79,8 @@ class _WrappedCall(aio.Call):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
-class _WrappedUnaryResponseMixin(Generic[U], _WrappedCall):
-    def __await__(self) -> Iterator[U]:
+class _WrappedUnaryResponseMixin(Generic[P], _WrappedCall):
+    def __await__(self) -> Iterator[P]:
         try:
             response = yield from self._call.__await__()
             return response
@@ -91,17 +88,17 @@ class _WrappedUnaryResponseMixin(Generic[U], _WrappedCall):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
-class _WrappedStreamResponseMixin(Generic[S], _WrappedCall):
+class _WrappedStreamResponseMixin(Generic[P], _WrappedCall):
     def __init__(self):
         self._wrapped_async_generator = None
 
-    async def read(self) -> S:
+    async def read(self) -> P:
         try:
             return await self._call.read()
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-    async def _wrapped_aiter(self) -> AsyncGenerator[S, None]:
+    async def _wrapped_aiter(self) -> AsyncGenerator[P, None]:
         try:
             # NOTE(lidiz) coverage doesn't understand the exception raised from
             # __anext__ method. It is covered by test case:
@@ -111,7 +108,7 @@ class _WrappedStreamResponseMixin(Generic[S], _WrappedCall):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-    def __aiter__(self) -> AsyncGenerator[S, None]:
+    def __aiter__(self) -> AsyncGenerator[P, None]:
         if not self._wrapped_async_generator:
             self._wrapped_async_generator = self._wrapped_aiter()
         return self._wrapped_async_generator
@@ -134,30 +131,30 @@ class _WrappedStreamRequestMixin(_WrappedCall):
 # NOTE(lidiz) Implementing each individual class separately, so we don't
 # expose any API that should not be seen. E.g., __aiter__ in unary-unary
 # RPC, or __await__ in stream-stream RPC.
-class _WrappedUnaryUnaryCall(_WrappedUnaryResponseMixin[U], aio.UnaryUnaryCall):
+class _WrappedUnaryUnaryCall(_WrappedUnaryResponseMixin[P], aio.UnaryUnaryCall):
     """Wrapped UnaryUnaryCall to map exceptions."""
 
 
-class _WrappedUnaryStreamCall(_WrappedStreamResponseMixin[S], aio.UnaryStreamCall):
+class _WrappedUnaryStreamCall(_WrappedStreamResponseMixin[P], aio.UnaryStreamCall):
     """Wrapped UnaryStreamCall to map exceptions."""
 
 
 class _WrappedStreamUnaryCall(
-    _WrappedUnaryResponseMixin[S], _WrappedStreamRequestMixin, aio.StreamUnaryCall
+    _WrappedUnaryResponseMixin[P], _WrappedStreamRequestMixin, aio.StreamUnaryCall
 ):
     """Wrapped StreamUnaryCall to map exceptions."""
 
 
 class _WrappedStreamStreamCall(
-    _WrappedStreamRequestMixin, _WrappedStreamResponseMixin[S], aio.StreamStreamCall
+    _WrappedStreamRequestMixin, _WrappedStreamResponseMixin[P], aio.StreamStreamCall
 ):
     """Wrapped StreamStreamCall to map exceptions."""
 
 
 # public type alias denoting the return type of async streaming gapic calls
-GrpcAsyncStream = _WrappedStreamResponseMixin[S]
+GrpcAsyncStream = _WrappedStreamResponseMixin[P]
 # public type alias denoting the return type of unary gapic calls
-AwaitableGrpcCall = _WrappedUnaryResponseMixin[U]
+AwaitableGrpcCall = _WrappedUnaryResponseMixin[P]
 
 
 def _wrap_unary_errors(callable_):

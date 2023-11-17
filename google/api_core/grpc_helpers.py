@@ -55,8 +55,8 @@ _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCal
 
 _LOGGER = logging.getLogger(__name__)
 
-# denotes the type yielded from streaming calls
-S = TypeVar("S")
+# denotes the proto response type for grpc calls
+P = TypeVar("P")
 
 
 def _patch_callable_name(callable_):
@@ -83,7 +83,7 @@ def _wrap_unary_errors(callable_):
     return error_remapped_callable
 
 
-class _StreamingResponseIterator(Generic[S], grpc.Call):
+class _StreamingResponseIterator(Generic[P], grpc.Call):
     def __init__(self, wrapped, prefetch_first_result=True):
         self._wrapped = wrapped
 
@@ -101,11 +101,11 @@ class _StreamingResponseIterator(Generic[S], grpc.Call):
             # ignore stop iteration at this time. This should be handled outside of retry.
             pass
 
-    def __iter__(self) -> Iterator[S]:
+    def __iter__(self) -> Iterator[P]:
         """This iterator is also an iterable that returns itself."""
         return self
 
-    def __next__(self) -> S:
+    def __next__(self) -> P:
         """Get the next response from the stream.
 
         Returns:
@@ -149,7 +149,7 @@ class _StreamingResponseIterator(Generic[S], grpc.Call):
 
 
 # public type alias denoting the return type of streaming gapic calls
-GrpcStream = _StreamingResponseIterator[S]
+GrpcStream = _StreamingResponseIterator[P]
 
 
 def _wrap_stream_errors(callable_):
