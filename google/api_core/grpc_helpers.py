@@ -83,7 +83,7 @@ def _wrap_unary_errors(callable_):
     return error_remapped_callable
 
 
-class _StreamingResponseIterator(grpc.Call, Generic[S]):
+class _StreamingResponseIterator(Generic[S], grpc.Call):
     def __init__(self, wrapped, prefetch_first_result=True):
         self._wrapped = wrapped
 
