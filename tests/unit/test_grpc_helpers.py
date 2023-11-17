@@ -73,14 +73,14 @@ def test_wrap_unary_errors():
     assert exc_info.value.response == grpc_error
 
 
-class TestGrpcStream:
+class Test_StreamingResponseIterator:
     @staticmethod
     def _make_wrapped(*items):
         return iter(items)
 
     @staticmethod
     def _make_one(wrapped, **kw):
-        return grpc_helpers.GrpcStream(wrapped, **kw)
+        return grpc_helpers._StreamingResponseIterator(wrapped, **kw)
 
     def test_ctor_defaults(self):
         wrapped = self._make_wrapped("a", "b", "c")
