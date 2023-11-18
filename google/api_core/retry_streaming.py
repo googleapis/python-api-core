@@ -31,7 +31,6 @@ from typing import (
 
 import logging
 import time
-from functools import partial
 
 import google.api_core.retry as retries
 
@@ -47,7 +46,10 @@ def retry_target_stream(
     timeout: Optional[float] = None,
     on_error: Optional[Callable[[Exception], None]] = None,
     exception_factory: Optional[
-        Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
+        Callable[
+            [List[Exception], "retries.RetryFailureReason", Optional[float]],
+            Tuple[Exception, Optional[Exception]],
+        ]
     ] = None,
     **kwargs,
 ) -> Generator[_Y, Any, None]:
@@ -72,8 +74,8 @@ def retry_target_stream(
             function will *not* be caught.
         exception_factory: A function that is called when the retryable reaches
             a terminal failure state, used to construct an exception to be raised.
-            It it given a list of all exceptions encountered, a boolean indicating
-            whether the failure was due to a timeout, and the original timeout value
+            It it given a list of all exceptions encountered, a retry.RetryFailureReason
+            enum indicating the failure cause, and the original timeout value
             as arguments. It should return a tuple of the exception to be raised,
             along with the cause exception if any.
             If not provided, a default implementation will raise a RetryError
@@ -93,9 +95,7 @@ def retry_target_stream(
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
-    exc_factory = partial(
-        exception_factory or retries._build_retry_error, timeout_val=timeout
-    )
+    exc_factory = exception_factory or retries._build_retry_error
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -110,8 +110,9 @@ def retry_target_stream(
             error_list.append(exc)
             if not predicate(exc):
                 final_exc, source_exc = exc_factory(
-                    exc_list=error_list,
-                    reason=retries.RetryFailureReason.NON_RETRYABLE_ERROR,
+                    error_list,
+                    retries.RetryFailureReason.NON_RETRYABLE_ERROR,
+                    timeout,
                 )
                 raise final_exc from source_exc
             if on_error is not None:
@@ -119,7 +120,7 @@ def retry_target_stream(
 
         if deadline is not None and time.monotonic() + sleep > deadline:
             final_exc, source_exc = exc_factory(
-                exc_list=error_list, reason=retries.RetryFailureReason.TIMEOUT
+                error_list, retries.RetryFailureReason.TIMEOUT, timeout
             )
             raise final_exc from source_exc
         _LOGGER.debug(

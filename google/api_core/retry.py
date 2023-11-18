@@ -104,27 +104,28 @@ class RetryFailureReason(Enum):
 def _build_retry_error(
     exc_list: list[Exception],
     reason: RetryFailureReason,
-    timeout_val: float,
+    timeout_val: float | None,
     **kwargs: Any,
 ) -> tuple[Exception, Exception | None]:
     """
     Default exception_factory implementation. Builds an exception after the retry fails
 
     Args:
-      - exc_list (list[Exception]): list of exceptions that occurred during the retry
-      - reason (google.api_core.retry.RetryFailureReason): reason for the retry failure.
+      - exc_list: list of exceptions that occurred during the retry
+      - reason: reason for the retry failure.
             Can be TIMEOUT or NON_RETRYABLE_ERROR
-      - timeout_val (float): the original timeout value for the retry, for use in the exception message
+      - timeout_val: the original timeout value for the retry, for use in the exception message
 
     Returns:
-      - tuple[Exception, Exception|None]: a tuple of the exception to be raised, and the cause exception if any
+      - tuple: a tuple of the exception to be raised, and the cause exception if any
     """
     if reason == RetryFailureReason.TIMEOUT:
         # return RetryError with the most recent exception as the cause
         src_exc = exc_list[-1] if exc_list else None
+        timeout_val_str = f"of {timeout_val:0.1f}s " if timeout_val is not None else ""
         return (
             exceptions.RetryError(
-                "Timeout of {:.1f}s exceeded".format(timeout_val),
+                f"Timeout {timeout_val_str}exceeded",
                 src_exc,
             ),
             src_exc,

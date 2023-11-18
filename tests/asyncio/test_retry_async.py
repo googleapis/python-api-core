@@ -828,10 +828,10 @@ class TestAsyncRetry:
         expected_source_err = ZeroDivisionError("test4")
 
         def factory(*args, **kwargs):
-            assert len(args) == 0
-            assert kwargs["exc_list"] == sent_errors
-            assert kwargs["reason"] == RetryFailureReason.NON_RETRYABLE_ERROR
-            assert kwargs["timeout_val"] == timeout
+            assert len(kwargs) == 0
+            assert args[0] == sent_errors
+            assert args[1] == RetryFailureReason.NON_RETRYABLE_ERROR
+            assert args[2] == timeout
             return expected_final_err, expected_source_err
 
         generator = retry_target_stream(
@@ -876,10 +876,10 @@ class TestAsyncRetry:
             expected_source_err = ZeroDivisionError("test4")
 
             def factory(*args, **kwargs):
-                assert len(args) == 0
-                assert kwargs["exc_list"] == sent_errors
-                assert kwargs["reason"] == RetryFailureReason.TIMEOUT
-                assert kwargs["timeout_val"] == timeout
+                assert len(kwargs) == 0
+                assert args[0] == sent_errors
+                assert args[1] == RetryFailureReason.TIMEOUT
+                assert args[2] == timeout
                 return expected_final_err, expected_source_err
 
             generator = retry_target_stream(

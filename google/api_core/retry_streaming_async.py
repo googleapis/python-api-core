@@ -38,10 +38,9 @@ import asyncio
 import logging
 import time
 import sys
-from functools import partial
 
-from google.api_core.retry import _build_retry_error
-from google.api_core.retry import RetryFailureReason
+import google.api_core.retry as retries
+
 
 if TYPE_CHECKING:
     _Y = TypeVar("_Y")  # yielded values
@@ -59,7 +58,10 @@ async def retry_target_stream(
     timeout: Optional[float] = None,
     on_error: Optional[Callable[[Exception], None]] = None,
     exception_factory: Optional[
-        Callable[[List[Exception], bool, float], Tuple[Exception, Optional[Exception]]]
+        Callable[
+            [List[Exception], retries.RetryFailureReason, Optional[float]],
+            Tuple[Exception, Optional[Exception]],
+        ]
     ] = None,
     **kwargs,
 ) -> AsyncGenerator["_Y", None]:
@@ -84,8 +86,8 @@ async def retry_target_stream(
             function will *not* be caught.
         exception_factory: A function that is called when the retryable reaches
             a terminal failure state, used to construct an exception to be raised.
-            It it given a list of all exceptions encountered, a boolean indicating
-            whether the failure was due to a timeout, and the original timeout value
+            It it given a list of all exceptions encountered, a retry.RetryFailureReason
+            enum indicating the failure cause, and the original timeout value
             as arguments. It should return a tuple of the exception to be raised,
             along with the cause exception if any.
             If not provided, a default implementation will raise a RetryError
@@ -108,7 +110,7 @@ async def retry_target_stream(
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: List[Exception] = []
     # override exception_factory to build a more complex exception
-    exc_factory = partial(exception_factory or _build_retry_error, timeout_val=timeout)
+    exc_factory = exception_factory or retries._build_retry_error
     target_is_generator: Optional[bool] = None
 
     for sleep in sleep_generator:
@@ -173,7 +175,7 @@ async def retry_target_stream(
             error_list.append(exc)
             if not predicate(exc):
                 exc, source_exc = exc_factory(
-                    exc_list=error_list, reason=RetryFailureReason.NON_RETRYABLE_ERROR
+                    error_list, retries.RetryFailureReason.NON_RETRYABLE_ERROR, timeout
                 )
                 raise exc from source_exc
             if on_error is not None:
@@ -185,7 +187,7 @@ async def retry_target_stream(
         # sleep and adjust timeout budget
         if deadline is not None and time.monotonic() + sleep > deadline:
             final_exc, source_exc = exc_factory(
-                exc_list=error_list, reason=RetryFailureReason.TIMEOUT
+                error_list, retries.RetryFailureReason.TIMEOUT, timeout
             )
             raise final_exc from source_exc
         _LOGGER.debug(

@@ -67,11 +67,43 @@ def test__build_retry_error_empty_list():
     should return a generic RetryError
     """
     from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import RetryFailureReason
 
-    src, cause = _build_retry_error([], False, 10)
+    reason = RetryFailureReason.NON_RETRYABLE_ERROR
+    src, cause = _build_retry_error([], reason, 10)
     assert isinstance(src, exceptions.RetryError)
     assert cause is None
     assert src.message == "Unknown error"
+
+
+def test__build_retry_error_timeout_message():
+    """
+    should provide helpful error message when timeout is reached
+    """
+    from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import RetryFailureReason
+
+    reason = RetryFailureReason.TIMEOUT
+    cause = RuntimeError("timeout")
+    src, found_cause = _build_retry_error([ValueError(), cause], reason, 10)
+    assert isinstance(src, exceptions.RetryError)
+    assert src.message == "Timeout of 10.0s exceeded"
+    # should attach appropriate cause
+    assert found_cause is cause
+
+
+def test__build_retry_error_empty_timeout():
+    """
+    attempt to build a retry error with timout is None
+    should return a generic timeout error message
+    """
+    from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import RetryFailureReason
+
+    reason = RetryFailureReason.TIMEOUT
+    src, _ = _build_retry_error([], reason, None)
+    assert isinstance(src, exceptions.RetryError)
+    assert src.message == "Timeout exceeded"
 
 
 @mock.patch("time.sleep", autospec=True)
@@ -863,16 +895,16 @@ class TestRetry(object):
         from google.api_core.retry import RetryFailureReason
         from google.api_core.retry_streaming import retry_target_stream
 
-        timeout = 6
+        timeout = None
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
         expected_final_err = RuntimeError("done")
         expected_source_err = ZeroDivisionError("test4")
 
         def factory(*args, **kwargs):
-            assert len(args) == 0
-            assert kwargs["exc_list"] == sent_errors
-            assert kwargs["reason"] == RetryFailureReason.NON_RETRYABLE_ERROR
-            assert kwargs["timeout_val"] == timeout
+            assert len(kwargs) == 0
+            assert args[0] == sent_errors
+            assert args[1] == RetryFailureReason.NON_RETRYABLE_ERROR
+            assert args[2] == timeout
             return expected_final_err, expected_source_err
 
         generator = retry_target_stream(
@@ -916,10 +948,10 @@ class TestRetry(object):
             expected_source_err = ZeroDivisionError("test4")
 
             def factory(*args, **kwargs):
-                assert len(args) == 0
-                assert kwargs["exc_list"] == sent_errors
-                assert kwargs["reason"] == RetryFailureReason.TIMEOUT
-                assert kwargs["timeout_val"] == timeout
+                assert len(kwargs) == 0
+                assert args[0] == sent_errors
+                assert args[1] == RetryFailureReason.TIMEOUT
+                assert args[2] == timeout
                 return expected_final_err, expected_source_err
 
             generator = retry_target_stream(
