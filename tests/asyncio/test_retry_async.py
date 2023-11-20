@@ -145,7 +145,6 @@ async def test_retry_streaming_target_bad_sleep_generator():
 
 
 class TestAsyncRetry(Test_BaseRetry):
-
     def _make_one(self, *args, **kwargs):
         return retry_async.AsyncRetry(*args, **kwargs)
 

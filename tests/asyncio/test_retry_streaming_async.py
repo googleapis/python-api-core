@@ -27,7 +27,6 @@ from ..unit.test_retry import Test_BaseRetry
 
 
 class TestAsyncStreamingRetry(Test_BaseRetry):
-
     def _make_one(self, *args, **kwargs):
         return retry_streaming_async.AsyncStreamingRetry(*args, **kwargs)
 
@@ -119,7 +118,6 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
-            
             timeout=None,
         )
         generator = await retry_(self._generator_mock)(error_on=3)
@@ -146,7 +144,6 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             maximum=1024.0,
             multiplier=2.0,
             deadline=9.9,
-            
         )
 
         time_now = time.monotonic()
@@ -236,7 +233,6 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
-            
             timeout=None,
         )
         generator = await retry_(self._generator_mock)(error_on=3)
@@ -298,7 +294,6 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         # The generator should not retry when it encounters a non-retryable error
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             predicate=retry_async.if_exception_type(ValueError),
-            
         )
         decorated = retry_(self._generator_mock)
         exception_list = []
@@ -415,7 +410,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         """
 
         predicate = retry_async.if_exception_type(ValueError)
-        retry_ = retry_streaming_async.AsyncStreamingRetry( predicate=predicate)
+        retry_ = retry_streaming_async.AsyncStreamingRetry(predicate=predicate)
 
         def iterable_fn():
             class CustomIterable:

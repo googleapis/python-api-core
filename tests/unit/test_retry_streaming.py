@@ -26,7 +26,6 @@ from .test_retry import Test_BaseRetry
 
 
 class TestStreamingRetry(Test_BaseRetry):
-
     def _make_one(self, *args, **kwargs):
         return retry_streaming.StreamingRetry(*args, **kwargs)
 

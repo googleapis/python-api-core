@@ -238,7 +238,6 @@ def test_retry_streaming_target_bad_sleep_generator():
 
 
 class Test_BaseRetry(object):
-
     def _make_one(self, *args, **kwargs):
         return retry._BaseRetry(*args, **kwargs)
 
@@ -403,7 +402,6 @@ class Test_BaseRetry(object):
 
 
 class TestRetry(Test_BaseRetry):
-
     def _make_one(self, *args, **kwargs):
         return retry.Retry(*args, **kwargs)
 
