@@ -75,6 +75,8 @@ class ClientOptions(object):
             authentication flows. Audience is typically a resource identifier.
             If not set, the service endpoint value will be used as a default.
             An example of a valid ``api_audience`` is: "https://language.googleapis.com".
+        universe_domain (Optional[str]): The desired universe domain for API endpoint,
+            e.g., {service}.{universe_domain}. The default is "googleapis.com".
 
     Raises:
         ValueError: If both ``client_cert_source`` and ``client_encrypted_cert_source``
