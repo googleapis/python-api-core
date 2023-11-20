@@ -78,6 +78,10 @@ if TYPE_CHECKING:
         from typing import ParamSpec
     else:
         from typing_extensions import ParamSpec
+    if sys.version_info >= (3, 11):
+        from typing import Self
+    else:
+        from typing_extensions import Self
 
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
@@ -316,7 +320,7 @@ class _BaseRetry(object):
         raise NotImplementedError("Not implemented in base class")
 
     @property
-    def deadline(self):
+    def deadline(self) -> float | None:
         """
         DEPRECATED: use ``timeout`` instead.  Refer to the ``Retry`` class
         documentation for details.
@@ -324,7 +328,7 @@ class _BaseRetry(object):
         return self._timeout
 
     @property
-    def timeout(self):
+    def timeout(self) -> float | None:
         return self._timeout
 
     def _replace(
@@ -335,7 +339,7 @@ class _BaseRetry(object):
         multiplier=None,
         timeout=None,
         on_error=None,
-    ):
+    ) -> Self:
         return type(self)(
             predicate=predicate or self._predicate,
             initial=initial or self._initial,
@@ -345,7 +349,7 @@ class _BaseRetry(object):
             on_error=on_error or self._on_error,
         )
 
-    def with_deadline(self, deadline):
+    def with_deadline(self, deadline) -> Self:
         """Return a copy of this retry with the given timeout.
 
         DEPRECATED: use :meth:`with_timeout` instead. Refer to the ``Retry`` class
@@ -359,7 +363,7 @@ class _BaseRetry(object):
         """
         return self._replace(timeout=deadline)
 
-    def with_timeout(self, timeout):
+    def with_timeout(self, timeout) -> Self:
         """Return a copy of this retry with the given timeout.
 
         Args:
@@ -370,7 +374,7 @@ class _BaseRetry(object):
         """
         return self._replace(timeout=timeout)
 
-    def with_predicate(self, predicate):
+    def with_predicate(self, predicate) -> Self:
         """Return a copy of this retry with the given predicate.
 
         Args:
@@ -382,7 +386,7 @@ class _BaseRetry(object):
         """
         return self._replace(predicate=predicate)
 
-    def with_delay(self, initial=None, maximum=None, multiplier=None):
+    def with_delay(self, initial=None, maximum=None, multiplier=None) -> Self:
         """Return a copy of this retry with the given delay options.
 
         Args:
@@ -396,7 +400,7 @@ class _BaseRetry(object):
         """
         return self._replace(initial=initial, maximum=maximum, multiplier=multiplier)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "<{} predicate={}, initial={:.1f}, maximum={:.1f}, "
             "multiplier={:.1f}, timeout={}, on_error={}>".format(
