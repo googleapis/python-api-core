@@ -70,10 +70,12 @@ from typing import (
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
+from google.api_core.retry import _BaseRetry
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
 from google.api_core.retry import if_transient_error
-from google.api_core.retry_streaming_async import retry_target_stream
+from google.api_core.retry import _build_retry_error
+from google.api_core.retry import RetryFailureReason
 
 if TYPE_CHECKING:
     import sys
@@ -85,7 +87,6 @@ if TYPE_CHECKING:
 
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
-    _Y = TypeVar("_Y")  # target stream yielded values
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
@@ -179,7 +180,7 @@ async def retry_target(
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
 
-class AsyncRetry:
+class AsyncRetry(_BaseRetry):
     """Exponential retry decorator for async coroutines.
 
     This class is a decorator used to add exponential back-off retry behavior
@@ -187,69 +188,6 @@ class AsyncRetry:
 
     Although the default behavior is to retry transient API errors, a
     different predicate can be provided to retry other exceptions.
-
-    When ``is_stream=False``, the target is treated as a coroutine function,
-    and will retry when the coroutine returns an error. When ``is_stream=True``,
-    the target will be treated as an async generator function. Instead
-    of just wrapping the initial call in retry logic, the output iterable is
-    wrapped, with each yield passing through the retryable generator. If any yield
-    in the stream raises a retryable exception, the entire stream will be
-    retried.
-
-    Important Note: when a stream is encounters a retryable error, it will
-    silently construct a fresh iterator instance in the background
-    and continue yielding (likely duplicate) values as if no error occurred.
-    This is the most general way to retry a stream, but it often is not the
-    desired behavior. Example: iter([1, 2, 1/0]) -> [1, 2, 1, 2, ...]
-
-    There are two ways to build more advanced retry logic for streams:
-
-    1. Wrap the target
-        Use a ``target`` that maintains state between retries, and creates a
-        different generator on each retry call. For example, you can wrap a
-        grpc call in a function that modifies the request based on what has
-        already been returned:
-
-        .. code-block:: python
-
-            async def attempt_with_modified_request(target, request, seen_items=[]):
-                # remove seen items from request on each attempt
-                new_request = modify_request(request, seen_items)
-                new_generator = await target(new_request)
-                async for item in new_generator:
-                    yield item
-                    seen_items.append(item)
-
-            retry_wrapped = AsyncRetry(is_stream=True,...)(attempt_with_modified_request, target, request, [])
-
-        2. Wrap the retry generator
-            Alternatively, you can wrap the retryable generator itself before
-            passing it to the end-user to add a filter on the stream. For
-            example, you can keep track of the items that were successfully yielded
-            in previous retry attempts, and only yield new items when the
-            new attempt surpasses the previous ones:
-
-            .. code-block:: python
-
-                async def retryable_with_filter(target):
-                    stream_idx = 0
-                    # reset stream_idx when the stream is retried
-                    def on_error(e):
-                        nonlocal stream_idx
-                        stream_idx = 0
-                    # build retryable
-                    retryable_gen = AsyncRetry(is_stream=True, ...)(target)
-                    # keep track of what has been yielded out of filter
-                    seen_items = []
-                    async for item in retryable_gen:
-                        if stream_idx >= len(seen_items):
-                            yield item
-                            seen_items.append(item)
-                        elif item != previous_stream[stream_idx]:
-                            raise ValueError("Stream differs from last attempt")"
-                        stream_idx += 1
-
-                filter_retry_wrapped = retryable_with_filter(target)
 
     Args:
         predicate (Callable[Exception]): A callable that should return ``True``
@@ -262,45 +200,15 @@ class AsyncRetry:
         on_error (Optional[Callable[Exception]]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
-        is_stream (bool): Indicates whether the input function
-            should be treated as a stream function (i.e. an AsyncGenerator,
-            or function or coroutine that returns an AsyncIterable).
-            If True, the iterable will be wrapped with retry logic, and any
-            failed outputs will restart the stream. If False, only the input
-            function call itself will be retried. Defaults to False.
-            To avoid duplicate values, retryable streams should typically be
-            wrapped in additional filter logic before use.
         deadline (float): DEPRECATED use ``timeout`` instead. If set it will
         override ``timeout`` parameter.
     """
 
-    def __init__(
-        self,
-        predicate: Callable[[BaseException], bool] = if_transient_error,
-        initial: float = _DEFAULT_INITIAL_DELAY,
-        maximum: float = _DEFAULT_MAXIMUM_DELAY,
-        multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
-        timeout: float = _DEFAULT_TIMEOUT,
-        on_error: Callable[[BaseException], Any] | None = None,
-        is_stream: bool = False,
-        **kwargs,
-    ):
-        self._predicate = predicate
-        self._initial = initial
-        self._multiplier = multiplier
-        self._maximum = maximum
-        self._timeout = kwargs.get("deadline", timeout)
-        self._deadline = self._timeout
-        self._on_error = on_error
-        self._is_stream = is_stream
-
     def __call__(
         self,
-        func: Callable[
-            ..., Awaitable[_R] | AsyncIterable[_Y] | Awaitable[AsyncIterable[_Y]]
-        ],
+        func: Callable[..., Awaitable[_R]],
         on_error: Callable[[BaseException], Any] | None = None,
-    ) -> Callable[_P, Awaitable[_R | AsyncGenerator[_Y, None]]]:
+    ) -> Callable[_P, Awaitable[_R]]:
         """Wrap a callable with retry behavior.
 
         Args:
@@ -311,7 +219,6 @@ class AsyncRetry:
                 function will *not* be caught. If on_error was specified in the
                 constructor, this value will be ignored.
 
-
         Returns:
             Callable: A callable that will invoke ``func`` with retry
                 behavior.
@@ -319,105 +226,18 @@ class AsyncRetry:
         if self._on_error is not None:
             on_error = self._on_error
 
-        # @functools.wraps(func)
-        async def retry_wrapped_func(
-            *args: _P.args, **kwargs: _P.kwargs
-        ) -> _R | AsyncGenerator[_Y, None]:
+        @functools.wraps(func)
+        async def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             """A wrapper that calls target function with retry."""
-            target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_kwargs = {
-                "predicate": self._predicate,
-                "sleep_generator": sleep_generator,
-                "timeout": self._timeout,
-                "on_error": on_error,
-            }
-            if self._is_stream:
-                stream_target = cast(Callable[[], AsyncIterable["_Y"]], target)
-                return retry_target_stream(stream_target, **retry_kwargs)
-            else:
-                return await retry_target(target, **retry_kwargs)
+            return await retry_target(
+                functools.partial(func, *args, **kwargs),
+                predicate=self._predicate,
+                sleep_generator=sleep_generator,
+                timeout=self._timeout,
+                on_error=on_error,
+            )
 
         return retry_wrapped_func
-
-    def _replace(
-        self,
-        predicate=None,
-        initial=None,
-        maximum=None,
-        multiplier=None,
-        timeout=None,
-        on_error=None,
-    ):
-        return AsyncRetry(
-            predicate=predicate or self._predicate,
-            initial=initial or self._initial,
-            maximum=maximum or self._maximum,
-            multiplier=multiplier or self._multiplier,
-            timeout=timeout or self._timeout,
-            on_error=on_error or self._on_error,
-        )
-
-    def with_deadline(self, deadline):
-        """Return a copy of this retry with the given deadline.
-        DEPRECATED: use :meth:`with_timeout` instead.
-
-        Args:
-            deadline (float): How long to keep retrying.
-
-        Returns:
-            AsyncRetry: A new retry instance with the given deadline.
-        """
-        return self._replace(timeout=deadline)
-
-    def with_timeout(self, timeout):
-        """Return a copy of this retry with the given timeout.
-
-        Args:
-            timeout (float): How long to keep retrying, in seconds.
-
-        Returns:
-            AsyncRetry: A new retry instance with the given timeout.
-        """
-        return self._replace(timeout=timeout)
-
-    def with_predicate(self, predicate):
-        """Return a copy of this retry with the given predicate.
-
-        Args:
-            predicate (Callable[Exception]): A callable that should return
-                ``True`` if the given exception is retryable.
-
-        Returns:
-            AsyncRetry: A new retry instance with the given predicate.
-        """
-        return self._replace(predicate=predicate)
-
-    def with_delay(self, initial=None, maximum=None, multiplier=None):
-        """Return a copy of this retry with the given delay options.
-
-        Args:
-            initial (float): The minimum amount of time to delay. This must
-                be greater than 0.
-            maximum (float): The maximum amount of time to delay.
-            multiplier (float): The multiplier applied to the delay.
-
-        Returns:
-            AsyncRetry: A new retry instance with the given predicate.
-        """
-        return self._replace(initial=initial, maximum=maximum, multiplier=multiplier)
-
-    def __str__(self):
-        return (
-            "<AsyncRetry predicate={}, initial={:.1f}, maximum={:.1f}, "
-            "multiplier={:.1f}, timeout={:.1f}, on_error={}>".format(
-                self._predicate,
-                self._initial,
-                self._maximum,
-                self._multiplier,
-                self._timeout,
-                self._on_error,
-            )
-        )

@@ -14,9 +14,8 @@
 
 """
 Generator wrapper for retryable streaming RPCs.
-This function will be used when initilizing a retry with
-``Retry(is_stream=True)``.
 """
+from __future__ import annotations
 
 from typing import (
     Callable,
@@ -27,14 +26,29 @@ from typing import (
     Generator,
     TypeVar,
     Any,
+    TYPE_CHECKING,
 )
 
+import sys
 import logging
 import time
+import functools
 
-import google.api_core.retry as retries
+from google.api_core.retry import _BaseRetry
+from google.api_core.retry import exponential_sleep_generator
+from google.api_core.retry import if_exception_type  # noqa: F401
+from google.api_core.retry import if_transient_error
+from google.api_core.retry import _build_retry_error
+from google.api_core.retry import RetryFailureReason
 
-_Y = TypeVar("_Y")  # yielded values
+if TYPE_CHECKING:
+    if sys.version_info >= (3, 10):
+        from typing import ParamSpec
+    else:
+        from typing_extensions import ParamSpec
+
+    _P = ParamSpec("_P")  # target function call parameters
+    _Y = TypeVar("_Y")  # yielded values
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +61,7 @@ def retry_target_stream(
     on_error: Optional[Callable[[Exception], None]] = None,
     exception_factory: Optional[
         Callable[
-            [List[Exception], "retries.RetryFailureReason", Optional[float]],
+            [List[Exception], RetryFailureReason, Optional[float]],
             Tuple[Exception, Optional[Exception]],
         ]
     ] = None,
@@ -95,7 +109,7 @@ def retry_target_stream(
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     error_list: List[Exception] = []
-    exc_factory = exception_factory or retries._build_retry_error
+    exc_factory = exception_factory or _build_retry_error
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -111,7 +125,7 @@ def retry_target_stream(
             if not predicate(exc):
                 final_exc, source_exc = exc_factory(
                     error_list,
-                    retries.RetryFailureReason.NON_RETRYABLE_ERROR,
+                    RetryFailureReason.NON_RETRYABLE_ERROR,
                     timeout,
                 )
                 raise final_exc from source_exc
@@ -120,7 +134,7 @@ def retry_target_stream(
 
         if deadline is not None and time.monotonic() + sleep > deadline:
             final_exc, source_exc = exc_factory(
-                error_list, retries.RetryFailureReason.TIMEOUT, timeout
+                error_list, RetryFailureReason.TIMEOUT, timeout
             )
             raise final_exc from source_exc
         _LOGGER.debug(
@@ -129,3 +143,194 @@ def retry_target_stream(
         time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
+
+
+class StreamingRetry(_BaseRetry):
+    """Exponential retry decorator for streaming synchronous RPCs.
+
+    This class returns a Generator when called, which wraps the target
+    stream in retry logic. If any exception is raised by the target, the
+    entire stream will be retried within the wrapper.
+
+    Although the default behavior is to retry transient API errors, a
+    different predicate can be provided to retry other exceptions.
+
+    There two important concepts that retry/polling behavior may operate on,
+    Deadline and Timeout, which need to be properly defined for the correct
+    usage of this class and the rest of the library.
+
+    Deadline: a fixed point in time by which a certain operation must
+    terminate. For example, if a certain operation has a deadline
+    "2022-10-18T23:30:52.123Z" it must terminate (successfully or with an
+    error) by that time, regardless of when it was started or whether it
+    was started at all.
+
+    Timeout: the maximum duration of time after which a certain operation
+    must terminate (successfully or with an error). The countdown begins right
+    after an operation was started. For example, if an operation was started at
+    09:24:00 with timeout of 75 seconds, it must terminate no later than
+    09:25:15.
+
+    Unfortunately, in the past this class (and the api-core library as a whole) has not been
+    properly distinguishing the concepts of "timeout" and "deadline", and the
+    ``deadline`` parameter has meant ``timeout``. That is why
+    ``deadline`` has been deprecated and ``timeout`` should be used instead. If the
+    ``deadline`` parameter is set, it will override the ``timeout`` parameter. In other words,
+    ``retry.deadline`` should be treated as just a deprecated alias for
+    ``retry.timeout``.
+
+    Said another way, it is safe to assume that this class and the rest of this
+    library operate in terms of timeouts (not deadlines) unless explicitly
+    noted the usage of deadline semantics.
+
+    It is also important to
+    understand the three most common applications of the Timeout concept in the
+    context of this library.
+
+    Usually the generic Timeout term may stand for one of the following actual
+    timeouts: RPC Timeout, Retry Timeout, or Polling Timeout.
+
+    RPC Timeout: a value supplied by the client to the server so
+    that the server side knows the maximum amount of time it is expected to
+    spend handling that specific RPC. For example, in the case of gRPC transport,
+    RPC Timeout is represented by setting "grpc-timeout" header in the HTTP2
+    request. The `timeout` property of this class normally never represents the
+    RPC Timeout as it is handled separately by the ``google.api_core.timeout``
+    module of this library.
+
+    Retry Timeout: this is the most common meaning of the ``timeout`` property
+    of this class, and defines how long a certain RPC may be retried in case
+    the server returns an error.
+
+    Polling Timeout: defines how long the
+    client side is allowed to call the polling RPC repeatedly to check a status of a
+    long-running operation. Each polling RPC is
+    expected to succeed (its errors are supposed to be handled by the retry
+    logic). The decision as to whether a new polling attempt needs to be made is based
+    not on the RPC status code but  on the status of the returned
+    status of an operation. In other words: we will poll a long-running operation until
+    the operation is done or the polling timeout expires. Each poll will inform us of
+    the status of the operation. The poll consists of an RPC to the server that may
+    itself be retried as per the poll-specific retry settings in case of errors. The
+    operation-level retry settings do NOT apply to polling-RPC retries.
+
+    With the actual timeout types being defined above, the client libraries
+    often refer to just Timeout without clarifying which type specifically
+    that is. In that case the actual timeout type (sometimes also referred to as
+    Logical Timeout) can be determined from the context. If it is a unary rpc
+    call (i.e. a regular one) Timeout usually stands for the RPC Timeout (if
+    provided directly as a standalone value) or Retry Timeout (if provided as
+    ``retry.timeout`` property of the unary RPC's retry config). For
+    ``Operation`` or ``PollingFuture`` in general Timeout stands for
+    Polling Timeout.
+
+    Important Note: when a stream encounters a retryable error, it will
+    silently construct a fresh iterator instance in the background
+    and continue yielding (likely duplicate) values as if no error occurred.
+    This is the most general way to retry a stream, but it often is not the
+    desired behavior. Example: iter([1, 2, 1/0]) -> [1, 2, 1, 2, ...]
+
+    There are two ways to build more advanced retry logic for streams:
+
+    1. Wrap the target
+        Use a ``target`` that maintains state between retries, and creates a
+        different generator on each retry call. For example, you can wrap a
+        network call in a function that modifies the request based on what has
+        already been returned:
+
+        .. code-block:: python
+
+            def attempt_with_modified_request(target, request, seen_items=[]):
+                # remove seen items from request on each attempt
+                new_request = modify_request(request, seen_items)
+                new_generator = target(new_request)
+                for item in new_generator:
+                    yield item
+                    seen_items.append(item)
+
+            retry_wrapped_fn = StreamingRetry()(attempt_with_modified_request)
+            retryable_generator = retry_wrapped_fn(target, request)
+
+    2. Wrap the retry generator
+        Alternatively, you can wrap the retryable generator itself before
+        passing it to the end-user to add a filter on the stream. For
+        example, you can keep track of the items that were successfully yielded
+        in previous retry attempts, and only yield new items when the
+        new attempt surpasses the previous ones:
+
+        .. code-block:: python
+
+            def retryable_with_filter(target):
+                stream_idx = 0
+                # reset stream_idx when the stream is retried
+                def on_error(e):
+                    nonlocal stream_idx
+                    stream_idx = 0
+                # build retryable
+                retryable_gen = StreamingRetry(...)(target)
+                # keep track of what has been yielded out of filter
+                seen_items = []
+                for item in retryable_gen():
+                    if stream_idx >= len(seen_items):
+                        seen_items.append(item)
+                        yield item
+                    elif item != seen_items[stream_idx]:
+                        raise ValueError("Stream differs from last attempt")
+                    stream_idx += 1
+
+            filter_retry_wrapped = retryable_with_filter(target)
+
+    Args:
+        predicate (Callable[Exception]): A callable that should return ``True``
+            if the given exception is retryable.
+        initial (float): The minimum amount of time to delay in seconds. This
+            must be greater than 0.
+        maximum (float): The maximum amount of time to delay in seconds.
+        multiplier (float): The multiplier applied to the delay.
+        timeout (float): How long to keep retrying, in seconds.
+        on_error (Callable[Exception]): A function to call while processing
+            a retryable exception. Any error raised by this function will
+            *not* be caught.
+        deadline (float): DEPRECATED: use `timeout` instead. For backward
+            compatibility, if specified it will override the ``timeout`` parameter.
+    """
+
+    def __call__(
+        self,
+        func: Callable[_P, Iterable[_Y]],
+        on_error: Callable[[BaseException], Any] | None = None,
+    ) -> Callable[_P, Generator[_Y, Any, None]]:
+        """Wrap a callable with retry behavior.
+
+        Args:
+            func (Callable): The callable to add retry behavior to.
+            on_error (Optional[Callable[Exception]]): If given, the
+                on_error callback will be called with each retryable exception
+                raised by the wrapped function. Any error raised by this
+                function will *not* be caught. If on_error was specified in the
+                constructor, this value will be ignored.
+
+        Returns:
+            Callable: A callable that will invoke ``func`` with retry
+                behavior.
+        """
+        if self._on_error is not None:
+            on_error = self._on_error
+
+        @functools.wraps(func)
+        def retry_wrapped_func(
+            *args: _P.args, **kwargs: _P.kwargs
+        ) -> Generator[_Y, Any, None]:
+            """A wrapper that calls target function with retry."""
+            sleep_generator = exponential_sleep_generator(
+                self._initial, self._maximum, multiplier=self._multiplier
+            )
+            return retry_target_stream(
+                functools.partial(func, *args, **kwargs),
+                predicate=self._predicate,
+                sleep_generator=sleep_generator,
+                timeout=self._timeout,
+                on_error=on_error,
+            )
+
+        return retry_wrapped_func

@@ -71,7 +71,6 @@ import requests.exceptions
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-import google.api_core.retry_streaming as retry_streaming
 from google.auth import exceptions as auth_exceptions
 
 if TYPE_CHECKING:
@@ -287,8 +286,133 @@ def retry_target(
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
 
-class Retry(object):
-    """Exponential retry decorator.
+class _BaseRetry(object):
+    """
+    Base class for retry configuration objects. This class is intended to capture retry
+    and backoff configuration that is common to both synchronous and asynchronous retries,
+    for both unary and streaming RPCs. It is not intended to be instantiated directly,
+    but rather to be subclassed by the various retry configuration classes.
+    """
+
+    def __init__(
+        self,
+        predicate: Callable[[BaseException], bool] = if_transient_error,
+        initial: float = _DEFAULT_INITIAL_DELAY,
+        maximum: float = _DEFAULT_MAXIMUM_DELAY,
+        multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
+        timeout: float = _DEFAULT_DEADLINE,
+        on_error: Callable[[BaseException], Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self._predicate = predicate
+        self._initial = initial
+        self._multiplier = multiplier
+        self._maximum = maximum
+        self._timeout = kwargs.get("deadline", timeout)
+        self._deadline = self._timeout
+        self._on_error = on_error
+
+    def __call__(self, *args, **kwargs) -> Any:
+        raise NotImplementedError("Not implemented in base class")
+
+    @property
+    def deadline(self):
+        """
+        DEPRECATED: use ``timeout`` instead.  Refer to the ``Retry`` class
+        documentation for details.
+        """
+        return self._timeout
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    def _replace(
+        self,
+        predicate=None,
+        initial=None,
+        maximum=None,
+        multiplier=None,
+        timeout=None,
+        on_error=None,
+    ):
+        return type(self)(
+            predicate=predicate or self._predicate,
+            initial=initial or self._initial,
+            maximum=maximum or self._maximum,
+            multiplier=multiplier or self._multiplier,
+            timeout=timeout or self._timeout,
+            on_error=on_error or self._on_error,
+        )
+
+    def with_deadline(self, deadline):
+        """Return a copy of this retry with the given timeout.
+
+        DEPRECATED: use :meth:`with_timeout` instead. Refer to the ``Retry`` class
+        documentation for details.
+
+        Args:
+            deadline (float): How long to keep retrying in seconds.
+
+        Returns:
+            Retry: A new retry instance with the given timeout.
+        """
+        return self._replace(timeout=deadline)
+
+    def with_timeout(self, timeout):
+        """Return a copy of this retry with the given timeout.
+
+        Args:
+            timeout (float): How long to keep retrying, in seconds.
+
+        Returns:
+            Retry: A new retry instance with the given timeout.
+        """
+        return self._replace(timeout=timeout)
+
+    def with_predicate(self, predicate):
+        """Return a copy of this retry with the given predicate.
+
+        Args:
+            predicate (Callable[Exception]): A callable that should return
+                ``True`` if the given exception is retryable.
+
+        Returns:
+            Retry: A new retry instance with the given predicate.
+        """
+        return self._replace(predicate=predicate)
+
+    def with_delay(self, initial=None, maximum=None, multiplier=None):
+        """Return a copy of this retry with the given delay options.
+
+        Args:
+            initial (float): The minimum amount of time to delay. This must
+                be greater than 0.
+            maximum (float): The maximum amount of time to delay.
+            multiplier (float): The multiplier applied to the delay.
+
+        Returns:
+            Retry: A new retry instance with the given predicate.
+        """
+        return self._replace(initial=initial, maximum=maximum, multiplier=multiplier)
+
+    def __str__(self):
+        return (
+            "<{} predicate={}, initial={:.1f}, maximum={:.1f}, "
+            "multiplier={:.1f}, timeout={}, on_error={}>".format(
+                type(self).__name__,
+                self._predicate,
+                self._initial,
+                self._maximum,
+                self._multiplier,
+                self._timeout,  # timeout can be None, thus no {:.1f}
+                self._on_error,
+            )
+        )
+
+
+class Retry(_BaseRetry):
+    """Exponential retry decorator for unary synchronous RPCs.
 
     This class is a decorator used to add retry or polling behavior to an RPC
     call.
@@ -365,70 +489,6 @@ class Retry(object):
     ``Operation`` or ``PollingFuture`` in general Timeout stands for
     Polling Timeout.
 
-    When ``is_stream=False``, the target is treated as a callable,
-    and will retry when the callable returns an error. When ``is_stream=True``,
-    the target will be treated as a generator function. Instead of just wrapping
-    the initial call in retry logic, the entire output iterable is
-    wrapped, with each yield passing through the retryable generator. If any yield
-    in the stream raises a retryable exception, the entire stream will be
-    retried.
-
-    NOTE: when a stream encounters a retryable error, it will
-    silently construct a fresh iterator instance in the background
-    and continue yielding (likely duplicate) values as if no error occurred.
-    This is the most general way to retry a stream, but it often is not the
-    desired behavior. Example: iter([1, 2, 1/0]) -> [1, 2, 1, 2, ...]
-
-    There are two ways to build more advanced retry logic for streams:
-
-    1. Wrap the target
-        Use a ``target`` that maintains state between retries, and creates a
-        different generator on each retry call. For example, you can wrap a
-        network call in a function that modifies the request based on what has
-        already been returned:
-
-        .. code-block:: python
-
-            def attempt_with_modified_request(target, request, seen_items=[]):
-                # remove seen items from request on each attempt
-                new_request = modify_request(request, seen_items)
-                new_generator = target(new_request)
-                for item in new_generator:
-                    yield item
-                    seen_items.append(item)
-
-            retry_wrapped_fn = Retry(is_stream=True,...)(attempt_with_modified_request)
-            retryable_generator = retry_wrapped_fn(target, request)
-
-    2. Wrap the retry generator
-        Alternatively, you can wrap the retryable generator itself before
-        passing it to the end-user to add a filter on the stream. For
-        example, you can keep track of the items that were successfully yielded
-        in previous retry attempts, and only yield new items when the
-        new attempt surpasses the previous ones:
-
-        .. code-block:: python
-
-            def retryable_with_filter(target):
-                stream_idx = 0
-                # reset stream_idx when the stream is retried
-                def on_error(e):
-                    nonlocal stream_idx
-                    stream_idx = 0
-                # build retryable
-                retryable_gen = Retry(is_stream=True,...)(target)
-                # keep track of what has been yielded out of filter
-                seen_items = []
-                for item in retryable_gen():
-                    if stream_idx >= len(seen_items):
-                        seen_items.append(item)
-                        yield item
-                    elif item != seen_items[stream_idx]:
-                        raise ValueError("Stream differs from last attempt")
-                    stream_idx += 1
-
-            filter_retry_wrapped = retryable_with_filter(target)
-
     Args:
         predicate (Callable[Exception]): A callable that should return ``True``
             if the given exception is retryable.
@@ -440,43 +500,15 @@ class Retry(object):
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
-        is_stream (bool): Indicates whether the input function
-            should be treated as a stream function (i.e. a Generator,
-            or function that returns an Iterable). If True, the iterable
-            will be wrapped with retry logic, and any failed outputs will
-            restart the stream. If False, only the input function call itself
-            will be retried. Defaults to False.
-            To avoid duplicate values, retryable streams should typically be
-            wrapped in additional filter logic before use.
         deadline (float): DEPRECATED: use `timeout` instead. For backward
             compatibility, if specified it will override the ``timeout`` parameter.
     """
 
-    def __init__(
-        self,
-        predicate: Callable[[BaseException], bool] = if_transient_error,
-        initial: float = _DEFAULT_INITIAL_DELAY,
-        maximum: float = _DEFAULT_MAXIMUM_DELAY,
-        multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
-        timeout: float = _DEFAULT_DEADLINE,
-        on_error: Callable[[BaseException], Any] | None = None,
-        is_stream: bool = False,
-        **kwargs: Any,
-    ) -> None:
-        self._predicate = predicate
-        self._initial = initial
-        self._multiplier = multiplier
-        self._maximum = maximum
-        self._timeout = kwargs.get("deadline", timeout)
-        self._deadline = self._timeout
-        self._on_error = on_error
-        self._is_stream = is_stream
-
     def __call__(
         self,
-        func: Callable[_P, _R | Iterable[_Y]],
+        func: Callable[_P, _R],
         on_error: Callable[[BaseException], Any] | None = None,
-    ) -> Callable[_P, _R | Generator[_Y, Any, None]]:
+    ) -> Callable[_P, _R]:
         """Wrap a callable with retry behavior.
 
         Args:
@@ -495,9 +527,7 @@ class Retry(object):
             on_error = self._on_error
 
         @functools.wraps(func)
-        def retry_wrapped_func(
-            *args: _P.args, **kwargs: _P.kwargs
-        ) -> _R | Generator[_Y, Any, None]:
+        def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             """A wrapper that calls target function with retry."""
             target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
@@ -509,110 +539,6 @@ class Retry(object):
                 "timeout": self._timeout,
                 "on_error": on_error,
             }
-            if self._is_stream:
-                # when stream is enabled, assume target returns an iterable that yields _Y
-                stream_target = cast(Callable[[], Iterable["_Y"]], target)
-                return retry_streaming.retry_target_stream(
-                    stream_target, **retry_kwargs
-                )
-            else:
-                return retry_target(target, **retry_kwargs)
+            return retry_target(target, **retry_kwargs)
 
         return retry_wrapped_func
-
-    @property
-    def deadline(self):
-        """
-        DEPRECATED: use ``timeout`` instead.  Refer to the ``Retry`` class
-        documentation for details.
-        """
-        return self._timeout
-
-    @property
-    def timeout(self):
-        return self._timeout
-
-    def with_deadline(self, deadline):
-        """Return a copy of this retry with the given timeout.
-
-        DEPRECATED: use :meth:`with_timeout` instead. Refer to the ``Retry`` class
-        documentation for details.
-
-        Args:
-            deadline (float): How long to keep retrying in seconds.
-
-        Returns:
-            Retry: A new retry instance with the given timeout.
-        """
-        return self.with_timeout(timeout=deadline)
-
-    def with_timeout(self, timeout):
-        """Return a copy of this retry with the given timeout.
-
-        Args:
-            timeout (float): How long to keep retrying, in seconds.
-
-        Returns:
-            Retry: A new retry instance with the given timeout.
-        """
-        return Retry(
-            predicate=self._predicate,
-            initial=self._initial,
-            maximum=self._maximum,
-            multiplier=self._multiplier,
-            timeout=timeout,
-            on_error=self._on_error,
-        )
-
-    def with_predicate(self, predicate):
-        """Return a copy of this retry with the given predicate.
-
-        Args:
-            predicate (Callable[Exception]): A callable that should return
-                ``True`` if the given exception is retryable.
-
-        Returns:
-            Retry: A new retry instance with the given predicate.
-        """
-        return Retry(
-            predicate=predicate,
-            initial=self._initial,
-            maximum=self._maximum,
-            multiplier=self._multiplier,
-            timeout=self._timeout,
-            on_error=self._on_error,
-        )
-
-    def with_delay(self, initial=None, maximum=None, multiplier=None):
-        """Return a copy of this retry with the given delay options.
-
-        Args:
-            initial (float): The minimum amount of time to delay. This must
-                be greater than 0.
-            maximum (float): The maximum amount of time to delay.
-            multiplier (float): The multiplier applied to the delay.
-
-        Returns:
-            Retry: A new retry instance with the given predicate.
-        """
-        return Retry(
-            predicate=self._predicate,
-            initial=initial if initial is not None else self._initial,
-            maximum=maximum if maximum is not None else self._maximum,
-            multiplier=multiplier if multiplier is not None else self._multiplier,
-            timeout=self._timeout,
-            on_error=self._on_error,
-        )
-
-    def __str__(self):
-        return (
-            "<Retry predicate={}, initial={:.1f}, maximum={:.1f}, "
-            "multiplier={:.1f}, timeout={}, on_error={}>".format(
-                self._predicate,
-                self._initial,
-                self._maximum,
-                self._multiplier,
-                self._timeout,  # timeout can be None, thus no {:.1f}
-                self._on_error,
-            )
-        )
