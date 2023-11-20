@@ -14,7 +14,6 @@
 
 import datetime
 import re
-import asyncio
 
 import mock
 import pytest

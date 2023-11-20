@@ -65,7 +65,7 @@ import time
 from enum import Enum
 import inspect
 import warnings
-from typing import Any, Callable, TypeVar, Generator, Iterable, cast, TYPE_CHECKING
+from typing import Any, Callable, TypeVar, TYPE_CHECKING
 
 import requests.exceptions
 
@@ -142,8 +142,8 @@ def _build_retry_error(
 
 
 def if_exception_type(
-    *exception_types: type[BaseException],
-) -> Callable[[BaseException], bool]:
+    *exception_types: type[Exception],
+) -> Callable[[Exception], bool]:
     """Creates a predicate to check if the exception is of a given type.
 
     Args:
@@ -155,7 +155,7 @@ def if_exception_type(
             exception is of the given type(s).
     """
 
-    def if_exception_type_predicate(exception: BaseException) -> bool:
+    def if_exception_type_predicate(exception: Exception) -> bool:
         """Bound predicate for checking an exception type."""
         return isinstance(exception, exception_types)
 
@@ -300,12 +300,12 @@ class _BaseRetry(object):
 
     def __init__(
         self,
-        predicate: Callable[[BaseException], bool] = if_transient_error,
+        predicate: Callable[[Exception], bool] = if_transient_error,
         initial: float = _DEFAULT_INITIAL_DELAY,
         maximum: float = _DEFAULT_MAXIMUM_DELAY,
         multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
         timeout: float = _DEFAULT_DEADLINE,
-        on_error: Callable[[BaseException], Any] | None = None,
+        on_error: Callable[[Exception], Any] | None = None,
         **kwargs: Any,
     ) -> None:
         self._predicate = predicate
@@ -511,7 +511,7 @@ class Retry(_BaseRetry):
     def __call__(
         self,
         func: Callable[_P, _R],
-        on_error: Callable[[BaseException], Any] | None = None,
+        on_error: Callable[[Exception], Any] | None = None,
     ) -> Callable[_P, _R]:
         """Wrap a callable with retry behavior.
 
@@ -537,12 +537,12 @@ class Retry(_BaseRetry):
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
-            retry_kwargs = {
-                "predicate": self._predicate,
-                "sleep_generator": sleep_generator,
-                "timeout": self._timeout,
-                "on_error": on_error,
-            }
-            return retry_target(target, **retry_kwargs)
+            return retry_target(
+                target,
+                self._predicate,
+                sleep_generator,
+                timeout=self._timeout,
+                on_error=on_error,
+            )
 
         return retry_wrapped_func

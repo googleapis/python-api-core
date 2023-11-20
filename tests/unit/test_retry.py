@@ -15,7 +15,6 @@
 import datetime
 import itertools
 import re
-import functools
 
 import mock
 import pytest

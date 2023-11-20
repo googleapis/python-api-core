@@ -43,7 +43,7 @@ import functools
 from google.api_core.retry import _BaseRetry
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
-from google.api_core.retry import if_transient_error
+from google.api_core.retry import if_transient_error  # noqa: F401
 from google.api_core.retry import _build_retry_error
 from google.api_core.retry import RetryFailureReason
 
@@ -180,7 +180,7 @@ async def retry_target_stream(
         # handle exceptions raised by the target_iterator
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
-        except (Exception, asyncio.CancelledError) as exc:
+        except Exception as exc:
             error_list.append(exc)
             if not predicate(exc):
                 exc, source_exc = exc_factory(
@@ -297,7 +297,7 @@ class AsyncStreamingRetry(_BaseRetry):
     def __call__(
         self,
         func: Callable[..., AsyncIterable[_Y] | Awaitable[AsyncIterable[_Y]]],
-        on_error: Callable[[BaseException], Any] | None = None,
+        on_error: Callable[[Exception], Any] | None = None,
     ) -> Callable[_P, Awaitable[AsyncGenerator[_Y, None]]]:
         """Wrap a callable with retry behavior.
 

@@ -37,7 +37,7 @@ import functools
 from google.api_core.retry import _BaseRetry
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import if_exception_type  # noqa: F401
-from google.api_core.retry import if_transient_error
+from google.api_core.retry import if_transient_error  # noqa: F401
 from google.api_core.retry import _build_retry_error
 from google.api_core.retry import RetryFailureReason
 
@@ -298,7 +298,7 @@ class StreamingRetry(_BaseRetry):
     def __call__(
         self,
         func: Callable[_P, Iterable[_Y]],
-        on_error: Callable[[BaseException], Any] | None = None,
+        on_error: Callable[[Exception], Any] | None = None,
     ) -> Callable[_P, Generator[_Y, Any, None]]:
         """Wrap a callable with retry behavior.
 
