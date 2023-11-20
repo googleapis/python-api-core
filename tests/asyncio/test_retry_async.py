@@ -22,6 +22,8 @@ import pytest
 from google.api_core import exceptions
 from google.api_core import retry_async
 
+from ..unit.test_retry import Test_BaseRetry
+
 
 @mock.patch("asyncio.sleep", autospec=True)
 @mock.patch(
@@ -142,108 +144,10 @@ async def test_retry_streaming_target_bad_sleep_generator():
         await retry_target_stream(None, None, [], None).__anext__()
 
 
-class TestAsyncRetry:
-    def test_constructor_defaults(self):
-        retry_ = retry_async.AsyncRetry()
-        assert retry_._predicate == retry_async.if_transient_error
-        assert retry_._initial == 1
-        assert retry_._maximum == 60
-        assert retry_._multiplier == 2
-        assert retry_._deadline == 120
-        assert retry_._on_error is None
+class TestAsyncRetry(Test_BaseRetry):
 
-    def test_constructor_options(self):
-        _some_function = mock.Mock()
-
-        retry_ = retry_async.AsyncRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=_some_function,
-        )
-        assert retry_._predicate == mock.sentinel.predicate
-        assert retry_._initial == 1
-        assert retry_._maximum == 2
-        assert retry_._multiplier == 3
-        assert retry_._deadline == 4
-        assert retry_._on_error is _some_function
-
-    def test_with_deadline(self):
-        retry_ = retry_async.AsyncRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_deadline(42)
-        assert retry_ is not new_retry
-        assert new_retry._deadline == 42
-
-        # the rest of the attributes should remain the same
-        assert new_retry._predicate is retry_._predicate
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-        assert new_retry._on_error is retry_._on_error
-
-    def test_with_predicate(self):
-        retry_ = retry_async.AsyncRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_predicate(mock.sentinel.predicate)
-        assert retry_ is not new_retry
-        assert new_retry._predicate == mock.sentinel.predicate
-
-        # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-        assert new_retry._on_error is retry_._on_error
-
-    def test_with_delay_noop(self):
-        retry_ = retry_async.AsyncRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_delay()
-        assert retry_ is not new_retry
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-
-    def test_with_delay(self):
-        retry_ = retry_async.AsyncRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_delay(initial=1, maximum=2, multiplier=3)
-        assert retry_ is not new_retry
-        assert new_retry._initial == 1
-        assert new_retry._maximum == 2
-        assert new_retry._multiplier == 3
-
-        # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
-        assert new_retry._predicate is retry_._predicate
-        assert new_retry._on_error is retry_._on_error
+    def _make_one(self, *args, **kwargs):
+        return retry_async.AsyncRetry(*args, **kwargs)
 
     def test___str__(self):
         def if_exception_type(exc):

@@ -237,9 +237,13 @@ def test_retry_streaming_target_bad_sleep_generator():
         next(retry_target_stream(None, None, [], None))
 
 
-class TestRetry(object):
+class Test_BaseRetry(object):
+
+    def _make_one(self, *args, **kwargs):
+        return retry._BaseRetry(*args, **kwargs)
+
     def test_constructor_defaults(self):
-        retry_ = retry.Retry()
+        retry_ = self._make_one()
         assert retry_._predicate == retry.if_transient_error
         assert retry_._initial == 1
         assert retry_._maximum == 60
@@ -252,7 +256,7 @@ class TestRetry(object):
     def test_constructor_options(self):
         _some_function = mock.Mock()
 
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -268,7 +272,7 @@ class TestRetry(object):
         assert retry_._on_error is _some_function
 
     def test_with_deadline(self):
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -288,7 +292,7 @@ class TestRetry(object):
         assert new_retry._on_error is retry_._on_error
 
     def test_with_predicate(self):
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -308,7 +312,7 @@ class TestRetry(object):
         assert new_retry._on_error is retry_._on_error
 
     def test_with_delay_noop(self):
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -323,7 +327,7 @@ class TestRetry(object):
         assert new_retry._multiplier == retry_._multiplier
 
     def test_with_delay(self):
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -343,7 +347,7 @@ class TestRetry(object):
         assert new_retry._on_error is retry_._on_error
 
     def test_with_delay_partial_options(self):
-        retry_ = retry.Retry(
+        retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
@@ -373,6 +377,35 @@ class TestRetry(object):
         assert new_retry._deadline == retry_._deadline
         assert new_retry._predicate is retry_._predicate
         assert new_retry._on_error is retry_._on_error
+
+    def test___str__(self):
+        def if_exception_type(exc):
+            return bool(exc)  # pragma: NO COVER
+
+        # Explicitly set all attributes as changed Retry defaults should not
+        # cause this test to start failing.
+        retry_ = self._make_one(
+            predicate=if_exception_type,
+            initial=1.0,
+            maximum=60.0,
+            multiplier=2.0,
+            deadline=120.0,
+            on_error=None,
+        )
+        assert re.match(
+            (
+                r"<_BaseRetry predicate=<function.*?if_exception_type.*?>, "
+                r"initial=1.0, maximum=60.0, multiplier=2.0, timeout=120.0, "
+                r"on_error=None>"
+            ),
+            str(retry_),
+        )
+
+
+class TestRetry(Test_BaseRetry):
+
+    def _make_one(self, *args, **kwargs):
+        return retry.Retry(*args, **kwargs)
 
     def test___str__(self):
         def if_exception_type(exc):

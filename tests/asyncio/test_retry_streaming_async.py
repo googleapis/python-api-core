@@ -23,109 +23,13 @@ from google.api_core import exceptions
 from google.api_core import retry_async
 from google.api_core import retry_streaming_async
 
+from ..unit.test_retry import Test_BaseRetry
 
-class TestAsyncStreamingRetry:
-    def test_constructor_defaults(self):
-        retry_ = retry_streaming_async.AsyncStreamingRetry()
-        assert retry_._predicate == retry_async.if_transient_error
-        assert retry_._initial == 1
-        assert retry_._maximum == 60
-        assert retry_._multiplier == 2
-        assert retry_._deadline == 120
-        assert retry_._on_error is None
 
-    def test_constructor_options(self):
-        _some_function = mock.Mock()
+class TestAsyncStreamingRetry(Test_BaseRetry):
 
-        retry_ = retry_streaming_async.AsyncStreamingRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=_some_function,
-        )
-        assert retry_._predicate == mock.sentinel.predicate
-        assert retry_._initial == 1
-        assert retry_._maximum == 2
-        assert retry_._multiplier == 3
-        assert retry_._deadline == 4
-        assert retry_._on_error is _some_function
-
-    def test_with_deadline(self):
-        retry_ = retry_streaming_async.AsyncStreamingRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_deadline(42)
-        assert retry_ is not new_retry
-        assert new_retry._deadline == 42
-
-        # the rest of the attributes should remain the same
-        assert new_retry._predicate is retry_._predicate
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-        assert new_retry._on_error is retry_._on_error
-
-    def test_with_predicate(self):
-        retry_ = retry_streaming_async.AsyncStreamingRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_predicate(mock.sentinel.predicate)
-        assert retry_ is not new_retry
-        assert new_retry._predicate == mock.sentinel.predicate
-
-        # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-        assert new_retry._on_error is retry_._on_error
-
-    def test_with_delay_noop(self):
-        retry_ = retry_streaming_async.AsyncStreamingRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_delay()
-        assert retry_ is not new_retry
-        assert new_retry._initial == retry_._initial
-        assert new_retry._maximum == retry_._maximum
-        assert new_retry._multiplier == retry_._multiplier
-
-    def test_with_delay(self):
-        retry_ = retry_streaming_async.AsyncStreamingRetry(
-            predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            deadline=4,
-            on_error=mock.sentinel.on_error,
-        )
-        new_retry = retry_.with_delay(initial=1, maximum=2, multiplier=3)
-        assert retry_ is not new_retry
-        assert new_retry._initial == 1
-        assert new_retry._maximum == 2
-        assert new_retry._multiplier == 3
-
-        # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
-        assert new_retry._predicate is retry_._predicate
-        assert new_retry._on_error is retry_._on_error
+    def _make_one(self, *args, **kwargs):
+        return retry_streaming_async.AsyncStreamingRetry(*args, **kwargs)
 
     def test___str__(self):
         def if_exception_type(exc):
@@ -215,6 +119,7 @@ class TestAsyncStreamingRetry:
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
+            
             timeout=None,
         )
         generator = await retry_(self._generator_mock)(error_on=3)
@@ -241,6 +146,7 @@ class TestAsyncStreamingRetry:
             maximum=1024.0,
             multiplier=2.0,
             deadline=9.9,
+            
         )
 
         time_now = time.monotonic()
@@ -330,6 +236,7 @@ class TestAsyncStreamingRetry:
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             on_error=on_error,
             predicate=retry_async.if_exception_type(ValueError),
+            
             timeout=None,
         )
         generator = await retry_(self._generator_mock)(error_on=3)
@@ -391,6 +298,7 @@ class TestAsyncStreamingRetry:
         # The generator should not retry when it encounters a non-retryable error
         retry_ = retry_streaming_async.AsyncStreamingRetry(
             predicate=retry_async.if_exception_type(ValueError),
+            
         )
         decorated = retry_(self._generator_mock)
         exception_list = []
@@ -507,7 +415,7 @@ class TestAsyncStreamingRetry:
         """
 
         predicate = retry_async.if_exception_type(ValueError)
-        retry_ = retry_streaming_async.AsyncStreamingRetry(predicate=predicate)
+        retry_ = retry_streaming_async.AsyncStreamingRetry( predicate=predicate)
 
         def iterable_fn():
             class CustomIterable:
