@@ -121,21 +121,24 @@ def test_invoke_wrapped_method_with_metadata_as_none():
 
 
 @mock.patch("time.sleep")
-def test_wrap_method_with_default_retry_and_timeout(unused_sleep):
+def test_wrap_method_with_default_retry_and_timeout_and_compression(unused_sleep):
     method = mock.Mock(
         spec=["__call__"], side_effect=[exceptions.InternalServerError(None), 42]
     )
     default_retry = retry.Retry()
     default_timeout = timeout.ConstantTimeout(60)
+    default_compression = grpc.Compression.Gzip
     wrapped_method = google.api_core.gapic_v1.method.wrap_method(
-        method, default_retry, default_timeout
+        method, default_retry, default_timeout, default_compression
     )
 
     result = wrapped_method()
 
     assert result == 42
     assert method.call_count == 2
-    method.assert_called_with(timeout=60, metadata=mock.ANY)
+    method.assert_called_with(
+        timeout=60, compression=default_compression, metadata=mock.ANY
+    )
 
 
 @mock.patch("time.sleep")
@@ -145,37 +148,45 @@ def test_wrap_method_with_default_retry_and_timeout_using_sentinel(unused_sleep)
     )
     default_retry = retry.Retry()
     default_timeout = timeout.ConstantTimeout(60)
+    default_compression = grpc.Compression.Gzip
     wrapped_method = google.api_core.gapic_v1.method.wrap_method(
-        method, default_retry, default_timeout
+        method, default_retry, default_timeout, default_compression
     )
 
     result = wrapped_method(
         retry=google.api_core.gapic_v1.method.DEFAULT,
         timeout=google.api_core.gapic_v1.method.DEFAULT,
+        compression=google.api_core.gapic_v1.method.DEFAULT,
     )
 
     assert result == 42
     assert method.call_count == 2
-    method.assert_called_with(timeout=60, metadata=mock.ANY)
+    method.assert_called_with(
+        timeout=60, compression=default_compression, metadata=mock.ANY
+    )
 
 
 @mock.patch("time.sleep")
-def test_wrap_method_with_overriding_retry_and_timeout(unused_sleep):
+def test_wrap_method_with_overriding_retry_timeout_compression(unused_sleep):
     method = mock.Mock(spec=["__call__"], side_effect=[exceptions.NotFound(None), 42])
     default_retry = retry.Retry()
     default_timeout = timeout.ConstantTimeout(60)
+    default_compression = grpc.Compression.Gzip
     wrapped_method = google.api_core.gapic_v1.method.wrap_method(
-        method, default_retry, default_timeout
+        method, default_retry, default_timeout, default_compression
     )
 
     result = wrapped_method(
         retry=retry.Retry(retry.if_exception_type(exceptions.NotFound)),
         timeout=timeout.ConstantTimeout(22),
+        compression=grpc.Compression.Deflate,
     )
 
     assert result == 42
     assert method.call_count == 2
-    method.assert_called_with(timeout=22, metadata=mock.ANY)
+    method.assert_called_with(
+        timeout=22, compression=grpc.Compression.Deflate, metadata=mock.ANY
+    )
 
 
 def test_wrap_method_with_overriding_timeout_as_a_number():
@@ -190,3 +201,24 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
 
     assert result == 42
     method.assert_called_once_with(timeout=22, metadata=mock.ANY)
+
+
+def test_wrap_method_with_call():
+    method = mock.Mock()
+    mock_call = mock.Mock()
+    method.with_call.return_value = 42, mock_call
+
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(method, with_call=True)
+    result = wrapped_method()
+    assert len(result) == 2
+    assert result[0] == 42
+    assert result[1] == mock_call
+
+
+def test_wrap_method_with_call_not_supported():
+    """Raises an error if wrapped callable doesn't have with_call method."""
+    method = lambda: None  # noqa: E731
+
+    with pytest.raises(ValueError) as exc_info:
+        google.api_core.gapic_v1.method.wrap_method(method, with_call=True)
+    assert "with_call=True is only supported for unary calls" in str(exc_info.value)

@@ -143,7 +143,7 @@ def default(session, install_grpc=True):
     session.run(*pytest_args)
 
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11"])
+@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"])
 def unit(session):
     """Run the unit test suite."""
     default(session)
@@ -232,7 +232,7 @@ def docs(session):
     )
 
 
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def docfx(session):
     """Build the docfx yaml files for this library."""
 

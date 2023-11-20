@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from collections import OrderedDict
-from distutils import util
 import os
 import re
 from typing import Dict, Optional, Sequence, Tuple, Type, Union
@@ -33,6 +32,7 @@ from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.auth.transport import mtls  # type: ignore
 from google.longrunning import operations_pb2
 from google.oauth2 import service_account  # type: ignore
+import grpc
 
 OptionalRetry = Union[retries.Retry, object]
 
@@ -293,13 +293,16 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             client_options = client_options_lib.ClientOptions()
 
         # Create SSL credentials for mutual TLS if needed.
-        use_client_cert = bool(
-            util.strtobool(os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false"))
-        )
-
+        use_client_cert = os.getenv(
+            "GOOGLE_API_USE_CLIENT_CERTIFICATE", "false"
+        ).lower()
+        if use_client_cert not in ("true", "false"):
+            raise ValueError(
+                "Environment variable `GOOGLE_API_USE_CLIENT_CERTIFICATE` must be either `true` or `false`"
+            )
         client_cert_source_func = None
         is_mtls = False
-        if use_client_cert:
+        if use_client_cert == "true":
             if client_options.client_cert_source:
                 is_mtls = True
                 client_cert_source_func = client_options.client_cert_source
@@ -368,6 +371,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         page_token: Optional[str] = None,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
+        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListOperationsPager:
         r"""Lists operations that match the specified filter in the request.
@@ -429,6 +433,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 
@@ -450,6 +455,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
+        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
         r"""Gets the latest state of a long-running operation.
@@ -490,6 +496,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 
@@ -502,6 +509,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
+        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Deletes a long-running operation. This method indicates that the
@@ -541,6 +549,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )
 
@@ -550,6 +559,7 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
         *,
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
+        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Starts asynchronous cancellation on a long-running operation.
@@ -598,5 +608,6 @@ class AbstractOperationsClient(metaclass=AbstractOperationsClientMeta):
             request,
             retry=retry,
             timeout=timeout,
+            compression=compression,
             metadata=metadata,
         )

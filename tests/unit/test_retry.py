@@ -129,6 +129,26 @@ def test_retry_target_non_retryable_error(utcnow, sleep):
     sleep.assert_not_called()
 
 
+@mock.patch("asyncio.sleep", autospec=True)
+@mock.patch(
+    "google.api_core.datetime_helpers.utcnow",
+    return_value=datetime.datetime.min,
+    autospec=True,
+)
+@pytest.mark.asyncio
+async def test_retry_target_warning_for_retry(utcnow, sleep):
+    predicate = retry.if_exception_type(ValueError)
+    target = mock.AsyncMock(spec=["__call__"])
+
+    with pytest.warns(Warning) as exc_info:
+        # Note: predicate is just a filler and doesn't affect the test
+        retry.retry_target(target, predicate, range(10), None)
+
+    assert len(exc_info) == 2
+    assert str(exc_info[0].message) == retry._ASYNC_RETRY_WARNING
+    sleep.assert_not_called()
+
+
 @mock.patch("time.sleep", autospec=True)
 @mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
 def test_retry_target_deadline_exceeded(utcnow, sleep):
@@ -341,7 +361,6 @@ class TestRetry(object):
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
     def test___call___and_execute_retry(self, sleep, uniform):
-
         on_error = mock.Mock(spec=["__call__"], side_effect=[None])
         retry_ = retry.Retry(predicate=retry.if_exception_type(ValueError))
 
@@ -363,7 +382,6 @@ class TestRetry(object):
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
     def test___call___and_execute_retry_hitting_deadline(self, sleep, uniform):
-
         on_error = mock.Mock(spec=["__call__"], side_effect=[None] * 10)
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
@@ -373,7 +391,7 @@ class TestRetry(object):
             deadline=30.9,
         )
 
-        utcnow = datetime.datetime.utcnow()
+        utcnow = datetime.datetime.now(tz=datetime.timezone.utc)
         utcnow_patcher = mock.patch(
             "google.api_core.datetime_helpers.utcnow", return_value=utcnow
         )

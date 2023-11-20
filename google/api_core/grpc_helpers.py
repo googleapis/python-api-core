@@ -13,9 +13,11 @@
 # limitations under the License.
 
 """Helpers for :mod:`grpc`."""
+from typing import Generic, TypeVar, Iterator
 
 import collections
 import functools
+import logging
 import warnings
 
 import grpc
@@ -51,6 +53,11 @@ else:
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
 
+_LOGGER = logging.getLogger(__name__)
+
+# denotes the proto response type for grpc calls
+P = TypeVar("P")
+
 
 def _patch_callable_name(callable_):
     """Fix-up gRPC callable attributes.
@@ -76,7 +83,7 @@ def _wrap_unary_errors(callable_):
     return error_remapped_callable
 
 
-class _StreamingResponseIterator(grpc.Call):
+class _StreamingResponseIterator(Generic[P], grpc.Call):
     def __init__(self, wrapped, prefetch_first_result=True):
         self._wrapped = wrapped
 
@@ -94,11 +101,11 @@ class _StreamingResponseIterator(grpc.Call):
             # ignore stop iteration at this time. This should be handled outside of retry.
             pass
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[P]:
         """This iterator is also an iterable that returns itself."""
         return self
 
-    def __next__(self):
+    def __next__(self) -> P:
         """Get the next response from the stream.
 
         Returns:
@@ -139,6 +146,10 @@ class _StreamingResponseIterator(grpc.Call):
 
     def trailing_metadata(self):
         return self._wrapped.trailing_metadata()
+
+
+# public type alias denoting the return type of streaming gapic calls
+GrpcStream = _StreamingResponseIterator[P]
 
 
 def _wrap_stream_errors(callable_):
@@ -276,7 +287,8 @@ def create_channel(
     quota_project_id=None,
     default_scopes=None,
     default_host=None,
-    **kwargs
+    compression=None,
+    **kwargs,
 ):
     """Create a secure channel with credentials.
 
@@ -297,6 +309,8 @@ def create_channel(
         default_scopes (Sequence[str]): Default scopes passed by a Google client
             library. Use 'scopes' for user-defined scopes.
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
+        compression (grpc.Compression): An optional value indicating the
+            compression method to be used over the lifetime of the channel.
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
             Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
@@ -319,12 +333,18 @@ def create_channel(
     )
 
     if HAS_GRPC_GCP:  # pragma: NO COVER
+        if compression is not None and compression != grpc.Compression.NoCompression:
+            _LOGGER.debug(
+                "Compression argument is being ignored for grpc_gcp.secure_channel creation."
+            )
         return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-    return grpc.secure_channel(target, composite_credentials, **kwargs)
+    return grpc.secure_channel(
+        target, composite_credentials, compression=compression, **kwargs
+    )
 
 
 _MethodCall = collections.namedtuple(
-    "_MethodCall", ("request", "timeout", "metadata", "credentials")
+    "_MethodCall", ("request", "timeout", "metadata", "credentials", "compression")
 )
 
 _ChannelRequest = collections.namedtuple("_ChannelRequest", ("method", "request"))
@@ -351,11 +371,15 @@ class _CallableStub(object):
         """List[protobuf.Message]: All requests sent to this callable."""
         self.calls = []
         """List[Tuple]: All invocations of this callable. Each tuple is the
-        request, timeout, metadata, and credentials."""
+        request, timeout, metadata, compression, and credentials."""
 
-    def __call__(self, request, timeout=None, metadata=None, credentials=None):
+    def __call__(
+        self, request, timeout=None, metadata=None, credentials=None, compression=None
+    ):
         self._channel.requests.append(_ChannelRequest(self._method, request))
-        self.calls.append(_MethodCall(request, timeout, metadata, credentials))
+        self.calls.append(
+            _MethodCall(request, timeout, metadata, credentials, compression)
+        )
         self.requests.append(request)
 
         response = self.response
