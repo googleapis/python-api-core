@@ -38,6 +38,7 @@ import asyncio
 import logging
 import time
 import sys
+import functools
 
 from google.api_core.retry import _BaseRetry
 from google.api_core.retry import exponential_sleep_generator
@@ -322,7 +323,7 @@ class AsyncStreamingRetry(_BaseRetry):
         if self._on_error is not None:
             on_error = self._on_error
 
-        # @functools.wraps(func)
+        @functools.wraps(func)
         async def retry_wrapped_func(
             *args: _P.args, **kwargs: _P.kwargs
         ) -> AsyncGenerator[_Y, None]:
