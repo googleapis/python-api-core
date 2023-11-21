@@ -54,7 +54,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def retry_target_stream(
-    target: Callable[[], Iterable[_Y]],
+    target: Callable[_P, Iterable[_Y]],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],
     timeout: Optional[float] = None,
@@ -65,6 +65,8 @@ def retry_target_stream(
             Tuple[Exception, Optional[Exception]],
         ]
     ] = None,
+    init_args: _P.args = (),
+    init_kwargs: _P.kwargs = {},
     **kwargs,
 ) -> Generator[_Y, Any, None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
@@ -73,8 +75,7 @@ def retry_target_stream(
     higher-level retry helper :class:`Retry`.
 
     Args:
-        target: The generator function to call and retry. This must be a
-            nullary function - apply arguments with `functools.partial`.
+        target: The generator function to call and retry.
         predicate: A callable used to determine if an
             exception raised by the target should be considered retryable.
             It should return True to retry or False otherwise.
@@ -94,6 +95,8 @@ def retry_target_stream(
             along with the cause exception if any.
             If not provided, a default implementation will raise a RetryError
             on timeout, or the last exception encountered otherwise.
+        init_args: Positional arguments to pass to the target function.
+        init_kwargs: Keyword arguments to pass to the target function.
 
     Returns:
         Generator: A retryable generator that wraps the target generator function.
@@ -114,8 +117,10 @@ def retry_target_stream(
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
-            # create and yield from a new instance of the generator from input generator function
-            subgenerator = target()
+            # Note: in the future, we can add a ResumptionStrategy object
+            # to generate new args between calls. For now, use the same args
+            # for each attempt.
+            subgenerator = target(*init_args, **init_kwargs)
             return (yield from subgenerator)
         # handle exceptions raised by the subgenerator
         # pylint: disable=broad-except
@@ -326,11 +331,13 @@ class StreamingRetry(_BaseRetry):
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             return retry_target_stream(
-                functools.partial(func, *args, **kwargs),
+                func,
                 predicate=self._predicate,
                 sleep_generator=sleep_generator,
                 timeout=self._timeout,
                 on_error=on_error,
+                init_args=args,
+                init_kwargs=kwargs,
             )
 
         return retry_wrapped_func

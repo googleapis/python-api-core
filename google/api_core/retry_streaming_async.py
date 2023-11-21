@@ -38,7 +38,6 @@ import asyncio
 import logging
 import time
 import sys
-import functools
 
 from google.api_core.retry import _BaseRetry
 from google.api_core.retry import exponential_sleep_generator
@@ -61,7 +60,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def retry_target_stream(
-    target: Callable[[], AsyncIterable["_Y"] | Awaitable[AsyncIterable["_Y"]]],
+    target: Callable[_P, AsyncIterable["_Y"] | Awaitable[AsyncIterable["_Y"]]],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],
     timeout: Optional[float] = None,
@@ -72,6 +71,8 @@ async def retry_target_stream(
             Tuple[Exception, Optional[Exception]],
         ]
     ] = None,
+    init_args: _P.args = (),
+    init_kwargs: _P.kwargs = {},
     **kwargs,
 ) -> AsyncGenerator["_Y", None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
@@ -80,8 +81,7 @@ async def retry_target_stream(
     higher-level retry helper :class:`AsyncRetry`.
 
     Args:
-        target: The generator function to call and retry. This must be a
-            nullary function - apply arguments with `functools.partial`.
+        target: The generator function to call and retry.
         predicate: A callable used to determine if an
             exception raised by the target should be considered retryable.
             It should return True to retry or False otherwise.
@@ -101,6 +101,8 @@ async def retry_target_stream(
             along with the cause exception if any.
             If not provided, a default implementation will raise a RetryError
             on timeout, or the last exception encountered otherwise.
+        init_args: Positional arguments to pass to the target function.
+        init_kwargs: Keyword arguments to pass to the target function.
 
     Returns:
         AsyncGenerator: A retryable generator that wraps the target generator function.
@@ -112,7 +114,8 @@ async def retry_target_stream(
                 google.api_core.RetryError: If the deadline is exceeded while retrying.
                 Exception: If the target raises an error that isn't retryable.
     """
-
+    # create frozen partial from original call args
+    # In the future, we can add a ResumptionStrategy object that creates new kwargs between calls
     target_iterator: Optional[AsyncIterator[_Y]] = None
     timeout = kwargs.get("deadline", timeout)
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
@@ -125,9 +128,12 @@ async def retry_target_stream(
     for sleep in sleep_generator:
         # Start a new retry loop
         try:
+            # Note: in the future, we can add a ResumptionStrategy object
+            # to generate new args between calls. For now, use the same args
+            # for each attempt.
             target_output: Union[
                 AsyncIterable[_Y], Awaitable[AsyncIterable[_Y]]
-            ] = target()
+            ] = target(*init_args, **init_kwargs)
             try:
                 # gapic functions return the generator behind an awaitable
                 # unwrap the awaitable so we can work with the generator directly
@@ -321,16 +327,17 @@ class AsyncStreamingRetry(_BaseRetry):
             *args: _P.args, **kwargs: _P.kwargs
         ) -> AsyncGenerator[_Y, None]:
             """A wrapper that calls target function with retry."""
-            target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             return retry_target_stream(
-                target,
+                func,
                 self._predicate,
                 sleep_generator,
                 self._timeout,
                 on_error,
+                init_args=args,
+                init_kwargs=kwargs,
             )
 
         return retry_wrapped_func
