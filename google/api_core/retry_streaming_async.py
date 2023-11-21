@@ -321,15 +321,16 @@ class AsyncStreamingRetry(_BaseRetry):
             *args: _P.args, **kwargs: _P.kwargs
         ) -> AsyncGenerator[_Y, None]:
             """A wrapper that calls target function with retry."""
+            target = functools.partial(func, *args, **kwargs)
             sleep_generator = exponential_sleep_generator(
                 self._initial, self._maximum, multiplier=self._multiplier
             )
             return retry_target_stream(
-                functools.partial(func, *args, **kwargs),
-                predicate=self._predicate,
-                sleep_generator=sleep_generator,
-                timeout=self._timeout,
-                on_error=on_error,
+                target,
+                self._predicate,
+                sleep_generator,
+                self._timeout,
+                on_error,
             )
 
         return retry_wrapped_func

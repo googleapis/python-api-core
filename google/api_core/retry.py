@@ -85,7 +85,6 @@ if TYPE_CHECKING:
 
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
-    _Y = TypeVar("_Y")  # target stream yielded values
 
 _LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
