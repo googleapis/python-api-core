@@ -22,8 +22,11 @@ from .retry_base import RetryFailureReason
 from .retry_unary import Retry
 from .retry_unary import retry_target
 from .retry_unary_async import AsyncRetry
+from .retry_unary_async import retry_target as retry_target_async
 from .retry_streaming import StreamingRetry
+from .retry_streaming import retry_target_stream
 from .retry_streaming_async import AsyncStreamingRetry
+from .retry_streaming_async import retry_target_stream as retry_target_stream_async
 
 __all__ = (
     "exponential_sleep_generator",
@@ -36,4 +39,7 @@ __all__ = (
     "StreamingRetry",
     "AsyncStreamingRetry",
     "retry_target",
+    "retry_target_async",
+    "retry_target_stream",
+    "retry_target_stream_async",
 )
