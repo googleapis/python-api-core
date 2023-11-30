@@ -99,8 +99,8 @@ class RetryFailureReason(Enum):
     The cause of a failed retry, used when building exceptions
     """
 
-    TIMEOUT = "TIMEOUT"
-    NON_RETRYABLE_ERROR = "NON_RETRYABLE_ERROR"
+    TIMEOUT = 0
+    NON_RETRYABLE_ERROR = 1
 
 
 def _build_retry_error(
