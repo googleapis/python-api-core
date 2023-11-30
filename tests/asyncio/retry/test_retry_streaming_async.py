@@ -21,9 +21,9 @@ import pytest
 
 from google.api_core import exceptions
 from google.api_core import retry_async
-from google.api_core import retry_streaming_async
+from google.api_core.retry import retry_streaming_async
 
-from ..unit.test_retry import Test_BaseRetry
+from ...unit.retry.test_retry_base import Test_BaseRetry
 
 
 class TestAsyncStreamingRetry(Test_BaseRetry):
@@ -459,7 +459,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         test when non-retryable error is thrown
         """
         from google.api_core.retry import RetryFailureReason
-        from google.api_core.retry_streaming_async import retry_target_stream
+        from google.api_core.retry.retry_streaming_async import retry_target_stream
 
         timeout = 6
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -499,7 +499,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         """
         import time
         from google.api_core.retry import RetryFailureReason
-        from google.api_core.retry_streaming_async import retry_target_stream
+        from google.api_core.retry.retry_streaming_async import retry_target_stream
 
         timeout = 2
         time_now = time.monotonic()

@@ -34,12 +34,10 @@ import logging
 import time
 import functools
 
-from google.api_core.retry_base import _BaseRetry
-from google.api_core.retry_base import exponential_sleep_generator
-from google.api_core.retry_base import if_exception_type  # noqa: F401
-from google.api_core.retry_base import if_transient_error  # noqa: F401
-from google.api_core.retry_base import _build_retry_error
-from google.api_core.retry_base import RetryFailureReason
+from google.api_core.retry.retry_base import _BaseRetry
+from google.api_core.retry import exponential_sleep_generator
+from google.api_core.retry import _build_retry_error
+from google.api_core.retry import RetryFailureReason
 
 if TYPE_CHECKING:
     if sys.version_info >= (3, 10):

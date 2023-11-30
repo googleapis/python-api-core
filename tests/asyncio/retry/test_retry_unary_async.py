@@ -21,7 +21,7 @@ import pytest
 from google.api_core import exceptions
 from google.api_core import retry_async
 
-from ..unit.test_retry import Test_BaseRetry
+from ...unit.retry.test_retry_base import Test_BaseRetry
 
 
 @mock.patch("asyncio.sleep", autospec=True)
@@ -137,7 +137,7 @@ async def test_retry_target_bad_sleep_generator():
 
 @pytest.mark.asyncio
 async def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry_streaming_async import retry_target_stream
+    from google.api_core.retry.retry_streaming_async import retry_target_stream
 
     with pytest.raises(ValueError, match="Sleep generator"):
         await retry_target_stream(None, None, [], None).__anext__()

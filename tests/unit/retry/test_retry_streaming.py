@@ -19,9 +19,16 @@ import pytest
 
 from google.api_core import exceptions
 from google.api_core import retry
-from google.api_core import retry_streaming
+from google.api_core.retry import retry_streaming
 
-from .test_retry import Test_BaseRetry
+from .test_retry_base import Test_BaseRetry
+
+
+def test_retry_streaming_target_bad_sleep_generator():
+    with pytest.raises(
+        ValueError, match="Sleep generator stopped yielding sleep values"
+    ):
+        next(retry_streaming.retry_target_stream(None, None, [], None))
 
 
 class TestStreamingRetry(Test_BaseRetry):
@@ -372,7 +379,7 @@ class TestStreamingRetry(Test_BaseRetry):
         test when non-retryable error is thrown
         """
         from google.api_core.retry import RetryFailureReason
-        from google.api_core.retry_streaming import retry_target_stream
+        from google.api_core.retry.retry_streaming import retry_target_stream
 
         timeout = None
         sent_errors = [ValueError("test"), ValueError("test2"), BufferError("test3")]
@@ -411,7 +418,7 @@ class TestStreamingRetry(Test_BaseRetry):
         """
         import time
         from google.api_core.retry import RetryFailureReason
-        from google.api_core.retry_streaming import retry_target_stream
+        from google.api_core.retry.retry_streaming import retry_target_stream
 
         timeout = 2
         time_now = time.monotonic()
