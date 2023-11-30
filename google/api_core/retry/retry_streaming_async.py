@@ -41,6 +41,7 @@ import sys
 import functools
 
 from google.api_core.retry.retry_base import _BaseRetry
+from google.api_core.retry.retry_base import _LOGGER
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import _build_retry_error
 from google.api_core.retry import RetryFailureReason
@@ -54,8 +55,6 @@ if TYPE_CHECKING:
 
     _P = ParamSpec("_P")  # target function call parameters
     _Y = TypeVar("_Y")  # yielded values
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def retry_target_stream(

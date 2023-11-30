@@ -68,6 +68,7 @@ from typing import (
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
 from google.api_core.retry.retry_base import _BaseRetry
+from google.api_core.retry.retry_base import _LOGGER
 from google.api_core.retry import exponential_sleep_generator
 
 # for backwards compatibility, expose helpers in this module
@@ -84,7 +85,6 @@ if TYPE_CHECKING:
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
 
-_LOGGER = logging.getLogger(__name__)
 _DEFAULT_INITIAL_DELAY = 1.0  # seconds
 _DEFAULT_MAXIMUM_DELAY = 60.0  # seconds
 _DEFAULT_DELAY_MULTIPLIER = 2.0

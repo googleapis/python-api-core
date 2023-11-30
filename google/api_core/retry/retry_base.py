@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import logging
 import random
 from enum import Enum
 from typing import Any, Callable, TYPE_CHECKING
@@ -41,6 +42,8 @@ _DEFAULT_INITIAL_DELAY = 1.0  # seconds
 _DEFAULT_MAXIMUM_DELAY = 60.0  # seconds
 _DEFAULT_DELAY_MULTIPLIER = 2.0
 _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
+
+_LOGGER = logging.getLogger("google.api_core.retry")
 
 
 def if_exception_type(

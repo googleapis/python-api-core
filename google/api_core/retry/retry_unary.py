@@ -69,6 +69,7 @@ from google.api_core import datetime_helpers
 from google.api_core import exceptions
 
 from google.api_core.retry.retry_base import _BaseRetry
+from google.api_core.retry.retry_base import _LOGGER
 from google.api_core.retry import exponential_sleep_generator
 
 
@@ -81,7 +82,6 @@ if TYPE_CHECKING:
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
 
-_LOGGER = logging.getLogger(__name__)
 _ASYNC_RETRY_WARNING = "Using the synchronous google.api_core.retry.Retry with asynchronous calls may lead to unexpected results. Please use google.api_core.retry_async.AsyncRetry instead."
 
 
