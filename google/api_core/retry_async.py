@@ -67,10 +67,10 @@ from typing import (
 
 from google.api_core import datetime_helpers
 from google.api_core import exceptions
-from google.api_core.retry import _BaseRetry
-from google.api_core.retry import exponential_sleep_generator
-from google.api_core.retry import if_exception_type  # noqa: F401
-from google.api_core.retry import if_transient_error  # noqa: F401
+from google.api_core.retry_base import _BaseRetry
+from google.api_core.retry_base import exponential_sleep_generator
+from google.api_core.retry_base import if_exception_type  # noqa: F401
+from google.api_core.retry_base import if_transient_error  # noqa: F401
 
 if TYPE_CHECKING:
     import sys
