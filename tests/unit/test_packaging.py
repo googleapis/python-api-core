@@ -11,7 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-docker:
-  image: gcr.io/cloud-devrel-public-resources/owlbot-python:latest
-  digest: sha256:2f155882785883336b4468d5218db737bb1d10c9cea7cb62219ad16fe248c03c
-# created: 2023-11-29T14:54:29.548172703Z
+
+import os
+import subprocess
+import sys
+
+
+def test_namespace_package_compat(tmp_path):
+    # The ``google`` namespace package should not be masked
+    # by the presence of ``google-api-core``.
+    google = tmp_path / "google"
+    google.mkdir()
+    google.joinpath("othermod.py").write_text("")
+    env = dict(os.environ, PYTHONPATH=str(tmp_path))
+    cmd = [sys.executable, "-m", "google.othermod"]
+    subprocess.check_call(cmd, env=env)
