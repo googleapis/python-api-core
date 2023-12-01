@@ -97,7 +97,9 @@ The following server errors are considered transient:
 # pylint: enable=invalid-name
 
 
-def exponential_sleep_generator(initial, maximum, multiplier=_DEFAULT_DELAY_MULTIPLIER):
+def exponential_sleep_generator(
+    initial: float, maximum: float, multiplier: float = _DEFAULT_DELAY_MULTIPLIER
+):
     """Generates sleep intervals based on the exponential back-off algorithm.
 
     This implements the `Truncated Exponential Back-off`_ algorithm.
@@ -167,7 +169,16 @@ def _build_retry_error(
 
 
 def _retry_error_helper(
-    exc, deadline, next_sleep, error_list, predicate_fn, on_error_fn, exc_factory_fn
+    exc: Exception,
+    deadline: float | None,
+    next_sleep: float,
+    error_list: list[Exception],
+    predicate_fn: Callable[[Exception], bool],
+    on_error_fn: Callable[[Exception], None] | None,
+    exc_factory_fn: Callable[
+        [list[Exception], RetryFailureReason],
+        tuple[Exception, Exception | None],
+    ],
 ):
     """
     Shared logic for handling an error for all retry implementations
@@ -248,12 +259,12 @@ class _BaseRetry(object):
 
     def _replace(
         self,
-        predicate=None,
-        initial=None,
-        maximum=None,
-        multiplier=None,
-        timeout=None,
-        on_error=None,
+        predicate: Callable[[Exception], bool] | None = None,
+        initial: float | None = None,
+        maximum: float | None = None,
+        multiplier: float | None = None,
+        timeout: float | None = None,
+        on_error: Callable[[Exception], Any] | None = None,
     ) -> Self:
         return type(self)(
             predicate=predicate or self._predicate,
@@ -264,7 +275,7 @@ class _BaseRetry(object):
             on_error=on_error or self._on_error,
         )
 
-    def with_deadline(self, deadline) -> Self:
+    def with_deadline(self, deadline: float | None) -> Self:
         """Return a copy of this retry with the given timeout.
 
         DEPRECATED: use :meth:`with_timeout` instead. Refer to the ``Retry`` class
@@ -278,7 +289,7 @@ class _BaseRetry(object):
         """
         return self._replace(timeout=deadline)
 
-    def with_timeout(self, timeout) -> Self:
+    def with_timeout(self, timeout: float) -> Self:
         """Return a copy of this retry with the given timeout.
 
         Args:
@@ -289,7 +300,7 @@ class _BaseRetry(object):
         """
         return self._replace(timeout=timeout)
 
-    def with_predicate(self, predicate) -> Self:
+    def with_predicate(self, predicate: Callable[[Exception], bool]) -> Self:
         """Return a copy of this retry with the given predicate.
 
         Args:
@@ -301,7 +312,12 @@ class _BaseRetry(object):
         """
         return self._replace(predicate=predicate)
 
-    def with_delay(self, initial=None, maximum=None, multiplier=None) -> Self:
+    def with_delay(
+        self,
+        initial: float | None = None,
+        maximum: float | None = None,
+        multiplier: float | None = None,
+    ) -> Self:
         """Return a copy of this retry with the given delay options.
 
         Args:

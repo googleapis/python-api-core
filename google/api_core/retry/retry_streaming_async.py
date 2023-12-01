@@ -21,14 +21,10 @@ from typing import (
     cast,
     Any,
     Callable,
-    Optional,
     Iterable,
-    List,
-    Tuple,
     AsyncIterator,
     AsyncIterable,
     Awaitable,
-    Union,
     TypeVar,
     AsyncGenerator,
     TYPE_CHECKING,
@@ -57,21 +53,20 @@ if TYPE_CHECKING:
 
 
 async def retry_target_stream(
-    target: Callable[_P, AsyncIterable["_Y"] | Awaitable[AsyncIterable["_Y"]]],
+    target: Callable[_P, AsyncIterable[_Y] | Awaitable[AsyncIterable[_Y]]],
     predicate: Callable[[Exception], bool],
     sleep_generator: Iterable[float],
-    timeout: Optional[float] = None,
-    on_error: Optional[Callable[[Exception], None]] = None,
-    exception_factory: Optional[
-        Callable[
-            [List[Exception], RetryFailureReason, Optional[float]],
-            Tuple[Exception, Optional[Exception]],
-        ]
-    ] = None,
+    timeout: float | None = None,
+    on_error: Callable[[Exception], None] | None = None,
+    exception_factory: Callable[
+        [list[Exception], RetryFailureReason, float | None],
+        tuple[Exception, Exception | None],
+    ]
+    | None = None,
     init_args: _P.args = (),
     init_kwargs: _P.kwargs = {},
     **kwargs,
-) -> AsyncGenerator["_Y", None]:
+) -> AsyncGenerator[_Y, None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
 
     This is the lowest-level retry helper. Generally, you'll use the
@@ -113,16 +108,16 @@ async def retry_target_stream(
     """
     # create frozen partial from original call args
     # In the future, we can add a ResumptionStrategy object that creates new kwargs between calls
-    target_iterator: Optional[AsyncIterator[_Y]] = None
+    target_iterator: AsyncIterator[_Y] | None = None
     timeout = kwargs.get("deadline", timeout)
-    deadline: Optional[float] = time.monotonic() + timeout if timeout else None
+    deadline = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
-    error_list: List[Exception] = []
+    error_list: list[Exception] = []
     # make a partial with timeout applied
     exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
         e, t, timeout
     )
-    target_is_generator: Optional[bool] = None
+    target_is_generator: bool | None = None
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -130,9 +125,9 @@ async def retry_target_stream(
             # Note: in the future, we can add a ResumptionStrategy object
             # to generate new args between calls. For now, use the same args
             # for each attempt.
-            target_output: Union[
-                AsyncIterable[_Y], Awaitable[AsyncIterable[_Y]]
-            ] = target(*init_args, **init_kwargs)
+            target_output: AsyncIterable[_Y] | Awaitable[AsyncIterable[_Y]] = target(
+                *init_args, **init_kwargs
+            )
             try:
                 # gapic functions return the generator behind an awaitable
                 # unwrap the awaitable so we can work with the generator directly

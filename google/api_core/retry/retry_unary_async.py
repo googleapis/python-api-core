@@ -60,14 +60,16 @@ from typing import (
     Awaitable,
     Any,
     Callable,
+    Iterable,
     TypeVar,
     TYPE_CHECKING,
 )
 
 from google.api_core.retry.retry_base import _BaseRetry
 from google.api_core.retry.retry_base import _retry_error_helper
-from google.api_core.retry import exponential_sleep_generator
-from google.api_core.retry import _build_retry_error
+from google.api_core.retry.retry_base import exponential_sleep_generator
+from google.api_core.retry.retry_base import _build_retry_error
+from google.api_core.retry.retry_base import RetryFailureReason
 
 # for backwards compatibility, expose helpers in this module
 from google.api_core.retry.retry_base import if_exception_type  # noqa
@@ -91,12 +93,16 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
 
 async def retry_target(
-    target,
-    predicate,
-    sleep_generator,
-    timeout=None,
-    on_error=None,
-    exception_factory=None,
+    target: Callable[_P, Awaitable[_R]],
+    predicate: Callable[[Exception], bool],
+    sleep_generator: Iterable[float],
+    timeout: float | None = None,
+    on_error: Callable[[Exception], None] | None = None,
+    exception_factory: Callable[
+        [list[Exception], RetryFailureReason, float | None],
+        tuple[Exception, Exception | None],
+    ]
+    | None = None,
     **kwargs,
 ):
     """Await a coroutine and retry if it fails.
