@@ -54,9 +54,8 @@ a ``retry`` parameter that allows you to configure the behavior:
 from __future__ import annotations
 
 import asyncio
-import datetime
+import time
 import functools
-import logging
 from typing import (
     Awaitable,
     Any,
@@ -65,11 +64,10 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from google.api_core import datetime_helpers
-from google.api_core import exceptions
 from google.api_core.retry.retry_base import _BaseRetry
-from google.api_core.retry.retry_base import _LOGGER
+from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry import exponential_sleep_generator
+from google.api_core.retry import _build_retry_error
 
 # for backwards compatibility, expose helpers in this module
 from google.api_core.retry.retry_base import if_exception_type  # noqa
@@ -93,7 +91,13 @@ _DEFAULT_TIMEOUT = 60.0 * 2.0  # seconds
 
 
 async def retry_target(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+    target,
+    predicate,
+    sleep_generator,
+    timeout=None,
+    on_error=None,
+    exception_factory=None,
+    **kwargs,
 ):
     """Await a coroutine and retry if it fails.
 
@@ -113,7 +117,7 @@ async def retry_target(
             callback will be called with each retryable exception raised by the
             target. Any error raised by this function will *not* be caught.
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
-        compatibility, if set it will override the ``timeout`` parameter.
+            compatibility, if set it will override the ``timeout`` parameter.
 
     Returns:
         Any: the return value of the target function.
@@ -126,52 +130,25 @@ async def retry_target(
 
     timeout = kwargs.get("deadline", timeout)
 
-    deadline_dt = (
-        (datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout))
-        if timeout
-        else None
+    deadline = time.monotonic() + timeout if timeout is not None else None
+    error_list: list[Exception] = []
+    # make a partial with timeout applied
+    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
+        e, t, timeout
     )
-
-    last_exc = None
 
     for sleep in sleep_generator:
         try:
-            if not deadline_dt:
-                return await target()
-            else:
-                return await asyncio.wait_for(
-                    target(),
-                    timeout=(deadline_dt - datetime_helpers.utcnow()).total_seconds(),
-                )
+            return await target()
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            if not predicate(exc) and not isinstance(exc, asyncio.TimeoutError):
-                raise
-            last_exc = exc
-            if on_error is not None:
-                on_error(exc)
-
-        now = datetime_helpers.utcnow()
-
-        if deadline_dt:
-            if deadline_dt <= now:
-                # Chains the raising RetryError with the root cause error,
-                # which helps observability and debugability.
-                raise exceptions.RetryError(
-                    "Timeout of {:.1f}s exceeded while calling target function".format(
-                        timeout
-                    ),
-                    last_exc,
-                ) from last_exc
-            else:
-                time_to_deadline = (deadline_dt - now).total_seconds()
-                sleep = min(time_to_deadline, sleep)
-
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        await asyncio.sleep(sleep)
+            # defer to shared logic for handling errors
+            _retry_error_helper(
+                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
+            )
+            # if exception not raised, sleep before next attempt
+            await asyncio.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 

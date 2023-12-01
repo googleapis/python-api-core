@@ -35,13 +35,12 @@ from typing import (
 )
 
 import asyncio
-import logging
 import time
 import sys
 import functools
 
 from google.api_core.retry.retry_base import _BaseRetry
-from google.api_core.retry.retry_base import _LOGGER
+from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import _build_retry_error
 from google.api_core.retry import RetryFailureReason
@@ -119,8 +118,10 @@ async def retry_target_stream(
     deadline: Optional[float] = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: List[Exception] = []
-    # override exception_factory to build a more complex exception
-    exc_factory = exception_factory or _build_retry_error
+    # make a partial with timeout applied
+    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
+        e, t, timeout
+    )
     target_is_generator: Optional[bool] = None
 
     for sleep in sleep_generator:
@@ -185,28 +186,15 @@ async def retry_target_stream(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            error_list.append(exc)
-            if not predicate(exc):
-                exc, source_exc = exc_factory(
-                    error_list, RetryFailureReason.NON_RETRYABLE_ERROR, timeout
-                )
-                raise exc from source_exc
-            if on_error is not None:
-                on_error(exc)
+            # defer to shared logic for handling errors
+            _retry_error_helper(
+                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
+            )
+            # if exception not raised, sleep before next attempt
+            await asyncio.sleep(sleep)
         finally:
             if target_is_generator and target_iterator is not None:
                 await cast(AsyncGenerator["_Y", None], target_iterator).aclose()
-
-        # sleep and adjust timeout budget
-        if deadline is not None and time.monotonic() + sleep > deadline:
-            final_exc, source_exc = exc_factory(
-                error_list, RetryFailureReason.TIMEOUT, timeout
-            )
-            raise final_exc from source_exc
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)
-        )
-        await asyncio.sleep(sleep)
     raise ValueError("Sleep generator stopped yielding sleep values.")
 
 

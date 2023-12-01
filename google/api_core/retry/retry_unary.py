@@ -56,21 +56,17 @@ a ``retry`` parameter that allows you to configure the behavior:
 
 from __future__ import annotations
 
-import datetime
 import functools
-import logging
 import sys
 import time
 import inspect
 import warnings
 from typing import Any, Callable, TypeVar, TYPE_CHECKING
 
-from google.api_core import datetime_helpers
-from google.api_core import exceptions
-
 from google.api_core.retry.retry_base import _BaseRetry
-from google.api_core.retry.retry_base import _LOGGER
+from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry import exponential_sleep_generator
+from google.api_core.retry import _build_retry_error
 
 
 if TYPE_CHECKING:
@@ -86,7 +82,13 @@ _ASYNC_RETRY_WARNING = "Using the synchronous google.api_core.retry.Retry with a
 
 
 def retry_target(
-    target, predicate, sleep_generator, timeout=None, on_error=None, **kwargs
+    target,
+    predicate,
+    sleep_generator,
+    timeout=None,
+    on_error=None,
+    exception_factory=None,
+    **kwargs,
 ):
     """Call a function and retry if it fails.
 
@@ -119,12 +121,12 @@ def retry_target(
 
     timeout = kwargs.get("deadline", timeout)
 
-    if timeout is not None:
-        deadline = datetime_helpers.utcnow() + datetime.timedelta(seconds=timeout)
-    else:
-        deadline = None
-
-    last_exc = None
+    deadline = time.monotonic() + timeout if timeout is not None else None
+    error_list = []
+    # make a partial with timeout applied
+    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
+        e, t, timeout
+    )
 
     for sleep in sleep_generator:
         try:
@@ -136,28 +138,12 @@ def retry_target(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            if not predicate(exc):
-                raise
-            last_exc = exc
-            if on_error is not None:
-                on_error(exc)
-
-        if deadline is not None:
-            next_attempt_time = datetime_helpers.utcnow() + datetime.timedelta(
-                seconds=sleep
+            # defer to shared logic for handling errors
+            _retry_error_helper(
+                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
             )
-            if deadline < next_attempt_time:
-                raise exceptions.RetryError(
-                    "Deadline of {:.1f}s exceeded while calling target function".format(
-                        timeout
-                    ),
-                    last_exc,
-                ) from last_exc
-
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(last_exc, sleep)
-        )
-        time.sleep(sleep)
+            # if exception not raised, sleep before next attempt
+            time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 

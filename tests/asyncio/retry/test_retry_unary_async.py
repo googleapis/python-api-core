@@ -99,20 +99,15 @@ async def test_retry_target_non_retryable_error(utcnow, sleep):
 
 
 @mock.patch("asyncio.sleep", autospec=True)
-@mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
+@mock.patch("time.monotonic", autospec=True)
 @pytest.mark.asyncio
-async def test_retry_target_deadline_exceeded(utcnow, sleep):
+async def test_retry_target_deadline_exceeded(monotonic, sleep):
     predicate = retry_async.if_exception_type(ValueError)
     exception = ValueError("meep")
     target = mock.Mock(side_effect=exception)
     # Setup the timeline so that the first call takes 5 seconds but the second
     # call takes 6, which puts the retry over the deadline.
-    utcnow.side_effect = [
-        # The first call to utcnow establishes the start of the timeline.
-        datetime.datetime.min,
-        datetime.datetime.min + datetime.timedelta(seconds=5),
-        datetime.datetime.min + datetime.timedelta(seconds=11),
-    ]
+    monotonic.side_effect = [0, 5, 11]
 
     with pytest.raises(exceptions.RetryError) as exc_info:
         await retry_async.retry_target(target, predicate, range(10), deadline=10)
@@ -221,13 +216,10 @@ class TestAsyncRetry(Test_BaseRetry):
             initial=1.0,
             maximum=1024.0,
             multiplier=2.0,
-            deadline=9.9,
+            deadline=30.9,
         )
 
-        utcnow = datetime.datetime.now(tz=datetime.timezone.utc)
-        utcnow_patcher = mock.patch(
-            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
-        )
+        monotonic_patcher = mock.patch("time.monotonic", return_value=0)
 
         target = mock.AsyncMock(spec=["__call__"], side_effect=[ValueError()] * 10)
         # __name__ is needed by functools.partial.
@@ -236,11 +228,12 @@ class TestAsyncRetry(Test_BaseRetry):
         decorated = retry_(target, on_error=on_error)
         target.assert_not_called()
 
-        with utcnow_patcher as patched_utcnow:
+        with monotonic_patcher as patched_monotonic:
             # Make sure that calls to fake asyncio.sleep() also advance the mocked
             # time clock.
             def increase_time(sleep_delay):
-                patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
+                print(sleep_delay)
+                patched_monotonic.return_value += sleep_delay
 
             sleep.side_effect = increase_time
 
@@ -256,8 +249,17 @@ class TestAsyncRetry(Test_BaseRetry):
         last_wait = sleep.call_args.args[0]
         total_wait = sum(call_args.args[0] for call_args in sleep.call_args_list)
 
-        assert last_wait == 2.9  # and not 8.0, because the last delay was shortened
-        assert total_wait == 9.9  # the same as the deadline
+        assert last_wait == 8.0
+        # Next attempt would be scheduled in 16 secs, 15 + 16 = 31 > 30.9, thus
+        # we do not even wait for it to be scheduled (30.9 is configured timeout).
+        # This changes the previous logic of shortening the last attempt to fit
+        # in the deadline. The previous logic was removed to make Python retry
+        # logic consistent with the other languages and to not disrupt the
+        # randomized retry delays distribution by artificially increasing a
+        # probability of scheduling two (instead of one) last attempts with very
+        # short delay between them, while the second retry having very low chance
+        # of succeeding anyways.
+        assert total_wait == 15.0
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio

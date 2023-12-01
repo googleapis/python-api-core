@@ -30,11 +30,11 @@ from typing import (
 )
 
 import sys
-import logging
 import time
 import functools
 
 from google.api_core.retry.retry_base import _BaseRetry
+from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry import exponential_sleep_generator
 from google.api_core.retry import _build_retry_error
 from google.api_core.retry import RetryFailureReason
@@ -47,8 +47,6 @@ if TYPE_CHECKING:
 
     _P = ParamSpec("_P")  # target function call parameters
     _Y = TypeVar("_Y")  # yielded values
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def retry_target_stream(
@@ -108,9 +106,14 @@ def retry_target_stream(
     """
 
     timeout = kwargs.get("deadline", timeout)
-    deadline: Optional[float] = time.monotonic() + timeout if timeout else None
-    error_list: List[Exception] = []
-    exc_factory = exception_factory or _build_retry_error
+    deadline: Optional[float] = (
+        time.monotonic() + timeout if timeout is not None else None
+    )
+    error_list: list[Exception] = []
+    # make a partial with timeout applied
+    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
+        e, t, timeout
+    )
 
     for sleep in sleep_generator:
         # Start a new retry loop
@@ -124,26 +127,12 @@ def retry_target_stream(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            error_list.append(exc)
-            if not predicate(exc):
-                final_exc, source_exc = exc_factory(
-                    error_list,
-                    RetryFailureReason.NON_RETRYABLE_ERROR,
-                    timeout,
-                )
-                raise final_exc from source_exc
-            if on_error is not None:
-                on_error(exc)
-
-        if deadline is not None and time.monotonic() + sleep > deadline:
-            final_exc, source_exc = exc_factory(
-                error_list, RetryFailureReason.TIMEOUT, timeout
+            # defer to shared logic for handling errors
+            _retry_error_helper(
+                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
             )
-            raise final_exc from source_exc
-        _LOGGER.debug(
-            "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], sleep)
-        )
-        time.sleep(sleep)
+            # if exception not raised, sleep before next attempt
+            time.sleep(sleep)
 
     raise ValueError("Sleep generator stopped yielding sleep values.")
 

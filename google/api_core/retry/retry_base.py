@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import logging
 import random
+import time
+
 from enum import Enum
 from typing import Any, Callable, TYPE_CHECKING
 
@@ -162,6 +164,45 @@ def _build_retry_error(
     else:
         # no exceptions were given in exc_list. Raise generic RetryError
         return exceptions.RetryError("Unknown error", None), None
+
+
+def _retry_error_helper(
+    exc, deadline, next_sleep, error_list, predicate_fn, on_error_fn, exc_factory_fn
+):
+    """
+    Shared logic for handling an error for all retry implementations
+
+    - Raises an error on timeout or non-retryable error
+    - Calls on_error_fn if provided
+    - Logs the error
+
+    Args:
+       - exc: the exception that was raised
+       - deadline: the deadline for the retry, calculated as a diff from time.monotonic()
+       - next_sleep: the calculated next sleep interval
+       - error_list: the list of exceptions that have been raised so far
+       - predicate_fn: the predicate that was used to determine if the exception should be retried
+       - on_error_fn: the callback that was called when the exception was raised
+       - exc_factory_fn: the callback that was called to build the exception to be raised on terminal failure
+    """
+    error_list.append(exc)
+    if not predicate_fn(exc):
+        final_exc, source_exc = exc_factory_fn(
+            error_list,
+            RetryFailureReason.NON_RETRYABLE_ERROR,
+        )
+        raise final_exc from source_exc
+    if on_error_fn is not None:
+        on_error_fn(exc)
+    if deadline is not None and time.monotonic() + next_sleep > deadline:
+        final_exc, source_exc = exc_factory_fn(
+            error_list,
+            RetryFailureReason.TIMEOUT,
+        )
+        raise final_exc from source_exc
+    _LOGGER.debug(
+        "Retrying due to {}, sleeping {:.1f}s ...".format(error_list[-1], next_sleep)
+    )
 
 
 class _BaseRetry(object):

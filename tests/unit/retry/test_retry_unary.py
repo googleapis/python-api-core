@@ -114,25 +114,20 @@ async def test_retry_target_warning_for_retry(utcnow, sleep):
 
 
 @mock.patch("time.sleep", autospec=True)
-@mock.patch("google.api_core.datetime_helpers.utcnow", autospec=True)
-def test_retry_target_deadline_exceeded(utcnow, sleep):
+@mock.patch("time.monotonic", autospec=True)
+def test_retry_target_deadline_exceeded(monotonic, sleep):
     predicate = retry.if_exception_type(ValueError)
     exception = ValueError("meep")
     target = mock.Mock(side_effect=exception)
     # Setup the timeline so that the first call takes 5 seconds but the second
     # call takes 6, which puts the retry over the deadline.
-    utcnow.side_effect = [
-        # The first call to utcnow establishes the start of the timeline.
-        datetime.datetime.min,
-        datetime.datetime.min + datetime.timedelta(seconds=5),
-        datetime.datetime.min + datetime.timedelta(seconds=11),
-    ]
+    monotonic.side_effect = [0, 5, 11]
 
     with pytest.raises(exceptions.RetryError) as exc_info:
         retry.retry_target(target, predicate, range(10), deadline=10)
 
     assert exc_info.value.cause == exception
-    assert exc_info.match("Deadline of 10.0s exceeded")
+    assert exc_info.match("Timeout of 10.0s exceeded")
     assert exc_info.match("last exception: meep")
     assert target.call_count == 2
 
@@ -222,10 +217,7 @@ class TestRetry(Test_BaseRetry):
             deadline=30.9,
         )
 
-        utcnow = datetime.datetime.now(tz=datetime.timezone.utc)
-        utcnow_patcher = mock.patch(
-            "google.api_core.datetime_helpers.utcnow", return_value=utcnow
-        )
+        monotonic_patcher = mock.patch("time.monotonic", return_value=0)
 
         target = mock.Mock(spec=["__call__"], side_effect=[ValueError()] * 10)
         # __name__ is needed by functools.partial.
@@ -234,11 +226,11 @@ class TestRetry(Test_BaseRetry):
         decorated = retry_(target, on_error=on_error)
         target.assert_not_called()
 
-        with utcnow_patcher as patched_utcnow:
+        with monotonic_patcher as patched_monotonic:
             # Make sure that calls to fake time.sleep() also advance the mocked
             # time clock.
             def increase_time(sleep_delay):
-                patched_utcnow.return_value += datetime.timedelta(seconds=sleep_delay)
+                patched_monotonic.return_value += sleep_delay
 
             sleep.side_effect = increase_time
 
