@@ -122,6 +122,14 @@ async def retry_target(
         on_error (Optional[Callable[Exception]]): If given, the on_error
             callback will be called with each retryable exception raised by the
             target. Any error raised by this function will *not* be caught.
+        exception_factory: A function that is called when the retryable reaches
+            a terminal failure state, used to construct an exception to be raised.
+            It it given a list of all exceptions encountered, a retry.RetryFailureReason
+            enum indicating the failure cause, and the original timeout value
+            as arguments. It should return a tuple of the exception to be raised,
+            along with the cause exception if any.
+            If not provided, a default implementation will raise a RetryError
+            on timeout, or the last exception encountered otherwise.
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
             compatibility, if set it will override the ``timeout`` parameter.
 
