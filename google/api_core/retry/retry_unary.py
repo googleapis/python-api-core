@@ -59,6 +59,8 @@ from __future__ import annotations
 import functools
 import sys
 import time
+import inspect
+import warnings
 from typing import Any, Callable, Iterable, TypeVar, TYPE_CHECKING
 
 from google.api_core.retry.retry_base import _BaseRetry
@@ -76,6 +78,8 @@ if TYPE_CHECKING:
 
     _P = ParamSpec("_P")  # target function call parameters
     _R = TypeVar("_R")  # target function returned value
+
+_ASYNC_RETRY_WARNING = "Using the synchronous google.api_core.retry.Retry with asynchronous calls may lead to unexpected results. Please use google.api_core.retry_async.AsyncRetry instead."
 
 
 def retry_target(
@@ -139,7 +143,10 @@ def retry_target(
 
     for sleep in sleep_generator:
         try:
-            return target()
+            result = target()
+            if inspect.isawaitable(result):
+                warnings.warn(_ASYNC_RETRY_WARNING)
+            return result
 
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
