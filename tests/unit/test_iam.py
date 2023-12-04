@@ -174,7 +174,7 @@ class TestPolicy:
         expected = set([MEMBER])
         policy = self._make_one()
 
-        with warnings.catch_warnings(record=True) as warned:
+        with pytest.warns(DeprecationWarning, match="Assigning to 'owners' is deprecated.") as warned:
             policy.owners = [MEMBER]
 
         (warning,) = warned
@@ -198,7 +198,7 @@ class TestPolicy:
         expected = set([MEMBER])
         policy = self._make_one()
 
-        with warnings.catch_warnings(record=True) as warned:
+        with pytest.warns(DeprecationWarning, match="Assigning to 'editors' is deprecated.") as warned:
             policy.editors = [MEMBER]
 
         (warning,) = warned
@@ -222,7 +222,7 @@ class TestPolicy:
         expected = set([MEMBER])
         policy = self._make_one()
 
-        with warnings.catch_warnings(record=True) as warned:
+        with pytest.warns(DeprecationWarning, match="Assigning to 'viewers' is deprecated.") as warned:
             policy.viewers = [MEMBER]
 
         (warning,) = warned
@@ -342,7 +342,7 @@ class TestPolicy:
 
         OWNER = "group:cloud-logs@google.com"
         policy = self._make_one()
-        with warnings.catch_warnings(record=True):
+        with pytest.warns(DeprecationWarning, match="Assigning to 'owners' is deprecated."):
             policy.owners = [OWNER, OWNER]
         assert policy.to_api_repr() == {
             "bindings": [{"role": OWNER_ROLE, "members": [OWNER]}]
