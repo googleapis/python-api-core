@@ -167,7 +167,6 @@ class TestPolicy:
         assert policy.owners == expected
 
     def test_owners_setter(self):
-        import warnings
         from google.api_core.iam import OWNER_ROLE
 
         MEMBER = "user:phred@example.com"
@@ -193,7 +192,6 @@ class TestPolicy:
         assert policy.editors == expected
 
     def test_editors_setter(self):
-        import warnings
         from google.api_core.iam import EDITOR_ROLE
 
         MEMBER = "user:phred@example.com"
@@ -219,7 +217,6 @@ class TestPolicy:
         assert policy.viewers == expected
 
     def test_viewers_setter(self):
-        import warnings
         from google.api_core.iam import VIEWER_ROLE
 
         MEMBER = "user:phred@example.com"
@@ -343,7 +340,6 @@ class TestPolicy:
         assert policy.to_api_repr() == {}
 
     def test_to_api_repr_binding_w_duplicates(self):
-        import warnings
         from google.api_core.iam import OWNER_ROLE
 
         OWNER = "group:cloud-logs@google.com"
