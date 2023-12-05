@@ -147,7 +147,7 @@ class StreamingRetry(_BaseRetry):
     Although the default behavior is to retry transient API errors, a
     different predicate can be provided to retry other exceptions.
 
-    There two important concepts that retry/polling behavior may operate on,
+    There are two important concepts that retry/polling behavior may operate on,
     Deadline and Timeout, which need to be properly defined for the correct
     usage of this class and the rest of the library.
 
@@ -163,12 +163,12 @@ class StreamingRetry(_BaseRetry):
     09:24:00 with timeout of 75 seconds, it must terminate no later than
     09:25:15.
 
-    Unfortunately, in the past this class (and the api-core library as a whole) has not been
-    properly distinguishing the concepts of "timeout" and "deadline", and the
+    Unfortunately, in the past this class (and the api-core library as a whole) has not
+    been properly distinguishing the concepts of "timeout" and "deadline", and the
     ``deadline`` parameter has meant ``timeout``. That is why
     ``deadline`` has been deprecated and ``timeout`` should be used instead. If the
-    ``deadline`` parameter is set, it will override the ``timeout`` parameter. In other words,
-    ``retry.deadline`` should be treated as just a deprecated alias for
+    ``deadline`` parameter is set, it will override the ``timeout`` parameter.
+    In other words, ``retry.deadline`` should be treated as just a deprecated alias for
     ``retry.timeout``.
 
     Said another way, it is safe to assume that this class and the rest of this
