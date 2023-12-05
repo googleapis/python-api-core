@@ -108,6 +108,8 @@ def retry_target(
         sleep_generator (Iterable[float]): An infinite iterator that determines
             how long to sleep between retries.
         timeout (Optional[float]): How long to keep retrying the target.
+            Note: timeout is only checked before initiating a retry, so the target may
+            run past the timeout value as long as it is healthy.
         on_error (Optional[Callable[Exception]]): If given, the on_error
             callback will be called with each retryable exception raised by the
             target. Any error raised by this function will *not* be caught.
@@ -250,6 +252,8 @@ class Retry(_BaseRetry):
         maximum (float): The maximum amount of time to delay in seconds.
         multiplier (float): The multiplier applied to the delay.
         timeout (float): How long to keep retrying, in seconds.
+            Note: timeout is only checked before initiating a retry, so the target may
+            run past the timeout value as long as it is healthy.
         on_error (Callable[Exception]): A function to call while processing
             a retryable exception. Any error raised by this function will
             *not* be caught.
