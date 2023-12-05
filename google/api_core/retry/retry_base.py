@@ -144,7 +144,7 @@ def _build_retry_error(
       - exc_list: list of exceptions that occurred during the retry
       - reason: reason for the retry failure.
             Can be TIMEOUT or NON_RETRYABLE_ERROR
-      - timeout_val: the original timeout value for the retry, for use in the exception message
+      - timeout_val: the original timeout value for the retry (in seconds), for use in the exception message
 
     Returns:
       - tuple: a tuple of the exception to be raised, and the cause exception if any
