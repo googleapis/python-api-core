@@ -116,10 +116,10 @@ def exponential_sleep_generator(
     Yields:
         float: successive sleep intervals.
     """
-    delay = min(initial, maximum)
+    max_delay = min(initial, maximum)
     while True:
-        yield random.uniform(0.0, delay)
-        delay = min(delay * multiplier, maximum)
+        yield random.uniform(0.0, max_delay)
+        max_delay = min(max_delay * multiplier, maximum)
 
 
 class RetryFailureReason(Enum):
