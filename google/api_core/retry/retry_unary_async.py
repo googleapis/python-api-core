@@ -101,8 +101,7 @@ async def retry_target(
     exception_factory: Callable[
         [list[Exception], RetryFailureReason, float | None],
         tuple[Exception, Exception | None],
-    ]
-    | None = None,
+    ] = _build_retry_error,
     **kwargs,
 ):
     """Await a coroutine and retry if it fails.
@@ -127,9 +126,8 @@ async def retry_target(
             It takes a list of all exceptions encountered, a retry.RetryFailureReason
             enum indicating the failure cause, and the original timeout value
             as arguments. It should return a tuple of the exception to be raised,
-            along with the cause exception if any.
-            If not provided, a default implementation will raise a RetryError
-            on timeout, or the last exception encountered otherwise.
+            along with the cause exception if any. The default implementation will raise
+            a RetryError on timeout, or the last exception encountered otherwise.
         deadline (float): DEPRECATED use ``timeout`` instead. For backward
             compatibility, if set it will override the ``timeout`` parameter.
 
@@ -148,10 +146,6 @@ async def retry_target(
 
     deadline = time.monotonic() + timeout if timeout is not None else None
     error_list: list[Exception] = []
-    # make a partial with timeout applied
-    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
-        e, t, timeout
-    )
 
     for sleep in sleep_generator:
         try:
@@ -161,7 +155,7 @@ async def retry_target(
         except Exception as exc:
             # defer to shared logic for handling errors
             _retry_error_helper(
-                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
+                exc, deadline, sleep, error_list, predicate, on_error, exception_factory, timeout
             )
             # if exception not raised, sleep before next attempt
             await asyncio.sleep(sleep)

@@ -61,8 +61,7 @@ async def retry_target_stream(
     exception_factory: Callable[
         [list[Exception], RetryFailureReason, float | None],
         tuple[Exception, Exception | None],
-    ]
-    | None = None,
+    ] = _build_retry_error,
     init_args: _P.args = (),
     init_kwargs: _P.kwargs = {},
     **kwargs,
@@ -90,9 +89,8 @@ async def retry_target_stream(
             It takes a list of all exceptions encountered, a retry.RetryFailureReason
             enum indicating the failure cause, and the original timeout value
             as arguments. It should return a tuple of the exception to be raised,
-            along with the cause exception if any.
-            If not provided, a default implementation will raise a RetryError
-            on timeout, or the last exception encountered otherwise.
+            along with the cause exception if any. The default implementation will raise
+            a RetryError on timeout, or the last exception encountered otherwise.
         init_args: Positional arguments to pass to the target function.
         init_kwargs: Keyword arguments to pass to the target function.
 
@@ -111,10 +109,6 @@ async def retry_target_stream(
     deadline = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: list[Exception] = []
-    # make a partial with timeout applied
-    exc_factory = lambda e, t: (exception_factory or _build_retry_error)(  # noqa: E731
-        e, t, timeout
-    )
     target_is_generator: bool | None = None
 
     for sleep in sleep_generator:
@@ -181,7 +175,7 @@ async def retry_target_stream(
         except Exception as exc:
             # defer to shared logic for handling errors
             _retry_error_helper(
-                exc, deadline, sleep, error_list, predicate, on_error, exc_factory
+                exc, deadline, sleep, error_list, predicate, on_error, exception_factory, timeout
             )
             # if exception not raised, sleep before next attempt
             await asyncio.sleep(sleep)
