@@ -46,7 +46,7 @@ a ``retry`` parameter that allows you to configure the behavior:
 
 .. code-block:: python
 
-    my_retry = retry_async.AsyncRetry(deadline=60)
+    my_retry = retry_async.AsyncRetry(timeout=60)
     result = await client.some_method(retry=my_retry)
 
 """
