@@ -204,7 +204,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         utcnow = datetime.datetime.utcnow()
         mock.patch("google.api_core.datetime_helpers.utcnow", return_value=utcnow)
         generator = await retry_(self._generator_mock)(sleep_time=0.2)
-        await generator.__anext__() == 0
+        assert await generator.__anext__() == 0
         task = asyncio.create_task(generator.__anext__())
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
@@ -370,11 +370,13 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             decorated = retry_(iterable_fn)
 
         retryable = await decorated()
+        # initiate the generator by calling next
         result = await retryable.__anext__()
         assert result == 0
-        await retryable.asend("test") == 1
-        await retryable.asend("test2") == 2
-        await retryable.asend("test3") == 3
+        # test sending values
+        assert await retryable.asend("test") == 1
+        assert await retryable.asend("test2") == 2
+        assert await retryable.asend("test3") == 3
 
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
