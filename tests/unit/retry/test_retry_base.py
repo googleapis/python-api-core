@@ -113,9 +113,9 @@ class Test_BaseRetry(object):
         assert retry_._initial == 1
         assert retry_._maximum == 60
         assert retry_._multiplier == 2
-        assert retry_._deadline == 120
+        assert retry_._timeout == 120
         assert retry_._on_error is None
-        assert retry_.deadline == 120
+        assert retry_.timeout == 120
         assert retry_.timeout == 120
 
     def test_constructor_options(self):
@@ -126,28 +126,28 @@ class Test_BaseRetry(object):
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=_some_function,
         )
         assert retry_._predicate == mock.sentinel.predicate
         assert retry_._initial == 1
         assert retry_._maximum == 2
         assert retry_._multiplier == 3
-        assert retry_._deadline == 4
+        assert retry_._timeout == 4
         assert retry_._on_error is _some_function
 
-    def test_with_deadline(self):
+    def test_with_timeout(self):
         retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=mock.sentinel.on_error,
         )
-        new_retry = retry_.with_deadline(42)
+        new_retry = retry_.with_timeout(42)
         assert retry_ is not new_retry
-        assert new_retry._deadline == 42
+        assert new_retry._timeout == 42
 
         # the rest of the attributes should remain the same
         assert new_retry._predicate is retry_._predicate
@@ -162,7 +162,7 @@ class Test_BaseRetry(object):
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=mock.sentinel.on_error,
         )
         new_retry = retry_.with_predicate(mock.sentinel.predicate)
@@ -170,7 +170,7 @@ class Test_BaseRetry(object):
         assert new_retry._predicate == mock.sentinel.predicate
 
         # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
+        assert new_retry._timeout == retry_._timeout
         assert new_retry._initial == retry_._initial
         assert new_retry._maximum == retry_._maximum
         assert new_retry._multiplier == retry_._multiplier
@@ -182,7 +182,7 @@ class Test_BaseRetry(object):
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=mock.sentinel.on_error,
         )
         new_retry = retry_.with_delay()
@@ -197,7 +197,7 @@ class Test_BaseRetry(object):
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=mock.sentinel.on_error,
         )
         new_retry = retry_.with_delay(initial=5, maximum=6, multiplier=7)
@@ -207,7 +207,7 @@ class Test_BaseRetry(object):
         assert new_retry._multiplier == 7
 
         # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
+        assert new_retry._timeout == retry_._timeout
         assert new_retry._predicate is retry_._predicate
         assert new_retry._on_error is retry_._on_error
 
@@ -217,7 +217,7 @@ class Test_BaseRetry(object):
             initial=1,
             maximum=2,
             multiplier=3,
-            deadline=4,
+            timeout=4,
             on_error=mock.sentinel.on_error,
         )
         new_retry = retry_.with_delay(initial=4)
@@ -239,7 +239,7 @@ class Test_BaseRetry(object):
         assert new_retry._multiplier == 4
 
         # the rest of the attributes should remain the same
-        assert new_retry._deadline == retry_._deadline
+        assert new_retry._timeout == retry_._timeout
         assert new_retry._predicate is retry_._predicate
         assert new_retry._on_error is retry_._on_error
 
@@ -254,7 +254,7 @@ class Test_BaseRetry(object):
             initial=1.0,
             maximum=60.0,
             multiplier=2.0,
-            deadline=120.0,
+            timeout=120.0,
             on_error=None,
         )
         assert re.match(

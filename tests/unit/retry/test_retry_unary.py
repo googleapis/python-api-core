@@ -115,16 +115,20 @@ async def test_retry_target_warning_for_retry(utcnow, sleep):
 
 @mock.patch("time.sleep", autospec=True)
 @mock.patch("time.monotonic", autospec=True)
-def test_retry_target_deadline_exceeded(monotonic, sleep):
+@pytest.mark.parametrize("use_deadline_arg", [True, False])
+def test_retry_target_timeout_exceeded(monotonic, sleep, use_deadline_arg):
     predicate = retry.if_exception_type(ValueError)
     exception = ValueError("meep")
     target = mock.Mock(side_effect=exception)
     # Setup the timeline so that the first call takes 5 seconds but the second
-    # call takes 6, which puts the retry over the deadline.
+    # call takes 6, which puts the retry over the timeout.
     monotonic.side_effect = [0, 5, 11]
 
+    # support "deadline" as an alias for "timeout"
+    kwargs = {"timeout": 10} if use_deadline_arg else {"deadline": 10}
+
     with pytest.raises(exceptions.RetryError) as exc_info:
-        retry.retry_target(target, predicate, range(10), deadline=10)
+        retry.retry_target(target, predicate, range(10), **kwargs)
 
     assert exc_info.value.cause == exception
     assert exc_info.match("Timeout of 10.0s exceeded")
@@ -156,7 +160,7 @@ class TestRetry(Test_BaseRetry):
             initial=1.0,
             maximum=60.0,
             multiplier=2.0,
-            deadline=120.0,
+            timeout=120.0,
             on_error=None,
         )
         assert re.match(
@@ -207,14 +211,14 @@ class TestRetry(Test_BaseRetry):
 
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
-    def test___call___and_execute_retry_hitting_deadline(self, sleep, uniform):
+    def test___call___and_execute_retry_hitting_timeout(self, sleep, uniform):
         on_error = mock.Mock(spec=["__call__"], side_effect=[None] * 10)
         retry_ = retry.Retry(
             predicate=retry.if_exception_type(ValueError),
             initial=1.0,
             maximum=1024.0,
             multiplier=2.0,
-            deadline=30.9,
+            timeout=30.9,
         )
 
         monotonic_patcher = mock.patch("time.monotonic", return_value=0)
@@ -250,7 +254,7 @@ class TestRetry(Test_BaseRetry):
         # Next attempt would be scheduled in 16 secs, 15 + 16 = 31 > 30.9, thus
         # we do not even wait for it to be scheduled (30.9 is configured timeout).
         # This changes the previous logic of shortening the last attempt to fit
-        # in the deadline. The previous logic was removed to make Python retry
+        # in the timeout. The previous logic was removed to make Python retry
         # logic consistent with the other languages and to not disrupt the
         # randomized retry delays distribution by artificially increasing a
         # probability of scheduling two (instead of one) last attempts with very

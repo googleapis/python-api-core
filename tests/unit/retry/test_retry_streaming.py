@@ -46,7 +46,7 @@ class TestStreamingRetry(Test_BaseRetry):
             initial=1.0,
             maximum=60.0,
             multiplier=2.0,
-            deadline=120.0,
+            timeout=120.0,
             on_error=None,
         )
         assert re.match(
@@ -134,12 +134,17 @@ class TestStreamingRetry(Test_BaseRetry):
 
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("time.sleep", autospec=True)
-    def test___call___retry_hitting_deadline(self, sleep, uniform):
+    @pytest.mark.parametrize("use_deadline_arg", [True, False])
+    def test___call___retry_hitting_timeout(self, sleep, uniform, use_deadline_arg):
         """
         Tests that a retry-decorated generator will throw a RetryError
         after using the time budget
         """
         import time
+
+        timeout_val = 30.9
+        # support "deadline" as an alias for "timeout"
+        timout_kwarg = {"timeout": timeout_val} if not use_deadline_arg else {"deadline": timeout_val}
 
         on_error = mock.Mock(return_value=None)
         retry_ = retry_streaming.StreamingRetry(
@@ -147,7 +152,7 @@ class TestStreamingRetry(Test_BaseRetry):
             initial=1.0,
             maximum=1024.0,
             multiplier=2.0,
-            deadline=30.9,
+            **timout_kwarg,
         )
 
         timenow = time.monotonic()
