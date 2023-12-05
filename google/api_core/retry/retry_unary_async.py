@@ -137,7 +137,7 @@ async def retry_target(
         Any: the return value of the target function.
 
     Raises:
-        google.api_core.RetryError: If the deadline is exceeded while retrying.
+        google.api_core.RetryError: If the timeout is exceeded while retrying.
         ValueError: If the sleep generator stops yielding values.
         Exception: If the target raises a method that isn't retryable.
     """
