@@ -282,7 +282,7 @@ class _BaseRetry(object):
         documentation for details.
 
         Args:
-            deadline (float): How long to keep retrying in seconds.
+            deadline (float): How long to keep retrying, in seconds.
 
         Returns:
             Retry: A new retry instance with the given timeout.
