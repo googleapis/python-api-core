@@ -124,7 +124,7 @@ async def retry_target(
             target. Any error raised by this function will *not* be caught.
         exception_factory: A function that is called when the retryable reaches
             a terminal failure state, used to construct an exception to be raised.
-            It it given a list of all exceptions encountered, a retry.RetryFailureReason
+            It takes a list of all exceptions encountered, a retry.RetryFailureReason
             enum indicating the failure cause, and the original timeout value
             as arguments. It should return a tuple of the exception to be raised,
             along with the cause exception if any.
@@ -137,9 +137,11 @@ async def retry_target(
         Any: the return value of the target function.
 
     Raises:
-        google.api_core.RetryError: If the timeout is exceeded while retrying.
         ValueError: If the sleep generator stops yielding values.
-        Exception: If the target raises a method that isn't retryable.
+        Exception: a custom exception specified by the exception_factory if provided.
+            If no exception_factory is provided:
+                google.api_core.RetryError: If the timeout is exceeded while retrying.
+                Exception: If the target raises an error that isn't retryable.
     """
 
     timeout = kwargs.get("deadline", timeout)
