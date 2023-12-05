@@ -138,7 +138,7 @@ def _build_retry_error(
     **kwargs: Any,
 ) -> tuple[Exception, Exception | None]:
     """
-    Default exception_factory implementation. Builds an exception after the retry fails
+    Default exception_factory implementation. Builds an exception after the retry fails.
 
     Args:
       - exc_list: list of exceptions that occurred during the retry
