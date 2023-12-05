@@ -106,8 +106,6 @@ async def retry_target_stream(
                 google.api_core.RetryError: If the timeout is exceeded while retrying.
                 Exception: If the target raises an error that isn't retryable.
     """
-    # create frozen partial from original call args
-    # In the future, we can add a ResumptionStrategy object that creates new kwargs between calls
     target_iterator: AsyncIterator[_Y] | None = None
     timeout = kwargs.get("deadline", timeout)
     deadline = time.monotonic() + timeout if timeout else None
