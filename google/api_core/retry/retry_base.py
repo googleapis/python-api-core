@@ -321,9 +321,9 @@ class _BaseRetry(object):
         """Return a copy of this retry with the given delay options.
 
         Args:
-            initial (float): The minimum amount of time to delay. This must
+            initial (float): The minimum amount of time to delay (in seconds). This must
                 be greater than 0.
-            maximum (float): The maximum amount of time to delay.
+            maximum (float): The maximum amount of time to delay (in seconds).
             multiplier (float): The multiplier applied to the delay.
 
         Returns:
