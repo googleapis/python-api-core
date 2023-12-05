@@ -122,7 +122,14 @@ def retry_target_stream(
         except Exception as exc:
             # defer to shared logic for handling errors
             _retry_error_helper(
-                exc, deadline, sleep, error_list, predicate, on_error, exception_factory, timeout
+                exc,
+                deadline,
+                sleep,
+                error_list,
+                predicate,
+                on_error,
+                exception_factory,
+                timeout,
             )
             # if exception not raised, sleep before next attempt
             time.sleep(sleep)
