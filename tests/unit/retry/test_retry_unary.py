@@ -125,7 +125,7 @@ def test_retry_target_timeout_exceeded(monotonic, sleep, use_deadline_arg):
     monotonic.side_effect = [0, 5, 11]
 
     # support "deadline" as an alias for "timeout"
-    kwargs = {"timeout": 10} if use_deadline_arg else {"deadline": 10}
+    kwargs = {"timeout": 10} if not use_deadline_arg else {"deadline": 10}
 
     with pytest.raises(exceptions.RetryError) as exc_info:
         retry.retry_target(target, predicate, range(10), **kwargs)
