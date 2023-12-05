@@ -91,7 +91,7 @@ def test__build_retry_error_timeout_message():
 
 def test__build_retry_error_empty_timeout():
     """
-    attempt to build a retry error with timout is None
+    attempt to build a retry error when timeout is None
     should return a generic timeout error message
     """
     from google.api_core.retry import _build_retry_error
