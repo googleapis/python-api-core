@@ -112,7 +112,9 @@ async def test_retry_target_timeout_exceeded(monotonic, sleep, use_deadline_arg)
 
     timeout_val = 10
     # support "deadline" as an alias for "timeout"
-    timout_kwarg = {"timeout": timeout_val} if not use_deadline_arg else {"deadline": timeout_val}
+    timout_kwarg = (
+        {"timeout": timeout_val} if not use_deadline_arg else {"deadline": timeout_val}
+    )
 
     with pytest.raises(exceptions.RetryError) as exc_info:
         await retry_async.retry_target(target, predicate, range(10), **timout_kwarg)

@@ -144,7 +144,11 @@ class TestStreamingRetry(Test_BaseRetry):
 
         timeout_val = 30.9
         # support "deadline" as an alias for "timeout"
-        timout_kwarg = {"timeout": timeout_val} if not use_deadline_arg else {"deadline": timeout_val}
+        timout_kwarg = (
+            {"timeout": timeout_val}
+            if not use_deadline_arg
+            else {"deadline": timeout_val}
+        )
 
         on_error = mock.Mock(return_value=None)
         retry_ = retry_streaming.StreamingRetry(

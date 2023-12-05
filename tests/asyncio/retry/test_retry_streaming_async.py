@@ -131,7 +131,9 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.parametrize("use_deadline_arg", [True, False])
     @pytest.mark.asyncio
-    async def test___call___generator_retry_hitting_timeout(self, sleep, uniform, use_deadline_arg):
+    async def test___call___generator_retry_hitting_timeout(
+        self, sleep, uniform, use_deadline_arg
+    ):
         """
         Tests that a retry-decorated generator will throw a RetryError
         after using the time budget
@@ -140,7 +142,11 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
 
         timeout_val = 9.9
         # support "deadline" as an alias for "timeout"
-        timout_kwarg = {"timeout": timeout_val} if not use_deadline_arg else {"deadline": timeout_val}
+        timout_kwarg = (
+            {"timeout": timeout_val}
+            if not use_deadline_arg
+            else {"deadline": timeout_val}
+        )
 
         on_error = mock.Mock()
         retry_ = retry_streaming_async.AsyncStreamingRetry(
