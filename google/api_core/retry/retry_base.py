@@ -196,7 +196,7 @@ def _retry_error_helper(
        - deadline: the deadline for the retry, calculated as a diff from time.monotonic()
        - next_sleep: the next sleep interval
        - error_list: the list of exceptions that have been raised so far
-       - predicate_fn: predicate used to determine if the exception should be retried
+       - predicate_fn: takes `exc` and returns true if the operation should be retried
        - on_error_fn: callback to execute when a retryable error occurs
        - exc_factory_fn: callback used to build the exception to be raised on terminal failure
        - original_timeout_val: the original timeout value for the retry (in seconds),
