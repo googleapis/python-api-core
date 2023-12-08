@@ -137,14 +137,6 @@ async def test_retry_target_bad_sleep_generator():
         )
 
 
-@pytest.mark.asyncio
-async def test_retry_streaming_target_bad_sleep_generator():
-    from google.api_core.retry.retry_streaming_async import retry_target_stream
-
-    with pytest.raises(ValueError, match="Sleep generator"):
-        await retry_target_stream(None, None, [], None).__anext__()
-
-
 class TestAsyncRetry(Test_BaseRetry):
     def _make_one(self, *args, **kwargs):
         return retry_async.AsyncRetry(*args, **kwargs)
