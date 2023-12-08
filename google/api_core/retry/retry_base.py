@@ -131,14 +131,17 @@ class RetryFailureReason(Enum):
     NON_RETRYABLE_ERROR = 1
 
 
-def _build_retry_error(
+def build_retry_error(
     exc_list: list[Exception],
     reason: RetryFailureReason,
     timeout_val: float | None,
     **kwargs: Any,
 ) -> tuple[Exception, Exception | None]:
     """
-    Default exception_factory implementation. Builds an exception after the retry fails.
+    Default exception_factory implementation.
+
+    Returns a RetryError if the failure is due to a timeout, otherwise
+    returns the last exception encountered.
 
     Args:
       - exc_list: list of exceptions that occurred during the retry

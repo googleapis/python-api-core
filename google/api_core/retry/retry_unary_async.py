@@ -68,7 +68,7 @@ from typing import (
 from google.api_core.retry.retry_base import _BaseRetry
 from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry.retry_base import exponential_sleep_generator
-from google.api_core.retry.retry_base import _build_retry_error
+from google.api_core.retry.retry_base import build_retry_error
 from google.api_core.retry.retry_base import RetryFailureReason
 
 # for backwards compatibility, expose helpers in this module
@@ -101,7 +101,7 @@ async def retry_target(
     exception_factory: Callable[
         [list[Exception], RetryFailureReason, float | None],
         tuple[Exception, Exception | None],
-    ] = _build_retry_error,
+    ] = build_retry_error,
     **kwargs,
 ):
     """Await a coroutine and retry if it fails.

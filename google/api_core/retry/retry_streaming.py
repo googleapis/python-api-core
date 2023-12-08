@@ -36,7 +36,7 @@ import functools
 from google.api_core.retry.retry_base import _BaseRetry
 from google.api_core.retry.retry_base import _retry_error_helper
 from google.api_core.retry import exponential_sleep_generator
-from google.api_core.retry import _build_retry_error
+from google.api_core.retry import build_retry_error
 from google.api_core.retry import RetryFailureReason
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ def retry_target_stream(
     exception_factory: Callable[
         [List[Exception], RetryFailureReason, Optional[float]],
         Tuple[Exception, Optional[Exception]],
-    ] = _build_retry_error,
+    ] = build_retry_error,
     init_args: _P.args = (),
     init_kwargs: _P.kwargs = {},
     **kwargs,

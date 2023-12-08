@@ -58,47 +58,47 @@ def test_exponential_sleep_generator_base_2(uniform):
     assert result == [1, 2, 4, 8, 16, 32, 60, 60]
 
 
-def test__build_retry_error_empty_list():
+def test_build_retry_error_empty_list():
     """
     attempt to build a retry error with no errors encountered
     should return a generic RetryError
     """
-    from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import build_retry_error
     from google.api_core.retry import RetryFailureReason
 
     reason = RetryFailureReason.NON_RETRYABLE_ERROR
-    src, cause = _build_retry_error([], reason, 10)
+    src, cause = build_retry_error([], reason, 10)
     assert isinstance(src, exceptions.RetryError)
     assert cause is None
     assert src.message == "Unknown error"
 
 
-def test__build_retry_error_timeout_message():
+def test_build_retry_error_timeout_message():
     """
     should provide helpful error message when timeout is reached
     """
-    from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import build_retry_error
     from google.api_core.retry import RetryFailureReason
 
     reason = RetryFailureReason.TIMEOUT
     cause = RuntimeError("timeout")
-    src, found_cause = _build_retry_error([ValueError(), cause], reason, 10)
+    src, found_cause = build_retry_error([ValueError(), cause], reason, 10)
     assert isinstance(src, exceptions.RetryError)
     assert src.message == "Timeout of 10.0s exceeded"
     # should attach appropriate cause
     assert found_cause is cause
 
 
-def test__build_retry_error_empty_timeout():
+def test_build_retry_error_empty_timeout():
     """
     attempt to build a retry error when timeout is None
     should return a generic timeout error message
     """
-    from google.api_core.retry import _build_retry_error
+    from google.api_core.retry import build_retry_error
     from google.api_core.retry import RetryFailureReason
 
     reason = RetryFailureReason.TIMEOUT
-    src, _ = _build_retry_error([], reason, None)
+    src, _ = build_retry_error([], reason, None)
     assert isinstance(src, exceptions.RetryError)
     assert src.message == "Timeout exceeded"
 
