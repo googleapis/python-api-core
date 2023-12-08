@@ -150,7 +150,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
 
         timeout_val = 9.9
         # support "deadline" as an alias for "timeout"
-        timout_kwarg = (
+        timeout_kwarg = (
             {"timeout": timeout_val}
             if not use_deadline_arg
             else {"deadline": timeout_val}
@@ -162,7 +162,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             initial=1.0,
             maximum=1024.0,
             multiplier=2.0,
-            **timout_kwarg,
+            **timeout_kwarg,
         )
 
         time_now = time.monotonic()
