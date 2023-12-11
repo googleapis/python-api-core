@@ -73,6 +73,7 @@ from google.api_core.retry.retry_base import RetryFailureReason
 
 # for backwards compatibility, expose helpers in this module
 from google.api_core.retry.retry_base import if_exception_type  # noqa
+from google.api_core.retry.retry_base import if_transient_error  # noqa
 
 if TYPE_CHECKING:
     import sys
