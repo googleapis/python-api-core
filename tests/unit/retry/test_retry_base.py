@@ -16,6 +16,7 @@ import itertools
 import re
 
 import mock
+import pytest
 import requests.exceptions
 
 from google.api_core import exceptions
@@ -136,7 +137,8 @@ class Test_BaseRetry(object):
         assert retry_._timeout == 4
         assert retry_._on_error is _some_function
 
-    def test_with_timeout(self):
+    @pytest.mark.parametrize("use_deadline", [True, False])
+    def test_with_timeout(self, use_deadline):
         retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
             initial=1,
@@ -145,9 +147,12 @@ class Test_BaseRetry(object):
             timeout=4,
             on_error=mock.sentinel.on_error,
         )
-        new_retry = retry_.with_timeout(42)
+        new_retry = (
+            retry_.with_timeout(42) if not use_deadline else retry_.with_deadline(42)
+        )
         assert retry_ is not new_retry
         assert new_retry._timeout == 42
+        assert new_retry.timeout == 42 if not use_deadline else new_retry.deadline == 42
 
         # the rest of the attributes should remain the same
         assert new_retry._predicate is retry_._predicate
