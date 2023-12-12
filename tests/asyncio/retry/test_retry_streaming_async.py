@@ -201,7 +201,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         """
         # test without cancel as retryable
         retry_ = retry_streaming_async.AsyncStreamingRetry()
-        utcnow = datetime.datetime.utcnow()
+        utcnow = datetime.datetime.now(datetime.timezone.utc)
         mock.patch("google.api_core.datetime_helpers.utcnow", return_value=utcnow)
         generator = await retry_(self._generator_mock)(sleep_time=0.2)
         assert await generator.__anext__() == 0
