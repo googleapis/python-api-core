@@ -164,7 +164,7 @@ async def retry_target_stream(
                         # TODO: Remove this conditional once the minimum supported Python version is 3.11
                         if sys.version_info[:3] >= (3, 11, 0):
                             await cast(AsyncGenerator["_Y", None], target_iterator).athrow(
-                                sys.exception())
+                                sys.exception())  # type: ignore
                         else:
                             await cast(AsyncGenerator["_Y", None], target_iterator).athrow(
                                 *sys.exc_info())
