@@ -160,18 +160,9 @@ async def retry_target_stream(
                     # bare except catches any exception passed to `athrow`
                     if target_is_generator:
                         # delegate error handling to target_iterator
-
-                        # TODO: Remove this conditional once the minimum supported Python version is 3.11
-                        if sys.version_info[:3] >= (3, 11, 0):
-                            await cast(
-                                AsyncGenerator["_Y", None], target_iterator
-                            ).athrow(
-                                sys.exception()  # type: ignore
-                            )
-                        else:
-                            await cast(
-                                AsyncGenerator["_Y", None], target_iterator
-                            ).athrow(*sys.exc_info())
+                        await cast(AsyncGenerator["_Y", None], target_iterator).athrow(
+                            cast(BaseException, sys.exc_info()[1])
+                        )
                     else:
                         raise
             return
