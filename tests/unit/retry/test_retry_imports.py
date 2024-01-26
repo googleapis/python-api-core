@@ -26,12 +26,10 @@ def test_legacy_imports_retry_unary_sync():
     from google.api_core.retry import time  # noqa: F401
     from google.api_core.retry import inspect  # noqa: F401
     from google.api_core.retry import warnings  # noqa: F401
-    from google.api_core.retry import (
-        Any,  # noqa: F401
-        Callable,  # noqa: F401
-        TypeVar,  # noqa: F401
-        TYPE_CHECKING,  # noqa: F401
-    )
+    from google.api_core.retry import Any  # noqa: F401
+    from google.api_core.retry import Callable  # noqa: F401
+    from google.api_core.retry import TypeVar  # noqa: F401
+    from google.api_core.retry import TYPE_CHECKING  # noqa: F401
 
     from google.api_core.retry import datetime_helpers  # noqa: F401
     from google.api_core.retry import exceptions  # noqa: F401
