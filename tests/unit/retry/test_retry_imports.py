@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def test_legacy_imports_retry_unary_sync():
     # TODO: Delete this test when when we revert these imports on the
     #       next major version release
     #       (https://github.com/googleapis/python-api-core/issues/576)
 
-    from google.api_core.retry import logging
     from google.api_core.retry import datetime  # noqa: F401
     from google.api_core.retry import functools  # noqa: F401
     from google.api_core.retry import logging  # noqa: F401
@@ -26,7 +26,12 @@ def test_legacy_imports_retry_unary_sync():
     from google.api_core.retry import time  # noqa: F401
     from google.api_core.retry import inspect  # noqa: F401
     from google.api_core.retry import warnings  # noqa: F401
-    from google.api_core.retry import Any, Callable, TypeVar, TYPE_CHECKING  # noqa: F401
+    from google.api_core.retry import (
+        Any,  # noqa: F401
+        Callable,  # noqa: F401
+        TypeVar,  # noqa: F401
+        TYPE_CHECKING,  # noqa: F401
+    )
 
     from google.api_core.retry import datetime_helpers  # noqa: F401
     from google.api_core.retry import exceptions  # noqa: F401
