@@ -12,27 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-
 def test_legacy_imports_retry_unary_sync():
     # TODO: Delete this test when when we revert these imports on the
     #       next major version release
     #       (https://github.com/googleapis/python-api-core/issues/576)
 
     from google.api_core.retry import logging
-    from google.api_core.retry import datetime
-    from google.api_core.retry import functools
-    from google.api_core.retry import logging
-    from google.api_core.retry import random
-    from google.api_core.retry import sys
-    from google.api_core.retry import time
-    from google.api_core.retry import inspect
-    from google.api_core.retry import warnings
-    from google.api_core.retry import Any, Callable, TypeVar, TYPE_CHECKING
+    from google.api_core.retry import datetime  # noqa: F401
+    from google.api_core.retry import functools  # noqa: F401
+    from google.api_core.retry import logging  # noqa: F401
+    from google.api_core.retry import random  # noqa: F401
+    from google.api_core.retry import sys  # noqa: F401
+    from google.api_core.retry import time  # noqa: F401
+    from google.api_core.retry import inspect  # noqa: F401
+    from google.api_core.retry import warnings  # noqa: F401
+    from google.api_core.retry import Any, Callable, TypeVar, TYPE_CHECKING  # noqa: F401
 
-    from google.api_core.retry import datetime_helpers
-    from google.api_core.retry import exceptions
-    from google.api_core.retry import auth_exceptions
+    from google.api_core.retry import datetime_helpers  # noqa: F401
+    from google.api_core.retry import exceptions  # noqa: F401
+    from google.api_core.retry import auth_exceptions  # noqa: F401
 
     ### FIXME: How do we test the following, and how do we import it in __init__.py?
     # import google.api_core.retry.requests.exceptions
@@ -43,7 +41,7 @@ def test_legacy_imports_retry_unary_async():
     #       next major version release
     #       (https://github.com/googleapis/python-api-core/issues/576)
 
-    from google.api_core import retry_async
+    from google.api_core import retry_async  # noqa: F401
 
     ### FIXME: each of the following cause errors on the "retry_async" part: module not found
     # import google.api_core.retry_async.functools
