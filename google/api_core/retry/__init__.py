@@ -31,15 +31,6 @@ from .retry_streaming_async import retry_target_stream as retry_target_stream_as
 # The following imports are for backwards compatibility with https://github.com/googleapis/python-api-core/blob/4d7d2edee2c108d43deb151e6e0fdceb56b73275/google/api_core/retry.py
 #
 # TODO: Revert these imports on the next major version release (https://github.com/googleapis/python-api-core/issues/576)
-import datetime  # noqa: F401
-import functools  # noqa: F401
-import logging  # noqa: F401
-import random  # noqa: F401
-import sys  # noqa: F401
-import time  # noqa: F401
-import inspect  # noqa: F401
-import warnings  # noqa: F401
-from typing import Any, Callable, TypeVar, TYPE_CHECKING  # noqa: F401
 from google.api_core import datetime_helpers  # noqa: F401
 from google.api_core import exceptions  # noqa: F401
 from google.auth import exceptions as auth_exceptions  # noqa: F401
