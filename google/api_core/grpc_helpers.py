@@ -384,7 +384,8 @@ def create_channel(
 
 
 def _modify_target_for_direct_path(target: str) -> str:
-    """Create a secure channel with credentials.
+    """
+    Modifies the given target to be compatible with Direct Path
 
     Args:
         target (str): The target service address in the format 'hostname:port', 'dns://hostname' or other
