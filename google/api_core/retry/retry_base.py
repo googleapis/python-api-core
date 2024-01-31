@@ -47,8 +47,6 @@ _DEFAULT_DEADLINE = 60.0 * 2.0  # seconds
 
 _LOGGER = logging.getLogger("google.api_core.retry")
 
-# sentinal value for _replace to indicate arguments that should not be replaced
-_DO_NOT_REPLACE = object()
 
 def if_exception_type(
     *exception_types: type[Exception],
@@ -267,24 +265,6 @@ class _BaseRetry(object):
     def timeout(self) -> float | None:
         return self._timeout
 
-    def _replace(
-        self,
-        predicate: Callable[[Exception], bool] | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        initial: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        maximum: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        multiplier: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        timeout: float | None | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        on_error: Callable[[Exception], Any] | None | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-    ) -> Self:
-        return type(self)(
-            predicate=self._predicate if predicate is _DO_NOT_REPLACE else predicate,
-            initial=self._initial if initial is _DO_NOT_REPLACE else initial,
-            maximum=self._maximum if maximum is _DO_NOT_REPLACE else maximum,
-            multiplier=self._multiplier if multiplier is _DO_NOT_REPLACE else multiplier,
-            timeout=self._timeout if timeout is _DO_NOT_REPLACE else timeout,
-            on_error=self._on_error if on_error is _DO_NOT_REPLACE else on_error,
-        )
-
     def with_deadline(self, deadline: float | None) -> Self:
         """Return a copy of this retry with the given timeout.
 
@@ -298,7 +278,7 @@ class _BaseRetry(object):
         Returns:
             Retry: A new retry instance with the given timeout.
         """
-        return self._replace(timeout=deadline)
+        return self.with_timeout(deadline)
 
     def with_timeout(self, timeout: float | None) -> Self:
         """Return a copy of this retry with the given timeout.
@@ -310,7 +290,14 @@ class _BaseRetry(object):
         Returns:
             Retry: A new retry instance with the given timeout.
         """
-        return self._replace(timeout=timeout)
+        return type(self)(
+            predicate=self._predicate,
+            initial=self._initial,
+            maximum=self._maximum,
+            multiplier=self._multiplier,
+            timeout=timeout,
+            on_error=self._on_error,
+        )
 
     def with_predicate(self, predicate: Callable[[Exception], bool]) -> Self:
         """Return a copy of this retry with the given predicate.
@@ -322,7 +309,14 @@ class _BaseRetry(object):
         Returns:
             Retry: A new retry instance with the given predicate.
         """
-        return self._replace(predicate=predicate)
+        return type(self)(
+            predicate=predicate,
+            initial=self._initial,
+            maximum=self._maximum,
+            multiplier=self._multiplier,
+            timeout=self._timeout,
+            on_error=self._on_error,
+        )
 
     def with_delay(
         self,
@@ -343,10 +337,14 @@ class _BaseRetry(object):
         Returns:
             Retry: A new retry instance with the given delay options.
         """
-        initial = _DO_NOT_REPLACE if initial is None else initial
-        maximum = _DO_NOT_REPLACE if maximum is None else maximum
-        multiplier = _DO_NOT_REPLACE if multiplier is None else multiplier
-        return self._replace(initial=initial, maximum=maximum, multiplier=multiplier)
+        return type(self)(
+            predicate=self._predicate,
+            initial=initial if initial is not None else self._initial,
+            maximum=maximum if maximum is not None else self._maximum,
+            multiplier=multiplier if multiplier is not None else self._multiplier,
+            timeout=self._timeout,
+            on_error=self._on_error,
+        )
 
     def __str__(self) -> str:
         return (
