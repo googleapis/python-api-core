@@ -385,7 +385,7 @@ def create_channel(
 
 def _modify_target_for_direct_path(target: str) -> str:
     """
-    Modifies the given target to be compatible with Direct Path
+    Given a target, return a modified version which is compatible with Direct Path.
 
     Args:
         target (str): The target service address in the format 'hostname:port', 'dns://hostname' or other
