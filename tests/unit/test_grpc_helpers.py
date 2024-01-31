@@ -413,11 +413,13 @@ def test_create_channel_implicit(
 
 
 @pytest.mark.parametrize(
-    "attempt_direct_path,expected_target",
+    "attempt_direct_path,target, expected_target",
     [
-        (None, "example.com:443"),
-        (False, "example.com:443"),
-        (True, "google-c2p:///example.com"),
+        (None, "example.com:443", "example.com:443"),
+        (False, "example.com:443", "example.com:443"),
+        (True, "example.com:443", "google-c2p:///example.com"),
+        (True, "dns:///example.com", "google-c2p:///example.com"),
+        (True, "another-c2p:///example.com", "another-c2p:///example.com"),
     ],
 )
 @mock.patch("google.auth.transport.grpc.AuthMetadataPlugin", autospec=True)
@@ -440,9 +442,9 @@ def test_create_channel_implicit_with_default_host(
     request,
     auth_metadata_plugin,
     attempt_direct_path,
+    target,
     expected_target,
 ):
-    target = "example.com:443"
     default_host = "example.com"
     composite_creds = composite_creds_call.return_value
 
