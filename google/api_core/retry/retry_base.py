@@ -240,7 +240,7 @@ class _BaseRetry(object):
         initial: float = _DEFAULT_INITIAL_DELAY,
         maximum: float = _DEFAULT_MAXIMUM_DELAY,
         multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
-        timeout: float = _DEFAULT_DEADLINE,
+        timeout: float | None = _DEFAULT_DEADLINE,
         on_error: Callable[[Exception], Any] | None = None,
         **kwargs: Any,
     ) -> None:
@@ -273,7 +273,7 @@ class _BaseRetry(object):
         initial: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
         maximum: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
         multiplier: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
-        timeout: float | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
+        timeout: float | None | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
         on_error: Callable[[Exception], Any] | None | _DO_NOT_REPLACE = _DO_NOT_REPLACE,
     ) -> Self:
         return type(self)(
@@ -292,18 +292,20 @@ class _BaseRetry(object):
         documentation for details.
 
         Args:
-            deadline (float): How long to keep retrying, in seconds.
+            deadline (float|None): How long to keep retrying, in seconds. If None,
+                no timeout is enforced.
 
         Returns:
             Retry: A new retry instance with the given timeout.
         """
         return self._replace(timeout=deadline)
 
-    def with_timeout(self, timeout: float) -> Self:
+    def with_timeout(self, timeout: float | None) -> Self:
         """Return a copy of this retry with the given timeout.
 
         Args:
-            timeout (float): How long to keep retrying, in seconds.
+            timeout (float): How long to keep retrying, in seconds. If None,
+                no timeout will be enforced.
 
         Returns:
             Retry: A new retry instance with the given timeout.
