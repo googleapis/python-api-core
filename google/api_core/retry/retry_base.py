@@ -25,7 +25,7 @@ import random
 import time
 
 from enum import Enum
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import requests.exceptions
 
@@ -238,8 +238,8 @@ class _BaseRetry(object):
         initial: float = _DEFAULT_INITIAL_DELAY,
         maximum: float = _DEFAULT_MAXIMUM_DELAY,
         multiplier: float = _DEFAULT_DELAY_MULTIPLIER,
-        timeout: float | None = _DEFAULT_DEADLINE,
-        on_error: Callable[[Exception], Any] | None = None,
+        timeout: Optional[float] = _DEFAULT_DEADLINE,
+        on_error: Optional[Callable[[Exception], Any]] = None,
         **kwargs: Any,
     ) -> None:
         self._predicate = predicate
@@ -320,9 +320,9 @@ class _BaseRetry(object):
 
     def with_delay(
         self,
-        initial: float | None = None,
-        maximum: float | None = None,
-        multiplier: float | None = None,
+        initial: Optional[float] = None,
+        maximum: Optional[float] = None,
+        multiplier: Optional[float] = None,
     ) -> Self:
         """Return a copy of this retry with the given delay options.
 
