@@ -203,20 +203,34 @@ class Test_BaseRetry(object):
         assert new_retry._maximum == retry_._maximum
         assert new_retry._multiplier == retry_._multiplier
 
-    def test_with_delay(self):
+    @pytest.mark.parametrize(
+        "originals,updated,expected",
+        [
+            [(1, 2, 3), (4, 5, 6), (4, 5, 6)],
+            [(1, 2, 3), (0, 0, 0), (0, 0, 0)],
+            [(1, 2, 3), (None, None, None), (1, 2, 3)],
+            [(0, 0, 0), (None, None, None), (0, 0, 0)],
+            [(1, 2, 3), (None, 0.5, None), (1, 0.5, 3)],
+            [(1, 2, 3), (None, 0.5, 4), (1, 0.5, 4)],
+            [(1, 2, 3), (9, None, None), (9, 2, 3)],
+        ],
+    )
+    def test_with_delay(self, originals, updated, expected):
         retry_ = self._make_one(
             predicate=mock.sentinel.predicate,
-            initial=1,
-            maximum=2,
-            multiplier=3,
-            timeout=4,
+            initial=originals[0],
+            maximum=originals[1],
+            multiplier=originals[2],
+            timeout=14,
             on_error=mock.sentinel.on_error,
         )
-        new_retry = retry_.with_delay(initial=5, maximum=6, multiplier=7)
+        new_retry = retry_.with_delay(
+            initial=updated[0], maximum=updated[1], multiplier=updated[2]
+        )
         assert retry_ is not new_retry
-        assert new_retry._initial == 5
-        assert new_retry._maximum == 6
-        assert new_retry._multiplier == 7
+        assert new_retry._initial == expected[0]
+        assert new_retry._maximum == expected[1]
+        assert new_retry._multiplier == expected[2]
 
         # the rest of the attributes should remain the same
         assert new_retry._timeout == retry_._timeout
