@@ -280,7 +280,7 @@ def _create_composite_credentials(
     else:
         # Use grpc.compute_engine_channel_credentials in order to support Direct Path.
         # See https://grpc.github.io/grpc/python/grpc.html#grpc.compute_engine_channel_credentials
-        # TODO(b/323073050):
+        # TODO(https://github.com/googleapis/python-api-core/issues/598):
         # Although `grpc.compute_engine_channel_credentials` returns channel credentials
         # outside of a Google Compute Engine environment (GCE), we should determine if
         # there is a way to reliably detect a GCE environment so that
