@@ -411,11 +411,11 @@ def _modify_target_for_direct_path(target: str) -> str:
     # the Direct Path prefix `google-c2p:///` will be used instead.
     target = target.replace(dns_prefix, "")
 
-    direct_path_prefix = ":///"
-    if direct_path_prefix not in target:
+    direct_path_separator = ":///"
+    if direct_path_separator not in target:
         target_without_port = target.split(":")[0]
         # Modify the target to use Direct Path by adding the `google-c2p:///` prefix
-        target = f"google-c2p{direct_path_prefix}{target_without_port}"
+        target = f"google-c2p{direct_path_separator}{target_without_port}"
     return target
 
 
