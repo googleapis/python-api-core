@@ -299,11 +299,13 @@ def test_wrap_errors_streaming(wrap_stream_errors):
 
 
 @pytest.mark.parametrize(
-    "attempt_direct_path,expected_target",
+    "attempt_direct_path,target,expected_target",
     [
-        (None, "example.com:443"),
-        (False, "example.com:443"),
-        (True, "google-c2p:///example.com"),
+        (None, "example.com:443", "example.com:443"),
+        (False, "example.com:443", "example.com:443"),
+        (True, "example.com:443", "google-c2p:///example.com"),
+        (True, "dns:///example.com", "google-c2p:///example.com"),
+        (True, "another-c2p:///example.com", "another-c2p:///example.com"),
     ],
 )
 @mock.patch("grpc.compute_engine_channel_credentials")
@@ -318,9 +320,9 @@ def test_create_channel_implicit(
     google_auth_default,
     composite_creds_call,
     attempt_direct_path,
+    target,
     expected_target,
 ):
-    target = "example.com:443"
     composite_creds = composite_creds_call.return_value
 
     channel = grpc_helpers_async.create_channel(
