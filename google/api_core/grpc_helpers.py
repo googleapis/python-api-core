@@ -17,7 +17,6 @@ from typing import Generic, Iterator, Optional, TypeVar
 
 import collections
 import functools
-import logging
 import warnings
 
 import grpc
@@ -52,8 +51,6 @@ else:
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
-
-_LOGGER = logging.getLogger(__name__)
 
 # denotes the proto response type for grpc calls
 P = TypeVar("P")
@@ -373,8 +370,9 @@ def create_channel(
     # Note that grpcio-gcp is deprecated
     if HAS_GRPC_GCP:  # pragma: NO COVER
         if compression is not None and compression != grpc.Compression.NoCompression:
-            _LOGGER.debug(
-                "Compression argument is being ignored for grpc_gcp.secure_channel creation."
+            warnings.warn(
+                "The `compression` argument is ignored for grpc_gcp.secure_channel creation.",
+                DeprecationWarning,
             )
         if attempt_direct_path:
             warnings.warn(
