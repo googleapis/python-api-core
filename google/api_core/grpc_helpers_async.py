@@ -247,16 +247,23 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         compression (grpc.Compression): An optional value indicating the
             compression method to be used over the lifetime of the channel.
-        attempt_direct_path (Optional[bool]): If set, Direct Path will be attempted when
-            the request is made. Direct Path provides a proxyless connection which
-            increases the available throughput, reduces latency, and increases
-            reliability. Outside of GCE, the direct path request may fallback
-            to DNS if this is configured by the Service. This argument should only
-            be set in a GCE environment and for Services that are known to support Direct Path.
-            If a `ServiceUnavailable` response is received when the request is sent, it is
-            recommended that the client repeat the request with `attempt_direct_path` set to `False`
-            as the Service may not support Direct Path. Using `ssl_credentials` with `attempt_direct_path`
-            set to `True` will result in `ValueError` as it is not yet supported.
+        attempt_direct_path (Optional[bool]): If set, Direct Path will be attempted
+            when the request is made. Direct Path is only available within a Google
+            Compute Engine (GCE) environment and provides a proxyless connection
+            which increases the available throughput, reduces latency, and increases
+            reliability. Note:
+
+            - This argument should only be set in a GCE environment and for Services
+              that are known to support Direct Path.
+            - If this argument is set outside of GCE, then this request will fail
+              unless the back-end service happens to have configured fall-back to DNS.
+            - If the request causes a `ServiceUnavailable` response, it is recommended
+              that the client repeat the request with `attempt_direct_path` set to
+              `False` as the Service may not support Direct Path.
+            - Using `ssl_credentials` with `attempt_direct_path`
+              set to `True` will result in `ValueError` as this combination  is not yet
+              supported.
+
         kwargs: Additional key-word args passed to :func:`aio.secure_channel`.
 
     Returns:

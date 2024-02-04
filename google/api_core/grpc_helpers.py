@@ -283,9 +283,10 @@ def _create_composite_credentials(
     else:
         # Use grpc.compute_engine_channel_credentials in order to support Direct Path.
         # See https://grpc.github.io/grpc/python/grpc.html#grpc.compute_engine_channel_credentials
-        # TODO(b/323073050): Although `grpc.compute_engine_channel_credentials`
-        # returns channel credentials outside of GCE, we should determine if there is a way to
-        # reliably detect when the client is in a GCE environment so that
+        # TODO(b/323073050):
+        # Although `grpc.compute_engine_channel_credentials` returns channel credentials
+        # outside of a Google Compute Engine environment (GCE), we should determine if
+        # there is a way to reliably detect a GCE environment so that
         # `grpc.compute_engine_channel_credentials` is not called outside of GCE.
         return grpc.compute_engine_channel_credentials(google_auth_credentials)
 
@@ -324,16 +325,23 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         compression (grpc.Compression): An optional value indicating the
             compression method to be used over the lifetime of the channel.
-        attempt_direct_path (Optional[bool]): If set, Direct Path will be attempted when
-            the request is made. Direct Path provides a proxyless connection which
-            increases the available throughput, reduces latency, and increases
-            reliability. Outside of GCE, the direct path request may fallback
-            to DNS if this is configured by the Service. This argument should only
-            be set in a GCE environment and for Services that are known to support Direct Path.
-            If a `ServiceUnavailable` response is received when the request is sent, it is
-            recommended that the client repeat the request with `attempt_direct_path` set to `False`
-            as the Service may not support Direct Path. Using `ssl_credentials` with `attempt_direct_path`
-            set to `True` will result in `ValueError` as it is not yet supported.
+        attempt_direct_path (Optional[bool]): If set, Direct Path will be attempted
+            when the request is made. Direct Path is only available within a Google
+            Compute Engine (GCE) environment and provides a proxyless connection
+            which increases the available throughput, reduces latency, and increases
+            reliability. Note:
+
+            - This argument should only be set in a GCE environment and for Services
+              that are known to support Direct Path.
+            - If this argument is set outside of GCE, then this request will fail
+              unless the back-end service happens to have configured fall-back to DNS.
+            - If the request causes a `ServiceUnavailable` response, it is recommended
+              that the client repeat the request with `attempt_direct_path` set to
+              `False` as the Service may not support Direct Path.
+            - Using `ssl_credentials` with `attempt_direct_path`
+              set to `True` will result in `ValueError` as this combination  is not yet
+              supported.
+
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
             Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
