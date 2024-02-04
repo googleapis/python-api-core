@@ -394,8 +394,8 @@ def _modify_target_for_direct_path(target: str) -> str:
     Given a target, return a modified version which is compatible with Direct Path.
 
     Args:
-        target (str): The target service address in the format 'hostname:port', 'dns://hostname' or other
-            compatible format.
+        target (str): The target service address in the format 'hostname[:port]' or
+            'dns://hostname[:port]'.
 
     Returns:
         target (str): The target service address which is converted into a format compatible with Direct Path.
