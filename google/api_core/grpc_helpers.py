@@ -301,7 +301,7 @@ def create_channel(
     default_scopes=None,
     default_host=None,
     compression=None,
-    attempt_direct_path: Optional[bool] = None,
+    attempt_direct_path: Optional[bool] = False,
     **kwargs,
 ):
     """Create a secure channel with credentials.

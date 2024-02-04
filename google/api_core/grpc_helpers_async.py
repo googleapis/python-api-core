@@ -223,7 +223,7 @@ def create_channel(
     default_scopes=None,
     default_host=None,
     compression=None,
-    attempt_direct_path: Optional[bool] = None,
+    attempt_direct_path: Optional[bool] = False,
     **kwargs
 ):
     """Create an AsyncIO secure channel with credentials.
