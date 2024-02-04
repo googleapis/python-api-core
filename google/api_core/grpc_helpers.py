@@ -406,6 +406,8 @@ def _modify_target_for_direct_path(target: str) -> str:
             original target may already denote Direct Path.
     """
 
+    # A DNS prefix may be included with the target to indicate the endpoint is living in the Internet,
+    # outside of Google Cloud Platform.
     dns_prefix = "dns:///"
     # Remove "dns:///" if `attempt_direct_path` is set to True as
     # the Direct Path prefix `google-c2p:///` will be used instead.
