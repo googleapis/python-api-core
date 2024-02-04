@@ -401,8 +401,9 @@ def _modify_target_for_direct_path(target: str) -> str:
 
     Returns:
         target (str): The target service address which is converted into a format compatible with Direct Path.
-            If the target contains `dns:///` or does not have contain `:///`, the target will be converted in
-            a format compatible with Direct Path, otherwise the original target will be returned.
+            If the target contains `dns:///` or does not contain `:///`, the target will be converted in
+            a format compatible with Direct Path; otherwise the original target will be returned as the
+            original target may already denote Direct Path.
     """
 
     dns_prefix = "dns:///"
