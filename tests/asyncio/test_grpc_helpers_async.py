@@ -315,7 +315,7 @@ def test_wrap_errors_streaming(wrap_stream_errors):
 @mock.patch("grpc.aio.secure_channel")
 def test_create_channel_implicit(
     grpc_secure_channel,
-    default,
+    google_auth_default,
     composite_creds_call,
     attempt_direct_path,
     expected_target,
@@ -329,7 +329,7 @@ def test_create_channel_implicit(
 
     assert channel is grpc_secure_channel.return_value
 
-    default.assert_called_once_with(scopes=None, default_scopes=None)
+    google_auth_default.assert_called_once_with(scopes=None, default_scopes=None)
     grpc_secure_channel.assert_called_once_with(
         expected_target, composite_creds, compression=None
     )
@@ -360,7 +360,7 @@ def test_create_channel_implicit(
 @mock.patch("grpc.aio.secure_channel")
 def test_create_channel_implicit_with_default_host(
     grpc_secure_channel,
-    default,
+    google_auth_default,
     composite_creds_call,
     request,
     auth_metadata_plugin,
@@ -377,7 +377,7 @@ def test_create_channel_implicit_with_default_host(
 
     assert channel is grpc_secure_channel.return_value
 
-    default.assert_called_once_with(scopes=None, default_scopes=None)
+    google_auth_default.assert_called_once_with(scopes=None, default_scopes=None)
     auth_metadata_plugin.assert_called_once_with(
         mock.sentinel.credentials, mock.sentinel.Request, default_host=default_host
     )
