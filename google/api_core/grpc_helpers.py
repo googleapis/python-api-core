@@ -357,7 +357,7 @@ def create_channel(
     # If `ssl_credentials` is set and `attempt_direct_path` is set to `True`,
     # raise ValueError as this is not yet supported.
     # See https://github.com/googleapis/python-api-core/issues/590
-    if ssl_credentials is not None and attempt_direct_path:
+    if ssl_credentials and attempt_direct_path:
         raise ValueError("Using ssl_credentials with Direct Path is not supported")
 
     composite_credentials = _create_composite_credentials(
