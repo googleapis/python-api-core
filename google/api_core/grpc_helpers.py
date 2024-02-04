@@ -335,9 +335,8 @@ def create_channel(
             - If the request causes a `ServiceUnavailable` response, it is recommended
               that the client repeat the request with `attempt_direct_path` set to
               `False` as the Service may not support Direct Path.
-            - Using `ssl_credentials` with `attempt_direct_path`
-              set to `True` will result in `ValueError` as this combination  is not yet
-              supported.
+            - Using `ssl_credentials` with `attempt_direct_path` set to `True` will
+              result in `ValueError` as this combination  is not yet supported.
 
         kwargs: Additional key-word args passed to
             :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
