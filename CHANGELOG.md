@@ -4,6 +4,69 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.17.0](https://github.com/googleapis/python-api-core/compare/v2.16.2...v2.17.0) (2024-02-06)
+
+
+### Features
+
+* Add attempt_direct_path argument to create_channel ([#583](https://github.com/googleapis/python-api-core/issues/583)) ([94726e7](https://github.com/googleapis/python-api-core/commit/94726e739698035b00667983f854c600252abd28))
+
+
+### Bug Fixes
+
+* Retry constructors methods support None ([#592](https://github.com/googleapis/python-api-core/issues/592)) ([416203c](https://github.com/googleapis/python-api-core/commit/416203c1888934670bfeccafe5f5469f87314512))
+
+## [2.16.2](https://github.com/googleapis/python-api-core/compare/v2.16.1...v2.16.2) (2024-02-02)
+
+
+### Bug Fixes
+
+* Spelling error `a,out` -&gt; `amount` ([#596](https://github.com/googleapis/python-api-core/issues/596)) ([88688b1](https://github.com/googleapis/python-api-core/commit/88688b1625c4dab0df6124a0560f550eb322500f))
+
+## [2.16.1](https://github.com/googleapis/python-api-core/compare/v2.16.0...v2.16.1) (2024-01-30)
+
+
+### Bug Fixes
+
+* Fix broken import for google.api_core.retry_async.AsyncRetry ([#587](https://github.com/googleapis/python-api-core/issues/587)) ([ac012c0](https://github.com/googleapis/python-api-core/commit/ac012c04c69b8bbe72962f0d0d9e9536c0b4a524))
+
+## [2.16.0](https://github.com/googleapis/python-api-core/compare/v2.15.0...v2.16.0) (2024-01-29)
+
+
+### Features
+
+* Retry and retry_async support streaming rpcs ([#495](https://github.com/googleapis/python-api-core/issues/495)) ([17ff5f1](https://github.com/googleapis/python-api-core/commit/17ff5f1d83a9a6f50a0226fb0e794634bd584f17))
+
+## [2.15.0](https://github.com/googleapis/python-api-core/compare/v2.14.0...v2.15.0) (2023-12-07)
+
+
+### Features
+
+* Add support for Python 3.12 ([#557](https://github.com/googleapis/python-api-core/issues/557)) ([091b4f1](https://github.com/googleapis/python-api-core/commit/091b4f1c7fcc59c3f2a02ee44fd3c30b78423f12))
+* Add type annotations to wrapped grpc calls ([#554](https://github.com/googleapis/python-api-core/issues/554)) ([fc12b40](https://github.com/googleapis/python-api-core/commit/fc12b40bfc6e0c4bb313196e2e3a9c9374ce1c45))
+* Add universe_domain argument to ClientOptions ([3069ef4](https://github.com/googleapis/python-api-core/commit/3069ef4b9123ddb64841cbb7bbb183b53d502e0a))
+* Introduce compatibility with native namespace packages ([#561](https://github.com/googleapis/python-api-core/issues/561)) ([bd82827](https://github.com/googleapis/python-api-core/commit/bd82827108f1eeb6c05cfacf6c044b2afacc18a2))
+
+
+### Bug Fixes
+
+* Fix regression in `bidi` causing `Thread-ConsumeBidirectionalStream caught unexpected exception  and will exit` ([#562](https://github.com/googleapis/python-api-core/issues/562)) ([40c8ae0](https://github.com/googleapis/python-api-core/commit/40c8ae0cf1f797e31e106461164e22db4fb2d3d9))
+* Replace deprecated `datetime.datetime.utcnow()` ([#552](https://github.com/googleapis/python-api-core/issues/552)) ([448923a](https://github.com/googleapis/python-api-core/commit/448923acf277a70e8704c949311bf4feaef8cab6)), closes [#540](https://github.com/googleapis/python-api-core/issues/540)
+
+## [2.14.0](https://github.com/googleapis/python-api-core/compare/v2.13.1...v2.14.0) (2023-11-09)
+
+
+### Features
+
+* Support with_call for wrapped rpcs ([#550](https://github.com/googleapis/python-api-core/issues/550)) ([01a57a7](https://github.com/googleapis/python-api-core/commit/01a57a745f4c8345c9c93412c27dd416b49f5953))
+
+## [2.13.1](https://github.com/googleapis/python-api-core/compare/v2.13.0...v2.13.1) (2023-11-09)
+
+
+### Bug Fixes
+
+* Update async client to use async retry ([#544](https://github.com/googleapis/python-api-core/issues/544)) ([f21bb32](https://github.com/googleapis/python-api-core/commit/f21bb32b8e6310116a642a6e6b6dd8e44e30e656))
+
 ## [2.13.0](https://github.com/googleapis/python-api-core/compare/v2.12.0...v2.13.0) (2023-11-03)
 
 
