@@ -21,11 +21,15 @@ functions. This module is implementing the same surface with AsyncIO semantics.
 import asyncio
 import functools
 
+from typing import AsyncGenerator, Generic, Iterator, Optional, TypeVar
+
 import grpc
 from grpc import aio
 
 from google.api_core import exceptions, grpc_helpers
 
+# denotes the proto response type for grpc calls
+P = TypeVar("P")
 
 # NOTE(lidiz) Alternatively, we can hack "__getattribute__" to perform
 # automatic patching for us. But that means the overhead of creating an
@@ -75,8 +79,8 @@ class _WrappedCall(aio.Call):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
-class _WrappedUnaryResponseMixin(_WrappedCall):
-    def __await__(self):
+class _WrappedUnaryResponseMixin(Generic[P], _WrappedCall):
+    def __await__(self) -> Iterator[P]:
         try:
             response = yield from self._call.__await__()
             return response
@@ -84,17 +88,17 @@ class _WrappedUnaryResponseMixin(_WrappedCall):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
-class _WrappedStreamResponseMixin(_WrappedCall):
+class _WrappedStreamResponseMixin(Generic[P], _WrappedCall):
     def __init__(self):
         self._wrapped_async_generator = None
 
-    async def read(self):
+    async def read(self) -> P:
         try:
             return await self._call.read()
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-    async def _wrapped_aiter(self):
+    async def _wrapped_aiter(self) -> AsyncGenerator[P, None]:
         try:
             # NOTE(lidiz) coverage doesn't understand the exception raised from
             # __anext__ method. It is covered by test case:
@@ -104,7 +108,7 @@ class _WrappedStreamResponseMixin(_WrappedCall):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncGenerator[P, None]:
         if not self._wrapped_async_generator:
             self._wrapped_async_generator = self._wrapped_aiter()
         return self._wrapped_async_generator
@@ -127,24 +131,30 @@ class _WrappedStreamRequestMixin(_WrappedCall):
 # NOTE(lidiz) Implementing each individual class separately, so we don't
 # expose any API that should not be seen. E.g., __aiter__ in unary-unary
 # RPC, or __await__ in stream-stream RPC.
-class _WrappedUnaryUnaryCall(_WrappedUnaryResponseMixin, aio.UnaryUnaryCall):
+class _WrappedUnaryUnaryCall(_WrappedUnaryResponseMixin[P], aio.UnaryUnaryCall):
     """Wrapped UnaryUnaryCall to map exceptions."""
 
 
-class _WrappedUnaryStreamCall(_WrappedStreamResponseMixin, aio.UnaryStreamCall):
+class _WrappedUnaryStreamCall(_WrappedStreamResponseMixin[P], aio.UnaryStreamCall):
     """Wrapped UnaryStreamCall to map exceptions."""
 
 
 class _WrappedStreamUnaryCall(
-    _WrappedUnaryResponseMixin, _WrappedStreamRequestMixin, aio.StreamUnaryCall
+    _WrappedUnaryResponseMixin[P], _WrappedStreamRequestMixin, aio.StreamUnaryCall
 ):
     """Wrapped StreamUnaryCall to map exceptions."""
 
 
 class _WrappedStreamStreamCall(
-    _WrappedStreamRequestMixin, _WrappedStreamResponseMixin, aio.StreamStreamCall
+    _WrappedStreamRequestMixin, _WrappedStreamResponseMixin[P], aio.StreamStreamCall
 ):
     """Wrapped StreamStreamCall to map exceptions."""
+
+
+# public type alias denoting the return type of async streaming gapic calls
+GrpcAsyncStream = _WrappedStreamResponseMixin[P]
+# public type alias denoting the return type of unary gapic calls
+AwaitableGrpcCall = _WrappedUnaryResponseMixin[P]
 
 
 def _wrap_unary_errors(callable_):
@@ -213,6 +223,7 @@ def create_channel(
     default_scopes=None,
     default_host=None,
     compression=None,
+    attempt_direct_path: Optional[bool] = False,
     **kwargs
 ):
     """Create an AsyncIO secure channel with credentials.
@@ -236,6 +247,22 @@ def create_channel(
         default_host (str): The default endpoint. e.g., "pubsub.googleapis.com".
         compression (grpc.Compression): An optional value indicating the
             compression method to be used over the lifetime of the channel.
+        attempt_direct_path (Optional[bool]): If set, Direct Path will be attempted
+            when the request is made. Direct Path is only available within a Google
+            Compute Engine (GCE) environment and provides a proxyless connection
+            which increases the available throughput, reduces latency, and increases
+            reliability. Note:
+
+            - This argument should only be set in a GCE environment and for Services
+              that are known to support Direct Path.
+            - If this argument is set outside of GCE, then this request will fail
+              unless the back-end service happens to have configured fall-back to DNS.
+            - If the request causes a `ServiceUnavailable` response, it is recommended
+              that the client repeat the request with `attempt_direct_path` set to
+              `False` as the Service may not support Direct Path.
+            - Using `ssl_credentials` with `attempt_direct_path` set to `True` will
+              result in `ValueError` as this combination  is not yet supported.
+
         kwargs: Additional key-word args passed to :func:`aio.secure_channel`.
 
     Returns:
@@ -243,7 +270,14 @@ def create_channel(
 
     Raises:
         google.api_core.DuplicateCredentialArgs: If both a credentials object and credentials_file are passed.
+        ValueError: If `ssl_credentials` is set and `attempt_direct_path` is set to `True`.
     """
+
+    # If `ssl_credentials` is set and `attempt_direct_path` is set to `True`,
+    # raise ValueError as this is not yet supported.
+    # See https://github.com/googleapis/python-api-core/issues/590
+    if ssl_credentials and attempt_direct_path:
+        raise ValueError("Using ssl_credentials with Direct Path is not supported")
 
     composite_credentials = grpc_helpers._create_composite_credentials(
         credentials=credentials,
@@ -254,6 +288,9 @@ def create_channel(
         quota_project_id=quota_project_id,
         default_host=default_host,
     )
+
+    if attempt_direct_path:
+        target = grpc_helpers._modify_target_for_direct_path(target)
 
     return aio.secure_channel(
         target, composite_credentials, compression=compression, **kwargs
