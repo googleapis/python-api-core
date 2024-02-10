@@ -112,7 +112,7 @@ async def test_common_methods_in_wrapped_call():
 async def test_wrap_errors_w_stream_type(callable_type, expected_wrapper_type):
     class ConcreteMulticallable(callable_type):
         def __call__(self, *args, **kwargs):
-            pass
+            raise NotImplementedError("Should not be called")
 
     with mock.patch.object(
         grpc_helpers_async, "_wrap_stream_errors"
