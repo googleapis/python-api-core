@@ -42,24 +42,6 @@ DEFAULT = _MethodDefault._DEFAULT_VALUE
 so the default should be used."""
 
 
-def _is_not_none_or_false(value):
-    return value is not None and value is not False
-
-
-def _apply_decorators(func, decorators):
-    """Apply a list of decorators to a given function.
-
-    ``decorators`` may contain items that are ``None`` or ``False`` which will
-    be ignored.
-    """
-    filtered_decorators = filter(_is_not_none_or_false, reversed(decorators))
-
-    for decorator in filtered_decorators:
-        func = decorator(func)
-
-    return func
-
-
 class _GapicCallable(object):
     """Callable that applies retry, timeout, and metadata logic.
 
