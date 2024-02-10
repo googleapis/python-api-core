@@ -91,12 +91,12 @@ class _GapicCallable(object):
 
         # Add the user agent metadata to the call.
         if self._metadata is not None:
-            metadata = kwargs.get("metadata", [])
-            # Due to the nature of invocation, None should be treated the same
-            # as not specified.
-            if metadata is None:
-                metadata = []
-            kwargs["metadata"] = (*self._metadata, *metadata)
+            try:
+                # attempt to concatenate default metadata with user-provided metadata
+                kwargs["metadata"] = (*kwargs["metadata"], *self._metadata)
+            except KeyError:
+                # if metadata is not provided, use just the default metadata
+                kwargs["metadata"] = self._metadata
 
         call = self._build_wrapped_call(timeout, retry)
         return call(*args, **kwargs)
