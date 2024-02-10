@@ -86,7 +86,7 @@ class _GapicCallable(object):
 
         if compression is DEFAULT:
             compression = self._compression
-        if self._compression is not None:
+        if compression is not None:
             kwargs["compression"] = compression
 
         # Add the user agent metadata to the call.
@@ -94,7 +94,7 @@ class _GapicCallable(object):
             try:
                 # attempt to concatenate default metadata with user-provided metadata
                 kwargs["metadata"] = (*kwargs["metadata"], *self._metadata)
-            except KeyError:
+            except (KeyError, TypeError):
                 # if metadata is not provided, use just the default metadata
                 kwargs["metadata"] = self._metadata
 
