@@ -98,6 +98,32 @@ async def test_common_methods_in_wrapped_call():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "callable_type,expected_wrapper_type",
+    [
+        (grpc.aio.UnaryStreamMultiCallable, grpc_helpers_async._WrappedUnaryStreamCall),
+        (grpc.aio.StreamUnaryMultiCallable, grpc_helpers_async._WrappedStreamUnaryCall),
+        (
+            grpc.aio.StreamStreamMultiCallable,
+            grpc_helpers_async._WrappedStreamStreamCall,
+        ),
+    ],
+)
+async def test_wrap_errors_w_stream_type(callable_type, expected_wrapper_type):
+    class ConcreteMulticallable(callable_type):
+        def __call__(self, *args, **kwargs):
+            pass
+
+    with mock.patch.object(
+        grpc_helpers_async, "_wrap_stream_errors"
+    ) as wrap_stream_errors:
+        callable_ = ConcreteMulticallable()
+        grpc_helpers_async.wrap_errors(callable_)
+        assert wrap_stream_errors.call_count == 1
+        wrap_stream_errors.assert_called_once_with(callable_, expected_wrapper_type)
+
+
+@pytest.mark.asyncio
 async def test_wrap_stream_errors_unary_stream():
     mock_call = mock.Mock(aio.UnaryStreamCall, autospec=True)
     multicallable = mock.Mock(return_value=mock_call)
