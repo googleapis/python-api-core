@@ -174,8 +174,9 @@ def _wrap_stream_errors(callable_, wrapper_type):
     @functools.wraps(callable_)
     async def error_remapped_callable(*args, **kwargs):
         call = callable_(*args, **kwargs)
+        call = wrapper_type().with_call(call)
         await call.wait_for_connection()
-        return wrapper_type().with_call(call)
+        return call
 
     return error_remapped_callable
 
