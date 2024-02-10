@@ -115,10 +115,10 @@ class _GapicCallable(object):
             retry = self._retry
         if retry is not None:
             wrapped_func = retry(wrapped_func)
-            
+
         if compression is DEFAULT:
             compression = self._compression
-         if self._compression is not None:
+        if self._compression is not None:
             kwargs["compression"] = compression
 
         # Add the user agent metadata to the call.
