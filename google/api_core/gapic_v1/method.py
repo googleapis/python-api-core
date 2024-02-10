@@ -101,11 +101,11 @@ class _GapicCallable(object):
         call = self._build_wrapped_call(timeout, retry)
         return call(*args, **kwargs)
 
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=4)
     def _build_wrapped_call(self, timeout, retry):
-        """Invoke the low-level RPC with retry, timeout, compression, and metadata."""
-
-        # construct wrapped function
+        """
+        Build a wrapped callable that applies retry, timeout, and metadata logic.
+        """
         wrapped_func = self._target
         if timeout is DEFAULT:
             timeout = self._timeout
