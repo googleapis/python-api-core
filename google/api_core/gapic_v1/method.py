@@ -84,20 +84,6 @@ class _GapicCallable(object):
     ):
         """Invoke the low-level RPC with retry, timeout, compression, and metadata."""
 
-        # construct wrapped function
-        wrapped_func = self._target
-        if timeout is DEFAULT:
-            timeout = self._timeout
-        elif isinstance(timeout, (int, float)):
-            timeout = TimeToDeadlineTimeout(timeout=timeout)
-        if timeout is not None:
-            wrapped_func = timeout(wrapped_func)
-
-        if retry is DEFAULT:
-            retry = self._retry
-        if retry is not None:
-            wrapped_func = retry(wrapped_func)
-
         if compression is DEFAULT:
             compression = self._compression
         if self._compression is not None:
@@ -112,7 +98,28 @@ class _GapicCallable(object):
                 metadata = []
             kwargs["metadata"] = (*self._metadata, *metadata)
 
-        return wrapped_func(*args, **kwargs)
+        call = self._build_wrapped_call(timeout, retry)
+        return call(*args, **kwargs)
+
+    @functools.lru_cache
+    def _build_wrapped_call(self, timeout, retry):
+        """Invoke the low-level RPC with retry, timeout, compression, and metadata."""
+
+        # construct wrapped function
+        wrapped_func = self._target
+        if timeout is DEFAULT:
+            timeout = self._timeout
+        elif isinstance(timeout, (int, float)):
+            timeout = TimeToDeadlineTimeout(timeout=timeout)
+        if timeout is not None:
+            wrapped_func = timeout(wrapped_func)
+
+        if retry is DEFAULT:
+            retry = self._retry
+        if retry is not None:
+            wrapped_func = retry(wrapped_func)
+
+        return wrapped_func
 
 
 def wrap_method(
