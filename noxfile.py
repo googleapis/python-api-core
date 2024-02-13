@@ -110,7 +110,7 @@ def default(session, install_grpc=True):
     pytest_args = [
         "python",
         "-m",
-        "py.test",
+        "pytest",
         *(
             # Helpful for running a single test or testfile.
             session.posargs
