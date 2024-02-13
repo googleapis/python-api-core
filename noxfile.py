@@ -61,7 +61,7 @@ def lint(session):
     Returns a failure if the linters find linting errors or sufficiently
     serious code quality issues.
     """
-    session.install("flake8", BLACK_VERSION)
+    session.install("flake8==6.0.0", BLACK_VERSION)
     session.install(".")
     session.run(
         "black",
@@ -97,9 +97,7 @@ def default(session, install_grpc=True):
     session.install(
         "dataclasses",
         "mock",
-        # Revert to just "pytest" once
-        # https://github.com/pytest-dev/pytest/issues/10451 is fixed
-        "pytest<7.2.0",
+        "pytest",
         "pytest-cov",
         "pytest-xdist",
     )
@@ -112,7 +110,7 @@ def default(session, install_grpc=True):
     pytest_args = [
         "python",
         "-m",
-        "py.test",
+        "pytest",
         *(
             # Helpful for running a single test or testfile.
             session.posargs
@@ -217,7 +215,20 @@ def docs(session):
     """Build the docs for this library."""
 
     session.install("-e", ".[grpc]")
-    session.install("sphinx==4.2.0", "alabaster", "recommonmark")
+    session.install(
+        # We need to pin to specific versions of the `sphinxcontrib-*` packages
+        # which still support sphinx 4.x.
+        # See https://github.com/googleapis/sphinx-docfx-yaml/issues/344
+        # and https://github.com/googleapis/sphinx-docfx-yaml/issues/345.
+        "sphinxcontrib-applehelp==1.0.4",
+        "sphinxcontrib-devhelp==1.0.2",
+        "sphinxcontrib-htmlhelp==2.0.1",
+        "sphinxcontrib-qthelp==1.0.3",
+        "sphinxcontrib-serializinghtml==1.1.5",
+        "sphinx==4.5.0",
+        "alabaster",
+        "recommonmark",
+    )
 
     shutil.rmtree(os.path.join("docs", "_build"), ignore_errors=True)
     session.run(
@@ -240,7 +251,18 @@ def docfx(session):
 
     session.install("-e", ".")
     session.install(
-        "sphinx==4.0.1", "alabaster", "recommonmark", "gcp-sphinx-docfx-yaml"
+        # We need to pin to specific versions of the `sphinxcontrib-*` packages
+        # which still support sphinx 4.x.
+        # See https://github.com/googleapis/sphinx-docfx-yaml/issues/344
+        # and https://github.com/googleapis/sphinx-docfx-yaml/issues/345.
+        "sphinxcontrib-applehelp==1.0.4",
+        "sphinxcontrib-devhelp==1.0.2",
+        "sphinxcontrib-htmlhelp==2.0.1",
+        "sphinxcontrib-qthelp==1.0.3",
+        "sphinxcontrib-serializinghtml==1.1.5",
+        "gcp-sphinx-docfx-yaml",
+        "alabaster",
+        "recommonmark",
     )
 
     shutil.rmtree(os.path.join("docs", "_build"), ignore_errors=True)
