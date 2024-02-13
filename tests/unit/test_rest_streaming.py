@@ -324,5 +324,3 @@ def test_next_html(response_type):
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
-
-
