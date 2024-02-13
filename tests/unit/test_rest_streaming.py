@@ -121,13 +121,15 @@ class ResponseMock(requests.Response):
 
 
 @pytest.mark.parametrize(
-    "random_split,resp_message_is_proto_plus,response_type",
-    [(False, True, EchoResponse), (False, False, httpbody_pb2.HttpBody)],
+    "random_split,resp_message_is_proto_plus",
+    [(False, True), (False, False)],
 )
-def test_next_simple(random_split, resp_message_is_proto_plus, response_type):
+def test_next_simple(random_split, resp_message_is_proto_plus):
     if resp_message_is_proto_plus:
+        response_type = EchoResponse
         responses = [EchoResponse(content="hello world"), EchoResponse(content="yes")]
     else:
+        response_type = httpbody_pb2.HttpBody
         responses = [
             httpbody_pb2.HttpBody(content_type="hello world"),
             httpbody_pb2.HttpBody(content_type="yes"),
@@ -141,16 +143,17 @@ def test_next_simple(random_split, resp_message_is_proto_plus, response_type):
 
 
 @pytest.mark.parametrize(
-    "random_split,resp_message_is_proto_plus,response_type",
+    "random_split,resp_message_is_proto_plus",
     [
-        (True, True, Song),
-        (False, True, Song),
-        (True, False, http_pb2.HttpRule),
-        (False, False, http_pb2.HttpRule),
+        (True, True),
+        (False, True),
+        (True, False),
+        (False, False),
     ],
 )
-def test_next_nested(random_split, resp_message_is_proto_plus, response_type):
+def test_next_nested(random_split, resp_message_is_proto_plus):
     if resp_message_is_proto_plus:
+        response_type = Song
         responses = [
             Song(title="some song", composer=Composer(given_name="some name")),
             Song(title="another song", date_added=datetime.datetime(2021, 12, 17)),
@@ -158,6 +161,7 @@ def test_next_nested(random_split, resp_message_is_proto_plus, response_type):
     else:
         # Although `http_pb2.HttpRule`` is used in the response, any response message
         # can be used which meets this criteria for the test of having a nested field.
+        response_type = http_pb2.HttpRule
         responses = [
             http_pb2.HttpRule(
                 selector="some selector",
@@ -176,22 +180,24 @@ def test_next_nested(random_split, resp_message_is_proto_plus, response_type):
 
 
 @pytest.mark.parametrize(
-    "random_split,resp_message_is_proto_plus,response_type",
+    "random_split,resp_message_is_proto_plus",
     [
-        (True, True, Song),
-        (False, True, Song),
-        (True, False, http_pb2.HttpRule),
-        (False, False, http_pb2.HttpRule),
+        (True, True),
+        (False, True),
+        (True, False),
+        (False, False),
     ],
 )
-def test_next_stress(random_split, resp_message_is_proto_plus, response_type):
+def test_next_stress(random_split, resp_message_is_proto_plus):
     n = 50
     if resp_message_is_proto_plus:
+        response_type = Song
         responses = [
             Song(title="title_%d" % i, composer=Composer(given_name="name_%d" % i))
             for i in range(n)
         ]
     else:
+        response_type = http_pb2.HttpRule
         responses = [
             http_pb2.HttpRule(
                 selector="selector_%d" % i,
@@ -207,18 +213,17 @@ def test_next_stress(random_split, resp_message_is_proto_plus, response_type):
 
 
 @pytest.mark.parametrize(
-    "random_split,resp_message_is_proto_plus,response_type",
+    "random_split,resp_message_is_proto_plus",
     [
-        (True, True, Song),
-        (False, True, Song),
-        (True, False, http_pb2.Http),
-        (False, False, http_pb2.Http),
+        (True, True),
+        (False, True),
+        (True, False),
+        (False, False),
     ],
 )
-def test_next_escaped_characters_in_string(
-    random_split, resp_message_is_proto_plus, response_type
-):
+def test_next_escaped_characters_in_string(random_split, resp_message_is_proto_plus):
     if resp_message_is_proto_plus:
+        response_type = Song
         composer_with_relateds = Composer()
         relateds = ["Artist A", "Artist B"]
         composer_with_relateds.relateds = relateds
@@ -234,6 +239,7 @@ def test_next_escaped_characters_in_string(
             Song(title='\\{"key": ["value",]}\\', composer=composer_with_relateds),
         ]
     else:
+        response_type = http_pb2.Http
         responses = [
             http_pb2.Http(
                 rules=[
@@ -318,3 +324,5 @@ def test_next_html(response_type):
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
+
+
