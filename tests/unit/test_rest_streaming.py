@@ -324,3 +324,16 @@ def test_next_html(response_type):
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
+
+
+def test_invalid_response_class():
+    class SomeClass:
+        pass
+
+    resp = ResponseMock(responses=[], response_cls=SomeClass)
+    response_iterator = rest_streaming.ResponseIterator(resp, SomeClass)
+    with pytest.raises(
+        ValueError,
+        match="Response message class must be a subclass of proto.Message or google.protobuf.message.Message",
+    ):
+        response_iterator._grab()
