@@ -31,6 +31,9 @@ class ResponseIterator:
         response (requests.Response): An API response object.
         response_message_cls (Union[proto.Message, google.protobuf.message.Message]): A response
         class expected to be returned from an API.
+
+    Raises:
+        ValueError: If `response_message_cls` is not a subclass of `proto.Message` or `google.protobuf.message.Message`.
     """
 
     def __init__(
@@ -116,8 +119,12 @@ class ResponseIterator:
         # Add extra quotes to make json.loads happy.
         if issubclass(self._response_message_cls, proto.Message):
             return self._response_message_cls.from_json(self._ready_objs.popleft())
-        else:
+        elif issubclass(self._response_message_cls, google.protobuf.message.Message):
             return Parse(self._ready_objs.popleft(), self._response_message_cls())
+        else:
+            raise ValueError(
+                "Response message class must be a subclass of proto.Message or google.protobuf.message.Message."
+            )
 
     def __iter__(self):
         return self
