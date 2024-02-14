@@ -570,7 +570,7 @@ class ChannelStub(grpc.Channel):
             raise AttributeError
 
     def unary_unary(
-        self, method, request_serializer=None, response_deserializer=None,_registered_method=False
+        self, method, request_serializer=None, response_deserializer=None, _registered_method=False
     ):
         """grpc.Channel.unary_unary implementation."""
         return self._stub_for_method(method)
