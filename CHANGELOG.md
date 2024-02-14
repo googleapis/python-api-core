@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [1.34.1](https://github.com/googleapis/python-api-core/compare/v1.34.0...v1.34.1) (2024-02-13)
+
+
+### Bug Fixes
+
+* **v1:** Resolve issue handling protobuf responses in rest streaming ([#609](https://github.com/googleapis/python-api-core/issues/609)) ([d386d2e](https://github.com/googleapis/python-api-core/commit/d386d2e784c53b45f4eca4bd8e8afdef0d55c8af))
+
 ## [1.34.0](https://github.com/googleapis/python-api-core/compare/v1.33.2...v1.34.0) (2022-12-01)
 
 
