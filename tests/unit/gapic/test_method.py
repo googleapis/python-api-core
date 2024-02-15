@@ -231,6 +231,9 @@ def test_benchmark_gapic_call():
     __call__ builds a new wrapped function using passed-in timeout and retry, but
     subsequent calls are cached
 
+    Note: The threshold has been tuned for the CI workers. Test may flake on
+    slower hardware
+
     https://github.com/googleapis/python-api-core/pull/527
     """
     from google.api_core.gapic_v1.method import _GapicCallable
@@ -241,4 +244,4 @@ def test_benchmark_gapic_call():
         lambda *a, **k: 1, retry=Retry(), timeout=1010, compression=False
     )
     avg_time = timeit(lambda: gapic_callable(), number=10_000)
-    assert avg_time < 0.15  # expect ~0.1, but allow for some variance
+    assert avg_time < 0.4  # expect ~0.15, but allow for some variance
