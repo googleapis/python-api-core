@@ -41,7 +41,7 @@ jobs:
       env:
         COVERAGE_FILE: .coverage${{ matrix.option }}-${{matrix.python }}
       run: |
-        nox -s unit${{ matrix.option }}-${{ matrix.python }}
+        nox -s unit${{ matrix.option }}-${{ matrix.python }} -- -s -v
     - name: Upload coverage results
       uses: actions/upload-artifact@v3
       with:
