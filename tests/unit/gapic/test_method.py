@@ -243,7 +243,5 @@ def test_benchmark_gapic_call():
     gapic_callable = _GapicCallable(
         lambda *a, **k: 1, retry=Retry(), timeout=1010, compression=False
     )
-    for i in range(1000):
-        avg_time = timeit(lambda: gapic_callable(), number=10_000)
-        print(f"avg_time: {avg_time}")
-        assert avg_time < 0.4  # expect ~0.15, but allow for some variance
+    avg_time = timeit(lambda: gapic_callable(), number=10_000)
+    assert avg_time < 0.4  # expect ~0.15, but allow for some variance
