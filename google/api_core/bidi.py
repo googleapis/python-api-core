@@ -663,7 +663,8 @@ class BackgroundConsumer(object):
                 response = self._bidi_rpc.recv()
                 _LOGGER.debug("recved response.")
                 self._on_response(response)
-
+        except (exceptions.Cancelled, StopIteration):
+            pass
         except exceptions.GoogleAPICallError as exc:
             _LOGGER.debug(
                 "%s caught error %s and will exit. Generally this is due to "
