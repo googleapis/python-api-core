@@ -1,7 +1,5 @@
 from google.auth.exceptions import MutualTLSChannelError
-from google.auth.credentials import Credentials as ga_credentials
-from oauth2client.client import Credentials as oauth2_credentials
-from typing import Optional, Union
+from typing import Any, Optional
 
 _DEFAULT_UNIVERSE = "googleapis.com"
 
@@ -48,13 +46,13 @@ def _get_universe_domain(
 
 
 def _compare_universes(
-    client_universe: str, credentials: Union[ga_credentials, oauth2_credentials]
+    client_universe: str, credentials: Any
 ) -> bool:
     """Returns True iff the universe domains used by the client and credentials match.
 
     Args:
         client_universe (str): The universe domain configured via the client options.
-        credentials Union[google.auth.credentials.Credentials, oauth2client.client.Credentials]: The credentials being used in the client.
+        credentials Any: The credentials being used in the client.
 
     Returns:
         bool: True iff client_universe matches the universe in credentials.

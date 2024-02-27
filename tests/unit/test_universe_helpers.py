@@ -1,7 +1,6 @@
 import pytest
 from google.api_core import universe_helpers
 from google.auth import credentials
-from oauth2client import client
 
 
 def test__get_universe_domain():
@@ -30,9 +29,6 @@ def test__get_universe_domain():
 
 def test__compare_universes():
     ga_credentials = credentials.AnonymousCredentials()
-    oauth2_credentials = client.GoogleCredentials(
-        None, None, None, None, None, None, None, None
-    )
     mismatch_err_msg = (
         "The configured universe domain (foo.com) does not match the universe domain "
         "found in the credentials (googleapis.com). "
@@ -46,17 +42,7 @@ def test__compare_universes():
         )
         is True
     )
-    assert (
-        universe_helpers._compare_universes(
-            universe_helpers._DEFAULT_UNIVERSE, oauth2_credentials
-        )
-        is True
-    )
 
     with pytest.raises(ValueError) as excinfo:
         universe_helpers._compare_universes("foo.com", ga_credentials)
-    assert str(excinfo.value) == mismatch_err_msg
-
-    with pytest.raises(ValueError) as excinfo:
-        universe_helpers._compare_universes("foo.com", oauth2_credentials)
     assert str(excinfo.value) == mismatch_err_msg
