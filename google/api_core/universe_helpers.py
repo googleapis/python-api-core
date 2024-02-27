@@ -1,3 +1,19 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Helpers for universe domain."""
+
 from google.auth.exceptions import MutualTLSChannelError
 from typing import Any, Optional
 
@@ -6,7 +22,6 @@ _DEFAULT_UNIVERSE = "googleapis.com"
 _mTLS_Universe_Error = MutualTLSChannelError(
     f"mTLS is not supported in any universe other than {_DEFAULT_UNIVERSE}."
 )
-_Empty_Universe_Error = ValueError("Universe Domain cannot be an empty string.")
 
 
 class _UniverseMismatchError(ValueError):
@@ -22,7 +37,7 @@ class _UniverseMismatchError(ValueError):
 
 def _get_universe_domain(
     client_universe_domain: Optional[str], universe_domain_env: Optional[str]
-) -> str:  # temp disable Optional
+) -> str:
     """Return the universe domain used by the client.
 
     Args:
@@ -41,7 +56,7 @@ def _get_universe_domain(
     elif universe_domain_env is not None:
         universe_domain = universe_domain_env
     if len(universe_domain.strip()) == 0:
-        raise _Empty_Universe_Error
+        raise ValueError("Universe Domain cannot be an empty string.")
     return universe_domain
 
 
