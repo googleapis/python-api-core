@@ -45,9 +45,7 @@ def _get_universe_domain(
     return universe_domain
 
 
-def _compare_universes(
-    client_universe: str, credentials: Any
-) -> bool:
+def _compare_universes(client_universe: str, credentials: Any) -> bool:
     """Returns True iff the universe domains used by the client and credentials match.
 
     Args:
