@@ -44,13 +44,13 @@ def test__compare_universes():
         universe_helpers._compare_universes(
             universe_helpers._DEFAULT_UNIVERSE, ga_credentials
         )
-        == True
+        is True
     )
     assert (
         universe_helpers._compare_universes(
             universe_helpers._DEFAULT_UNIVERSE, oauth2_credentials
         )
-        == True
+        is True
     )
 
     with pytest.raises(ValueError) as excinfo:
