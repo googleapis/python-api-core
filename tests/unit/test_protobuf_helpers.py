@@ -476,11 +476,6 @@ def test_field_mask_different_level_diffs():
     ]
 
 
-@pytest.mark.skipif(
-    sys.version_info.major == 2,
-    reason="Field names with trailing underscores can only be created"
-    "through proto-plus, which is Python 3 only.",
-)
 def test_field_mask_ignore_trailing_underscore():
     import proto
 
@@ -496,11 +491,6 @@ def test_field_mask_ignore_trailing_underscore():
     ]
 
 
-@pytest.mark.skipif(
-    sys.version_info.major == 2,
-    reason="Field names with trailing underscores can only be created"
-    "through proto-plus, which is Python 3 only.",
-)
 def test_field_mask_ignore_trailing_underscore_with_nesting():
     import proto
 
