@@ -24,7 +24,7 @@ mTLS_Universe_Error = MutualTLSChannelError(
 )
 
 
-class UniverseMismatchError(ValueError):
+class _UniverseMismatchError(ValueError):
     def __init__(self, client_universe, credentials_universe):
         message = (
             f"The configured universe domain ({client_universe}) does not match the universe domain "
@@ -42,7 +42,8 @@ def determine_domain(
 
     Args:
         client_universe_domain (Optional[str]): The universe domain configured via the client options.
-        universe_domain_env (Optional[str]): The universe domain configured via the "GOOGLE_CLOUD_UNIVERSE_DOMAIN" environment variable.
+        universe_domain_env (Optional[str]): The universe domain configured via the
+        "GOOGLE_CLOUD_UNIVERSE_DOMAIN" environment variable.
 
     Returns:
         str: The universe domain to be used by the client.
@@ -76,5 +77,5 @@ def compare_domains(client_universe: str, credentials: Any) -> bool:
     credentials_universe = getattr(credentials, "universe_domain", DEFAULT_UNIVERSE)
 
     if client_universe != credentials_universe:
-        raise UniverseMismatchError(client_universe, credentials_universe)
+        raise _UniverseMismatchError(client_universe, credentials_universe)
     return True
