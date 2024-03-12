@@ -24,7 +24,13 @@ mTLS_Universe_Error = MutualTLSChannelError(
 )
 
 
-class _UniverseMismatchError(ValueError):
+class EmptyUniverseError(ValueError):
+    def __init__(self):
+        message = "Universe Domain cannot be an empty string."
+        super().__init__(message)
+
+
+class UniverseMismatchError(ValueError):
     def __init__(self, client_universe, credentials_universe):
         message = (
             f"The configured universe domain ({client_universe}) does not match the universe domain "
@@ -77,5 +83,5 @@ def compare_domains(client_universe: str, credentials: Any) -> bool:
     credentials_universe = getattr(credentials, "universe_domain", DEFAULT_UNIVERSE)
 
     if client_universe != credentials_universe:
-        raise _UniverseMismatchError(client_universe, credentials_universe)
+        raise UniverseMismatchError(client_universe, credentials_universe)
     return True

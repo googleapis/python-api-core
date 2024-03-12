@@ -14,36 +14,44 @@
 
 import pytest
 from google.api_core import universe
-from google.auth import credentials
+
+
+class _Fake_Credentials:
+
+    def __init__(self, universe_domain=None):
+        if universe_domain:
+            self.universe_domain = universe_domain
 
 
 def test_determine_domain():
-    client_universe_domain = "foo.com"
-    universe_domain_env = "bar.com"
+    domain_client = "foo.com"
+    domain_env = "bar.com"
 
-    assert (
-        universe.determine_domain(client_universe_domain, universe_domain_env)
-        == client_universe_domain
-    )
-    assert universe.determine_domain(None, universe_domain_env) == universe_domain_env
+    assert universe.determine_domain(domain_client, domain_env) == domain_client
+    assert universe.determine_domain(None, domain_env) == domain_env
+    assert universe.determine_domain(domain_client, None) == domain_client
     assert universe.determine_domain(None, None) == universe.DEFAULT_UNIVERSE
 
     with pytest.raises(ValueError) as excinfo:
         universe.determine_domain("", None)
     assert str(excinfo.value) == "Universe Domain cannot be an empty string."
 
+    with pytest.raises(ValueError) as excinfo:
+        universe.determine_domain(None, "")
+    assert str(excinfo.value) == "Universe Domain cannot be an empty string."
+
 
 def test_compare_domains():
-    ga_credentials = credentials.AnonymousCredentials()
-    mismatch_err_msg = (
-        "The configured universe domain (foo.com) does not match the universe domain "
-        "found in the credentials (googleapis.com). "
-        "If you haven't configured the universe domain explicitly, "
-        "`googleapis.com` is the default."
+    fake_domain = "foo.com"
+
+    assert (
+        universe.compare_domains(universe.DEFAULT_UNIVERSE, _Fake_Credentials()) is True
     )
+    assert universe.compare_domains(fake_domain, _Fake_Credentials(fake_domain)) is True
 
-    assert universe.compare_domains(universe.DEFAULT_UNIVERSE, ga_credentials) is True
-
-    with pytest.raises(ValueError) as excinfo:
-        universe.compare_domains("foo.com", ga_credentials)
-    assert str(excinfo.value) == mismatch_err_msg
+    with pytest.raises(universe.UniverseMismatchError) as excinfo:
+        universe.compare_domains(
+            universe.DEFAULT_UNIVERSE, _Fake_Credentials(fake_domain)
+        )
+    assert str(excinfo.value).find(universe.DEFAULT_UNIVERSE) >= 0
+    assert str(excinfo.value).find(fake_domain) >= 0
