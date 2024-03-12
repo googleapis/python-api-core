@@ -17,7 +17,6 @@ from google.api_core import universe
 
 
 class _Fake_Credentials:
-
     def __init__(self, universe_domain=None):
         if universe_domain:
             self.universe_domain = universe_domain
