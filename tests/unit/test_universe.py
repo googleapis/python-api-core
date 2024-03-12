@@ -17,7 +17,6 @@ from google.api_core import universe
 
 
 class _Fake_Credentials:
-
     def __init__(self, universe_domain=None):
         if universe_domain:
             self.universe_domain = universe_domain
@@ -32,10 +31,10 @@ def test_determine_domain():
     assert universe.determine_domain(domain_client, None) == domain_client
     assert universe.determine_domain(None, None) == universe.DEFAULT_UNIVERSE
 
-    with pytest.raises(universe.EmptyUniverseError) as excinfo:
+    with pytest.raises(universe.EmptyUniverseError):
         universe.determine_domain("", None)
 
-    with pytest.raises(universe.EmptyUniverseError) as excinfo:
+    with pytest.raises(universe.EmptyUniverseError):
         universe.determine_domain(None, "")
 
 
