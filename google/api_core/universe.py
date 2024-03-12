@@ -63,7 +63,7 @@ def determine_domain(
     elif universe_domain_env is not None:
         universe_domain = universe_domain_env
     if len(universe_domain.strip()) == 0:
-        raise ValueError("Universe Domain cannot be an empty string.")
+        raise EmptyUniverseError
     return universe_domain
 
 

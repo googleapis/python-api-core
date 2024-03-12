@@ -32,13 +32,11 @@ def test_determine_domain():
     assert universe.determine_domain(domain_client, None) == domain_client
     assert universe.determine_domain(None, None) == universe.DEFAULT_UNIVERSE
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(universe.EmptyUniverseError) as excinfo:
         universe.determine_domain("", None)
-    assert str(excinfo.value) == "Universe Domain cannot be an empty string."
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(universe.EmptyUniverseError) as excinfo:
         universe.determine_domain(None, "")
-    assert str(excinfo.value) == "Universe Domain cannot be an empty string."
 
 
 def test_compare_domains():
