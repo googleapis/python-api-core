@@ -22,19 +22,11 @@ def test_determine_domain():
     universe_domain_env = "bar.com"
 
     assert (
-        universe.determine_domain(
-            client_universe_domain, universe_domain_env
-        )
+        universe.determine_domain(client_universe_domain, universe_domain_env)
         == client_universe_domain
     )
-    assert (
-        universe.determine_domain(None, universe_domain_env)
-        == universe_domain_env
-    )
-    assert (
-        universe.determine_domain(None, None)
-        == universe.DEFAULT_UNIVERSE
-    )
+    assert universe.determine_domain(None, universe_domain_env) == universe_domain_env
+    assert universe.determine_domain(None, None) == universe.DEFAULT_UNIVERSE
 
     with pytest.raises(ValueError) as excinfo:
         universe.determine_domain("", None)
@@ -50,12 +42,7 @@ def test_compare_domains():
         "`googleapis.com` is the default."
     )
 
-    assert (
-        universe.compare_domains(
-            universe.DEFAULT_UNIVERSE, ga_credentials
-        )
-        is True
-    )
+    assert universe.compare_domains(universe.DEFAULT_UNIVERSE, ga_credentials) is True
 
     with pytest.raises(ValueError) as excinfo:
         universe.compare_domains("foo.com", ga_credentials)
