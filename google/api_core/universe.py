@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@
 from google.auth.exceptions import MutualTLSChannelError
 from typing import Any, Optional
 
-_DEFAULT_UNIVERSE = "googleapis.com"
+DEFAULT_UNIVERSE = "googleapis.com"
 
-_mTLS_Universe_Error = MutualTLSChannelError(
-    f"mTLS is not supported in any universe other than {_DEFAULT_UNIVERSE}."
+mTLS_Universe_Error = MutualTLSChannelError(
+    f"mTLS is not supported in any universe other than {DEFAULT_UNIVERSE}."
 )
 
 
-class _UniverseMismatchError(ValueError):
+class UniverseMismatchError(ValueError):
     def __init__(self, client_universe, credentials_universe):
         message = (
             f"The configured universe domain ({client_universe}) does not match the universe domain "
             f"found in the credentials ({credentials_universe}). "
             "If you haven't configured the universe domain explicitly, "
-            f"`{_DEFAULT_UNIVERSE}` is the default."
+            f"`{DEFAULT_UNIVERSE}` is the default."
         )
         super().__init__(message)
 
 
-def _get_universe_domain(
+def determine_domain(
     client_universe_domain: Optional[str], universe_domain_env: Optional[str]
 ) -> str:
     """Return the universe domain used by the client.
@@ -50,7 +50,7 @@ def _get_universe_domain(
     Raises:
         ValueError: If the universe domain is an empty string.
     """
-    universe_domain = _DEFAULT_UNIVERSE
+    universe_domain = DEFAULT_UNIVERSE
     if client_universe_domain is not None:
         universe_domain = client_universe_domain
     elif universe_domain_env is not None:
@@ -60,7 +60,7 @@ def _get_universe_domain(
     return universe_domain
 
 
-def _compare_universes(client_universe: str, credentials: Any) -> bool:
+def compare_domains(client_universe: str, credentials: Any) -> bool:
     """Returns True iff the universe domains used by the client and credentials match.
 
     Args:
@@ -73,8 +73,8 @@ def _compare_universes(client_universe: str, credentials: Any) -> bool:
     Raises:
         ValueError: when client_universe does not match the universe in credentials.
     """
-    credentials_universe = getattr(credentials, "universe_domain", _DEFAULT_UNIVERSE)
+    credentials_universe = getattr(credentials, "universe_domain", DEFAULT_UNIVERSE)
 
     if client_universe != credentials_universe:
-        raise _UniverseMismatchError(client_universe, credentials_universe)
+        raise UniverseMismatchError(client_universe, credentials_universe)
     return True

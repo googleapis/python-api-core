@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,35 +13,35 @@
 # limitations under the License.
 
 import pytest
-from google.api_core import universe_helpers
+from google.api_core import universe
 from google.auth import credentials
 
 
-def test__get_universe_domain():
+def test_determine_domain():
     client_universe_domain = "foo.com"
     universe_domain_env = "bar.com"
 
     assert (
-        universe_helpers._get_universe_domain(
+        universe.determine_domain(
             client_universe_domain, universe_domain_env
         )
         == client_universe_domain
     )
     assert (
-        universe_helpers._get_universe_domain(None, universe_domain_env)
+        universe.determine_domain(None, universe_domain_env)
         == universe_domain_env
     )
     assert (
-        universe_helpers._get_universe_domain(None, None)
-        == universe_helpers._DEFAULT_UNIVERSE
+        universe.determine_domain(None, None)
+        == universe.DEFAULT_UNIVERSE
     )
 
     with pytest.raises(ValueError) as excinfo:
-        universe_helpers._get_universe_domain("", None)
+        universe.determine_domain("", None)
     assert str(excinfo.value) == "Universe Domain cannot be an empty string."
 
 
-def test__compare_universes():
+def test_compare_domains():
     ga_credentials = credentials.AnonymousCredentials()
     mismatch_err_msg = (
         "The configured universe domain (foo.com) does not match the universe domain "
@@ -51,12 +51,12 @@ def test__compare_universes():
     )
 
     assert (
-        universe_helpers._compare_universes(
-            universe_helpers._DEFAULT_UNIVERSE, ga_credentials
+        universe.compare_domains(
+            universe.DEFAULT_UNIVERSE, ga_credentials
         )
         is True
     )
 
     with pytest.raises(ValueError) as excinfo:
-        universe_helpers._compare_universes("foo.com", ga_credentials)
+        universe.compare_domains("foo.com", ga_credentials)
     assert str(excinfo.value) == mismatch_err_msg
