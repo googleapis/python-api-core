@@ -55,15 +55,11 @@ def test_compare_domains():
     assert str(excinfo.value).find(fake_domain) >= 0
 
     with pytest.raises(universe.UniverseMismatchError) as excinfo:
-        universe.compare_domains(
-            fake_domain, _Fake_Credentials()
-        )
+        universe.compare_domains(fake_domain, _Fake_Credentials())
     assert str(excinfo.value).find(fake_domain) >= 0
     assert str(excinfo.value).find(universe.DEFAULT_UNIVERSE) >= 0
 
     with pytest.raises(universe.UniverseMismatchError) as excinfo:
-        universe.compare_domains(
-            fake_domain, _Fake_Credentials(another_fake_domain)
-        )
+        universe.compare_domains(fake_domain, _Fake_Credentials(another_fake_domain))
     assert str(excinfo.value).find(fake_domain) >= 0
     assert str(excinfo.value).find(another_fake_domain) >= 0
