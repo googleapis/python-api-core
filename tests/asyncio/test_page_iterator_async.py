@@ -16,7 +16,6 @@ import inspect
 
 import mock
 import pytest
-import math
 
 from google.api_core import page_iterator_async, page_iterator
 
