@@ -42,10 +42,8 @@ def test_compare_domains():
     fake_domain = "foo.com"
     another_fake_domain = "bar.com"
 
-    assert (
-        universe.compare_domains(universe.DEFAULT_UNIVERSE, _Fake_Credentials()) is True
-    )
-    assert universe.compare_domains(fake_domain, _Fake_Credentials(fake_domain)) is True
+    assert universe.compare_domains(universe.DEFAULT_UNIVERSE, _Fake_Credentials())
+    assert universe.compare_domains(fake_domain, _Fake_Credentials(fake_domain))
 
     with pytest.raises(universe.UniverseMismatchError) as excinfo:
         universe.compare_domains(
