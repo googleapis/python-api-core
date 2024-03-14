@@ -14,14 +14,9 @@
 
 """Helpers for universe domain."""
 
-from google.auth.exceptions import MutualTLSChannelError
 from typing import Any, Optional
 
 DEFAULT_UNIVERSE = "googleapis.com"
-
-mTLS_Universe_Error = MutualTLSChannelError(
-    f"mTLS is not supported in any universe other than {DEFAULT_UNIVERSE}."
-)
 
 
 class EmptyUniverseError(ValueError):
