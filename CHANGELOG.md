@@ -4,6 +4,12 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.18.0rc0](https://github.com/googleapis/python-api-core/compare/v2.17.1...v2.18.0rc0) (2024-02-14)
+
+### Features
+
+* Add common logic for supporting universe domain ([#624](https://github.com/googleapis/python-api-core/issues/624)) ([94f2ca3](https://github.com/googleapis/python-api-core/commit/94f2ca3b4d094e6e10154634d3463d07ebea2035))
+
 ## [2.17.1](https://github.com/googleapis/python-api-core/compare/v2.17.0...v2.17.1) (2024-02-13)
 
 
