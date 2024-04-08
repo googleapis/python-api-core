@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.18.1](https://github.com/googleapis/python-api-core/compare/v2.18.0...v2.18.1) (2024-04-08)
+
+
+### Documentation
+
+* Fix docs session ([#636](https://github.com/googleapis/python-api-core/issues/636)) ([c38dd1e](https://github.com/googleapis/python-api-core/commit/c38dd1e5adad6ba0057e86bd93985989f9139683))
+
 ## [2.18.0](https://github.com/googleapis/python-api-core/compare/v2.17.1...v2.18.0) (2024-03-20)
 
 
