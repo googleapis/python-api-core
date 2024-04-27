@@ -45,7 +45,7 @@ jobs:
     - name: Upload coverage results
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-artifacts
+        name: coverage-artifact-${{ '{{' }} matrix.python {{ '}}' }}
         path: .coverage${{ matrix.option }}-${{ matrix.python }}
 
   report-coverage:
@@ -67,9 +67,9 @@ jobs:
     - name: Download coverage results
       uses: actions/download-artifact@v4
       with:
-        name: coverage-artifacts
         path: .coverage-results/
     - name: Report coverage results
       run: |
-        coverage combine .coverage-results/.coverage*
+        find .coverage-results -type f -name '*.zip' -exec unzip {} \;
+        coverage combine .coverage-results/**/.coverage*
         coverage report --show-missing --fail-under=100
