@@ -15,6 +15,8 @@
 from __future__ import absolute_import
 import os
 import pathlib
+import pytest
+import re
 import shutil
 
 # https://github.com/google/importlab/issues/25
@@ -25,6 +27,8 @@ BLACK_VERSION = "black==22.3.0"
 BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
+
+PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
 
 DEFAULT_PYTHON_VERSION = "3.10"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
@@ -72,7 +76,37 @@ def blacken(session):
     session.run("black", *BLACK_EXCLUDES, *BLACK_PATHS)
 
 
-def default(session, install_grpc=True):
+def install_prerelease_dependencies(session, constraints_path):
+    with open(constraints_path, encoding="utf-8") as constraints_file:
+        constraints_text = constraints_file.read()
+        # Ignore leading whitespace and comment lines.
+        constraints_deps = [
+            match.group(1)
+            for match in re.finditer(
+                r"^\s*(\S+)(?===\S+)", constraints_text, flags=re.MULTILINE
+            )
+        ]
+        session.install(*constraints_deps)
+        prerel_deps = [
+            "google-auth",
+            "googleapis-common-protos",
+            "grpcio",
+            "grpcio-status",
+            "proto-plus",
+            "protobuf",
+        ]
+
+        for dep in prerel_deps:
+            session.install("--pre", "--no-deps", "--upgrade", dep)
+
+        # Remaining dependencies
+        other_deps = [
+            "requests",
+        ]
+        session.install(*other_deps)
+
+
+def default(session, install_grpc=True, prerelease=False):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -80,9 +114,8 @@ def default(session, install_grpc=True):
     Python corresponding to the ``nox`` binary the ``PATH`` can
     run the tests.
     """
-    constraints_path = str(
-        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-    )
+    if prerelease and not install_grpc:
+        pytest.skip("The pre-release session cannot be run without grpc")
 
     session.install(
         "dataclasses",
@@ -92,10 +125,41 @@ def default(session, install_grpc=True):
         "pytest-xdist",
     )
 
-    if install_grpc:
-        session.install("-e", ".[grpc]", "-c", constraints_path)
+    constraints_dir = str(CURRENT_DIRECTORY / "testing")
+
+    if prerelease:
+        install_prerelease_dependencies(
+            session, f"{constraints_dir}/constraints-{PYTHON_VERSIONS[0]}.txt"
+        )
+        # This *must* be the last install command to get the package from source.
+        session.install("-e", ".", "--no-deps")
     else:
-        session.install("-e", ".", "-c", constraints_path)
+        if install_grpc:
+            session.install(
+                "-e",
+                ".[grpc]",
+                "-c",
+                f"{constraints_dir}/constraints-{session.python}.txt",
+            )
+        else:
+            session.install(
+                "-e", ".", "-c", f"{constraints_dir}/constraints-{session.python}.txt"
+            )
+
+    # Print out package versions of dependencies
+    session.run(
+        "python", "-c", "import google.protobuf; print(google.protobuf.__version__)"
+    )
+    # Support for proto.version was added in v1.23.0
+    # https://github.com/googleapis/proto-plus-python/releases/tag/v1.23.0
+    session.run(
+        "python",
+        "-c",
+        """import proto; hasattr(proto, "version") and print(proto.version.__version__)""",
+    )
+    if install_grpc:
+        session.run("python", "-c", "import grpc; print(grpc.__version__)")
+    session.run("python", "-c", "import google.auth; print(google.auth.__version__)")
 
     pytest_args = [
         "python",
@@ -130,15 +194,26 @@ def default(session, install_grpc=True):
     session.run(*pytest_args)
 
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"])
+@nox.session(python=PYTHON_VERSIONS)
 def unit(session):
     """Run the unit test suite."""
     default(session)
 
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"])
+@nox.session(python=PYTHON_VERSIONS[-1])
+def unit_prerelease(session):
+    """Run the unit test suite."""
+    default(session, prerelease=True)
+
+
+@nox.session(python=PYTHON_VERSIONS)
 def unit_grpc_gcp(session):
-    """Run the unit test suite with grpcio-gcp installed."""
+    """
+    Run the unit test suite with grpcio-gcp installed.
+    `grpcio-gcp` doesn't support protobuf 4+.
+    Remove extra `grpcgcp` when protobuf 3.x is dropped.
+    https://github.com/googleapis/python-api-core/issues/594
+    """
     constraints_path = str(
         CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
     )
@@ -150,7 +225,7 @@ def unit_grpc_gcp(session):
     default(session)
 
 
-@nox.session(python=["3.8", "3.10", "3.11", "3.12"])
+@nox.session(python=PYTHON_VERSIONS)
 def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
     default(session, install_grpc=False)
@@ -164,10 +239,10 @@ def lint_setup_py(session):
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
-@nox.session(python="3.8")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def pytype(session):
     """Run type-checking."""
-    session.install(".[grpc]", "pytype >= 2019.3.21")
+    session.install(".[grpc]", "pytype")
     session.run("pytype")
 
 
@@ -175,12 +250,10 @@ def pytype(session):
 def mypy(session):
     """Run type-checking."""
     session.install(".[grpc]", "mypy")
-    # Exclude types-protobuf==4.24.0.20240106
-    # See https://github.com/python/typeshed/issues/11254
     session.install(
         "types-setuptools",
         "types-requests",
-        "types-protobuf!=4.24.0.20240106",
+        "types-protobuf",
         "types-mock",
         "types-dataclasses",
     )

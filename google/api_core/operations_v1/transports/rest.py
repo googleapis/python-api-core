@@ -29,8 +29,12 @@ from google.auth.transport.requests import AuthorizedSession  # type: ignore
 from google.longrunning import operations_pb2  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
 from google.protobuf import json_format  # type: ignore
+import google.protobuf
+
 import grpc
 from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTransport
+
+PROTOBUF_VERSION = google.protobuf.__version__
 
 OptionalRetry = Union[retries.Retry, object]
 
@@ -184,11 +188,22 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.ListOperations"
             ]
 
-        request_kwargs = json_format.MessageToDict(
-            request,
-            preserving_proto_field_name=True,
-            including_default_value_fields=True,
-        )
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
+
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -199,7 +214,6 @@ class OperationsRestTransport(OperationsTransport):
         json_format.ParseDict(transcoded_request["query_params"], query_params_request)
         query_params = json_format.MessageToDict(
             query_params_request,
-            including_default_value_fields=False,
             preserving_proto_field_name=False,
             use_integers_for_enums=False,
         )
@@ -265,11 +279,22 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.GetOperation"
             ]
 
-        request_kwargs = json_format.MessageToDict(
-            request,
-            preserving_proto_field_name=True,
-            including_default_value_fields=True,
-        )
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
+
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -280,7 +305,6 @@ class OperationsRestTransport(OperationsTransport):
         json_format.ParseDict(transcoded_request["query_params"], query_params_request)
         query_params = json_format.MessageToDict(
             query_params_request,
-            including_default_value_fields=False,
             preserving_proto_field_name=False,
             use_integers_for_enums=False,
         )
@@ -339,11 +363,21 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.DeleteOperation"
             ]
 
-        request_kwargs = json_format.MessageToDict(
-            request,
-            preserving_proto_field_name=True,
-            including_default_value_fields=True,
-        )
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -354,7 +388,6 @@ class OperationsRestTransport(OperationsTransport):
         json_format.ParseDict(transcoded_request["query_params"], query_params_request)
         query_params = json_format.MessageToDict(
             query_params_request,
-            including_default_value_fields=False,
             preserving_proto_field_name=False,
             use_integers_for_enums=False,
         )
@@ -411,11 +444,21 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.CancelOperation"
             ]
 
-        request_kwargs = json_format.MessageToDict(
-            request,
-            preserving_proto_field_name=True,
-            including_default_value_fields=True,
-        )
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            request_kwargs = json_format.MessageToDict(
+                request,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         # Jsonify the request body
@@ -423,7 +466,6 @@ class OperationsRestTransport(OperationsTransport):
         json_format.ParseDict(transcoded_request["body"], body_request)
         body = json_format.MessageToDict(
             body_request,
-            including_default_value_fields=False,
             preserving_proto_field_name=False,
             use_integers_for_enums=False,
         )
@@ -435,7 +477,6 @@ class OperationsRestTransport(OperationsTransport):
         json_format.ParseDict(transcoded_request["query_params"], query_params_request)
         query_params = json_format.MessageToDict(
             query_params_request,
-            including_default_value_fields=False,
             preserving_proto_field_name=False,
             use_integers_for_enums=False,
         )

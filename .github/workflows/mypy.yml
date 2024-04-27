@@ -17,6 +17,9 @@ jobs:
       run: |
         python -m pip install --upgrade setuptools pip wheel
         python -m pip install nox
+    - name: Install pytest
+      run: |
+        python -m pip install pytest
     - name: Run mypy
       run: |
         nox -s mypy
