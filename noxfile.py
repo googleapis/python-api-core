@@ -15,9 +15,9 @@
 from __future__ import absolute_import
 import os
 import pathlib
-import pytest
 import re
 import shutil
+import unittest
 
 # https://github.com/google/importlab/issues/25
 import nox  # pytype: disable=import-error
@@ -115,7 +115,7 @@ def default(session, install_grpc=True, prerelease=False):
     run the tests.
     """
     if prerelease and not install_grpc:
-        pytest.skip("The pre-release session cannot be run without grpc")
+        unittest.skip("The pre-release session cannot be run without grpc")
 
     session.install(
         "dataclasses",
