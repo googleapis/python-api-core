@@ -16,7 +16,7 @@ API_VERSION_METADATA_KEY = "x-goog-api-version"
 
 
 def to_api_version_header(version_identifier):
-    """Returns the API Version header for the given `version_identifier`.
+    """Returns data for the API Version header for the given `version_identifier`.
 
     Args:
         version_identifier (str): The version identifier to be used in the
