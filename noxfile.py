@@ -253,9 +253,7 @@ def mypy(session):
     session.install(
         "types-setuptools",
         "types-requests",
-        # TODO(https://github.com/googleapis/python-api-core/issues/642):
-        # Use the latest version of types-protobuf.
-        "types-protobuf<5",
+        "types-protobuf",
         "types-mock",
         "types-dataclasses",
     )
