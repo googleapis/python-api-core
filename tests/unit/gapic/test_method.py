@@ -233,8 +233,6 @@ def test_benchmark_gapic_call():
 
     Note: The threshold has been tuned for the CI workers. Test may flake on
     slower hardware
-
-    https://github.com/googleapis/python-api-core/pull/527
     """
     from google.api_core.gapic_v1.method import _GapicCallable
     from google.api_core.retry import Retry
