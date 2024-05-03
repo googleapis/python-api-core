@@ -178,7 +178,6 @@ async def test_wrap_errors_type_error():
     assert "Unexpected type" in str(exc.value)
 
 
-
 @pytest.mark.asyncio
 async def test_wrap_stream_errors_raised():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
