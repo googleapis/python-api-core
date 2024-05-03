@@ -104,6 +104,7 @@ async def test_retry_target_warning_for_retry(utcnow, sleep):
     """
     retry.Retry should raise warning when wrapping an async function.
     """
+
     async def target():
         pass
 
