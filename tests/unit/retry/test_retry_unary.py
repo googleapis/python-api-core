@@ -106,7 +106,7 @@ async def test_retry_target_warning_for_retry(utcnow, sleep):
     """
 
     async def target():
-        pass
+        pass  # pragma: NO COVER
 
     retry_obj = retry.Retry()
 
