@@ -197,8 +197,7 @@ def wrap_errors(callable_):
     Returns: Callable: The wrapped gRPC callable.
     """
     grpc_helpers._patch_callable_name(callable_)
-    if isinstance(callable_, aio.UnaryUnaryMultiCallable):
-        return _wrap_unary_errors(callable_)
+
     elif isinstance(callable_, aio.UnaryStreamMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedUnaryStreamCall)
     elif isinstance(callable_, aio.StreamUnaryMultiCallable):
@@ -206,7 +205,7 @@ def wrap_errors(callable_):
     elif isinstance(callable_, aio.StreamStreamMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
     else:
-        raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
+        return _wrap_unary_errors(callable_)
 
 
 def create_channel(
