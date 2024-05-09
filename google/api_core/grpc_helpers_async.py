@@ -198,7 +198,7 @@ def wrap_errors(callable_):
     """
     grpc_helpers._patch_callable_name(callable_)
 
-    elif isinstance(callable_, aio.UnaryStreamMultiCallable):
+    if isinstance(callable_, aio.UnaryStreamMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedUnaryStreamCall)
     elif isinstance(callable_, aio.StreamUnaryMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedStreamUnaryCall)
