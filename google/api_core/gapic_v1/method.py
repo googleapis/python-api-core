@@ -229,9 +229,11 @@ def wrap_method(
             ) from exc
     func = grpc_helpers.wrap_errors(func)
     if client_info is not None:
-        user_agent_metadata = [client_info.to_grpc_metadata()]
+        metadata = client_info.to_grpc_metadata()
+        if not isinstance(metadata, list):
+            metadata = [metadata]
     else:
-        user_agent_metadata = None
+        metadata = None
 
     return functools.wraps(func)(
         _GapicCallable(
@@ -239,6 +241,6 @@ def wrap_method(
             default_retry,
             default_timeout,
             default_compression,
-            metadata=user_agent_metadata,
+            metadata=metadata,
         )
     )

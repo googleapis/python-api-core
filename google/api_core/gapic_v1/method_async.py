@@ -42,7 +42,12 @@ def wrap_method(
     """
     func = grpc_helpers_async.wrap_errors(func)
 
-    metadata = [client_info.to_grpc_metadata()] if client_info is not None else None
+    if client_info is not None:
+        metadata = client_info.to_grpc_metadata()
+        if not isinstance(metadata, list):
+            metadata = [metadata]
+    else:
+        metadata = None
 
     return functools.wraps(func)(
         _GapicCallable(

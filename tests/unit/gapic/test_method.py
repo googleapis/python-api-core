@@ -106,6 +106,28 @@ def test_invoke_wrapped_method_with_metadata():
     assert len(metadata) == 2
     assert ("a", "b") in metadata
 
+def test_wrap_method_with_custom_client_info_and_multiple_metadata_items():
+    client_info = google.api_core.gapic_v1.client_info.ClientInfo(
+        python_version=1,
+        grpc_version=2,
+        api_core_version=3,
+        gapic_version=4,
+        client_library_version=5,
+    )
+    method = mock.Mock(spec=["__call__"])
+
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(
+        method, client_info=client_info
+    )
+
+    wrapped_method(1, 2, meep="moop", metadata=[("a", "b")])
+
+    method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
+
+    # Check that the custom client info was specified in the metadata.
+    metadata = method.call_args[1]["metadata"]
+    assert client_info.to_grpc_metadata() in metadata
+
 
 def test_invoke_wrapped_method_with_metadata_as_none():
     method = mock.Mock(spec=["__call__"])
