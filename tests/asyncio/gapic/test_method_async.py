@@ -114,7 +114,7 @@ async def test_wrap_method_with_custom_client_info_and_multiple_metadata_items()
 
     await wrapped_method(1, 2, meep="moop")
 
-    method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
+    method.assert_called_once_with(1, 2, meep="moop", metadata=[("a", "b")])
 
     # Check that the custom client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
