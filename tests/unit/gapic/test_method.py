@@ -107,12 +107,11 @@ def test_invoke_wrapped_method_with_metadata():
     assert ("a", "b") in metadata
 
 def test_wrap_method_with_custom_client_info_and_multiple_metadata_items():
+    extra_metadata = [("key1", "value1")]
+
     class CustomClientInfo(google.api_core.gapic_v1.client_info.ClientInfo):
         def to_grpc_metadata(self):
-            return [
-                super().to_grpc_metadata(),
-                ("key1", "value1"),
-            ]
+            return [super().to_grpc_metadata()] + extra_metadata
 
     client_info = CustomClientInfo(
         python_version=1,

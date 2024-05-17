@@ -93,6 +93,36 @@ async def test_wrap_method_with_custom_client_info():
 
 
 @pytest.mark.asyncio
+async def test_wrap_method_with_custom_client_info_and_multiple_metadata_items():
+    extra_metadata = [("key1", "value1")]
+
+    class CustomClientInfo(google.api_core.gapic_v1.client_info.ClientInfo):
+        def to_grpc_metadata(self):
+            return [super().to_grpc_metadata()] + extra_metadata
+
+    client_info = CustomClientInfo(
+        python_version=1,
+        grpc_version=2,
+        api_core_version=3,
+        gapic_version=4,
+        client_library_version=5,
+    )
+    fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
+    method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
+
+    wrapped_method = gapic_v1.method_async.wrap_method(method, client_info=client_info)
+
+    await wrapped_method(1, 2, meep="moop")
+
+    method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
+
+    # Check that the custom client info was specified in the metadata.
+    metadata = method.call_args[1]["metadata"]
+    metadata_keys = {key for key, _ in metadata}
+    assert metadata_keys == {"x-goog-api-client", "key1"}
+
+
+@pytest.mark.asyncio
 async def test_wrap_method_with_no_compression():
     fake_call = grpc_helpers_async.FakeUnaryUnaryCall()
     method = mock.Mock(spec=aio.UnaryUnaryMultiCallable, return_value=fake_call)
