@@ -119,7 +119,7 @@ async def test_wrap_method_with_custom_client_info_and_multiple_metadata_items()
     # Check that the custom client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
     metadata_keys = {key for key, _ in metadata}
-    assert metadata_keys == {"x-goog-api-client", "key1"}
+    assert metadata_keys == {"a", "x-goog-api-client", "key1"}
 
 
 @pytest.mark.asyncio
