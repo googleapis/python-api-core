@@ -106,6 +106,7 @@ def test_invoke_wrapped_method_with_metadata():
     assert len(metadata) == 2
     assert ("a", "b") in metadata
 
+
 def test_wrap_method_with_custom_client_info_and_multiple_metadata_items():
     extra_metadata = [("key1", "value1")]
 
