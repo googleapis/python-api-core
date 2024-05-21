@@ -25,6 +25,7 @@ import http.client
 from typing import Dict
 from typing import Union
 import warnings
+import json
 
 from google.rpc import error_details_pb2
 
@@ -470,6 +471,56 @@ def from_http_status(status_code, message, **kwargs):
 
     return error
 
+
+async def from_http_response_async(response):
+    """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.
+
+    Args:
+        response (requests.Response): The HTTP response.
+
+    Returns:
+        GoogleAPICallError: An instance of the appropriate subclass of
+            :class:`GoogleAPICallError`, with the message and errors populated
+            from the response.
+    """
+    try:
+        payload = await response.text()
+    except ValueError:
+        payload = {"error": {"message": response.text or "unknown error"}}
+
+    payload = json.loads(payload)
+    error_message = payload.get("error", {}).get("message", "unknown error")
+    errors = payload.get("error", {}).get("errors", ())
+    # In JSON, details are already formatted in developer-friendly way.
+    details = payload.get("error", {}).get("details", ())
+    
+    if details is not None:
+        error_info = list(
+            filter(
+                lambda detail: detail.get("@type", "")
+                == "type.googleapis.com/google.rpc.ErrorInfo",
+                details,
+            )
+        )
+    else:
+        error_info = []
+    error_info = error_info[0] if error_info else None
+
+    message = "{method} {url}: {error}".format(
+        method=response.request_info.method,
+        url=response.request_info.url,
+        error=error_message,
+    )
+
+    exception = from_http_status(
+        response.status,
+        message,
+        errors=errors,
+        details=details,
+        response=response,
+        error_info=error_info,
+    )
+    return exception
 
 def from_http_response(response):
     """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.

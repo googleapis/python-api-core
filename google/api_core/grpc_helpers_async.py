@@ -191,7 +191,7 @@ def _wrap_stream_errors(callable_):
 
     return error_remapped_callable
 
-
+_STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable, aio.StreamStreamMultiCallable, aio.UnaryStreamMultiCallable, grpc.aio._channel.StreamUnaryMultiCallable, grpc.aio._channel.StreamStreamMultiCallable)
 def wrap_errors(callable_):
     """Wrap a gRPC async callable and map :class:`grpc.RpcErrors` to
     friendly error classes.
@@ -207,10 +207,10 @@ def wrap_errors(callable_):
 
     Returns: Callable: The wrapped gRPC callable.
     """
-    if isinstance(callable_, aio.UnaryUnaryMultiCallable):
-        return _wrap_unary_errors(callable_)
-    else:
+    if isinstance(callable_, _STREAM_WRAP_CLASSES):
         return _wrap_stream_errors(callable_)
+    else:
+        return _wrap_unary_errors(callable_)
 
 
 def create_channel(
