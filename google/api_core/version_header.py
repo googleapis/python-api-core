@@ -11,7 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-docker:
-  image: gcr.io/cloud-devrel-public-resources/owlbot-python:latest
-  digest: sha256:5a4c19d17e597b92d786e569be101e636c9c2817731f80a5adec56b2aa8fe070
-# created: 2024-04-12T11:35:58.922854369Z
+
+API_VERSION_METADATA_KEY = "x-goog-api-version"
+
+
+def to_api_version_header(version_identifier):
+    """Returns data for the API Version header for the given `version_identifier`.
+
+    Args:
+        version_identifier (str): The version identifier to be used in the
+            tuple returned.
+
+    Returns:
+        Tuple(str, str): A tuple containing the API Version metadata key and
+            value.
+    """
+    return (API_VERSION_METADATA_KEY, version_identifier)
