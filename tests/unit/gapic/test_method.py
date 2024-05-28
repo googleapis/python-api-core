@@ -243,3 +243,13 @@ def test_benchmark_gapic_call():
     )
     avg_time = timeit(lambda: gapic_callable(), number=10_000)
     assert avg_time < 0.4
+
+
+@pytest.mark.asyncio
+async def test_wrap_method_with_non_grpc_callable():
+    return_value = 42
+    method = mock.Mock(return_value=return_value)
+    wrapped_method = google.api_core.gapic_v1.method.wrap_method(method)
+    result = wrapped_method(1, 2, meep="moop")
+    assert result == 42
+    method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
