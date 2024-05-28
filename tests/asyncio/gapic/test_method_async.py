@@ -262,3 +262,14 @@ async def test_wrap_method_with_non_grpc_callable():
     result = await wrapped_method(1, 2, meep="moop")
     assert result == 42
     method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
+
+
+@pytest.mark.asyncio
+async def test_wrap_method_without_grpc_module():
+    return_value = 42
+    method = mock.Mock(return_value=return_value)
+    with mock.patch("google.api_core.gapic_v1.method_async.grpc", None):
+        wrapped_method =  gapic_v1.method_async.wrap_method(method)
+    result = wrapped_method(1, 2, meep="moop")
+    assert result == 42
+    method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
