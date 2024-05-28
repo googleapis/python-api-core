@@ -245,8 +245,7 @@ def test_benchmark_gapic_call():
     assert avg_time < 0.4
 
 
-@pytest.mark.asyncio
-async def test_wrap_method_with_non_grpc_callable():
+def test_wrap_method_with_non_grpc_callable():
     return_value = 42
     method = mock.Mock(return_value=return_value)
     wrapped_method = google.api_core.gapic_v1.method.wrap_method(method)
@@ -255,12 +254,21 @@ async def test_wrap_method_with_non_grpc_callable():
     method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
 
 
-@pytest.mark.asyncio
-async def test_wrap_method_without_grpc_module():
+def test_wrap_method_without_grpc_module():
     return_value = 42
     method = mock.Mock(return_value=return_value)
-    with mock.patch("google.api_core.gapic_v1.method.grpc", None):
-        wrapped_method = google.api_core.gapic_v1.method.wrap_method(method)
+    with mock.patch.dict("sys.modules", {"grpc": None, "google.api_core.grpc_helpers": None}):
+        import importlib
+        import google.api_core.gapic_v1.method as gapic_v1_method
+        importlib.reload(gapic_v1_method)
+
+        wrapped_method =  gapic_v1_method.wrap_method(method)
+        # Reload the module to apply the patch
+
+        
+        # Verify that grpc is None
+        assert gapic_v1_method.grpc is None
+
     result = wrapped_method(1, 2, meep="moop")
     assert result == 42
     method.assert_called_once_with(1, 2, meep="moop", metadata=mock.ANY)
