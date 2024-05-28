@@ -23,10 +23,17 @@ import functools
 
 from google.api_core.gapic_v1 import client_info
 from google.api_core.timeout import TimeToDeadlineTimeout
+
 try:
     import grpc
     from google.api_core import grpc_helpers
-    _GRPC_WRAP_CLASSES = (grpc.UnaryUnaryMultiCallable, grpc.UnaryStreamMultiCallable, grpc.StreamUnaryMultiCallable, grpc.StreamStreamMultiCallable)
+
+    _GRPC_WRAP_CLASSES = (
+        grpc.UnaryUnaryMultiCallable,
+        grpc.UnaryStreamMultiCallable,
+        grpc.StreamUnaryMultiCallable,
+        grpc.StreamStreamMultiCallable,
+    )
 except ImportError:
     grpc = None
 
@@ -232,11 +239,11 @@ def wrap_method(
             raise ValueError(
                 "with_call=True is only supported for unary calls."
             ) from exc
-    
+
     #  Ensure that wrap_errors is called on a gRPC callable only
     if grpc and isinstance(func, _GRPC_WRAP_CLASSES):
         func = grpc_helpers.wrap_errors(func)
-    
+
     if client_info is not None:
         user_agent_metadata = [client_info.to_grpc_metadata()]
     else:
