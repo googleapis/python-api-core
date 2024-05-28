@@ -257,15 +257,17 @@ def test_wrap_method_with_non_grpc_callable():
 def test_wrap_method_without_grpc_module():
     return_value = 42
     method = mock.Mock(return_value=return_value)
-    with mock.patch.dict("sys.modules", {"grpc": None, "google.api_core.grpc_helpers": None}):
+    with mock.patch.dict(
+        "sys.modules", {"grpc": None, "google.api_core.grpc_helpers": None}
+    ):
         import importlib
         import google.api_core.gapic_v1.method as gapic_v1_method
+
         importlib.reload(gapic_v1_method)
 
-        wrapped_method =  gapic_v1_method.wrap_method(method)
+        wrapped_method = gapic_v1_method.wrap_method(method)
         # Reload the module to apply the patch
 
-        
         # Verify that grpc is None
         assert gapic_v1_method.grpc is None
 

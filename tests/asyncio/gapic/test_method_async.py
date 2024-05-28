@@ -268,15 +268,17 @@ async def test_wrap_method_with_non_grpc_callable():
 async def test_wrap_method_without_grpc_module():
     return_value = 42
     method = mock.AsyncMock(return_value=return_value)
-    with mock.patch.dict("sys.modules", {"grpc": None, "google.api_core.grpc_helpers_async": None}):
+    with mock.patch.dict(
+        "sys.modules", {"grpc": None, "google.api_core.grpc_helpers_async": None}
+    ):
         import importlib
         import google.api_core.gapic_v1.method_async as method_async
 
         # Reload the module to apply the patch
         importlib.reload(method_async)
-        
-        wrapped_method =  method_async.wrap_method(method)
-       
+
+        wrapped_method = method_async.wrap_method(method)
+
         # Verify that grpc is None
         assert method_async.grpc is None
 
