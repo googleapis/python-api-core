@@ -471,6 +471,33 @@ def from_http_status(status_code, message, **kwargs):
 
     return error
 
+def _process_payload(response, payload):
+    error_message = payload.get("error", {}).get("message", "unknown error")
+    errors = payload.get("error", {}).get("errors", ())
+    # In JSON, details are already formatted in developer-friendly way.
+    details = payload.get("error", {}).get("details", ())
+    error_info = list(
+        filter(
+            lambda detail: detail.get("@type", "")
+            == "type.googleapis.com/google.rpc.ErrorInfo",
+            details,
+        )
+    )
+    message = "{method} {url}: {error}".format(
+        method=response.request.method,
+        url=response.request.url,
+        error=error_message,
+    )
+    status = getattr(response, "status", None) or getattr(response, "status_code", None)
+    exception = from_http_status(
+        status,
+        message,
+        errors=errors,
+        details=details,
+        response=response,
+        error_info=error_info,
+    )
+    return exception
 
 async def from_http_response_async(response):
     """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.
@@ -484,43 +511,12 @@ async def from_http_response_async(response):
             from the response.
     """
     try:
-        payload = await response.text()
+        payload = await response.content()
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
 
-    payload = json.loads(payload)
-    error_message = payload.get("error", {}).get("message", "unknown error")
-    errors = payload.get("error", {}).get("errors", ())
-    # In JSON, details are already formatted in developer-friendly way.
-    details = payload.get("error", {}).get("details", ())
-    
-    if details is not None:
-        error_info = list(
-            filter(
-                lambda detail: detail.get("@type", "")
-                == "type.googleapis.com/google.rpc.ErrorInfo",
-                details,
-            )
-        )
-    else:
-        error_info = []
-    error_info = error_info[0] if error_info else None
+    return _process_payload(response, payload)
 
-    message = "{method} {url}: {error}".format(
-        method=response.request_info.method,
-        url=response.request_info.url,
-        error=error_message,
-    )
-
-    exception = from_http_status(
-        response.status,
-        message,
-        errors=errors,
-        details=details,
-        response=response,
-        error_info=error_info,
-    )
-    return exception
 
 def from_http_response(response):
     """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.
@@ -538,34 +534,7 @@ def from_http_response(response):
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
 
-    error_message = payload.get("error", {}).get("message", "unknown error")
-    errors = payload.get("error", {}).get("errors", ())
-    # In JSON, details are already formatted in developer-friendly way.
-    details = payload.get("error", {}).get("details", ())
-    error_info = list(
-        filter(
-            lambda detail: detail.get("@type", "")
-            == "type.googleapis.com/google.rpc.ErrorInfo",
-            details,
-        )
-    )
-    error_info = error_info[0] if error_info else None
-
-    message = "{method} {url}: {error}".format(
-        method=response.request.method,
-        url=response.request.url,
-        error=error_message,
-    )
-
-    exception = from_http_status(
-        response.status_code,
-        message,
-        errors=errors,
-        details=details,
-        response=response,
-        error_info=error_info,
-    )
-    return exception
+    return _process_payload(response, payload)
 
 
 def exception_class_for_grpc_status(status_code):

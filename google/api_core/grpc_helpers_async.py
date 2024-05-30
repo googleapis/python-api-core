@@ -206,7 +206,8 @@ def wrap_errors(callable_):
     elif isinstance(callable_, aio.StreamStreamMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
     else:
-        raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
+        #TODO: This is a temporary fix for testing code for async REST.
+        return _wrap_unary_errors(callable_)
 
 
 def create_channel(
