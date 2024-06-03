@@ -515,6 +515,8 @@ async def from_http_response_async(response):
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
 
+    payload = json.loads(payload)
+
     return _process_payload(response, payload)
 
 
