@@ -27,6 +27,7 @@ from google.api_core.operations_v1.transports.base import (
     OperationsTransport,
 )
 from google.api_core.operations_v1.transports.rest import OperationsRestTransport
+from google.api_core.operations_v1.transports.rest_asyncio import OperationsRestAsyncIOTransport
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.auth.transport import mtls  # type: ignore
@@ -47,6 +48,7 @@ class AbstractOperationsClientMeta(type):
 
     _transport_registry = OrderedDict()  # type: Dict[str, Type[OperationsTransport]]
     _transport_registry["rest"] = OperationsRestTransport
+    _transport_registry["rest_asyncio"] = OperationsRestAsyncIOTransport
 
     def get_transport_class(
         cls,

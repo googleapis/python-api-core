@@ -180,7 +180,7 @@ def _wrap_stream_errors(callable_, wrapper_type):
 
     return error_remapped_callable
 
-
+_STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable, aio.StreamStreamMultiCallable, aio.UnaryStreamMultiCallable, grpc.aio._channel.StreamUnaryMultiCallable, grpc.aio._channel.StreamStreamMultiCallable)
 def wrap_errors(callable_):
     """Wrap a gRPC async callable and map :class:`grpc.RpcErrors` to
     friendly error classes.
@@ -206,7 +206,8 @@ def wrap_errors(callable_):
     elif isinstance(callable_, aio.StreamStreamMultiCallable):
         return _wrap_stream_errors(callable_, _WrappedStreamStreamCall)
     else:
-        raise TypeError("Unexpected type of callable: {}".format(type(callable_)))
+        #TODO: This is a temporary fix for testing code for async REST.
+        return _wrap_unary_errors(callable_)
 
 
 def create_channel(
