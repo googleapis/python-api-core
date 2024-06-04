@@ -194,7 +194,7 @@ def wrap_method(
     Args:
         func (Callable[Any]): The function to wrap. It should accept an
             optional ``timeout`` (google.api_core.timeout.Timeout) argument.
-            If ``metadata`` is not ``None``, it should accept a ``metadata`` 
+            If ``metadata`` is not ``None``, it should accept a ``metadata``
             (Sequence[Tuple[str, str]]) argument.
         default_retry (Optional[google.api_core.Retry]): The default retry
             strategy. If ``None``, the method will not retry by default.
