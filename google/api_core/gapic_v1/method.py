@@ -77,7 +77,7 @@ class _GapicCallable(object):
             timeout = TimeToDeadlineTimeout(timeout=timeout)
         self._timeout = timeout
         self._compression = compression
-        self._metadata = metadata
+        self._metadata = list(metadata) if metadata is not None else None
 
     def __call__(
         self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs
@@ -96,7 +96,7 @@ class _GapicCallable(object):
                 kwargs["metadata"] = [*kwargs["metadata"], *self._metadata]
             except (KeyError, TypeError):
                 # if metadata is not provided, use just the default metadata
-                kwargs["metadata"] = list(self._metadata)
+                kwargs["metadata"] = self._metadata
 
         call = self._build_wrapped_call(timeout, retry)
         return call(*args, **kwargs)
