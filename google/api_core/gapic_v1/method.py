@@ -93,10 +93,10 @@ class _GapicCallable(object):
         if self._metadata is not None:
             try:
                 # attempt to concatenate default metadata with user-provided metadata
-                kwargs["metadata"] = (*kwargs["metadata"], *self._metadata)
+                kwargs["metadata"] = [*kwargs["metadata"], *self._metadata]
             except (KeyError, TypeError):
                 # if metadata is not provided, use just the default metadata
-                kwargs["metadata"] = self._metadata
+                kwargs["metadata"] = list(self._metadata)
 
         call = self._build_wrapped_call(timeout, retry)
         return call(*args, **kwargs)
