@@ -134,16 +134,11 @@ def default(session, install_grpc=True, prerelease=False):
         # This *must* be the last install command to get the package from source.
         session.install("-e", ".", "--no-deps")
     else:
-        if install_grpc:
-            session.install(
-                "-e",
-                ".[grpc]",
-                "-c",
-                f"{constraints_dir}/constraints-{session.python}.txt",
-            )
-        else:
-            session.install(
-                "-e", ".", "-c", f"{constraints_dir}/constraints-{session.python}.txt"
+        session.install(
+            "-e",
+            ".[grpc]" if install_grpc else ".",
+            "-c",
+            f"{constraints_dir}/constraints-{session.python}.txt",
             )
 
     # Print out package versions of dependencies
