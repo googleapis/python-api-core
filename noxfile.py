@@ -139,7 +139,7 @@ def default(session, install_grpc=True, prerelease=False):
             ".[grpc]" if install_grpc else ".",
             "-c",
             f"{constraints_dir}/constraints-{session.python}.txt",
-            )
+        )
 
     # Print out package versions of dependencies
     session.run(
