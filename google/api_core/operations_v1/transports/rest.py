@@ -188,22 +188,7 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.ListOperations"
             ]
 
-        # For backwards compatibility with protobuf 3.x 4.x
-        # Remove once support for protobuf 3.x and 4.x is dropped
-        # https://github.com/googleapis/python-api-core/issues/643
-        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                including_default_value_fields=True,  # type: ignore # backward compatibility
-            )
-        else:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                always_print_fields_with_no_presence=True,
-            )
-
+        request_kwargs = self._convert_protobuf_message_to_dict(request)
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -279,22 +264,7 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.GetOperation"
             ]
 
-        # For backwards compatibility with protobuf 3.x 4.x
-        # Remove once support for protobuf 3.x and 4.x is dropped
-        # https://github.com/googleapis/python-api-core/issues/643
-        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                including_default_value_fields=True,  # type: ignore # backward compatibility
-            )
-        else:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                always_print_fields_with_no_presence=True,
-            )
-
+        request_kwargs = self._convert_protobuf_message_to_dict(request)
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -363,21 +333,7 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.DeleteOperation"
             ]
 
-        # For backwards compatibility with protobuf 3.x 4.x
-        # Remove once support for protobuf 3.x and 4.x is dropped
-        # https://github.com/googleapis/python-api-core/issues/643
-        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                including_default_value_fields=True,  # type: ignore # backward compatibility
-            )
-        else:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                always_print_fields_with_no_presence=True,
-            )
+        request_kwargs = self._convert_protobuf_message_to_dict(request)
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         uri = transcoded_request["uri"]
@@ -444,21 +400,7 @@ class OperationsRestTransport(OperationsTransport):
                 "google.longrunning.Operations.CancelOperation"
             ]
 
-        # For backwards compatibility with protobuf 3.x 4.x
-        # Remove once support for protobuf 3.x and 4.x is dropped
-        # https://github.com/googleapis/python-api-core/issues/643
-        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                including_default_value_fields=True,  # type: ignore # backward compatibility
-            )
-        else:
-            request_kwargs = json_format.MessageToDict(
-                request,
-                preserving_proto_field_name=True,
-                always_print_fields_with_no_presence=True,
-            )
+        request_kwargs = self._convert_protobuf_message_to_dict(request)
         transcoded_request = path_template.transcode(http_options, **request_kwargs)
 
         # Jsonify the request body
@@ -498,6 +440,38 @@ class OperationsRestTransport(OperationsTransport):
             raise core_exceptions.from_http_response(response)
 
         return empty_pb2.Empty()
+
+    def _convert_protobuf_message_to_dict(
+        self, message: google.protobuf.message.Message
+    ):
+        r"""Converts protobuf message to a dictionary.
+
+        When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
+
+        Args:
+            message(google.protobuf.message.Message): The protocol buffers message
+                instance to serialize.
+
+        Returns:
+            A dict representation of the protocol buffer message.
+        """
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            result = json_format.MessageToDict(
+                message,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            result = json_format.MessageToDict(
+                message,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
+
+        return result
 
     @property
     def list_operations(
