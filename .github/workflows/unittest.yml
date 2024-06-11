@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        option: ["", "_grpc_gcp", "_wo_grpc", "_prerelease"]
+        option: ["", "_grpc_gcp", "_wo_grpc", "_with_prerelease_deps"]
         python:
           - "3.7"
           - "3.8"
@@ -26,16 +26,6 @@ jobs:
             python: 3.8
           - option: "_wo_grpc"
             python: 3.9
-          - option: "_prerelease"
-            python: 3.7
-          - option: "_prerelease"
-            python: 3.8
-          - option: "_prerelease"
-            python: 3.9
-          - option: "_prerelease"
-            python: 3.10
-          - option: "_prerelease"
-            python: 3.11
     steps:
     - name: Checkout
       uses: actions/checkout@v4

@@ -195,8 +195,8 @@ def unit(session):
     default(session)
 
 
-@nox.session(python=PYTHON_VERSIONS[-1])
-def unit_prerelease(session):
+@nox.session(python=PYTHON_VERSIONS)
+def unit_with_prerelease_deps(session):
     """Run the unit test suite."""
     default(session, prerelease=True)
 
