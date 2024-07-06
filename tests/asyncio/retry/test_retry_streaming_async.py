@@ -15,8 +15,8 @@
 import datetime
 import re
 import asyncio
+from unittest import mock
 
-import mock
 import pytest
 
 from google.api_core import exceptions

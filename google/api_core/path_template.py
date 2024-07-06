@@ -23,8 +23,6 @@ in Google APIs for `resource names`_.
 .. _resource names: https://cloud.google.com/apis/design/resource_names
 """
 
-from __future__ import unicode_literals
-
 from collections import deque
 import copy
 import functools
