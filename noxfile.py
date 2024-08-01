@@ -247,6 +247,8 @@ def pytype(session):
 @nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
     """Run type-checking."""
+    # TODO(https://github.com/googleapis/python-api-core/issues/682):
+    # Use the latest version of mypy instead of mypy<1.11.0
     session.install(".[grpc]", "mypy<1.11.0")
     session.install(
         "types-setuptools",
