@@ -33,7 +33,7 @@ def _warn_could_not_import_grpcio_status():
     warnings.warn(
         "Please install grpcio-status to obtain helpful grpc error messages.",
         ImportWarning,
-    ) # pragma: NO COVER
+    )  # pragma: NO COVER
 
 
 try:
