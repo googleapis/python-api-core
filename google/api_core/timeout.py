@@ -52,8 +52,6 @@ In the broader context these decorators are typically combined with
 matches ``api_method(request, timeout=None, retry=None)``.
 """
 
-from __future__ import unicode_literals
-
 import datetime
 import functools
 

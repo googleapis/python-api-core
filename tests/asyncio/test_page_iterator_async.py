@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import inspect
+from unittest import mock
 
-import mock
 import pytest
 
 from google.api_core import page_iterator_async

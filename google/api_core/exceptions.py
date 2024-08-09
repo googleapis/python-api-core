@@ -18,9 +18,6 @@ This module provides base classes for all errors raised by libraries based
 on :mod:`google.api_core`, including both HTTP and gRPC clients.
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import http.client
 from typing import Dict
 from typing import Union

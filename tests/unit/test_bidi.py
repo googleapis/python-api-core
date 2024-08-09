@@ -16,8 +16,8 @@ import datetime
 import logging
 import queue
 import threading
+from unittest import mock
 
-import mock
 import pytest
 
 try:

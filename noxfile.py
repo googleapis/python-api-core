@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import os
 import pathlib
 import re
@@ -122,7 +121,6 @@ def default(session, install_grpc=True, prerelease=False):
 
     session.install(
         "dataclasses",
-        "mock",
         "pytest",
         "pytest-cov",
         "pytest-xdist",
@@ -254,7 +252,6 @@ def mypy(session):
         "types-setuptools",
         "types-requests",
         "types-protobuf",
-        "types-mock",
         "types-dataclasses",
     )
     session.run("mypy", "google", "tests")

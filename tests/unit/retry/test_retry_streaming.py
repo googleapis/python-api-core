@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import re
+from unittest import mock
 
-import mock
 import pytest
 
 from google.api_core import exceptions
