@@ -23,7 +23,7 @@ import proto
 import pytest
 import requests
 
-from google.api_core import rest_streaming_new
+from google.api_core import rest_streaming
 from google.api import http_pb2
 from google.api import httpbody_pb2
 
@@ -96,7 +96,7 @@ def test_next_simple(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_new.ResponseIterator(resp, response_type)
+    itr = rest_streaming.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -133,7 +133,7 @@ def test_next_nested(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_new.ResponseIterator(resp, response_type)
+    itr = rest_streaming.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -166,7 +166,7 @@ def test_next_stress(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_new.ResponseIterator(resp, response_type)
+    itr = rest_streaming.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -227,7 +227,7 @@ def test_next_escaped_characters_in_string(random_split, resp_message_is_proto_p
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_new.ResponseIterator(resp, response_type)
+    itr = rest_streaming.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -237,7 +237,7 @@ def test_next_not_array(response_type):
         ResponseMock, "iter_content", return_value=iter('{"hello": 0}')
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_new.ResponseIterator(resp, response_type)
+        itr = rest_streaming.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
@@ -247,7 +247,7 @@ def test_next_not_array(response_type):
 def test_cancel(response_type):
     with patch.object(ResponseMock, "close", return_value=None) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_new.ResponseIterator(resp, response_type)
+        itr = rest_streaming.ResponseIterator(resp, response_type)
         itr.cancel()
         mock_method.assert_called_once()
 
@@ -266,7 +266,7 @@ def test_check_buffer(response_type, return_value):
         return_value=return_value,
     ):
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_new.ResponseIterator(resp, response_type)
+        itr = rest_streaming.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
             next(itr)
@@ -278,7 +278,7 @@ def test_next_html(response_type):
         ResponseMock, "iter_content", return_value=iter("<!DOCTYPE html><html></html>")
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_new.ResponseIterator(resp, response_type)
+        itr = rest_streaming.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
@@ -289,7 +289,7 @@ def test_invalid_response_class():
         pass
 
     resp = ResponseMock(responses=[], response_cls=SomeClass)
-    response_iterator = rest_streaming_new.ResponseIterator(resp, SomeClass)
+    response_iterator = rest_streaming.ResponseIterator(resp, SomeClass)
     with pytest.raises(
         ValueError,
         match="Response message class must be a subclass of proto.Message or google.protobuf.message.Message",
