@@ -54,7 +54,7 @@ class AsyncResponseIterator(BaseResponseIterator):
 
     async def __anext__(self):
         while not self._ready_objs:
-            try:    
+            try:
                 chunk = await self._response_itr.__anext__()
                 chunk = chunk.decode("utf-8")
                 self._process_chunk(chunk)
