@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import string
 from typing import Deque, Union
 
 import proto
-import requests
 import google.protobuf.message
 from google.protobuf.json_format import Parse
 
 
-class ResponseIterator:
-    """Iterator over REST API responses.
+class BaseResponseIterator:
+    """Base Iterator over REST API responses. This class should not be used directly.
 
     Args:
         response (requests.Response): An API response object.
@@ -38,13 +37,11 @@ class ResponseIterator:
 
     def __init__(
         self,
-        response: requests.Response,
         response_message_cls: Union[proto.Message, google.protobuf.message.Message],
     ):
-        self._response = response
         self._response_message_cls = response_message_cls
         # Inner iterator over HTTP response's content.
-        self._response_itr = self._response.iter_content(decode_unicode=True)
+        # self._response_itr = self._response.iter_content(decode_unicode=True)
         # Contains a list of JSON responses ready to be sent to user.
         self._ready_objs: Deque[str] = deque()
         # Current JSON response being built.
@@ -56,10 +53,6 @@ class ResponseIterator:
         self._in_string = False
         # Whether an escape symbol "\" was encountered.
         self._escape_next = False
-
-    def cancel(self):
-        """Cancel existing streaming operation."""
-        self._response.close()
 
     def _process_chunk(self, chunk: str):
         if self._level == 0:
@@ -104,29 +97,13 @@ class ResponseIterator:
                 self._obj += char
             self._escape_next = not self._escape_next if char == "\\" else False
 
-    def __next__(self):
-        while not self._ready_objs:
-            try:
-                chunk = next(self._response_itr)
-                self._process_chunk(chunk)
-            except StopIteration as e:
-                if self._level > 0:
-                    raise ValueError("Unfinished stream: %s" % self._obj)
-                raise e
-        return self._grab()
-
     def _grab(self):
         # Add extra quotes to make json.loads happy.
         if issubclass(self._response_message_cls, proto.Message):
-            return self._response_message_cls.from_json(
-                self._ready_objs.popleft(), ignore_unknown_fields=True
-            )
+            return self._response_message_cls.from_json(self._ready_objs.popleft())
         elif issubclass(self._response_message_cls, google.protobuf.message.Message):
             return Parse(self._ready_objs.popleft(), self._response_message_cls())
         else:
             raise ValueError(
                 "Response message class must be a subclass of proto.Message or google.protobuf.message.Message."
             )
-
-    def __iter__(self):
-        return self

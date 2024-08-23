@@ -23,49 +23,17 @@ import proto
 import pytest
 import requests
 
-from google.api_core import rest_streaming
+from google.api_core import rest_streaming_new
 from google.api import http_pb2
 from google.api import httpbody_pb2
-from google.protobuf import duration_pb2
-from google.protobuf import timestamp_pb2
-from google.protobuf.json_format import MessageToJson
+
+from ..conftest import Composer, Song, EchoResponse, parse_responses
 
 
 __protobuf__ = proto.module(package=__name__)
 SEED = int(time.time())
 logging.info(f"Starting rest streaming tests with random seed: {SEED}")
 random.seed(SEED)
-
-
-class Genre(proto.Enum):
-    GENRE_UNSPECIFIED = 0
-    CLASSICAL = 1
-    JAZZ = 2
-    ROCK = 3
-
-
-class Composer(proto.Message):
-    given_name = proto.Field(proto.STRING, number=1)
-    family_name = proto.Field(proto.STRING, number=2)
-    relateds = proto.RepeatedField(proto.STRING, number=3)
-    indices = proto.MapField(proto.STRING, proto.STRING, number=4)
-
-
-class Song(proto.Message):
-    composer = proto.Field(Composer, number=1)
-    title = proto.Field(proto.STRING, number=2)
-    lyrics = proto.Field(proto.STRING, number=3)
-    year = proto.Field(proto.INT32, number=4)
-    genre = proto.Field(Genre, number=5)
-    is_five_mins_longer = proto.Field(proto.BOOL, number=6)
-    score = proto.Field(proto.DOUBLE, number=7)
-    likes = proto.Field(proto.INT64, number=8)
-    duration = proto.Field(duration_pb2.Duration, number=9)
-    date_added = proto.Field(timestamp_pb2.Timestamp, number=10)
-
-
-class EchoResponse(proto.Message):
-    content = proto.Field(proto.STRING, number=1)
 
 
 class ResponseMock(requests.Response):
@@ -97,29 +65,17 @@ class ResponseMock(requests.Response):
         self._random_split = random_split
         self._response_message_cls = response_cls
 
-    def _parse_responses(self, responses: List[proto.Message]) -> bytes:
-        # json.dumps returns a string surrounded with quotes that need to be stripped
-        # in order to be an actual JSON.
-        json_responses = [
-            (
-                self._response_message_cls.to_json(r).strip('"')
-                if issubclass(self._response_message_cls, proto.Message)
-                else MessageToJson(r).strip('"')
-            )
-            for r in responses
-        ]
-        logging.info(f"Sending JSON stream: {json_responses}")
-        ret_val = "[{}]".format(",".join(json_responses))
-        return bytes(ret_val, "utf-8")
-
     def close(self):
         raise NotImplementedError()
 
     def iter_content(self, *args, **kwargs):
         return self._ResponseItr(
-            self._parse_responses(self._responses),
+            self._parse_responses(),
             random_split=self._random_split,
         )
+
+    def _parse_responses(self):
+        return parse_responses(self._response_message_cls, self._responses)
 
 
 @pytest.mark.parametrize(
@@ -140,7 +96,7 @@ def test_next_simple(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming.ResponseIterator(resp, response_type)
+    itr = rest_streaming_new.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -177,7 +133,7 @@ def test_next_nested(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming.ResponseIterator(resp, response_type)
+    itr = rest_streaming_new.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -210,7 +166,7 @@ def test_next_stress(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming.ResponseIterator(resp, response_type)
+    itr = rest_streaming_new.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -271,7 +227,7 @@ def test_next_escaped_characters_in_string(random_split, resp_message_is_proto_p
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming.ResponseIterator(resp, response_type)
+    itr = rest_streaming_new.ResponseIterator(resp, response_type)
     assert list(itr) == responses
 
 
@@ -281,7 +237,7 @@ def test_next_not_array(response_type):
         ResponseMock, "iter_content", return_value=iter('{"hello": 0}')
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming.ResponseIterator(resp, response_type)
+        itr = rest_streaming_new.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
@@ -291,7 +247,7 @@ def test_next_not_array(response_type):
 def test_cancel(response_type):
     with patch.object(ResponseMock, "close", return_value=None) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming.ResponseIterator(resp, response_type)
+        itr = rest_streaming_new.ResponseIterator(resp, response_type)
         itr.cancel()
         mock_method.assert_called_once()
 
@@ -310,7 +266,7 @@ def test_check_buffer(response_type, return_value):
         return_value=return_value,
     ):
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming.ResponseIterator(resp, response_type)
+        itr = rest_streaming_new.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
             next(itr)
@@ -322,7 +278,7 @@ def test_next_html(response_type):
         ResponseMock, "iter_content", return_value=iter("<!DOCTYPE html><html></html>")
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming.ResponseIterator(resp, response_type)
+        itr = rest_streaming_new.ResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             next(itr)
         mock_method.assert_called_once()
@@ -333,7 +289,7 @@ def test_invalid_response_class():
         pass
 
     resp = ResponseMock(responses=[], response_cls=SomeClass)
-    response_iterator = rest_streaming.ResponseIterator(resp, SomeClass)
+    response_iterator = rest_streaming_new.ResponseIterator(resp, SomeClass)
     with pytest.raises(
         ValueError,
         match="Response message class must be a subclass of proto.Message or google.protobuf.message.Message",
