@@ -22,7 +22,7 @@ import mock
 import proto
 import pytest
 
-from google.api_core import rest_streaming_async_new
+from google.api_core import rest_streaming_async
 from google.api import http_pb2
 from google.api import httpbody_pb2
 from google.auth.aio.transport import Response
@@ -118,7 +118,7 @@ async def test_next_simple(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+    itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
     i = 0
     async for response in itr:
         assert response == responses[i]
@@ -159,7 +159,7 @@ async def test_next_nested(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+    itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
     i = 0
     async for response in itr:
         assert response == responses[i]
@@ -197,7 +197,7 @@ async def test_next_stress(random_split, resp_message_is_proto_plus):
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+    itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
     i = 0
     async for response in itr:
         assert response == responses[i]
@@ -265,7 +265,7 @@ async def test_next_escaped_characters_in_string(
     resp = ResponseMock(
         responses=responses, random_split=random_split, response_cls=response_type
     )
-    itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+    itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
 
     i = 0
     async for response in itr:
@@ -283,7 +283,7 @@ async def test_next_not_array(response_type):
         ResponseMock, "content", return_value=mock_async_gen(data)
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+        itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             await itr.__anext__()
         mock_method.assert_called_once()
@@ -296,7 +296,7 @@ async def test_cancel(response_type):
         ResponseMock, "close", new_callable=mock.AsyncMock
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+        itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
         await itr.cancel()
         mock_method.assert_called_once()
 
@@ -316,7 +316,7 @@ async def test_check_buffer(response_type, return_value):
         return_value=return_value,
     ):
         resp = ResponseMock(responses=[], response_cls=response_type)
-        itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+        itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             await itr.__anext__()
             await itr.__anext__()
@@ -332,7 +332,7 @@ async def test_next_html(response_type):
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
 
-        itr = rest_streaming_async_new.AsyncResponseIterator(resp, response_type)
+        itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
         with pytest.raises(ValueError):
             await itr.__anext__()
         mock_method.assert_called_once()
@@ -344,7 +344,7 @@ async def test_invalid_response_class():
         pass
 
     resp = ResponseMock(responses=[], response_cls=SomeClass)
-    response_iterator = rest_streaming_async_new.AsyncResponseIterator(resp, SomeClass)
+    response_iterator = rest_streaming_async.AsyncResponseIterator(resp, SomeClass)
 
     with pytest.raises(
         ValueError,
