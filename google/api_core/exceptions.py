@@ -475,6 +475,7 @@ def from_http_status(status_code, message, **kwargs):
 
     return error
 
+
 def _format_error_message(error, method, url):
     method = method.upper()
     message = "{method} {url}: {error}".format(
@@ -483,6 +484,7 @@ def _format_error_message(error, method, url):
         error=error,
     )
     return message
+
 
 def format_http_response_error(response, method, url, payload=None):
     """Create a :class:`GoogleAPICallError` from a google auth rest response.
@@ -539,7 +541,9 @@ def from_http_response(response):
         payload = response.json()
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
-    return format_http_response_error(response, response.request.method, response.request.url, payload)
+    return format_http_response_error(
+        response, response.request.method, response.request.url, payload
+    )
 
 
 def exception_class_for_grpc_status(status_code):

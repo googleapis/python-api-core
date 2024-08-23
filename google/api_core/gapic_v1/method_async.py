@@ -32,7 +32,7 @@ def wrap_method(
     default_timeout=None,
     default_compression=None,
     client_info=client_info.DEFAULT_CLIENT_INFO,
-    kind="grpc"
+    kind="grpc",
 ):
     """Wrap an async RPC method with common behavior.
 
