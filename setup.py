@@ -32,7 +32,8 @@ dependencies = [
     "googleapis-common-protos >= 1.56.2, < 2.0.dev0",
     "protobuf>=3.19.5,<6.0.0.dev0,!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5",
     "proto-plus >= 1.22.3, <2.0.0dev",
-    "google-auth >= 2.14.1, < 3.0.dev0",
+    # TODO (ohmayr): Temporary change to make test cases pass. Revert before merging.
+    "google-auth @ git+ssh://git@github.com/googleapis/google-auth-library-python@8833ad6f92c3300d6645355994c7db2356bd30ad",
     "requests >= 2.18.0, < 3.0.0.dev0",
 ]
 extras = {
