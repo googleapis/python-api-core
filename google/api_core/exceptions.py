@@ -475,6 +475,54 @@ def from_http_status(status_code, message, **kwargs):
 
     return error
 
+def _format_error_message(error, method, url):
+    method = method.upper()
+    message = "{method} {url}: {error}".format(
+        method=method,
+        url=url,
+        error=error,
+    )
+    return message
+
+def format_http_response_error(response, method, url, payload=None):
+    """Create a :class:`GoogleAPICallError` from a google auth rest response.
+
+    Args:
+        response Union[google.auth.transport.Response, google.auth.aio.transport.Response]: The HTTP response.
+        method Optional(str): The HTTP request method.
+        url Optional(str): The HTTP request url.
+        payload Optional(str): The HTTP response payload. If not passed in, it is read from response for a response type of google.auth.transport.Response.
+
+    Returns:
+        GoogleAPICallError: An instance of the appropriate subclass of
+            :class:`GoogleAPICallError`, with the message and errors populated
+            from the response.
+    """
+    payload = {} if not payload else payload
+    error_message = payload.get("error", {}).get("message", "unknown error")
+    errors = payload.get("error", {}).get("errors", ())
+    # In JSON, details are already formatted in developer-friendly way.
+    details = payload.get("error", {}).get("details", ())
+    error_info = list(
+        filter(
+            lambda detail: detail.get("@type", "")
+            == "type.googleapis.com/google.rpc.ErrorInfo",
+            details,
+        )
+    )
+    error_info = error_info[0] if error_info else None
+    message = _format_error_message(error_message, method, url)
+
+    exception = from_http_status(
+        response.status_code,
+        message,
+        errors=errors,
+        details=details,
+        response=response,
+        error_info=error_info,
+    )
+    return exception
+
 
 def from_http_response(response):
     """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.
@@ -491,35 +539,7 @@ def from_http_response(response):
         payload = response.json()
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
-
-    error_message = payload.get("error", {}).get("message", "unknown error")
-    errors = payload.get("error", {}).get("errors", ())
-    # In JSON, details are already formatted in developer-friendly way.
-    details = payload.get("error", {}).get("details", ())
-    error_info = list(
-        filter(
-            lambda detail: detail.get("@type", "")
-            == "type.googleapis.com/google.rpc.ErrorInfo",
-            details,
-        )
-    )
-    error_info = error_info[0] if error_info else None
-
-    message = "{method} {url}: {error}".format(
-        method=response.request.method,
-        url=response.request.url,
-        error=error_message,
-    )
-
-    exception = from_http_status(
-        response.status_code,
-        message,
-        errors=errors,
-        details=details,
-        response=response,
-        error_info=error_info,
-    )
-    return exception
+    return format_http_response_error(response, response.request.method, response.request.url, payload)
 
 
 def exception_class_for_grpc_status(status_code):
