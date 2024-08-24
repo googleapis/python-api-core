@@ -27,7 +27,6 @@ class BaseResponseIterator:
     """Base Iterator over REST API responses. This class should not be used directly.
 
     Args:
-        response (requests.Response): An API response object.
         response_message_cls (Union[proto.Message, google.protobuf.message.Message]): A response
         class expected to be returned from an API.
 
@@ -40,8 +39,6 @@ class BaseResponseIterator:
         response_message_cls: Union[proto.Message, google.protobuf.message.Message],
     ):
         self._response_message_cls = response_message_cls
-        # Inner iterator over HTTP response's content.
-        # self._response_itr = self._response.iter_content(decode_unicode=True)
         # Contains a list of JSON responses ready to be sent to user.
         self._ready_objs: Deque[str] = deque()
         # Current JSON response being built.
@@ -100,7 +97,7 @@ class BaseResponseIterator:
     def _grab(self):
         # Add extra quotes to make json.loads happy.
         if issubclass(self._response_message_cls, proto.Message):
-            return self._response_message_cls.from_json(self._ready_objs.popleft())
+            return self._response_message_cls.from_json(self._ready_objs.popleft(), ignore_unknown_fields=True)
         elif issubclass(self._response_message_cls, google.protobuf.message.Message):
             return Parse(self._ready_objs.popleft(), self._response_message_cls())
         else:

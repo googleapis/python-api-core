@@ -27,12 +27,12 @@ from google.api_core import rest_streaming
 from google.api import http_pb2
 from google.api import httpbody_pb2
 
-from ..conftest import Composer, Song, EchoResponse, parse_responses
+from ..helpers import Composer, Song, EchoResponse, parse_responses
 
 
 __protobuf__ = proto.module(package=__name__)
 SEED = int(time.time())
-logging.info(f"Starting rest streaming tests with random seed: {SEED}")
+logging.info(f"Starting sync rest streaming tests with random seed: {SEED}")
 random.seed(SEED)
 
 
@@ -65,6 +65,9 @@ class ResponseMock(requests.Response):
         self._random_split = random_split
         self._response_message_cls = response_cls
 
+    def _parse_responses(self):
+        return parse_responses(self._response_message_cls, self._responses)
+
     def close(self):
         raise NotImplementedError()
 
@@ -74,8 +77,6 @@ class ResponseMock(requests.Response):
             random_split=self._random_split,
         )
 
-    def _parse_responses(self):
-        return parse_responses(self._response_message_cls, self._responses)
 
 
 @pytest.mark.parametrize(

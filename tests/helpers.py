@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Helpers for tests"""
 
 import logging
 from typing import List
@@ -59,11 +60,11 @@ def parse_responses(response_message_cls, responses: List[proto.Message]) -> byt
     # in order to be an actual JSON.
     json_responses = [
         (
-            response_message_cls.to_json(r).strip('"')
+            response_message_cls.to_json(response).strip('"')
             if issubclass(response_message_cls, proto.Message)
-            else MessageToJson(r).strip('"')
+            else MessageToJson(response).strip('"')
         )
-        for r in responses
+        for response in responses
     ]
     logging.info(f"Sending JSON stream: {json_responses}")
     ret_val = "[{}]".format(",".join(json_responses))

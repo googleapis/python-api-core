@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helpers for server-side asynchronous streaming in REST."""
+"""Helpers for asynchronous server-side streaming in REST."""
 
 from typing import Union
 
@@ -33,7 +33,7 @@ class AsyncResponseIterator(BaseResponseIterator):
     Raises:
         ValueError:
             - If `response_message_cls` is not a subclass of `proto.Message` or `google.protobuf.message.Message`.
-            - If `response` is not an instance of `google.auth.aio.transport.aiohttp.Response`.
+            - If `response` is not an instance of a subclass of `google.auth.aio.transport.Response`.
     """
 
     def __init__(

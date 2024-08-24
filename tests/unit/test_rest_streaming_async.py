@@ -27,9 +27,9 @@ from google.api import http_pb2
 from google.api import httpbody_pb2
 from google.auth.aio.transport import Response
 
-from ..conftest import Composer, Song, EchoResponse, parse_responses
+from ..helpers import Composer, Song, EchoResponse, parse_responses
 
-# TODO (ohmayr): check if we need to log.
+
 __protobuf__ = proto.module(package=__name__)
 SEED = int(time.time())
 logging.info(f"Starting async rest streaming tests with random seed: {SEED}")
@@ -46,21 +46,21 @@ class ResponseMock(Response):
     class _ResponseItr(AsyncIterator[bytes]):
         def __init__(self, _response_bytes: bytes, random_split=False):
             self._responses_bytes = _response_bytes
-            self._i = 0
+            self._idx = 0
             self._random_split = random_split
 
         def __aiter__(self):
             return self
 
         async def __anext__(self):
-            if self._i == len(self._responses_bytes):
+            if self._idx >= len(self._responses_bytes):
                 raise StopAsyncIteration
             if self._random_split:
-                n = random.randint(1, len(self._responses_bytes[self._i :]))
+                n = random.randint(1, len(self._responses_bytes[self._idx :]))
             else:
                 n = 1
-            x = self._responses_bytes[self._i : self._i + n]
-            self._i += n
+            x = self._responses_bytes[self._idx : self._idx + n]
+            self._idx += n
             return x
 
     def __init__(
@@ -73,7 +73,17 @@ class ResponseMock(Response):
         self._random_split = random_split
         self._response_message_cls = response_cls
 
+    def _parse_responses(self):
+        return parse_responses(self._response_message_cls, self._responses)
+
     @property
+    async def headers(self):
+        raise NotImplementedError()
+
+    @property
+    async def status_code(self):
+        raise NotImplementedError()
+
     async def close(self):
         raise NotImplementedError()
 
@@ -86,17 +96,6 @@ class ResponseMock(Response):
 
     async def read(self):
         raise NotImplementedError()
-
-    @property
-    async def headers(self):
-        raise NotImplementedError()
-
-    @property
-    async def status_code(self):
-        raise NotImplementedError()
-
-    def _parse_responses(self):
-        return parse_responses(self._response_message_cls, self._responses)
 
 
 @pytest.mark.asyncio
@@ -119,10 +118,10 @@ async def test_next_simple(random_split, resp_message_is_proto_plus):
         responses=responses, random_split=random_split, response_cls=response_type
     )
     itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
-    i = 0
+    idx = 0
     async for response in itr:
-        assert response == responses[i]
-        i += 1
+        assert response == responses[idx]
+        idx += 1
 
 
 @pytest.mark.asyncio
@@ -160,11 +159,11 @@ async def test_next_nested(random_split, resp_message_is_proto_plus):
         responses=responses, random_split=random_split, response_cls=response_type
     )
     itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
-    i = 0
+    idx = 0
     async for response in itr:
-        assert response == responses[i]
-        i += 1
-    assert i == len(responses)
+        assert response == responses[idx]
+        idx += 1
+    assert idx == len(responses)
 
 
 @pytest.mark.asyncio
@@ -198,11 +197,11 @@ async def test_next_stress(random_split, resp_message_is_proto_plus):
         responses=responses, random_split=random_split, response_cls=response_type
     )
     itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
-    i = 0
+    idx = 0
     async for response in itr:
-        assert response == responses[i]
-        i += 1
-    assert i == n
+        assert response == responses[idx]
+        idx += 1
+    assert idx == n
 
 
 @pytest.mark.asyncio
@@ -266,12 +265,11 @@ async def test_next_escaped_characters_in_string(
         responses=responses, random_split=random_split, response_cls=response_type
     )
     itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
-
-    i = 0
+    idx = 0
     async for response in itr:
-        assert response == responses[i]
-        i += 1
-    assert i == len(responses)
+        assert response == responses[idx]
+        idx += 1
+    assert idx == len(responses)
 
 
 @pytest.mark.asyncio
