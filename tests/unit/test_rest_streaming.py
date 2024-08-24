@@ -78,7 +78,6 @@ class ResponseMock(requests.Response):
         )
 
 
-
 @pytest.mark.parametrize(
     "random_split,resp_message_is_proto_plus",
     [(False, True), (False, False)],
