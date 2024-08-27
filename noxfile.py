@@ -147,7 +147,7 @@ def default(session, install_grpc=True, prerelease=False, install_auth_aio=False
 
     if install_auth_aio:
         session.install(
-            "google-auth @ git+ssh://git@github.com/googleapis/google-auth-library-python@8833ad6f92c3300d6645355994c7db2356bd30ad"
+            "google-auth @ git+https://git@github.com/googleapis/google-auth-library-python@8833ad6f92c3300d6645355994c7db2356bd30ad"
         )
 
     # Print out package versions of dependencies
