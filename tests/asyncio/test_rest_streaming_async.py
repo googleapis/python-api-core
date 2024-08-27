@@ -12,20 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO: set random.seed explicitly in each test function.
+# See related issue: https://github.com/googleapis/python-api-core/issues/689.
+
+import pytest  # noqa: I202
+import mock
+
 import datetime
 import logging
 import random
 import time
 from typing import List, AsyncIterator
-import mock
 
 import proto
-import pytest
+
+try:
+    from google.auth.aio.transport import Response
+
+    AUTH_AIO_INSTALLED = True
+except ImportError:
+    AUTH_AIO_INSTALLED = False
+
+if not AUTH_AIO_INSTALLED:  # pragma: NO COVER
+    pytest.skip(
+        "google-auth>=2.3x.x is required to use asynchronous rest streaming.",
+        allow_module_level=True,
+    )
 
 from google.api_core import rest_streaming_async
 from google.api import http_pb2
 from google.api import httpbody_pb2
-from google.auth.aio.transport import Response
+
 
 from ..helpers import Composer, Song, EchoResponse, parse_responses
 
@@ -342,10 +359,8 @@ async def test_invalid_response_class():
         pass
 
     resp = ResponseMock(responses=[], response_cls=SomeClass)
-    response_iterator = rest_streaming_async.AsyncResponseIterator(resp, SomeClass)
-
     with pytest.raises(
         ValueError,
         match="Response message class must be a subclass of proto.Message or google.protobuf.message.Message",
     ):
-        response_iterator._grab()
+        rest_streaming_async.AsyncResponseIterator(resp, SomeClass)

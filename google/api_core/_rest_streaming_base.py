@@ -17,6 +17,7 @@
 from collections import deque
 import string
 from typing import Deque, Union
+import types
 
 import proto
 import google.protobuf.message
@@ -50,6 +51,24 @@ class BaseResponseIterator:
         self._in_string = False
         # Whether an escape symbol "\" was encountered.
         self._escape_next = False
+
+        if issubclass(self._response_message_cls, proto.Message):
+
+            def grab(this):
+                return this._response_message_cls.from_json(
+                    self._ready_objs.popleft(), ignore_unknown_fields=True
+                )
+
+        elif issubclass(self._response_message_cls, google.protobuf.message.Message):
+
+            def grab(this):
+                return Parse(this._ready_objs.popleft(), self._response_message_cls())
+
+        else:
+            raise ValueError(
+                "Response message class must be a subclass of proto.Message or google.protobuf.message.Message."
+            )
+        self._grab = types.MethodType(grab, self)
 
     def _process_chunk(self, chunk: str):
         if self._level == 0:
@@ -93,16 +112,3 @@ class BaseResponseIterator:
             else:
                 self._obj += char
             self._escape_next = not self._escape_next if char == "\\" else False
-
-    def _grab(self):
-        # Add extra quotes to make json.loads happy.
-        if issubclass(self._response_message_cls, proto.Message):
-            return self._response_message_cls.from_json(
-                self._ready_objs.popleft(), ignore_unknown_fields=True
-            )
-        elif issubclass(self._response_message_cls, google.protobuf.message.Message):
-            return Parse(self._ready_objs.popleft(), self._response_message_cls())
-        else:
-            raise ValueError(
-                "Response message class must be a subclass of proto.Message or google.protobuf.message.Message."
-            )

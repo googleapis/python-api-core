@@ -55,7 +55,7 @@ class EchoResponse(proto.Message):
     content = proto.Field(proto.STRING, number=1)
 
 
-def parse_responses(response_message_cls, responses: List[proto.Message]) -> bytes:
+def parse_responses(response_message_cls, all_responses: List[proto.Message]) -> bytes:
     # json.dumps returns a string surrounded with quotes that need to be stripped
     # in order to be an actual JSON.
     json_responses = [
@@ -64,7 +64,7 @@ def parse_responses(response_message_cls, responses: List[proto.Message]) -> byt
             if issubclass(response_message_cls, proto.Message)
             else MessageToJson(response).strip('"')
         )
-        for response in responses
+        for response in all_responses
     ]
     logging.info(f"Sending JSON stream: {json_responses}")
     ret_val = "[{}]".format(",".join(json_responses))

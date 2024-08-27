@@ -17,7 +17,15 @@
 from typing import Union
 
 import proto
-import google.auth.aio.transport
+
+try:
+    import google.auth.aio.transport
+except ImportError:
+    # TODO (ohmayr): Update this version once auth work is released.
+    raise ValueError(
+        "google-auth>=2.3x.x is required to use asynchronous rest streaming."
+    )
+
 import google.protobuf.message
 from google.api_core._rest_streaming_base import BaseResponseIterator
 
