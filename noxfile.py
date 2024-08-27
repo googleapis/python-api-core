@@ -38,6 +38,7 @@ nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
     "unit_wo_grpc",
+    "unit_with_auth_aio",
     "cover",
     "pytype",
     "mypy",
