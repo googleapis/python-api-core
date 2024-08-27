@@ -20,7 +20,7 @@ import proto
 
 try:
     import google.auth.aio.transport
-except ImportError:
+except ImportError:  # pragma: NO COVER
     # TODO (ohmayr): Update this version once auth work is released.
     raise ValueError(
         "google-auth>=2.3x.x is required to use asynchronous rest streaming."
@@ -55,6 +55,9 @@ class AsyncResponseIterator(BaseResponseIterator):
         super(AsyncResponseIterator, self).__init__(
             response_message_cls=response_message_cls
         )
+
+    async def __aenter__(self):
+        return self
 
     async def cancel(self):
         """Cancel existing streaming operation."""

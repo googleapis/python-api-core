@@ -54,7 +54,7 @@ random.seed(SEED)
 
 
 async def mock_async_gen(data, chunk_size=1):
-    for i in range(0, len(data)):
+    for i in range(0, len(data)):  # pragma: NO COVER
         chunk = data[i : i + chunk_size]
         yield chunk.encode("utf-8")
 
@@ -313,6 +313,18 @@ async def test_cancel(response_type):
         resp = ResponseMock(responses=[], response_cls=response_type)
         itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
         await itr.cancel()
+        mock_method.assert_called_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("response_type", [EchoResponse, httpbody_pb2.HttpBody])
+async def test_iterator_as_context_manager(response_type):
+    with mock.patch.object(
+        ResponseMock, "close", new_callable=mock.AsyncMock
+    ) as mock_method:
+        resp = ResponseMock(responses=[], response_cls=response_type)
+        async with rest_streaming_async.AsyncResponseIterator(resp, response_type):
+            pass
         mock_method.assert_called_once()
 
 
