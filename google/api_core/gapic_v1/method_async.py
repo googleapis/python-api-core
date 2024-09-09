@@ -27,6 +27,7 @@ from google.api_core.gapic_v1.method import USE_DEFAULT_METADATA  # noqa: F401
 
 _DEFAULT_ASYNC_TRANSPORT_KIND = "grpc_asyncio"
 
+
 def wrap_method(
     func,
     default_retry=None,
