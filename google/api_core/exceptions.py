@@ -22,7 +22,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import http.client
-from typing import Dict
+from typing import Optional, Dict
 from typing import Union
 import warnings
 
@@ -486,15 +486,20 @@ def _format_rest_error_message(error, method, url):
     return message
 
 
+# NOTE: We're moving away from `from_http_status` because it expects an aiohttp response compared
+# to `format_http_response_error` which expects a more abstract response from google.auth and is
+# compatible with both sync and async response types.
 # TODO(https://github.com/googleapis/python-api-core/issues/691): Add type hint for response.
-def format_http_response_error(response, method: str, url: str, payload: str = None):
+def format_http_response_error(
+    response, method: str, url: str, payload: Optional[Dict] = None
+):
     """Create a :class:`GoogleAPICallError` from a google auth rest response.
 
     Args:
         response Union[google.auth.transport.Response, google.auth.aio.transport.Response]: The HTTP response.
         method Optional(str): The HTTP request method.
         url Optional(str): The HTTP request url.
-        payload Optional(str): The HTTP response payload. If not passed in, it is read from response for a response type of google.auth.transport.Response.
+        payload Optional(dict): The HTTP response payload. If not passed in, it is read from response for a response type of google.auth.transport.Response.
 
     Returns:
         GoogleAPICallError: An instance of the appropriate subclass of
