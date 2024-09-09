@@ -476,7 +476,7 @@ def from_http_status(status_code, message, **kwargs):
     return error
 
 
-def _format_error_message(error, method, url):
+def _format_rest_error_message(error, method, url):
     method = method.upper()
     message = "{method} {url}: {error}".format(
         method=method,
@@ -486,7 +486,8 @@ def _format_error_message(error, method, url):
     return message
 
 
-def format_http_response_error(response, method, url, payload=None):
+# TODO(https://github.com/googleapis/python-api-core/issues/691): Add type hint for response.
+def format_http_response_error(response, method: str, url: str, payload: str = None):
     """Create a :class:`GoogleAPICallError` from a google auth rest response.
 
     Args:
@@ -513,7 +514,7 @@ def format_http_response_error(response, method, url, payload=None):
         )
     )
     error_info = error_info[0] if error_info else None
-    message = _format_error_message(error_message, method, url)
+    message = _format_rest_error_message(error_message, method, url)
 
     exception = from_http_status(
         response.status_code,
