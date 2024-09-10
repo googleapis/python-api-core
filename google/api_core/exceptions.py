@@ -477,7 +477,7 @@ def from_http_status(status_code, message, **kwargs):
 
 
 def _format_rest_error_message(error, method, url):
-    method = method.upper()
+    method = method.upper() if method else None
     message = "{method} {url}: {error}".format(
         method=method,
         url=url,
