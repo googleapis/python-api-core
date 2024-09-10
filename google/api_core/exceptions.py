@@ -444,6 +444,7 @@ class DeadlineExceeded(GatewayTimeout):
 
 class AsyncRestUnsupportedParameterError(NotImplementedError):
     """Raised when an unsupported parameter is configured against async rest transport."""
+
     pass
 
 
