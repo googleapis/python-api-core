@@ -33,7 +33,6 @@ class ResponseIterator(BaseResponseIterator):
     Raises:
         ValueError:
             - If `response_message_cls` is not a subclass of `proto.Message` or `google.protobuf.message.Message`.
-            - If `response` is not an instance of `requests.Response`.
     """
 
     def __init__(
