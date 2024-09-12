@@ -9,7 +9,7 @@
 
 ### Features
 
-* Add async unsupported paramater exception ([#694](https://github.com/googleapis/python-api-core/issues/694)) ([8c137fe](https://github.com/googleapis/python-api-core/commit/8c137feb6e880fdd93d1248d9b6c10002dc3c096))
+* Add async unsupported parameter exception ([#694](https://github.com/googleapis/python-api-core/issues/694)) ([8c137fe](https://github.com/googleapis/python-api-core/commit/8c137feb6e880fdd93d1248d9b6c10002dc3c096))
 * Add support for creating exceptions from an asynchronous response ([#688](https://github.com/googleapis/python-api-core/issues/688)) ([1c4b0d0](https://github.com/googleapis/python-api-core/commit/1c4b0d079f2103a7b5562371a7bd1ada92528de3))
 
 ## [2.19.2](https://github.com/googleapis/python-api-core/compare/v2.19.1...v2.19.2) (2024-08-16)
