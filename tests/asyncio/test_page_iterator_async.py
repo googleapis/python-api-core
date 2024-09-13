@@ -106,6 +106,7 @@ class TestAsyncIterator:
         await page_aiter.__anext__()
 
         assert iterator.num_results == 1
+        await page_aiter.aclose()
 
     @pytest.mark.asyncio
     async def test__page_aiter_no_increment(self):
@@ -118,6 +119,7 @@ class TestAsyncIterator:
 
         # results should still be 0 after fetching a page.
         assert iterator.num_results == 0
+        await page_aiter.aclose()
 
     @pytest.mark.asyncio
     async def test__items_aiter(self):

@@ -134,6 +134,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         unpacked = [await generator.__anext__() for i in range(10)]
         assert unpacked == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
         assert on_error.call_count == 3
+        await generator.aclose()
 
     @mock.patch("random.uniform", autospec=True, side_effect=lambda m, n: n)
     @mock.patch("asyncio.sleep", autospec=True)
@@ -241,6 +242,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             recv = await generator.asend(msg)
             out_messages.append(recv)
         assert in_messages == out_messages
+        await generator.aclose()
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -258,6 +260,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         with pytest.raises(TypeError) as exc_info:
             await generator.asend("cannot send to fresh generator")
             assert exc_info.match("can't send non-None value")
+        await generator.aclose()
 
         # error thrown on 3
         # generator should contain 0, 1, 2 looping
@@ -266,6 +269,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         unpacked = [await generator.asend(i) for i in range(10)]
         assert unpacked == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
         assert on_error.call_count == 3
+        await generator.aclose()
 
     @mock.patch("asyncio.sleep", autospec=True)
     @pytest.mark.asyncio
@@ -377,6 +381,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
         assert await retryable.asend("test") == 1
         assert await retryable.asend("test2") == 2
         assert await retryable.asend("test3") == 3
+        await retryable.aclose()
 
     @pytest.mark.parametrize("awaitable_wrapped", [True, False])
     @mock.patch("asyncio.sleep", autospec=True)
