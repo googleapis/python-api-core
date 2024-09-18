@@ -21,9 +21,8 @@ import proto
 try:
     import google.auth.aio.transport
 except ImportError:  # pragma: NO COVER
-    # TODO (ohmayr): Update this version once auth work is released.
     raise ValueError(
-        "google-auth>=2.3x.x is required to use asynchronous rest streaming."
+        "google-auth>=2.35.0 is required to use asynchronous rest streaming."
     )
 
 import google.protobuf.message
