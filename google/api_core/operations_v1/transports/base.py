@@ -20,6 +20,7 @@ import google.api_core  # type: ignore
 from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core import retry as retries  # type: ignore
+from google.api_core import retry_async as retries_async  # type: ignore
 from google.api_core import version
 import google.auth  # type: ignore
 from google.auth import credentials as ga_credentials  # type: ignore
@@ -115,12 +116,13 @@ class OperationsTransport(abc.ABC):
         # Save the credentials.
         self._credentials = credentials
 
-    def _prep_wrapped_messages(self, client_info):
+    def _prep_wrapped_messages(self, client_info, is_async=False):
         # Precompute the wrapped methods.
+        retry_class = retries_async.AsyncRetry if is_async else retries.Retry
         self._wrapped_methods = {
             self.list_operations: gapic_v1.method.wrap_method(
                 self.list_operations,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -135,7 +137,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.get_operation: gapic_v1.method.wrap_method(
                 self.get_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -150,7 +152,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.delete_operation: gapic_v1.method.wrap_method(
                 self.delete_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -165,7 +167,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.cancel_operation: gapic_v1.method.wrap_method(
                 self.cancel_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,

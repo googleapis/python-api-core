@@ -17,13 +17,16 @@ from collections import OrderedDict
 
 from .base import OperationsTransport
 from .rest import OperationsRestTransport
+from .rest_asyncio import OperationsRestAsyncTransport
 
 
 # Compile a registry of transports.
 _transport_registry = OrderedDict()
 _transport_registry["rest"] = OperationsRestTransport
+_transport_registry["rest_asyncio"] = OperationsRestAsyncTransport
 
 __all__ = (
     "OperationsTransport",
     "OperationsRestTransport",
+    "OperationsRestAsyncTransport",
 )
