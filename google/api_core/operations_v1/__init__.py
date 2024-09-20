@@ -21,9 +21,22 @@ from google.api_core.operations_v1.operations_async_client import OperationsAsyn
 from google.api_core.operations_v1.operations_client import OperationsClient
 from google.api_core.operations_v1.transports.rest import OperationsRestTransport
 
+try:
+    from google.api_core.operations_v1.transports.rest_asyncio import (
+        OperationsRestAsyncTransport,
+    )
+
+    HAS_ASYNC_TRANSPORT = True
+except ImportError:
+    # This import requires the `async_rest` extra
+    # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
+    # as other transports are still available
+    HAS_ASYNC_TRANSPORT = False
+
 __all__ = [
     "AbstractOperationsClient",
     "OperationsAsyncClient",
     "OperationsClient",
     "OperationsRestTransport",
+    "OperationsRestAsyncTransport",
 ]

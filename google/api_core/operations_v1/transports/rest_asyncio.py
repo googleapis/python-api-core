@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,24 +19,28 @@ from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
 from requests import __version__ as requests_version
 
+try:
+    import google.auth.aio.transport
+except ImportError as e:  # pragma: NO COVER
+    raise ImportError(
+        "`google-api-core[async_rest]` is required to use asynchronous rest streaming. "
+        "Install the `async_rest` extra of `google-api-core` using "
+        "`pip install google-api-core[async_rest]`."
+    ) from e
+
 from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core import path_template  # type: ignore
 from google.api_core import rest_helpers  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.auth import credentials as ga_credentials  # type: ignore
-from google.auth.transport.requests import AuthorizedSession  # type: ignore
+from google.api_core import retry_async as retries  # type: ignore
+from google.auth.aio import credentials as ga_credentials  # type: ignore
+from google.auth.aio.transport.sessions import AsyncAuthorizedSession  # type: ignore
 from google.longrunning import operations_pb2  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
 from google.protobuf import json_format  # type: ignore
-import google.protobuf
 
-import grpc
 from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTransport
 
-PROTOBUF_VERSION = google.protobuf.__version__
-
-OptionalRetry = Union[retries.Retry, object]
 
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
@@ -45,10 +49,11 @@ DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
 )
 
 
-class OperationsRestTransport(OperationsTransport):
-    """REST backend transport for Operations.
+class OperationsRestAsyncTransport(OperationsTransport):
+    """REST Async backend transport for Operations inherited from
+    `OperationsTransport`.
 
-    Manages long-running operations with an API service.
+    Manages async long-running operations with an API service.
 
     When an API method normally takes long time to complete, it can be
     designed to return [Operation][google.api_core.operations_v1.Operation] to the
@@ -71,10 +76,6 @@ class OperationsRestTransport(OperationsTransport):
         *,
         host: str = "longrunning.googleapis.com",
         credentials: Optional[ga_credentials.Credentials] = None,
-        credentials_file: Optional[str] = None,
-        scopes: Optional[Sequence[str]] = None,
-        client_cert_source_for_mtls: Optional[Callable[[], Tuple[bytes, bytes]]] = None,
-        quota_project_id: Optional[str] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
@@ -86,22 +87,11 @@ class OperationsRestTransport(OperationsTransport):
         Args:
             host (Optional[str]):
                  The hostname to connect to.
-            credentials (Optional[google.auth.credentials.Credentials]): The
+            credentials (Optional[google.auth.aio.credentials.Credentials]): The
                 authorization credentials to attach to requests. These
                 credentials identify the application to the service; if none
                 are specified, the client will attempt to ascertain the
                 credentials from the environment.
-
-            credentials_file (Optional[str]): A file with credentials that can
-                be loaded with :func:`google.auth.load_credentials_from_file`.
-                This argument is ignored if ``channel`` is provided.
-            scopes (Optional(Sequence[str])): A list of scopes. This argument is
-                ignored if ``channel`` is provided.
-            client_cert_source_for_mtls (Callable[[], Tuple[bytes, bytes]]): Client
-                certificate to configure mutual TLS HTTP channel. It is ignored
-                if ``channel`` is provided.
-            quota_project_id (Optional[str]): An optional project to use for billing
-                and quota.
             client_info (google.api_core.gapic_v1.client_info.ClientInfo):
                 The client info used to send a user-agent string along with
                 API requests. If ``None``, then default info will be used.
@@ -123,39 +113,41 @@ class OperationsRestTransport(OperationsTransport):
         # TODO(yon-mg): resolve other ctor params i.e. scopes, quota, etc.
         # TODO: When custom host (api_endpoint) is set, `scopes` must *also* be set on the
         # credentials object
+        maybe_url_match = re.match("^(?P<scheme>http(?:s)?://)?(?P<host>.*)$", host)
+        if maybe_url_match is None:
+            raise ValueError(
+                f"Unexpected hostname structure: {host}"
+            )  # pragma: NO COVER
+
+        url_match_items = maybe_url_match.groupdict()
+
+        host = f"{url_scheme}://{host}" if not url_match_items["scheme"] else host
+
         super().__init__(
             host=host,
             credentials=credentials,
             client_info=client_info,
             always_use_jwt_access=always_use_jwt_access,
         )
-        self._session = AuthorizedSession(
-            self._credentials, default_host=self.DEFAULT_HOST
-        )
-        if client_cert_source_for_mtls:
-            self._session.configure_mtls_channel(client_cert_source_for_mtls)
-        self._prep_wrapped_messages(client_info)
+        # TODO file bug in auth library to add support for default_host argument in AsyncAuthorizedSession
+        self._session = AsyncAuthorizedSession(self._credentials)
+        self._prep_wrapped_messages(client_info, is_async=True)
         self._http_options = http_options or {}
         self._path_prefix = path_prefix
 
-    def _list_operations(
+    async def _list_operations(
         self,
         request: operations_pb2.ListOperationsRequest,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.ListOperationsResponse:
-        r"""Call the list operations method over HTTP.
+        r"""Asynchronously call the list operations method over HTTP.
 
         Args:
             request (~.operations_pb2.ListOperationsRequest):
                 The request object. The request message for
                 [Operations.ListOperations][google.api_core.operations_v1.Operations.ListOperations].
-
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -196,7 +188,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
-        response = getattr(self._session, method)(
+        response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
             headers=headers,
@@ -213,24 +205,19 @@ class OperationsRestTransport(OperationsTransport):
         json_format.Parse(response.content, api_response, ignore_unknown_fields=False)
         return api_response
 
-    def _get_operation(
+    async def _get_operation(
         self,
         request: operations_pb2.GetOperationRequest,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
-        r"""Call the get operation method over HTTP.
+        r"""Asynchronously call the get operation method over HTTP.
 
         Args:
             request (~.operations_pb2.GetOperationRequest):
                 The request object. The request message for
                 [Operations.GetOperation][google.api_core.operations_v1.Operations.GetOperation].
-
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -272,7 +259,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
-        response = getattr(self._session, method)(
+        response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
             headers=headers,
@@ -286,19 +273,19 @@ class OperationsRestTransport(OperationsTransport):
 
         # Return the response
         api_response = operations_pb2.Operation()
-        json_format.Parse(response.content, api_response, ignore_unknown_fields=False)
+        json_format.Parse(
+            await response.read(), api_response, ignore_unknown_fields=False
+        )
         return api_response
 
-    def _delete_operation(
+    async def _delete_operation(
         self,
         request: operations_pb2.DeleteOperationRequest,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> empty_pb2.Empty:
-        r"""Call the delete operation method over HTTP.
+        r"""Asynchronously call the delete operation method over HTTP.
 
         Args:
             request (~.operations_pb2.DeleteOperationRequest):
@@ -341,7 +328,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
-        response = getattr(self._session, method)(
+        response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
             headers=headers,
@@ -355,24 +342,19 @@ class OperationsRestTransport(OperationsTransport):
 
         return empty_pb2.Empty()
 
-    def _cancel_operation(
+    async def _cancel_operation(
         self,
         request: operations_pb2.CancelOperationRequest,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> empty_pb2.Empty:
-        r"""Call the cancel operation method over HTTP.
+        r"""Asynchronously call the cancel operation method over HTTP.
 
         Args:
             request (~.operations_pb2.CancelOperationRequest):
                 The request object. The request message for
                 [Operations.CancelOperation][google.api_core.operations_v1.Operations.CancelOperation].
-
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -416,7 +398,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
-        response = getattr(self._session, method)(
+        response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
             headers=headers,
@@ -458,4 +440,4 @@ class OperationsRestTransport(OperationsTransport):
         return self._cancel_operation
 
 
-__all__ = ("OperationsRestTransport",)
+__all__ = ("OperationsRestAsyncTransport",)

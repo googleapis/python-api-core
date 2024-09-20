@@ -18,12 +18,25 @@ from collections import OrderedDict
 from .base import OperationsTransport
 from .rest import OperationsRestTransport
 
+try:
+    from .rest_asyncio import OperationsRestAsyncTransport
+
+    HAS_ASYNC_TRANSPORT = True
+except ImportError:
+    # This import requires the `async_rest` extra
+    # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
+    # as other transports are still available
+    HAS_ASYNC_TRANSPORT = False
 
 # Compile a registry of transports.
 _transport_registry = OrderedDict()
 _transport_registry["rest"] = OperationsRestTransport
 
+if HAS_ASYNC_TRANSPORT:
+    _transport_registry["rest_asyncio"] = OperationsRestAsyncTransport
+
 __all__ = (
     "OperationsTransport",
     "OperationsRestTransport",
+    "OperationsRestAsyncTransport",
 )

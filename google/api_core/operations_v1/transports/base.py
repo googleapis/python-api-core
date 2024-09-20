@@ -14,20 +14,25 @@
 # limitations under the License.
 #
 import abc
+import re
 from typing import Awaitable, Callable, Optional, Sequence, Union
 
 import google.api_core  # type: ignore
 from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core import retry as retries  # type: ignore
+from google.api_core import retry_async as retries_async  # type: ignore
 from google.api_core import version
 import google.auth  # type: ignore
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.longrunning import operations_pb2
 from google.oauth2 import service_account  # type: ignore
-from google.protobuf import empty_pb2  # type: ignore
+import google.protobuf
+from google.protobuf import empty_pb2, json_format  # type: ignore
 from grpc import Compression
 
+
+PROTOBUF_VERSION = google.protobuf.__version__
 
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=version.__version__,
@@ -51,6 +56,7 @@ class OperationsTransport(abc.ABC):
         quota_project_id: Optional[str] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
+        url_scheme="https",
         **kwargs,
     ) -> None:
         """Instantiate the transport.
@@ -76,7 +82,20 @@ class OperationsTransport(abc.ABC):
                 your own client library.
             always_use_jwt_access (Optional[bool]): Whether self signed JWT should
                 be used for service account credentials.
+            url_scheme: the protocol scheme for the API endpoint.  Normally
+                "https", but for testing or local servers,
+                "http" can be specified.
         """
+        maybe_url_match = re.match("^(?P<scheme>http(?:s)?://)?(?P<host>.*)$", host)
+        if maybe_url_match is None:
+            raise ValueError(
+                f"Unexpected hostname structure: {host}"
+            )  # pragma: NO COVER
+
+        url_match_items = maybe_url_match.groupdict()
+
+        host = f"{url_scheme}://{host}" if not url_match_items["scheme"] else host
+
         # Save the hostname. Default to port 443 (HTTPS) if none is specified.
         if ":" not in host:
             host += ":443"
@@ -115,12 +134,13 @@ class OperationsTransport(abc.ABC):
         # Save the credentials.
         self._credentials = credentials
 
-    def _prep_wrapped_messages(self, client_info):
+    def _prep_wrapped_messages(self, client_info, is_async=False):
         # Precompute the wrapped methods.
+        retry_class = retries_async.AsyncRetry if is_async else retries.Retry
         self._wrapped_methods = {
             self.list_operations: gapic_v1.method.wrap_method(
                 self.list_operations,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -135,7 +155,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.get_operation: gapic_v1.method.wrap_method(
                 self.get_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -150,7 +170,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.delete_operation: gapic_v1.method.wrap_method(
                 self.delete_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -165,7 +185,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.cancel_operation: gapic_v1.method.wrap_method(
                 self.cancel_operation,
-                default_retry=retries.Retry(
+                default_retry=retry_class(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -188,6 +208,38 @@ class OperationsTransport(abc.ABC):
              with other clients - this may cause errors in other clients!
         """
         raise NotImplementedError()
+
+    def _convert_protobuf_message_to_dict(
+        self, message: google.protobuf.message.Message
+    ):
+        r"""Converts protobuf message to a dictionary.
+
+        When the dictionary is encoded to JSON, it conforms to proto3 JSON spec.
+
+        Args:
+            message(google.protobuf.message.Message): The protocol buffers message
+                instance to serialize.
+
+        Returns:
+            A dict representation of the protocol buffer message.
+        """
+        # For backwards compatibility with protobuf 3.x 4.x
+        # Remove once support for protobuf 3.x and 4.x is dropped
+        # https://github.com/googleapis/python-api-core/issues/643
+        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+            result = json_format.MessageToDict(
+                message,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,  # type: ignore # backward compatibility
+            )
+        else:
+            result = json_format.MessageToDict(
+                message,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
+
+        return result
 
     @property
     def list_operations(
