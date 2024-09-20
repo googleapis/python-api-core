@@ -49,7 +49,7 @@ class AsyncResponseIterator(BaseResponseIterator):
     ):
         self._response = response
         self._chunk_size = 1024
-        self._response_itr = self._response.content().__aiter__()
+        self._response_itr = self._response.content(self._chunk_size).__aiter__()
         super(AsyncResponseIterator, self).__init__(
             response_message_cls=response_message_cls
         )
