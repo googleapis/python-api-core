@@ -38,7 +38,7 @@ nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
     "unit_wo_grpc",
-    "unit_with_auth_aio",
+    "unit_with_async_rest_extra",
     "cover",
     "pytype",
     "mypy",
@@ -110,7 +110,7 @@ def install_prerelease_dependencies(session, constraints_path):
         session.install(*other_deps)
 
 
-def default(session, install_grpc=True, prerelease=False, install_auth_aio=False):
+def default(session, install_grpc=True, prerelease=False, install_async_rest=False):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -130,24 +130,40 @@ def default(session, install_grpc=True, prerelease=False, install_auth_aio=False
     )
 
     constraints_dir = str(CURRENT_DIRECTORY / "testing")
-
+    constraints_type = "async-rest-" if install_async_rest else ""
     if prerelease:
         install_prerelease_dependencies(
-            session, f"{constraints_dir}/constraints-{PYTHON_VERSIONS[0]}.txt"
+            session,
+            f"{constraints_dir}/constraints-{constraints_type}{PYTHON_VERSIONS[0]}.txt",
         )
         # This *must* be the last install command to get the package from source.
-        session.install("-e", ".", "--no-deps")
+        session.install(
+            "-e", "." + ("[async_rest]" if install_async_rest else ""), "--no-deps"
+        )
     else:
+        constraints_file = (
+            f"{constraints_dir}/constraints-{constraints_type}{session.python}.txt"
+        )
+        # fall back to standard constraints file
+        if not pathlib.Path(constraints_file).exists():
+            constraints_file = f"{constraints_dir}/constraints-{session.python}.txt"
+
         session.install(
             "-e",
-            ".[grpc]" if install_grpc else ".",
+            "."
+            + (
+                "[grpc,async_rest]"
+                if install_grpc and install_async_rest
+                else (
+                    "[grpc]"
+                    if install_grpc
+                    else "[async_rest]"
+                    if install_async_rest
+                    else ""
+                )
+            ),
             "-c",
-            f"{constraints_dir}/constraints-{session.python}.txt",
-        )
-
-    if install_auth_aio:
-        session.install(
-            "google-auth @ git+https://git@github.com/googleapis/google-auth-library-python@8833ad6f92c3300d6645355994c7db2356bd30ad"
+            constraints_file,
         )
 
     # Print out package versions of dependencies
@@ -236,9 +252,9 @@ def unit_wo_grpc(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_with_auth_aio(session):
-    """Run the unit test suite with google.auth.aio installed"""
-    default(session, install_auth_aio=True)
+def unit_with_async_rest_extra(session):
+    """Run the unit test suite with the `async_rest` extra"""
+    default(session, install_async_rest=True)
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
@@ -261,7 +277,7 @@ def mypy(session):
     """Run type-checking."""
     # TODO(https://github.com/googleapis/python-api-core/issues/682):
     # Use the latest version of mypy instead of mypy<1.11.0
-    session.install(".[grpc]", "mypy<1.11.0")
+    session.install(".[grpc,async_rest]", "mypy<1.11.0")
     session.install(
         "types-setuptools",
         "types-requests",

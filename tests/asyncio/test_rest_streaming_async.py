@@ -35,7 +35,7 @@ except ImportError:
 
 if not AUTH_AIO_INSTALLED:  # pragma: NO COVER
     pytest.skip(
-        "google-auth>=2.35.0 is required to use asynchronous rest streaming.",
+        "google-api-core[async_rest] is required to use asynchronous rest streaming.",
         allow_module_level=True,
     )
 
