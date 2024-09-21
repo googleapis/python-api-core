@@ -38,7 +38,8 @@ nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
     "unit_wo_grpc",
-    "unit_with_async_rest_extra",
+    "unit_w_prerelease_deps",
+    "unit_w_async_rest_extra",
     "cover",
     "pytype",
     "mypy",
@@ -221,7 +222,7 @@ def unit(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_with_prerelease_deps(session):
+def unit_w_prerelease_deps(session):
     """Run the unit test suite."""
     default(session, prerelease=True)
 
@@ -252,7 +253,7 @@ def unit_wo_grpc(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_with_async_rest_extra(session):
+def unit_w_async_rest_extra(session):
     """Run the unit test suite with the `async_rest` extra"""
     default(session, install_async_rest=True)
 
