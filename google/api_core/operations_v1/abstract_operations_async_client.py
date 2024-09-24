@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 from google.api_core import client_options as client_options_lib  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.api_core.operations_v1 import pagers
+from google.api_core.operations_v1 import pagers_async as pagers
 from google.api_core.operations_v1.transports.base import (
     DEFAULT_CLIENT_INFO,
     OperationsTransport,
@@ -26,15 +25,22 @@ from google.api_core.operations_v1.transports.base import (
 from google.api_core.operations_v1.abstract_operations_base_client import (
     AbstractOperationsBaseClient,
 )
-from google.auth import credentials as ga_credentials  # type: ignore
+
+try:
+    from google.auth.aio import credentials as ga_credentials  # type: ignore
+except ImportError as e:  # pragma: NO COVER
+    raise ImportError(
+        "`google-api-core[async_rest]` is required to use asynchronous rest streaming. "
+        "Install the `async_rest` extra of `google-api-core` using "
+        "`pip install google-api-core[async_rest]`."
+    ) from e
+
+from google.auth.aio import credentials as ga_credentials  # type: ignore
 from google.longrunning import operations_pb2
-import grpc
-
-OptionalRetry = Union[retries.Retry, object]
 
 
-class AbstractOperationsClient(AbstractOperationsBaseClient):
-    """Manages long-running operations with an API service.
+class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
+    """Manages long-running operations with an API service for the asynchronous client.
 
     When an API method normally takes long time to complete, it can be
     designed to return [Operation][google.api_core.operations_v1.Operation] to the
@@ -57,7 +63,7 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         """Instantiates the operations client.
 
         Args:
-            credentials (Optional[google.auth.credentials.Credentials]): The
+            credentials (Optional[google.auth.aio.credentials.Credentials]): The
                 authorization credentials to attach to requests. These
                 credentials identify the application to the service; if none
                 are specified, the client will attempt to ascertain the
@@ -92,24 +98,22 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
                 creation failed for any reason.
         """
         super().__init__(
-            credentials=credentials,
+            credentials=credentials,  # type: ignore
             transport=transport,
             client_options=client_options,
             client_info=client_info,
         )
 
-    def list_operations(
+    async def list_operations(
         self,
         name: str,
         filter_: Optional[str] = None,
         *,
         page_size: Optional[int] = None,
         page_token: Optional[str] = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
-    ) -> pagers.ListOperationsPager:
+    ) -> pagers.ListOperationsAsyncPager:
         r"""Lists operations that match the specified filter in the request.
         If the server doesn't support this method, it returns
         ``UNIMPLEMENTED``.
@@ -132,8 +136,6 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
                 This corresponds to the ``filter`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -165,17 +167,15 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         )
 
         # Send the request.
-        response = rpc(
+        response = await rpc(
             request,
-            retry=retry,
             timeout=timeout,
-            compression=compression,
             metadata=metadata,
         )
 
         # This method is paged; wrap the response in a pager, which provides
         # an `__iter__` convenience method.
-        response = pagers.ListOperationsPager(
+        response = pagers.ListOperationsAsyncPager(
             method=rpc,
             request=request,
             response=response,
@@ -185,13 +185,11 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         # Done; return the response.
         return response
 
-    def get_operation(
+    async def get_operation(
         self,
         name: str,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
         r"""Gets the latest state of a long-running operation.
@@ -201,8 +199,6 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         Args:
             name (str):
                 The name of the operation resource.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -228,24 +224,20 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         )
 
         # Send the request.
-        response = rpc(
+        response = await rpc(
             request,
-            retry=retry,
             timeout=timeout,
-            compression=compression,
             metadata=metadata,
         )
 
         # Done; return the response.
         return response
 
-    def delete_operation(
+    async def delete_operation(
         self,
         name: str,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Deletes a long-running operation. This method indicates that the
@@ -261,8 +253,6 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -281,21 +271,17 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         )
 
         # Send the request.
-        rpc(
+        await rpc(
             request,
-            retry=retry,
             timeout=timeout,
-            compression=compression,
             metadata=metadata,
         )
 
-    def cancel_operation(
+    async def cancel_operation(
         self,
         name: Optional[str] = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
-        compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Starts asynchronous cancellation on a long-running operation.
@@ -320,8 +306,6 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
             timeout (float): The timeout for this request.
             metadata (Sequence[Tuple[str, str]]): Strings which should be
                 sent along with the request as metadata.
@@ -340,10 +324,8 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
         )
 
         # Send the request.
-        rpc(
+        await rpc(
             request,
-            retry=retry,
             timeout=timeout,
-            compression=compression,
             metadata=metadata,
         )

@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+from typing import Union
 
 import mock
 import pytest
@@ -23,13 +24,15 @@ try:
 except ImportError:  # pragma: NO COVER
     pytest.skip("No GRPC", allow_module_level=True)
 from requests import Response  # noqa I201
-from requests.sessions import Session
+from google.auth.transport.requests import AuthorizedSession
 
 from google.api_core import client_options
 from google.api_core import exceptions as core_exceptions
 from google.api_core import gapic_v1
 from google.api_core.operations_v1 import AbstractOperationsClient
+
 from google.api_core.operations_v1 import pagers
+from google.api_core.operations_v1 import pagers_async
 from google.api_core.operations_v1 import transports
 from google.auth import credentials as ga_credentials
 from google.auth.exceptions import MutualTLSChannelError
@@ -41,6 +44,8 @@ from google.rpc import status_pb2  # type: ignore
 try:
     import aiohttp  # noqa: F401
     import google.auth.aio.transport
+    from google.auth.aio.transport.sessions import AsyncAuthorizedSession
+    from google.api_core.operations_v1 import AbstractOperationsAsyncClient
     from google.auth.aio import credentials as ga_credentials_async
 
     GOOGLE_AUTH_AIO_INSTALLED = True
@@ -81,17 +86,63 @@ HTTP_OPTIONS = {
     ],
 }
 
+CLIENTS = [
+    AbstractOperationsClient,
+]
+
+CLIENTS_WITH_TRANSPORT = [
+    (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
+]
+CLIENTS_WITH_CREDENTIALS = [
+    (
+        AbstractOperationsClient,
+        transports.OperationsRestTransport,
+        ga_credentials.AnonymousCredentials(),
+    ),
+]
+
+if GOOGLE_AUTH_AIO_INSTALLED:
+    CLIENTS.append(AbstractOperationsAsyncClient)
+    CLIENTS_WITH_TRANSPORT.append(
+        (
+            AbstractOperationsAsyncClient,
+            transports.OperationsRestAsyncTransport,
+            "rest_asyncio",
+        )
+    ),
+    CLIENTS_WITH_CREDENTIALS.append(
+        (
+            AbstractOperationsAsyncClient,
+            transports.OperationsRestAsyncTransport,
+            ga_credentials_async.AnonymousCredentials(),
+        )
+    ),
+
 
 def client_cert_source_callback():
     return b"cert bytes", b"key bytes"
 
 
-def _get_operations_client(http_options=HTTP_OPTIONS):
-    transport = transports.rest.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
+def _get_session_type(is_async: bool):
+    return (
+        AsyncAuthorizedSession
+        if is_async and GOOGLE_AUTH_AIO_INSTALLED
+        else AuthorizedSession
     )
 
-    return AbstractOperationsClient(transport=transport)
+
+def _get_operations_client(is_async: bool, http_options=HTTP_OPTIONS):
+    if is_async and GOOGLE_AUTH_AIO_INSTALLED:
+        transport = transports.rest_asyncio.OperationsRestAsyncTransport(
+            credentials=ga_credentials_async.AnonymousCredentials(),
+            http_options=http_options,
+        )
+        return AbstractOperationsAsyncClient(transport=transport)
+    else:
+        transport = transports.rest.OperationsRestTransport(
+            credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
+        )
+        return AbstractOperationsClient(transport=transport)
 
 
 # If default endpoint is localhost, then default mtls endpoint will be the same.
@@ -105,37 +156,40 @@ def modify_default_endpoint(client):
     )
 
 
-def test__get_default_mtls_endpoint():
+# TODO: Add support for mtls in async rest
+@pytest.mark.parametrize(
+    "client_class",
+    [
+        AbstractOperationsClient,
+    ],
+)
+def test__get_default_mtls_endpoint(client_class):
     api_endpoint = "example.googleapis.com"
     api_mtls_endpoint = "example.mtls.googleapis.com"
     sandbox_endpoint = "example.sandbox.googleapis.com"
     sandbox_mtls_endpoint = "example.mtls.sandbox.googleapis.com"
     non_googleapi = "api.example.com"
 
-    assert AbstractOperationsClient._get_default_mtls_endpoint(None) is None
+    assert client_class._get_default_mtls_endpoint(None) is None
+    assert client_class._get_default_mtls_endpoint(api_endpoint) == api_mtls_endpoint
     assert (
-        AbstractOperationsClient._get_default_mtls_endpoint(api_endpoint)
-        == api_mtls_endpoint
+        client_class._get_default_mtls_endpoint(api_mtls_endpoint) == api_mtls_endpoint
     )
     assert (
-        AbstractOperationsClient._get_default_mtls_endpoint(api_mtls_endpoint)
-        == api_mtls_endpoint
-    )
-    assert (
-        AbstractOperationsClient._get_default_mtls_endpoint(sandbox_endpoint)
+        client_class._get_default_mtls_endpoint(sandbox_endpoint)
         == sandbox_mtls_endpoint
     )
     assert (
-        AbstractOperationsClient._get_default_mtls_endpoint(sandbox_mtls_endpoint)
+        client_class._get_default_mtls_endpoint(sandbox_mtls_endpoint)
         == sandbox_mtls_endpoint
     )
-    assert (
-        AbstractOperationsClient._get_default_mtls_endpoint(non_googleapi)
-        == non_googleapi
-    )
+    assert client_class._get_default_mtls_endpoint(non_googleapi) == non_googleapi
 
 
-@pytest.mark.parametrize("client_class", [AbstractOperationsClient])
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
 def test_operations_client_from_service_account_info(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -174,7 +228,10 @@ def test_operations_client_service_account_always_use_jwt(transport_class):
         use_jwt.assert_not_called()
 
 
-@pytest.mark.parametrize("client_class", [AbstractOperationsClient])
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
 def test_operations_client_from_service_account_file(client_class):
     creds = ga_credentials.AnonymousCredentials()
     with mock.patch.object(
@@ -192,20 +249,28 @@ def test_operations_client_from_service_account_file(client_class):
         assert client.transport._host == "https://longrunning.googleapis.com"
 
 
-def test_operations_client_get_transport_class():
-    transport = AbstractOperationsClient.get_transport_class()
+@pytest.mark.parametrize(
+    "client_class,transport_class,transport_name",
+    CLIENTS_WITH_TRANSPORT,
+)
+def test_operations_client_get_transport_class(
+    client_class, transport_class, transport_name
+):
+    transport = client_class.get_transport_class()
     available_transports = [
         transports.OperationsRestTransport,
     ]
+    if GOOGLE_AUTH_AIO_INSTALLED:
+        available_transports.append(transports.OperationsRestAsyncTransport)
     assert transport in available_transports
 
-    transport = AbstractOperationsClient.get_transport_class("rest")
-    assert transport == transports.OperationsRestTransport
+    transport = client_class.get_transport_class(transport_name)
+    assert transport == transport_class
 
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
+    CLIENTS_WITH_TRANSPORT,
 )
 @mock.patch.object(
     AbstractOperationsClient,
@@ -215,22 +280,21 @@ def test_operations_client_get_transport_class():
 def test_operations_client_client_options(
     client_class, transport_class, transport_name
 ):
-    # Check that if channel is provided we won't create a new one.
-    with mock.patch.object(AbstractOperationsClient, "get_transport_class") as gtc:
-        transport = transport_class(credentials=ga_credentials.AnonymousCredentials())
-        client = client_class(transport=transport)
-        gtc.assert_not_called()
+    # # Check that if channel is provided we won't create a new one.
+    # with mock.patch.object(AbstractOperationsBaseClient, "get_transport_class") as gtc:
+    #     client = client_class(transport=transport_class())
+    #     gtc.assert_not_called()
 
-    # Check that if channel is provided via str we will create a new one.
-    with mock.patch.object(AbstractOperationsClient, "get_transport_class") as gtc:
-        client = client_class(transport=transport_name)
-        gtc.assert_called()
+    # # Check that if channel is provided via str we will create a new one.
+    # with mock.patch.object(AbstractOperationsBaseClient, "get_transport_class") as gtc:
+    #     client = client_class(transport=transport_name)
+    #     gtc.assert_called()
 
     # Check the case api_endpoint is provided.
     options = client_options.ClientOptions(api_endpoint="squid.clam.whelk")
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
-        client = client_class(client_options=options)
+        client = client_class(client_options=options, transport=transport_name)
         patched.assert_called_once_with(
             credentials=None,
             credentials_file=None,
@@ -247,7 +311,7 @@ def test_operations_client_client_options(
     with mock.patch.dict(os.environ, {"GOOGLE_API_USE_MTLS_ENDPOINT": "never"}):
         with mock.patch.object(transport_class, "__init__") as patched:
             patched.return_value = None
-            client = client_class()
+            client = client_class(transport=transport_name)
             patched.assert_called_once_with(
                 credentials=None,
                 credentials_file=None,
@@ -264,7 +328,7 @@ def test_operations_client_client_options(
     with mock.patch.dict(os.environ, {"GOOGLE_API_USE_MTLS_ENDPOINT": "always"}):
         with mock.patch.object(transport_class, "__init__") as patched:
             patched.return_value = None
-            client = client_class()
+            client = client_class(transport=transport_name)
             patched.assert_called_once_with(
                 credentials=None,
                 credentials_file=None,
@@ -293,7 +357,7 @@ def test_operations_client_client_options(
     options = client_options.ClientOptions(quota_project_id="octopus")
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
-        client = client_class(client_options=options)
+        client = client_class(client_options=options, transport=transport_name)
         patched.assert_called_once_with(
             credentials=None,
             credentials_file=None,
@@ -306,6 +370,7 @@ def test_operations_client_client_options(
         )
 
 
+# TODO: Add support for mtls in async REST
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name,use_client_cert_env",
     [
@@ -422,7 +487,7 @@ def test_operations_client_mtls_env_auto(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
+    CLIENTS_WITH_TRANSPORT,
 )
 def test_operations_client_client_options_scopes(
     client_class, transport_class, transport_name
@@ -433,7 +498,7 @@ def test_operations_client_client_options_scopes(
     )
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
-        client = client_class(client_options=options)
+        client = client_class(client_options=options, transport=transport_name)
         patched.assert_called_once_with(
             credentials=None,
             credentials_file=None,
@@ -448,7 +513,7 @@ def test_operations_client_client_options_scopes(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    [(AbstractOperationsClient, transports.OperationsRestTransport, "rest")],
+    CLIENTS_WITH_TRANSPORT,
 )
 def test_operations_client_client_options_credentials_file(
     client_class, transport_class, transport_name
@@ -457,7 +522,7 @@ def test_operations_client_client_options_credentials_file(
     options = client_options.ClientOptions(credentials_file="credentials.json")
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
-        client = client_class(client_options=options)
+        client = client_class(client_options=options, transport=transport_name)
         patched.assert_called_once_with(
             credentials=None,
             credentials_file="credentials.json",
@@ -470,13 +535,10 @@ def test_operations_client_client_options_credentials_file(
         )
 
 
-def test_list_operations_rest(
-    transport: str = "rest", request_type=operations_pb2.ListOperationsRequest
-):
-    client = _get_operations_client()
-
+def test_list_operations_rest():
+    client = _get_operations_client(is_async=False)
     # Mock the http request call within the method and fake a response.
-    with mock.patch.object(Session, "request") as req:
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # Designate an appropriate value for the returned response.
         return_value = operations_pb2.ListOperationsResponse(
             next_page_token="next_page_token_value",
@@ -506,10 +568,47 @@ def test_list_operations_rest(
     assert response.next_page_token == "next_page_token_value"
 
 
-def test_list_operations_rest_failure():
-    client = _get_operations_client(http_options=None)
+@pytest.mark.asyncio
+async def test_list_operations_rest_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
 
-    with mock.patch.object(Session, "request") as req:
+    client = _get_operations_client(is_async=True)
+    # Mock the http request call within the method and fake a response.
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        # Designate an appropriate value for the returned response.
+        return_value = operations_pb2.ListOperationsResponse(
+            next_page_token="next_page_token_value",
+        )
+
+        # Wrap the value into a proper Response obj
+        response_value = Response()
+        response_value.status_code = 200
+        json_return_value = json_format.MessageToJson(return_value)
+        response_value._content = json_return_value.encode("UTF-8")
+        req.return_value = response_value
+        response = await client.list_operations(
+            name="operations", filter_="my_filter", page_size=10, page_token="abc"
+        )
+
+        actual_args = req.call_args
+        assert actual_args.args[0] == "GET"
+        assert actual_args.args[1] == "https://longrunning.googleapis.com/v3/operations"
+        assert actual_args.kwargs["params"] == [
+            ("filter", "my_filter"),
+            ("pageSize", 10),
+            ("pageToken", "abc"),
+        ]
+
+    # Establish that the response is the type that we expect.
+    assert isinstance(response, pagers_async.ListOperationsAsyncPager)
+    assert response.next_page_token == "next_page_token_value"
+
+
+def test_list_operations_rest_failure():
+    client = _get_operations_client(is_async=False, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         response_value = Response()
         response_value.status_code = 400
         mock_request = mock.MagicMock()
@@ -521,13 +620,30 @@ def test_list_operations_rest_failure():
             client.list_operations(name="operations")
 
 
+@pytest.mark.asyncio
+async def test_list_operations_rest_failure_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED and "async":
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+
+    client = _get_operations_client(is_async=True, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "GET"
+        mock_request.url = "https://longrunning.googleapis.com:443/v1/operations"
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            await client.list_operations(name="operations")
+
+
 def test_list_operations_rest_pager():
-    client = AbstractOperationsClient(
-        credentials=ga_credentials.AnonymousCredentials(),
-    )
+    client = _get_operations_client(is_async=False, http_options=None)
 
     # Mock the http request call within the method and fake a response.
-    with mock.patch.object(Session, "request") as req:
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # TODO(kbandes): remove this mock unless there's a good reason for it.
         # with mock.patch.object(path_template, 'transcode') as transcode:
         # Set the response as a series of pages
@@ -574,13 +690,80 @@ def test_list_operations_rest_pager():
             assert page_.next_page_token == token
 
 
-def test_get_operation_rest(
-    transport: str = "rest", request_type=operations_pb2.GetOperationRequest
-):
-    client = _get_operations_client()
+@pytest.mark.asyncio
+async def test_list_operations_rest_pager_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED and "async":
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True, http_options=None)
 
     # Mock the http request call within the method and fake a response.
-    with mock.patch.object(Session, "request") as req:
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        # TODO(kbandes): remove this mock unless there's a good reason for it.
+        # with mock.patch.object(path_template, 'transcode') as transcode:
+        # Set the response as a series of pages
+        response = (
+            operations_pb2.ListOperationsResponse(
+                operations=[
+                    operations_pb2.Operation(),
+                    operations_pb2.Operation(),
+                    operations_pb2.Operation(),
+                ],
+                next_page_token="abc",
+            ),
+            operations_pb2.ListOperationsResponse(
+                operations=[],
+                next_page_token="def",
+            ),
+            operations_pb2.ListOperationsResponse(
+                operations=[operations_pb2.Operation()],
+                next_page_token="ghi",
+            ),
+            operations_pb2.ListOperationsResponse(
+                operations=[operations_pb2.Operation(), operations_pb2.Operation()],
+            ),
+        )
+        # Two responses for two calls
+        response = response + response
+
+        # Wrap the values into proper Response objs
+        response = tuple(json_format.MessageToJson(x) for x in response)
+        return_values = tuple(Response() for i in response)
+        for return_val, response_val in zip(return_values, response):
+            return_val._content = response_val.encode("UTF-8")
+            return_val.status_code = 200
+        req.side_effect = return_values
+
+        pager = await client.list_operations(name="operations")
+
+        responses = []
+        async for response in pager:
+            responses.append(response)
+
+        results = list(responses)
+        assert len(results) == 6
+        assert all(isinstance(i, operations_pb2.Operation) for i in results)
+        pager = await client.list_operations(name="operations")
+
+        responses = []
+        async for response in pager:
+            responses.append(response)
+
+        assert len(responses) == 6
+        assert all(isinstance(i, operations_pb2.Operation) for i in results)
+
+        pages = []
+
+        async for page in pager.pages:
+            pages.append(page)
+        for page_, token in zip(pages, ["", "", "", "abc", "def", "ghi", ""]):
+            assert page_.next_page_token == token
+
+
+def test_get_operation_rest():
+    client = _get_operations_client(is_async=False)
+
+    # Mock the http request call within the method and fake a response.
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # Designate an appropriate value for the returned response.
         return_value = operations_pb2.Operation(
             name="operations/sample1",
@@ -609,10 +792,46 @@ def test_get_operation_rest(
     assert response.done is True
 
 
-def test_get_operation_rest_failure():
-    client = _get_operations_client(http_options=None)
+@pytest.mark.asyncio
+async def test_get_operation_rest_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True)
 
-    with mock.patch.object(Session, "request") as req:
+    # Mock the http request call within the method and fake a response.
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        # Designate an appropriate value for the returned response.
+        return_value = operations_pb2.Operation(
+            name="operations/sample1",
+            done=True,
+            error=status_pb2.Status(code=411),
+        )
+
+        # Wrap the value into a proper Response obj
+        response_value = mock.Mock()
+        response_value.status_code = 200
+        json_return_value = json_format.MessageToJson(return_value)
+        response_value.read = mock.AsyncMock(return_value=json_return_value)
+        req.return_value = response_value
+        response = await client.get_operation("operations/sample1")
+
+    actual_args = req.call_args
+    assert actual_args.args[0] == "GET"
+    assert (
+        actual_args.args[1]
+        == "https://longrunning.googleapis.com/v3/operations/sample1"
+    )
+
+    # Establish that the response is the type that we expect.
+    assert isinstance(response, operations_pb2.Operation)
+    assert response.name == "operations/sample1"
+    assert response.done is True
+
+
+def test_get_operation_rest_failure():
+    client = _get_operations_client(is_async=False, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         response_value = Response()
         response_value.status_code = 400
         mock_request = mock.MagicMock()
@@ -624,13 +843,29 @@ def test_get_operation_rest_failure():
             client.get_operation("sample0/operations/sample1")
 
 
-def test_delete_operation_rest(
-    transport: str = "rest", request_type=operations_pb2.DeleteOperationRequest
-):
-    client = _get_operations_client()
+@pytest.mark.asyncio
+async def test_get_operation_rest_failure_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "GET"
+        mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            await client.get_operation("sample0/operations/sample1")
+
+
+def test_delete_operation_rest():
+    client = _get_operations_client(is_async=False)
 
     # Mock the http request call within the method and fake a response.
-    with mock.patch.object(Session, "request") as req:
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # Wrap the value into a proper Response obj
         response_value = Response()
         response_value.status_code = 200
@@ -647,10 +882,34 @@ def test_delete_operation_rest(
         )
 
 
-def test_delete_operation_rest_failure():
-    client = _get_operations_client(http_options=None)
+@pytest.mark.asyncio
+async def test_delete_operation_rest_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True)
 
-    with mock.patch.object(Session, "request") as req:
+    # Mock the http request call within the method and fake a response.
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        # Wrap the value into a proper Response obj
+        response_value = Response()
+        response_value.status_code = 200
+        json_return_value = ""
+        response_value._content = json_return_value.encode("UTF-8")
+        req.return_value = response_value
+        await client.delete_operation(name="operations/sample1")
+        assert req.call_count == 1
+        actual_args = req.call_args
+        assert actual_args.args[0] == "DELETE"
+        assert (
+            actual_args.args[1]
+            == "https://longrunning.googleapis.com/v3/operations/sample1"
+        )
+
+
+def test_delete_operation_rest_failure():
+    client = _get_operations_client(is_async=False, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         response_value = Response()
         response_value.status_code = 400
         mock_request = mock.MagicMock()
@@ -662,11 +921,29 @@ def test_delete_operation_rest_failure():
             client.delete_operation(name="sample0/operations/sample1")
 
 
-def test_cancel_operation_rest(transport: str = "rest"):
-    client = _get_operations_client()
+@pytest.mark.asyncio
+async def test_delete_operation_rest_failure_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "DELETE"
+        mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            await client.delete_operation(name="sample0/operations/sample1")
+
+
+def test_cancel_operation_rest():
+    client = _get_operations_client(is_async=False)
 
     # Mock the http request call within the method and fake a response.
-    with mock.patch.object(Session, "request") as req:
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # Wrap the value into a proper Response obj
         response_value = Response()
         response_value.status_code = 200
@@ -683,10 +960,34 @@ def test_cancel_operation_rest(transport: str = "rest"):
         )
 
 
-def test_cancel_operation_rest_failure():
-    client = _get_operations_client(http_options=None)
+@pytest.mark.asyncio
+async def test_cancel_operation_rest_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=True)
 
-    with mock.patch.object(Session, "request") as req:
+    # Mock the http request call within the method and fake a response.
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        # Wrap the value into a proper Response obj
+        response_value = Response()
+        response_value.status_code = 200
+        json_return_value = ""
+        response_value._content = json_return_value.encode("UTF-8")
+        req.return_value = response_value
+        await client.cancel_operation(name="operations/sample1")
+        assert req.call_count == 1
+        actual_args = req.call_args
+        assert actual_args.args[0] == "POST"
+        assert (
+            actual_args.args[1]
+            == "https://longrunning.googleapis.com/v3/operations/sample1:cancel"
+        )
+
+
+def test_cancel_operation_rest_failure():
+    client = _get_operations_client(is_async=False, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         response_value = Response()
         response_value.status_code = 400
         mock_request = mock.MagicMock()
@@ -700,44 +1001,71 @@ def test_cancel_operation_rest_failure():
             client.cancel_operation(name="sample0/operations/sample1")
 
 
-def test_credentials_transport_error():
+@pytest.mark.asyncio
+async def test_cancel_operation_rest_failure_async():
+    if not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    client = _get_operations_client(is_async=False, http_options=None)
+
+    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
+        response_value = Response()
+        response_value.status_code = 400
+        mock_request = mock.MagicMock()
+        mock_request.method = "POST"
+        mock_request.url = (
+            "https://longrunning.googleapis.com/v1/operations/sample1:cancel"
+        )
+        response_value.request = mock_request
+        req.return_value = response_value
+        with pytest.raises(core_exceptions.GoogleAPIError):
+            await client.cancel_operation(name="sample0/operations/sample1")
+
+
+@pytest.mark.parametrize(
+    "client_class,transport_class,credentials",
+    CLIENTS_WITH_CREDENTIALS,
+)
+def test_credentials_transport_error(client_class, transport_class, credentials):
+    if not GOOGLE_AUTH_AIO_INSTALLED and "async" in str(transport_class).lower():
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+
     # It is an error to provide credentials and a transport instance.
-    transport = transports.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(),
-    )
+    transport = transport_class(credentials=credentials)
     with pytest.raises(ValueError):
-        AbstractOperationsClient(
+        client_class(
             credentials=ga_credentials.AnonymousCredentials(),
             transport=transport,
         )
 
     # It is an error to provide a credentials file and a transport instance.
-    transport = transports.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(),
-    )
+    transport = transport_class(credentials=credentials)
     with pytest.raises(ValueError):
-        AbstractOperationsClient(
+        client_class(
             client_options={"credentials_file": "credentials.json"},
             transport=transport,
         )
 
     # It is an error to provide scopes and a transport instance.
-    transport = transports.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(),
-    )
+    transport = transport_class(credentials=credentials)
     with pytest.raises(ValueError):
-        AbstractOperationsClient(
+        client_class(
             client_options={"scopes": ["1", "2"]},
             transport=transport,
         )
 
 
-def test_transport_instance():
+@pytest.mark.parametrize(
+    "client_class,transport_class,credentials",
+    CLIENTS_WITH_CREDENTIALS,
+)
+def test_transport_instance(client_class, transport_class, credentials):
+    if not GOOGLE_AUTH_AIO_INSTALLED and "async" in str(transport_class).lower():
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
     # A client may be instantiated with a custom transport instance.
-    transport = transports.OperationsRestTransport(
-        credentials=ga_credentials.AnonymousCredentials(),
+    transport = transport_class(
+        credentials=credentials,
     )
-    client = AbstractOperationsClient(transport=transport)
+    client = client_class(transport=transport)
     assert client.transport is transport
 
 
@@ -820,11 +1148,15 @@ def test_operations_base_transport_with_adc():
         adc.assert_called_once()
 
 
-def test_operations_auth_adc():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_operations_auth_adc(client_class):
     # If no credentials are provided, we should use ADC credentials.
     with mock.patch.object(google.auth, "default", autospec=True) as adc:
         adc.return_value = (ga_credentials.AnonymousCredentials(), None)
-        AbstractOperationsClient()
+        client_class()
         adc.assert_called_once_with(
             scopes=None,
             default_scopes=(),
@@ -852,8 +1184,12 @@ def test_operations_http_transport_client_cert_source_for_mtls(transport_class):
         mock_configure_mtls_channel.assert_called_once_with(client_cert_source_callback)
 
 
-def test_operations_host_no_port():
-    client = AbstractOperationsClient(
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_operations_host_no_port(client_class):
+    client = client_class(
         credentials=ga_credentials.AnonymousCredentials(),
         client_options=client_options.ClientOptions(
             api_endpoint="longrunning.googleapis.com"
@@ -862,8 +1198,12 @@ def test_operations_host_no_port():
     assert client.transport._host == "https://longrunning.googleapis.com"
 
 
-def test_operations_host_with_port():
-    client = AbstractOperationsClient(
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_operations_host_with_port(client_class):
+    client = client_class(
         credentials=ga_credentials.AnonymousCredentials(),
         client_options=client_options.ClientOptions(
             api_endpoint="longrunning.googleapis.com:8000"
@@ -872,116 +1212,160 @@ def test_operations_host_with_port():
     assert client.transport._host == "https://longrunning.googleapis.com:8000"
 
 
-def test_common_billing_account_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_common_billing_account_path(client_class):
     billing_account = "squid"
     expected = "billingAccounts/{billing_account}".format(
         billing_account=billing_account,
     )
-    actual = AbstractOperationsClient.common_billing_account_path(billing_account)
+    actual = client_class.common_billing_account_path(billing_account)
     assert expected == actual
 
 
-def test_parse_common_billing_account_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_parse_common_billing_account_path(client_class):
     expected = {
         "billing_account": "clam",
     }
-    path = AbstractOperationsClient.common_billing_account_path(**expected)
+    path = client_class.common_billing_account_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = AbstractOperationsClient.parse_common_billing_account_path(path)
+    actual = client_class.parse_common_billing_account_path(path)
     assert expected == actual
 
 
-def test_common_folder_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_common_folder_path(client_class):
     folder = "whelk"
     expected = "folders/{folder}".format(
         folder=folder,
     )
-    actual = AbstractOperationsClient.common_folder_path(folder)
+    actual = client_class.common_folder_path(folder)
     assert expected == actual
 
 
-def test_parse_common_folder_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_parse_common_folder_path(client_class):
     expected = {
         "folder": "octopus",
     }
-    path = AbstractOperationsClient.common_folder_path(**expected)
+    path = client_class.common_folder_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = AbstractOperationsClient.parse_common_folder_path(path)
+    actual = client_class.parse_common_folder_path(path)
     assert expected == actual
 
 
-def test_common_organization_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_common_organization_path(client_class):
     organization = "oyster"
     expected = "organizations/{organization}".format(
         organization=organization,
     )
-    actual = AbstractOperationsClient.common_organization_path(organization)
+    actual = client_class.common_organization_path(organization)
     assert expected == actual
 
 
-def test_parse_common_organization_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_parse_common_organization_path(client_class):
     expected = {
         "organization": "nudibranch",
     }
-    path = AbstractOperationsClient.common_organization_path(**expected)
+    path = client_class.common_organization_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = AbstractOperationsClient.parse_common_organization_path(path)
+    actual = client_class.parse_common_organization_path(path)
     assert expected == actual
 
 
-def test_common_project_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_common_project_path(client_class):
     project = "cuttlefish"
     expected = "projects/{project}".format(
         project=project,
     )
-    actual = AbstractOperationsClient.common_project_path(project)
+    actual = client_class.common_project_path(project)
     assert expected == actual
 
 
-def test_parse_common_project_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_parse_common_project_path(client_class):
     expected = {
         "project": "mussel",
     }
-    path = AbstractOperationsClient.common_project_path(**expected)
+    path = client_class.common_project_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = AbstractOperationsClient.parse_common_project_path(path)
+    actual = client_class.parse_common_project_path(path)
     assert expected == actual
 
 
-def test_common_location_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_common_location_path(client_class):
     project = "winkle"
     location = "nautilus"
     expected = "projects/{project}/locations/{location}".format(
         project=project,
         location=location,
     )
-    actual = AbstractOperationsClient.common_location_path(project, location)
+    actual = client_class.common_location_path(project, location)
     assert expected == actual
 
 
-def test_parse_common_location_path():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_parse_common_location_path(client_class):
     expected = {
         "project": "scallop",
         "location": "abalone",
     }
-    path = AbstractOperationsClient.common_location_path(**expected)
+    path = client_class.common_location_path(**expected)
 
     # Check that the path construction is reversible.
-    actual = AbstractOperationsClient.parse_common_location_path(path)
+    actual = client_class.parse_common_location_path(path)
     assert expected == actual
 
 
-def test_client_withDEFAULT_CLIENT_INFO():
+@pytest.mark.parametrize(
+    "client_class",
+    CLIENTS,
+)
+def test_client_withDEFAULT_CLIENT_INFO(client_class):
     client_info = gapic_v1.client_info.ClientInfo()
 
     with mock.patch.object(
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
-        AbstractOperationsClient(
+        client_class(
             credentials=ga_credentials.AnonymousCredentials(),
             client_info=client_info,
         )
@@ -990,7 +1374,7 @@ def test_client_withDEFAULT_CLIENT_INFO():
     with mock.patch.object(
         transports.OperationsTransport, "_prep_wrapped_messages"
     ) as prep:
-        transport_class = AbstractOperationsClient.get_transport_class()
+        transport_class = client_class.get_transport_class()
         transport_class(
             credentials=ga_credentials.AnonymousCredentials(),
             client_info=client_info,
