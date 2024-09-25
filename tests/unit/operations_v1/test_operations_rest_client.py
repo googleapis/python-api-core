@@ -138,8 +138,8 @@ def test_operations_client_from_service_account_info(client_class):
     "transport_class",
     [
         transports.OperationsRestTransport,
-        # TODO: Add support for service account credentials
-        # transports.OperationsRestAsyncTransport,
+        # TODO(https://github.com/googleapis/python-api-core/issues/706): Add support for
+        # service account credentials in transports.OperationsRestAsyncTransport
     ],
 )
 def test_operations_client_service_account_always_use_jwt(transport_class):
