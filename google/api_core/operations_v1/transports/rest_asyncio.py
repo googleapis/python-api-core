@@ -129,7 +129,9 @@ class OperationsRestAsyncTransport(OperationsTransport):
             client_info=client_info,
             always_use_jwt_access=always_use_jwt_access,
         )
-        # TODO file bug in auth library to add support for default_host argument in AsyncAuthorizedSession
+        # TODO(https://github.com/googleapis/python-api-core/issues/708): add support for
+        # `default_host` in AsyncAuthorizedSession for feature parity with the synchronous
+        # code.
         self._session = AsyncAuthorizedSession(self._credentials)
         self._prep_wrapped_messages(client_info, is_async=True)
         self._http_options = http_options or {}
