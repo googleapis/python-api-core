@@ -30,7 +30,7 @@ try:
 except ImportError:
     # This import requires the `async_rest` extra
     # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
-    # as other transports are still available
+    # as other transports are still available.
     HAS_ASYNC_TRANSPORT = False
 
 __all__ = [
@@ -38,5 +38,4 @@ __all__ = [
     "OperationsAsyncClient",
     "OperationsClient",
     "OperationsRestTransport",
-    "OperationsRestAsyncTransport",
-]
+].extend("OperationsRestAsyncTransport")

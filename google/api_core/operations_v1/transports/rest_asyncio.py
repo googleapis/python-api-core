@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import json
 import re
 from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
@@ -32,8 +33,8 @@ from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core import path_template  # type: ignore
 from google.api_core import rest_helpers  # type: ignore
-from google.api_core import retry_async as retries  # type: ignore
-from google.auth.aio import credentials as ga_credentials  # type: ignore
+from google.api_core import retry_async as retries_async  # type: ignore
+from google.auth.aio import credentials as ga_credentials_async  # type: ignore
 from google.auth.aio.transport.sessions import AsyncAuthorizedSession  # type: ignore
 from google.longrunning import operations_pb2  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
@@ -75,7 +76,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         *,
         host: str = "longrunning.googleapis.com",
-        credentials: Optional[ga_credentials.Credentials] = None,
+        credentials: Optional[ga_credentials_async.Credentials] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
@@ -133,9 +134,70 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # `default_host` in AsyncAuthorizedSession for feature parity with the synchronous
         # code.
         self._session = AsyncAuthorizedSession(self._credentials)
-        self._prep_wrapped_messages(client_info, is_async=True)
+        self._prep_wrapped_messages(client_info)
         self._http_options = http_options or {}
         self._path_prefix = path_prefix
+
+    def _prep_wrapped_messages(self, client_info):
+        # Precompute the wrapped methods.
+        self._wrapped_methods = {
+            self.list_operations: gapic_v1.method_async.wrap_method(
+                self.list_operations,
+                default_retry=retries_async.AsyncRetry(
+                    initial=0.5,
+                    maximum=10.0,
+                    multiplier=2.0,
+                    predicate=retries_async.if_exception_type(
+                        core_exceptions.ServiceUnavailable,
+                    ),
+                    deadline=10.0,
+                ),
+                default_timeout=10.0,
+                client_info=client_info,
+            ),
+            self.get_operation: gapic_v1.method_async.wrap_method(
+                self.get_operation,
+                default_retry=retries_async.AsyncRetry(
+                    initial=0.5,
+                    maximum=10.0,
+                    multiplier=2.0,
+                    predicate=retries_async.if_exception_type(
+                        core_exceptions.ServiceUnavailable,
+                    ),
+                    deadline=10.0,
+                ),
+                default_timeout=10.0,
+                client_info=client_info,
+            ),
+            self.delete_operation: gapic_v1.method_async.wrap_method(
+                self.delete_operation,
+                default_retry=retries_async.AsyncRetry(
+                    initial=0.5,
+                    maximum=10.0,
+                    multiplier=2.0,
+                    predicate=retries_async.if_exception_type(
+                        core_exceptions.ServiceUnavailable,
+                    ),
+                    deadline=10.0,
+                ),
+                default_timeout=10.0,
+                client_info=client_info,
+            ),
+            self.cancel_operation: gapic_v1.method_async.wrap_method(
+                self.cancel_operation,
+                default_retry=retries_async.AsyncRetry(
+                    initial=0.5,
+                    maximum=10.0,
+                    multiplier=2.0,
+                    predicate=retries_async.if_exception_type(
+                        core_exceptions.ServiceUnavailable,
+                    ),
+                    deadline=10.0,
+                ),
+                default_timeout=10.0,
+                client_info=client_info,
+            ),
+        }
 
     async def _list_operations(
         self,
@@ -196,15 +258,18 @@ class OperationsRestAsyncTransport(OperationsTransport):
             headers=headers,
             params=rest_helpers.flatten_query_params(query_params),
         )
+        content = await response.read()
 
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            raise core_exceptions.from_http_response(response)
+            payload = json.loads(content.decode('utf-8'))
+            request_url = "{host}{uri}".format(host=self._host, uri=uri)
+            raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
         # Return the response
         api_response = operations_pb2.ListOperationsResponse()
-        json_format.Parse(response.content, api_response, ignore_unknown_fields=False)
+        json_format.Parse(content, api_response, ignore_unknown_fields=False)
         return api_response
 
     async def _get_operation(
@@ -267,16 +332,19 @@ class OperationsRestAsyncTransport(OperationsTransport):
             headers=headers,
             params=rest_helpers.flatten_query_params(query_params),
         )
+        content = await response.read()
 
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            raise core_exceptions.from_http_response(response)
+            payload = json.loads(content.decode('utf-8'))
+            request_url = "{host}{uri}".format(host=self._host, uri=uri)
+            raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
         # Return the response
         api_response = operations_pb2.Operation()
         json_format.Parse(
-            await response.read(), api_response, ignore_unknown_fields=False
+            content, api_response, ignore_unknown_fields=False
         )
         return api_response
 
@@ -340,7 +408,10 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            raise core_exceptions.from_http_response(response)
+            content = await response.read()
+            payload = json.loads(content.decode('utf-8'))
+            request_url = "{host}{uri}".format(host=self._host, uri=uri)
+            raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
         return empty_pb2.Empty()
 
@@ -411,7 +482,10 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            raise core_exceptions.from_http_response(response)
+            content = await response.read()
+            payload = json.loads(content.decode('utf-8'))
+            request_url = "{host}{uri}".format(host=self._host, uri=uri)
+            raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
         return empty_pb2.Empty()
 

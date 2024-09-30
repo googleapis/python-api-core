@@ -134,13 +134,12 @@ class OperationsTransport(abc.ABC):
         # Save the credentials.
         self._credentials = credentials
 
-    def _prep_wrapped_messages(self, client_info, is_async=False):
+    def _prep_wrapped_messages(self, client_info):
         # Precompute the wrapped methods.
-        retry_class = retries_async.AsyncRetry if is_async else retries.Retry
         self._wrapped_methods = {
             self.list_operations: gapic_v1.method.wrap_method(
                 self.list_operations,
-                default_retry=retry_class(
+                default_retry=retries.Retry(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -155,7 +154,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.get_operation: gapic_v1.method.wrap_method(
                 self.get_operation,
-                default_retry=retry_class(
+                default_retry=retries.Retry(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -170,7 +169,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.delete_operation: gapic_v1.method.wrap_method(
                 self.delete_operation,
-                default_retry=retry_class(
+                default_retry=retries.Retry(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,
@@ -185,7 +184,7 @@ class OperationsTransport(abc.ABC):
             ),
             self.cancel_operation: gapic_v1.method.wrap_method(
                 self.cancel_operation,
-                default_retry=retry_class(
+                default_retry=retries.Retry(
                     initial=0.5,
                     maximum=10.0,
                     multiplier=2.0,

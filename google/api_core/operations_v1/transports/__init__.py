@@ -22,11 +22,13 @@ try:
     from .rest_asyncio import OperationsRestAsyncTransport
 
     HAS_ASYNC_TRANSPORT = True
+    ASYNC_REST_CLASSES = ("OperationsRestAsyncTransport",)
 except ImportError:
     # This import requires the `async_rest` extra
     # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
     # as other transports are still available
     HAS_ASYNC_TRANSPORT = False
+    ASYNC_REST_CLASSES = ()
 
 # Compile a registry of transports.
 _transport_registry = OrderedDict()
@@ -38,5 +40,4 @@ if HAS_ASYNC_TRANSPORT:
 __all__ = (
     "OperationsTransport",
     "OperationsRestTransport",
-    "OperationsRestAsyncTransport",
-)
+) + ASYNC_REST_CLASSES

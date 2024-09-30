@@ -736,8 +736,9 @@ def test_transport_instance():
     ],
 )
 def test_transport_adc(transport_class, credentials):
-    if not GOOGLE_AUTH_AIO_INSTALLED:
-        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
+    if "async" in str(transport_class).lower() and not GOOGLE_AUTH_AIO_INSTALLED:
+        pytest.skip("Skipped because google-api-core[async_rest] is not installed.")
+
     # Test default credentials are used if not provided.
     with mock.patch.object(google.auth, "default") as adc:
         adc.return_value = (credentials, None)
@@ -825,8 +826,8 @@ def test_operations_auth_adc():
 
 
 # TODO(https://github.com/googleapis/python-api-core/issues/705): Add
-# testing for `transports.OperationsRestAsyncTransport` once it mtls is supported
-# in `google.auth.aio.transport`
+# testing for `transports.OperationsRestAsyncTransport` once MTLS is supported
+# in `google.auth.aio.transport`.
 @pytest.mark.parametrize(
     "transport_class",
     [
