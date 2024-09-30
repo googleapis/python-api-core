@@ -19,6 +19,7 @@ import re
 from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
 from google.auth import __version__ as auth_version
+
 try:
     import google.auth.aio.transport
 except ImportError as e:  # pragma: NO COVER
@@ -262,7 +263,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            payload = json.loads(content.decode('utf-8'))
+            payload = json.loads(content.decode("utf-8"))
             request_url = "{host}{uri}".format(host=self._host, uri=uri)
             raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
@@ -336,15 +337,13 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # In case of error, raise the appropriate core_exceptions.GoogleAPICallError exception
         # subclass.
         if response.status_code >= 400:
-            payload = json.loads(content.decode('utf-8'))
+            payload = json.loads(content.decode("utf-8"))
             request_url = "{host}{uri}".format(host=self._host, uri=uri)
             raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
         # Return the response
         api_response = operations_pb2.Operation()
-        json_format.Parse(
-            content, api_response, ignore_unknown_fields=False
-        )
+        json_format.Parse(content, api_response, ignore_unknown_fields=False)
         return api_response
 
     async def _delete_operation(
@@ -408,7 +407,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # subclass.
         if response.status_code >= 400:
             content = await response.read()
-            payload = json.loads(content.decode('utf-8'))
+            payload = json.loads(content.decode("utf-8"))
             request_url = "{host}{uri}".format(host=self._host, uri=uri)
             raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
@@ -482,7 +481,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # subclass.
         if response.status_code >= 400:
             content = await response.read()
-            payload = json.loads(content.decode('utf-8'))
+            payload = json.loads(content.decode("utf-8"))
             request_url = "{host}{uri}".format(host=self._host, uri=uri)
             raise core_exceptions.format_http_response_error(response, method, request_url, payload)  # type: ignore
 
