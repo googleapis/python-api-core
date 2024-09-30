@@ -141,13 +141,14 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
     else:
         constraints_type = ""
 
+    lib_with_extras = f".[{','.join(install_extras)}]" if len(install_extras) else "."
     if prerelease:
         install_prerelease_dependencies(
             session,
             f"{constraints_dir}/constraints-{constraints_type}{PYTHON_VERSIONS[0]}.txt",
         )
         # This *must* be the last install command to get the package from source.
-        session.install("-e", f".[{','.join(install_extras)}]", "--no-deps")
+        session.install("-e", lib_with_extras, "--no-deps")
     else:
         constraints_file = (
             f"{constraints_dir}/constraints-{constraints_type}{session.python}.txt"
@@ -158,7 +159,7 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
         session.install(
             "-e",
-            f".[{','.join(install_extras)}]",
+            lib_with_extras,
             "-c",
             constraints_file,
         )
