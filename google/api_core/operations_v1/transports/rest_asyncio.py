@@ -18,8 +18,7 @@ import json
 import re
 from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
-from requests import __version__ as requests_version
-
+from google.auth import __version__ as auth_version
 try:
     import google.auth.aio.transport
 except ImportError as e:  # pragma: NO COVER
@@ -46,7 +45,7 @@ from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTra
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
     grpc_version=None,
-    rest_version=requests_version,
+    rest_version=auth_version,
 )
 
 
