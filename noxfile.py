@@ -130,8 +130,17 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         "pytest-xdist",
     )
 
+    install_extras = []
+    if install_grpc:
+        install_extras.append("grpc")
+
     constraints_dir = str(CURRENT_DIRECTORY / "testing")
-    constraints_type = "async-rest-" if install_async_rest else ""
+    if install_async_rest:
+        install_extras.append("async_rest")
+        constraints_type = "async-rest-"
+    else:
+        constraints_type = ""
+
     if prerelease:
         install_prerelease_dependencies(
             session,
@@ -139,7 +148,7 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         )
         # This *must* be the last install command to get the package from source.
         session.install(
-            "-e", "." + ("[async_rest]" if install_async_rest else ""), "--no-deps"
+            "-e", f".[{','.join(install_extras)}]", "--no-deps"
         )
     else:
         constraints_file = (
@@ -151,18 +160,7 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
         session.install(
             "-e",
-            "."
-            + (
-                "[grpc,async_rest]"
-                if install_grpc and install_async_rest
-                else (
-                    "[grpc]"
-                    if install_grpc
-                    else "[async_rest]"
-                    if install_async_rest
-                    else ""
-                )
-            ),
+            f".[{','.join(install_extras)}]",
             "-c",
             constraints_file,
         )
