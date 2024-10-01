@@ -189,8 +189,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> operations_pb2.ListOperationsResponse:  # pragma: NO COVER
+    ) -> operations_pb2.ListOperationsResponse:
         r"""Asynchronously call the list operations method over HTTP.
 
         Args:
@@ -264,8 +263,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> operations_pb2.Operation:  # pragma: NO COVER
+    ) -> operations_pb2.Operation:
         r"""Asynchronously call the get operation method over HTTP.
 
         Args:
@@ -340,8 +338,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> empty_pb2.Empty:  # pragma: NO COVER
+    ) -> empty_pb2.Empty:
         r"""Asynchronously call the delete operation method over HTTP.
 
         Args:
@@ -409,8 +406,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> empty_pb2.Empty:  # pragma: NO COVER
+    ) -> empty_pb2.Empty:
         r"""Asynchronously call the cancel operation method over HTTP.
 
         Args:
