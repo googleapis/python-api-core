@@ -63,8 +63,8 @@ def from_any_pb(pb_type, any_pb):
     # Unpack the Any object and populate the protobuf message instance.
     if not any_pb.Unpack(msg_pb):
         raise TypeError(
-            "Could not convert {} to {}".format(
-                any_pb.__class__.__name__, pb_type.__name__
+            "Could not convert\n   Any[{}] to\n       {}".format(
+                any_pb.TypeName(), msg_pb.DESCRIPTOR.full_name
             )
         )
 
