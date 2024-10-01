@@ -98,7 +98,7 @@ class OperationsTransport(abc.ABC):
 
         # Save the hostname. Default to port 443 (HTTPS) if none is specified.
         if ":" not in host:
-            host += ":443"  # pragme: NO COVER
+            host += ":443"  # pragma: NO COVER
         self._host = host
 
         scopes_kwargs = {"scopes": scopes, "default_scopes": self.AUTH_SCOPES}
