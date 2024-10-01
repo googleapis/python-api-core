@@ -33,11 +33,11 @@ from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import transports
 import google.auth
 from google.auth import credentials as ga_credentials
-from google.auth.aio import credentials as ga_credentials_async
 
 try:
-    import aiohttp
+    import aiohttp  # noqa: F401
     import google.auth.aio.transport
+    from google.auth.aio import credentials as ga_credentials_async
 
     GOOGLE_AUTH_AIO_INSTALLED = True
 except ImportError:
@@ -49,6 +49,25 @@ from google.oauth2 import service_account
 from google.protobuf import json_format  # type: ignore
 from google.rpc import status_pb2  # type: ignore
 
+
+if GOOGLE_AUTH_AIO_INSTALLED:
+    TEST_TRANSPORT_CREDS_PARAMS = [
+        (
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        ),
+        (
+            transports.OperationsRestAsyncTransport,
+            ga_credentials_async.AnonymousCredentials(),
+        ),
+    ]
+else:
+    TEST_TRANSPORT_CREDS_PARAMS = [
+        (
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        )
+    ]
 
 HTTP_OPTIONS = {
     "google.longrunning.Operations.CancelOperation": [
@@ -727,13 +746,7 @@ def test_transport_instance():
 
 @pytest.mark.parametrize(
     "transport_class,credentials",
-    [
-        (transports.OperationsRestTransport, ga_credentials.AnonymousCredentials()),
-        (
-            transports.OperationsRestAsyncTransport,
-            ga_credentials_async.AnonymousCredentials(),
-        ),
-    ],
+    TEST_TRANSPORT_CREDS_PARAMS,
 )
 def test_transport_adc(transport_class, credentials):
     if "async" in str(transport_class).lower() and not GOOGLE_AUTH_AIO_INSTALLED:

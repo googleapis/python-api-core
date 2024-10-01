@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-import re
 from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
 from requests import __version__ as requests_version

@@ -16,15 +16,15 @@
 
 import json
 import re
-from typing import Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, Optional, Sequence, Tuple
 
 from google.auth import __version__ as auth_version
 
 try:
-    import google.auth.aio.transport
+    from google.auth.aio.transport.sessions import AsyncAuthorizedSession  # type: ignore
 except ImportError as e:  # pragma: NO COVER
     raise ImportError(
-        "`google-api-core[async_rest]` is required to use asynchronous rest streaming. "
+        "`google-api-core[async_rest]` is required to use long running operations. "
         "Install the `async_rest` extra of `google-api-core` using "
         "`pip install google-api-core[async_rest]`."
     ) from e
@@ -35,7 +35,6 @@ from google.api_core import path_template  # type: ignore
 from google.api_core import rest_helpers  # type: ignore
 from google.api_core import retry_async as retries_async  # type: ignore
 from google.auth.aio import credentials as ga_credentials_async  # type: ignore
-from google.auth.aio.transport.sessions import AsyncAuthorizedSession  # type: ignore
 from google.longrunning import operations_pb2  # type: ignore
 from google.protobuf import empty_pb2  # type: ignore
 from google.protobuf import json_format  # type: ignore
@@ -76,7 +75,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         *,
         host: str = "longrunning.googleapis.com",
-        credentials: Optional[ga_credentials_async.Credentials] = None,
+        credentials: ga_credentials_async.Credentials,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
@@ -126,14 +125,16 @@ class OperationsRestAsyncTransport(OperationsTransport):
 
         super().__init__(
             host=host,
-            credentials=credentials,
+            # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.
+            credentials=credentials,  # type: ignore
             client_info=client_info,
             always_use_jwt_access=always_use_jwt_access,
         )
         # TODO(https://github.com/googleapis/python-api-core/issues/708): add support for
         # `default_host` in AsyncAuthorizedSession for feature parity with the synchronous
         # code.
-        self._session = AsyncAuthorizedSession(self._credentials)
+        # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.
+        self._session = AsyncAuthorizedSession(self._credentials)  # type: ignore
         self._prep_wrapped_messages(client_info)
         self._http_options = http_options or {}
         self._path_prefix = path_prefix
@@ -491,26 +492,34 @@ class OperationsRestAsyncTransport(OperationsTransport):
     def list_operations(
         self,
     ) -> Callable[
-        [operations_pb2.ListOperationsRequest], operations_pb2.ListOperationsResponse
+        [operations_pb2.ListOperationsRequest],
+        Coroutine[Any, Any, operations_pb2.ListOperationsResponse],
     ]:
         return self._list_operations
 
     @property
     def get_operation(
         self,
-    ) -> Callable[[operations_pb2.GetOperationRequest], operations_pb2.Operation]:
+    ) -> Callable[
+        [operations_pb2.GetOperationRequest],
+        Coroutine[Any, Any, operations_pb2.Operation],
+    ]:
         return self._get_operation
 
     @property
     def delete_operation(
         self,
-    ) -> Callable[[operations_pb2.DeleteOperationRequest], empty_pb2.Empty]:
+    ) -> Callable[
+        [operations_pb2.DeleteOperationRequest], Coroutine[Any, Any, empty_pb2.Empty]
+    ]:
         return self._delete_operation
 
     @property
     def cancel_operation(
         self,
-    ) -> Callable[[operations_pb2.CancelOperationRequest], empty_pb2.Empty]:
+    ) -> Callable[
+        [operations_pb2.CancelOperationRequest], Coroutine[Any, Any, empty_pb2.Empty]
+    ]:
         return self._cancel_operation
 
 
