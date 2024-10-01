@@ -206,7 +206,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-    ) -> operations_pb2.ListOperationsResponse:
+    ) -> operations_pb2.ListOperationsResponse:  # pragma: NO COVER
         r"""Asynchronously call the list operations method over HTTP.
 
         Args:
@@ -279,7 +279,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-    ) -> operations_pb2.Operation:  # pragme: NO COVER
+    ) -> operations_pb2.Operation:  # pragma: NO COVER
         r"""Asynchronously call the get operation method over HTTP.
 
         Args:
@@ -420,7 +420,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-    ) -> empty_pb2.Empty:  # pragme: NO COVER
+    ) -> empty_pb2.Empty:  # pragma: NO COVER
         r"""Asynchronously call the cancel operation method over HTTP.
 
         Args:
