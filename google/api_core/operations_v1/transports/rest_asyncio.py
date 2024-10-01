@@ -75,7 +75,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         *,
         host: str = "longrunning.googleapis.com",
-        credentials: ga_credentials_async.Credentials,
+        credentials: Optional[ga_credentials_async.Credentials] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",

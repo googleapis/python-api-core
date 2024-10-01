@@ -749,9 +749,6 @@ def test_transport_instance():
     TEST_TRANSPORT_CREDS_PARAMS,
 )
 def test_transport_adc(transport_class, credentials):
-    if "async" in str(transport_class).lower() and not GOOGLE_AUTH_AIO_INSTALLED:
-        pytest.skip("Skipped because google-api-core[async_rest] is not installed.")
-
     # Test default credentials are used if not provided.
     with mock.patch.object(google.auth, "default") as adc:
         adc.return_value = (credentials, None)
