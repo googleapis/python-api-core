@@ -31,8 +31,12 @@ from google.api_core import gapic_v1
 from google.api_core.operations_v1 import AbstractOperationsClient
 from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import transports
-import google.auth
 from google.auth import credentials as ga_credentials
+from google.auth.exceptions import MutualTLSChannelError
+from google.longrunning import operations_pb2
+from google.oauth2 import service_account
+from google.protobuf import json_format  # type: ignore
+from google.rpc import status_pb2  # type: ignore
 
 try:
     import aiohttp  # noqa: F401
@@ -42,13 +46,6 @@ try:
     GOOGLE_AUTH_AIO_INSTALLED = True
 except ImportError:
     GOOGLE_AUTH_AIO_INSTALLED = False
-
-from google.auth.exceptions import MutualTLSChannelError
-from google.longrunning import operations_pb2
-from google.oauth2 import service_account
-from google.protobuf import json_format  # type: ignore
-from google.rpc import status_pb2  # type: ignore
-
 
 if GOOGLE_AUTH_AIO_INSTALLED:
     TEST_TRANSPORT_CREDS_PARAMS = [

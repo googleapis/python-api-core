@@ -15,7 +15,6 @@
 #
 
 import json
-import re
 from typing import Any, Callable, Coroutine, Dict, Optional, Sequence, Tuple
 
 from google.auth import __version__ as auth_version
@@ -24,8 +23,7 @@ try:
     from google.auth.aio.transport.sessions import AsyncAuthorizedSession  # type: ignore
 except ImportError as e:  # pragma: NO COVER
     raise ImportError(
-        "`google-api-core[async_rest]` is required to use long running operations. "
-        "Install the `async_rest` extra of `google-api-core` using "
+        "The `async_rest` extra of `google-api-core` is required to use long-running operations.  Install it by running "
         "`pip install google-api-core[async_rest]`."
     ) from e
 
@@ -50,8 +48,7 @@ DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
 
 
 class OperationsRestAsyncTransport(OperationsTransport):
-    """REST Async backend transport for Operations inherited from
-    `OperationsTransport`.
+    """Asynchronous REST backend transport for Operations.
 
     Manages async long-running operations with an API service.
 
@@ -109,20 +106,6 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 "v1" by default.
 
         """
-        # Run the base constructor
-        # TODO(yon-mg): resolve other ctor params i.e. scopes, quota, etc.
-        # TODO: When custom host (api_endpoint) is set, `scopes` must *also* be set on the
-        # credentials object
-        maybe_url_match = re.match("^(?P<scheme>http(?:s)?://)?(?P<host>.*)$", host)
-        if maybe_url_match is None:
-            raise ValueError(
-                f"Unexpected hostname structure: {host}"
-            )  # pragma: NO COVER
-
-        url_match_items = maybe_url_match.groupdict()
-
-        host = f"{url_scheme}://{host}" if not url_match_items["scheme"] else host
-
         super().__init__(
             host=host,
             # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.

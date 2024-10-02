@@ -24,6 +24,7 @@ _transport_registry: Dict[str, OperationsTransport] = OrderedDict()
 _transport_registry["rest"] = cast(OperationsTransport, OperationsRestTransport)
 
 __all__: Tuple[str, ...] = ("OperationsTransport", "OperationsRestTransport")
+
 try:
     from .rest_asyncio import OperationsRestAsyncTransport
 
@@ -32,7 +33,7 @@ try:
         OperationsTransport, OperationsRestAsyncTransport
     )
 except ImportError:
-    # This import requires the `async_rest` extra
+    # This import requires the `async_rest` extra.
     # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
-    # as other transports are still available
+    # as other transports are still available.
     pass
