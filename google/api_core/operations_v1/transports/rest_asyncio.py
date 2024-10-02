@@ -39,11 +39,10 @@ from google.protobuf import json_format  # type: ignore
 
 from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTransport
 
-
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
     grpc_version=None,
-    rest_version=auth_version,
+    rest_version=f"rest@{auth_version}",
 )
 
 

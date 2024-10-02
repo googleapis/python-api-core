@@ -57,7 +57,7 @@ class ClientInfo(object):
         user_agent (Optional[str]): Prefix to the user agent header. This is
             used to supply information such as application name or partner tool.
             Recommended format: ``application-or-tool-ID/major.minor.version``.
-        rest_version (Optional[str]): The requests library version.
+        rest_version (Optional[str]): The google-auth or requests library version.
     """
 
     def __init__(

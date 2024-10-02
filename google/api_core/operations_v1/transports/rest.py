@@ -40,7 +40,7 @@ OptionalRetry = Union[retries.Retry, object]
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
     grpc_version=None,
-    rest_version=requests_version,
+    rest_version=f"rest@{requests_version}",
 )
 
 
