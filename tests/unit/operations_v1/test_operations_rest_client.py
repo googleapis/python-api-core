@@ -1019,7 +1019,7 @@ def test_cancel_operation_rest_failure():
 async def test_cancel_operation_rest_failure_async():
     if not GOOGLE_AUTH_AIO_INSTALLED:
         pytest.skip("Skipped because google-api-core[async_rest] is not installed")
-    client = _get_operations_client(is_async=False, http_options=None)
+    client = _get_operations_client(is_async=True, http_options=None)
 
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
         response_value = mock.Mock()
