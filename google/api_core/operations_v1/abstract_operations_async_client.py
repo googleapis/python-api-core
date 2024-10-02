@@ -98,7 +98,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         """
         super().__init__(
             credentials=credentials,  # type: ignore
-            transport=transport,
+            transport=transport or "rest_asyncio",
             client_options=client_options,
             client_info=client_info,
         )

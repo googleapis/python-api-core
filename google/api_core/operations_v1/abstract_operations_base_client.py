@@ -19,6 +19,7 @@ import re
 from typing import Dict, Optional, Type, Union
 
 from google.api_core import client_options as client_options_lib  # type: ignore
+from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core.operations_v1.transports.base import (
     DEFAULT_CLIENT_INFO,
@@ -39,7 +40,6 @@ except ImportError as e:
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.auth.transport import mtls  # type: ignore
-from google.oauth2 import service_account  # type: ignore
 
 
 class AbstractOperationsBaseClientMeta(type):
@@ -143,9 +143,7 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
         Returns:
             AbstractOperationsClient: The constructed client.
         """
-        credentials = service_account.Credentials.from_service_account_info(info)
-        kwargs["credentials"] = credentials
-        return cls(*args, **kwargs)
+        raise NotImplementedError("`from_service_account_info` is not implemented.")
 
     @classmethod
     def from_service_account_file(cls, filename: str, *args, **kwargs):
@@ -161,9 +159,7 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
         Returns:
             AbstractOperationsClient: The constructed client.
         """
-        credentials = service_account.Credentials.from_service_account_file(filename)
-        kwargs["credentials"] = credentials
-        return cls(*args, **kwargs)
+        raise NotImplementedError("`from_service_account_file` is not implemented.")
 
     from_service_account_json = from_service_account_file
 
@@ -362,15 +358,38 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
                 )
             self._transport = transport
         else:
-            # TODO (WIP): This code block will fail becuase async rest layer does not support all params.
             Transport = type(self).get_transport_class(transport)
-            self._transport = Transport(
-                credentials=credentials,
-                credentials_file=client_options.credentials_file,
-                host=api_endpoint,
-                scopes=client_options.scopes,
-                client_cert_source_for_mtls=client_cert_source_func,
-                quota_project_id=client_options.quota_project_id,
-                client_info=client_info,
-                always_use_jwt_access=True,
-            )
+            if "async" in str(Transport).lower():
+                # TODO(https://github.com/googleapis/gapic-generator-python/issues/2136): Support the following parameters in async rest.
+                unsupported_params = {
+                    "google.api_core.client_options.ClientOptions.credentials_file": client_options.credentials_file,
+                    "google.api_core.client_options.ClientOptions.scopes": client_options.scopes,
+                    "google.api_core.client_options.ClientOptions.quota_project_id": client_options.quota_project_id,
+                    "google.api_core.client_options.ClientOptions.client_cert_source": client_options.client_cert_source,
+                    "google.api_core.client_options.ClientOptions.api_audience": client_options.api_audience,
+                }
+                provided_unsupported_params = [
+                    name
+                    for name, value in unsupported_params.items()
+                    if value is not None
+                ]
+                if provided_unsupported_params:
+                    raise core_exceptions.AsyncRestUnsupportedParameterError(
+                        f"The following provided parameters are not supported for `transport=rest_asyncio`: {', '.join(provided_unsupported_params)}"
+                    )
+                self._transport = Transport(
+                    credentials=credentials,
+                    host=api_endpoint,
+                    client_info=client_info,
+                )
+            else:
+                self._transport = Transport(
+                    credentials=credentials,
+                    credentials_file=client_options.credentials_file,
+                    host=api_endpoint,
+                    scopes=client_options.scopes,
+                    client_cert_source_for_mtls=client_cert_source_func,
+                    quota_project_id=client_options.quota_project_id,
+                    client_info=client_info,
+                    always_use_jwt_access=True,
+                )

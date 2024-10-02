@@ -28,6 +28,7 @@ from google.api_core.operations_v1.abstract_operations_base_client import (
 )
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.longrunning import operations_pb2
+from google.oauth2 import service_account  # type: ignore
 import grpc
 
 OptionalRetry = Union[retries.Retry, object]
@@ -97,6 +98,43 @@ class AbstractOperationsClient(AbstractOperationsBaseClient):
             client_options=client_options,
             client_info=client_info,
         )
+
+    @classmethod
+    def from_service_account_info(cls, info: dict, *args, **kwargs):
+        """Creates an instance of this client using the provided credentials
+            info.
+
+        Args:
+            info (dict): The service account private key info.
+            args: Additional arguments to pass to the constructor.
+            kwargs: Additional arguments to pass to the constructor.
+
+        Returns:
+            AbstractOperationsClient: The constructed client.
+        """
+        credentials = service_account.Credentials.from_service_account_info(info)
+        kwargs["credentials"] = credentials
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def from_service_account_file(cls, filename: str, *args, **kwargs):
+        """Creates an instance of this client using the provided credentials
+            file.
+
+        Args:
+            filename (str): The path to the service account private key json
+                file.
+            args: Additional arguments to pass to the constructor.
+            kwargs: Additional arguments to pass to the constructor.
+
+        Returns:
+            AbstractOperationsClient: The constructed client.
+        """
+        credentials = service_account.Credentials.from_service_account_file(filename)
+        kwargs["credentials"] = credentials
+        return cls(*args, **kwargs)
+
+    from_service_account_json = from_service_account_file
 
     def list_operations(
         self,
