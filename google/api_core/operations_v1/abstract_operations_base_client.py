@@ -16,7 +16,7 @@
 from collections import OrderedDict
 import os
 import re
-from typing import Awaitable, Callable, Dict, Optional, Type, Union
+from typing import Dict, Optional, Type, Union
 
 from google.api_core import client_options as client_options_lib  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
@@ -39,9 +39,7 @@ except ImportError as e:
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.auth.transport import mtls  # type: ignore
-from google.longrunning import operations_pb2
 from google.oauth2 import service_account  # type: ignore
-from google.protobuf import empty_pb2  # type: ignore
 
 
 class AbstractOperationsBaseClientMeta(type):
@@ -364,6 +362,7 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
                 )
             self._transport = transport
         else:
+            # TODO (WIP): This code block will fail becuase async rest layer does not support all params.
             Transport = type(self).get_transport_class(transport)
             self._transport = Transport(
                 credentials=credentials,
@@ -375,42 +374,3 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
                 client_info=client_info,
                 always_use_jwt_access=True,
             )
-
-    @property
-    def list_operations(
-        self,
-    ) -> Callable[
-        [operations_pb2.ListOperationsRequest],
-        Union[
-            operations_pb2.ListOperationsResponse,
-            Awaitable[operations_pb2.ListOperationsResponse],
-        ],
-    ]:
-        raise NotImplementedError()
-
-    @property
-    def get_operation(
-        self,
-    ) -> Callable[
-        [operations_pb2.GetOperationRequest],
-        Union[operations_pb2.Operation, Awaitable[operations_pb2.Operation]],
-    ]:
-        raise NotImplementedError()
-
-    @property
-    def delete_operation(
-        self,
-    ) -> Callable[
-        [operations_pb2.DeleteOperationRequest],
-        Union[empty_pb2.Empty, Awaitable[empty_pb2.Empty]],
-    ]:
-        raise NotImplementedError()
-
-    @property
-    def cancel_operation(
-        self,
-    ) -> Callable[
-        [operations_pb2.CancelOperationRequest],
-        Union[empty_pb2.Empty, Awaitable[empty_pb2.Empty]],
-    ]:
-        raise NotImplementedError()

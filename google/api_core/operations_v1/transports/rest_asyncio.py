@@ -138,6 +138,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.get_operation: gapic_v1.method_async.wrap_method(
                 self.get_operation,
@@ -152,6 +153,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.delete_operation: gapic_v1.method_async.wrap_method(
                 self.delete_operation,
@@ -166,6 +168,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.cancel_operation: gapic_v1.method_async.wrap_method(
                 self.cancel_operation,
@@ -180,6 +183,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
         }
 

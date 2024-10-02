@@ -32,7 +32,7 @@ try:
     )
     from google.api_core.operations_v1.abstract_operations_async_client import AbstractOperationsAsyncClient
 
-    __all__.extend(["AbstractOperationsAsyncClient", "OperationsRestAsyncTransport"])
+    __all__ += ["AbstractOperationsAsyncClient", "OperationsRestAsyncTransport"]
 except ImportError:
     # This import requires the `async_rest` extra.
     # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported

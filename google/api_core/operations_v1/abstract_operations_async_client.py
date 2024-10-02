@@ -35,7 +35,6 @@ except ImportError as e:  # pragma: NO COVER
         "`pip install google-api-core[async_rest]`."
     ) from e
 
-from google.auth.aio import credentials as ga_credentials  # type: ignore
 from google.longrunning import operations_pb2
 
 

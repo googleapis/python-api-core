@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 import os
-from typing import Union
 
 import mock
 import pytest
@@ -86,37 +85,43 @@ HTTP_OPTIONS = {
     ],
 }
 
-CLIENTS = [
-    AbstractOperationsClient,
-]
-
-CLIENTS_WITH_TRANSPORT = [
-    (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
-]
-CLIENTS_WITH_CREDENTIALS = [
-    (
-        AbstractOperationsClient,
-        transports.OperationsRestTransport,
-        ga_credentials.AnonymousCredentials(),
-    ),
-]
 
 if GOOGLE_AUTH_AIO_INSTALLED:
-    CLIENTS.append(AbstractOperationsAsyncClient)
-    CLIENTS_WITH_TRANSPORT.append(
+    CLIENTS = [AbstractOperationsClient, AbstractOperationsAsyncClient]
+    CLIENTS_WITH_TRANSPORT = [
+        (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
         (
             AbstractOperationsAsyncClient,
             transports.OperationsRestAsyncTransport,
             "rest_asyncio",
-        )
-    ),
-    CLIENTS_WITH_CREDENTIALS.append(
+        ),
+    ]
+    CLIENTS_WITH_CREDENTIALS = [
+        (
+            AbstractOperationsClient,
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        ),
         (
             AbstractOperationsAsyncClient,
             transports.OperationsRestAsyncTransport,
             ga_credentials_async.AnonymousCredentials(),
-        )
-    ),
+        ),
+    ]
+else:
+    CLIENTS = [
+        AbstractOperationsClient,
+    ]
+    CLIENTS_WITH_TRANSPORT = [
+        (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
+    ]
+    CLIENTS_WITH_CREDENTIALS = [
+        (
+            AbstractOperationsClient,
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        ),
+    ]
 
 
 def client_cert_source_callback():
@@ -133,16 +138,16 @@ def _get_session_type(is_async: bool):
 
 def _get_operations_client(is_async: bool, http_options=HTTP_OPTIONS):
     if is_async and GOOGLE_AUTH_AIO_INSTALLED:
-        transport = transports.rest_asyncio.OperationsRestAsyncTransport(
+        async_transport = transports.rest_asyncio.OperationsRestAsyncTransport(
             credentials=ga_credentials_async.AnonymousCredentials(),
             http_options=http_options,
         )
-        return AbstractOperationsAsyncClient(transport=transport)
+        return AbstractOperationsAsyncClient(transport=async_transport)
     else:
-        transport = transports.rest.OperationsRestTransport(
+        sync_transport = transports.rest.OperationsRestTransport(
             credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
         )
-        return AbstractOperationsClient(transport=transport)
+        return AbstractOperationsClient(transport=sync_transport)
 
 
 # If default endpoint is localhost, then default mtls endpoint will be the same.
@@ -582,10 +587,12 @@ async def test_list_operations_rest_async():
         )
 
         # Wrap the value into a proper Response obj
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 200
         json_return_value = json_format.MessageToJson(return_value)
-        response_value._content = json_return_value.encode("UTF-8")
+        response_value.read = mock.AsyncMock(
+            return_value=json_return_value.encode("UTF-8")
+        )
         req.return_value = response_value
         response = await client.list_operations(
             name="operations", filter_="my_filter", page_size=10, page_token="abc"
@@ -628,8 +635,9 @@ async def test_list_operations_rest_failure_async():
     client = _get_operations_client(is_async=True, http_options=None)
 
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 400
+        response_value.read = mock.AsyncMock(return_value=b"{}")
         mock_request = mock.MagicMock()
         mock_request.method = "GET"
         mock_request.url = "https://longrunning.googleapis.com:443/v1/operations"
@@ -727,9 +735,9 @@ async def test_list_operations_rest_pager_async():
 
         # Wrap the values into proper Response objs
         response = tuple(json_format.MessageToJson(x) for x in response)
-        return_values = tuple(Response() for i in response)
+        return_values = tuple(mock.Mock() for i in response)
         for return_val, response_val in zip(return_values, response):
-            return_val._content = response_val.encode("UTF-8")
+            return_val.read = mock.AsyncMock(return_value=response_val.encode("UTF-8"))
             return_val.status_code = 200
         req.side_effect = return_values
 
@@ -850,8 +858,9 @@ async def test_get_operation_rest_failure_async():
     client = _get_operations_client(is_async=True, http_options=None)
 
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 400
+        response_value.read = mock.AsyncMock(return_value=b"{}")
         mock_request = mock.MagicMock()
         mock_request.method = "GET"
         mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
@@ -891,10 +900,12 @@ async def test_delete_operation_rest_async():
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
         # Wrap the value into a proper Response obj
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 200
         json_return_value = ""
-        response_value._content = json_return_value.encode("UTF-8")
+        response_value.read = mock.AsyncMock(
+            return_value=json_return_value.encode("UTF-8")
+        )
         req.return_value = response_value
         await client.delete_operation(name="operations/sample1")
         assert req.call_count == 1
@@ -928,8 +939,9 @@ async def test_delete_operation_rest_failure_async():
     client = _get_operations_client(is_async=True, http_options=None)
 
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 400
+        response_value.read = mock.AsyncMock(return_value=b"{}")
         mock_request = mock.MagicMock()
         mock_request.method = "DELETE"
         mock_request.url = "https://longrunning.googleapis.com/v1/operations/sample1"
@@ -969,10 +981,12 @@ async def test_cancel_operation_rest_async():
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(_get_session_type(is_async=True), "request") as req:
         # Wrap the value into a proper Response obj
-        response_value = Response()
+        response_value = mock.Mock()
         response_value.status_code = 200
         json_return_value = ""
-        response_value._content = json_return_value.encode("UTF-8")
+        response_value.read = mock.AsyncMock(
+            return_value=json_return_value.encode("UTF-8")
+        )
         req.return_value = response_value
         await client.cancel_operation(name="operations/sample1")
         assert req.call_count == 1
@@ -1007,9 +1021,10 @@ async def test_cancel_operation_rest_failure_async():
         pytest.skip("Skipped because google-api-core[async_rest] is not installed")
     client = _get_operations_client(is_async=False, http_options=None)
 
-    with mock.patch.object(_get_session_type(is_async=False), "request") as req:
-        response_value = Response()
+    with mock.patch.object(_get_session_type(is_async=True), "request") as req:
+        response_value = mock.Mock()
         response_value.status_code = 400
+        response_value.read = mock.AsyncMock(return_value=b"{}")
         mock_request = mock.MagicMock()
         mock_request.method = "POST"
         mock_request.url = (

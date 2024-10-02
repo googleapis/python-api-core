@@ -37,7 +37,3 @@ except ImportError:
     # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
     # as other transports are still available.
     pass
-
-# Compile a registry of transports.
-_transport_registry = OrderedDict()
-_transport_registry["rest"] = OperationsRestTransport
