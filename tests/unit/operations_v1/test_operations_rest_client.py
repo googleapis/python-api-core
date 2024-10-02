@@ -30,6 +30,7 @@ from google.api_core import exceptions as core_exceptions
 from google.api_core import gapic_v1
 from google.api_core.operations_v1 import AbstractOperationsClient
 
+import google.auth
 from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import pagers_async
 from google.api_core.operations_v1 import transports
