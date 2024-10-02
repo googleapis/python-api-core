@@ -132,23 +132,23 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
 
     @classmethod
     def from_service_account_info(cls, info: dict, *args, **kwargs):
-        """Creates an instance of this client using the provided credentials
-            info.
+        """
+        This class method should be overridden by the subclasses.
 
         Args:
             info (dict): The service account private key info.
             args: Additional arguments to pass to the constructor.
             kwargs: Additional arguments to pass to the constructor.
 
-        Returns:
-            AbstractOperationsClient: The constructed client.
+        Raises:
+            NotImplementedError: If the method is called on the base class.
         """
         raise NotImplementedError("`from_service_account_info` is not implemented.")
 
     @classmethod
     def from_service_account_file(cls, filename: str, *args, **kwargs):
-        """Creates an instance of this client using the provided credentials
-            file.
+        """
+        This class method should be overridden by the subclasses.
 
         Args:
             filename (str): The path to the service account private key json
@@ -156,8 +156,8 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
             args: Additional arguments to pass to the constructor.
             kwargs: Additional arguments to pass to the constructor.
 
-        Returns:
-            AbstractOperationsClient: The constructed client.
+        Raises:
+            NotImplementedError: If the method is called on the base class.
         """
         raise NotImplementedError("`from_service_account_file` is not implemented.")
 
@@ -359,14 +359,18 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
             self._transport = transport
         else:
             Transport = type(self).get_transport_class(transport)
+            # NOTE: The conditional logic below to initialize the transport can be removed
+            # once we have feature parity with the sync transport.
             if "async" in str(Transport).lower():
-                # TODO(https://github.com/googleapis/gapic-generator-python/issues/2136): Support the following parameters in async rest.
                 unsupported_params = {
+                    # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
                     "google.api_core.client_options.ClientOptions.credentials_file": client_options.credentials_file,
+                    # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
                     "google.api_core.client_options.ClientOptions.scopes": client_options.scopes,
+                    # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
                     "google.api_core.client_options.ClientOptions.quota_project_id": client_options.quota_project_id,
+                    # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
                     "google.api_core.client_options.ClientOptions.client_cert_source": client_options.client_cert_source,
-                    "google.api_core.client_options.ClientOptions.api_audience": client_options.api_audience,
                 }
                 provided_unsupported_params = [
                     name

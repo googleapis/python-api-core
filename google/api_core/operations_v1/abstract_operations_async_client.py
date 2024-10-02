@@ -98,6 +98,8 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         """
         super().__init__(
             credentials=credentials,  # type: ignore
+            # NOTE: If a transport is not provided, we force the client to use the async
+            # REST transport, as it should.
             transport=transport or "rest_asyncio",
             client_options=client_options,
             client_info=client_info,

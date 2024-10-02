@@ -77,6 +77,10 @@ class OperationsRestAsyncTransport(OperationsTransport):
         url_scheme: str = "https",
         http_options: Optional[Dict] = None,
         path_prefix: str = "v1",
+        # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
     ) -> None:
         """Instantiate the transport.
 
