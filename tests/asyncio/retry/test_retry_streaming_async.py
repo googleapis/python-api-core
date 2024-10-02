@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
 import datetime
 import re
-import asyncio
+from unittest import mock
 
-import mock
 import pytest
 
 from google.api_core import exceptions
