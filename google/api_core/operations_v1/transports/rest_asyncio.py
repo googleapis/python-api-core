@@ -42,7 +42,7 @@ from .base import DEFAULT_CLIENT_INFO as BASE_DEFAULT_CLIENT_INFO, OperationsTra
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
     grpc_version=None,
-    rest_version=f"rest@{auth_version}",
+    rest_version=f"google-auth@{auth_version}",
 )
 
 
@@ -117,6 +117,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # code.
         # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.
         self._session = AsyncAuthorizedSession(self._credentials)  # type: ignore
+        # TODO(https://github.com/googleapis/python-api-core/issues/720): Add wrap logic directly to the property methods for callables.
         self._prep_wrapped_messages(client_info)
         self._http_options = http_options or {}
         self._path_prefix = path_prefix
@@ -236,6 +237,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -311,6 +313,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -382,6 +385,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -456,6 +460,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = await getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,

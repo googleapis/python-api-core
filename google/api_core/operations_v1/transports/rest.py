@@ -40,7 +40,7 @@ OptionalRetry = Union[retries.Retry, object]
 DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
     gapic_version=BASE_DEFAULT_CLIENT_INFO.gapic_version,
     grpc_version=None,
-    rest_version=f"rest@{requests_version}",
+    rest_version=f"requests@{requests_version}",
 )
 
 
@@ -133,6 +133,7 @@ class OperationsRestTransport(OperationsTransport):
         )
         if client_cert_source_for_mtls:
             self._session.configure_mtls_channel(client_cert_source_for_mtls)
+        # TODO(https://github.com/googleapis/python-api-core/issues/720): Add wrap logic directly to the property methods for callables.
         self._prep_wrapped_messages(client_info)
         self._http_options = http_options or {}
         self._path_prefix = path_prefix
@@ -195,6 +196,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -271,6 +273,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -340,6 +343,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
@@ -415,6 +419,7 @@ class OperationsRestTransport(OperationsTransport):
         # Send the request
         headers = dict(metadata)
         headers["Content-Type"] = "application/json"
+        # TODO(https://github.com/googleapis/python-api-core/issues/721): Update incorrect use of `uri`` variable name.
         response = getattr(self._session, method)(
             "{host}{uri}".format(host=self._host, uri=uri),
             timeout=timeout,
