@@ -629,7 +629,7 @@ def test_list_operations_rest_failure():
 
 @pytest.mark.asyncio
 async def test_list_operations_rest_failure_async():
-    if not GOOGLE_AUTH_AIO_INSTALLED and "async":
+    if not GOOGLE_AUTH_AIO_INSTALLED:
         pytest.skip("Skipped because google-api-core[async_rest] is not installed")
 
     client = _get_operations_client(is_async=True, http_options=None)
@@ -700,7 +700,7 @@ def test_list_operations_rest_pager():
 
 @pytest.mark.asyncio
 async def test_list_operations_rest_pager_async():
-    if not GOOGLE_AUTH_AIO_INSTALLED and "async":
+    if not GOOGLE_AUTH_AIO_INSTALLED:
         pytest.skip("Skipped because google-api-core[async_rest] is not installed")
     client = _get_operations_client(is_async=True, http_options=None)
 
@@ -1041,8 +1041,6 @@ async def test_cancel_operation_rest_failure_async():
     CLIENTS_WITH_CREDENTIALS,
 )
 def test_credentials_transport_error(client_class, transport_class, credentials):
-    if not GOOGLE_AUTH_AIO_INSTALLED and "async" in str(transport_class).lower():
-        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
 
     # It is an error to provide credentials and a transport instance.
     transport = transport_class(credentials=credentials)
@@ -1074,8 +1072,6 @@ def test_credentials_transport_error(client_class, transport_class, credentials)
     CLIENTS_WITH_CREDENTIALS,
 )
 def test_transport_instance(client_class, transport_class, credentials):
-    if not GOOGLE_AUTH_AIO_INSTALLED and "async" in str(transport_class).lower():
-        pytest.skip("Skipped because google-api-core[async_rest] is not installed")
     # A client may be instantiated with a custom transport instance.
     transport = transport_class(
         credentials=credentials,
