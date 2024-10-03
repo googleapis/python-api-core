@@ -31,7 +31,6 @@ from google.api_core import gapic_v1
 from google.api_core.operations_v1 import AbstractOperationsClient
 from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import transports
-import google.auth
 from google.auth import credentials as ga_credentials
 from google.auth.exceptions import MutualTLSChannelError
 from google.longrunning import operations_pb2
@@ -39,6 +38,33 @@ from google.oauth2 import service_account
 from google.protobuf import json_format  # type: ignore
 from google.rpc import status_pb2  # type: ignore
 
+try:
+    import aiohttp  # noqa: F401
+    import google.auth.aio.transport
+    from google.auth.aio import credentials as ga_credentials_async
+
+    GOOGLE_AUTH_AIO_INSTALLED = True
+except ImportError:
+    GOOGLE_AUTH_AIO_INSTALLED = False
+
+if GOOGLE_AUTH_AIO_INSTALLED:
+    TEST_TRANSPORT_CREDS_PARAMS = [
+        (
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        ),
+        (
+            transports.OperationsRestAsyncTransport,
+            ga_credentials_async.AnonymousCredentials(),
+        ),
+    ]
+else:
+    TEST_TRANSPORT_CREDS_PARAMS = [
+        (
+            transports.OperationsRestTransport,
+            ga_credentials.AnonymousCredentials(),
+        )
+    ]
 
 HTTP_OPTIONS = {
     "google.longrunning.Operations.CancelOperation": [
@@ -125,11 +151,14 @@ def test_operations_client_from_service_account_info(client_class):
 
 
 @pytest.mark.parametrize(
-    "transport_class,transport_name", [(transports.OperationsRestTransport, "rest")]
+    "transport_class",
+    [
+        transports.OperationsRestTransport,
+        # TODO(https://github.com/googleapis/python-api-core/issues/706): Add support for
+        # service account credentials in transports.OperationsRestAsyncTransport
+    ],
 )
-def test_operations_client_service_account_always_use_jwt(
-    transport_class, transport_name
-):
+def test_operations_client_service_account_always_use_jwt(transport_class):
     with mock.patch.object(
         service_account.Credentials, "with_always_use_jwt_access", create=True
     ) as use_jwt:
@@ -712,11 +741,14 @@ def test_transport_instance():
     assert client.transport is transport
 
 
-@pytest.mark.parametrize("transport_class", [transports.OperationsRestTransport])
-def test_transport_adc(transport_class):
+@pytest.mark.parametrize(
+    "transport_class,credentials",
+    TEST_TRANSPORT_CREDS_PARAMS,
+)
+def test_transport_adc(transport_class, credentials):
     # Test default credentials are used if not provided.
     with mock.patch.object(google.auth, "default") as adc:
-        adc.return_value = (ga_credentials.AnonymousCredentials(), None)
+        adc.return_value = (credentials, None)
         transport_class()
         adc.assert_called_once()
 
@@ -800,12 +832,21 @@ def test_operations_auth_adc():
         )
 
 
-def test_operations_http_transport_client_cert_source_for_mtls():
+# TODO(https://github.com/googleapis/python-api-core/issues/705): Add
+# testing for `transports.OperationsRestAsyncTransport` once MTLS is supported
+# in `google.auth.aio.transport`.
+@pytest.mark.parametrize(
+    "transport_class",
+    [
+        transports.OperationsRestTransport,
+    ],
+)
+def test_operations_http_transport_client_cert_source_for_mtls(transport_class):
     cred = ga_credentials.AnonymousCredentials()
     with mock.patch(
         "google.auth.transport.requests.AuthorizedSession.configure_mtls_channel"
     ) as mock_configure_mtls_channel:
-        transports.OperationsRestTransport(
+        transport_class(
             credentials=cred, client_cert_source_for_mtls=client_cert_source_callback
         )
         mock_configure_mtls_channel.assert_called_once_with(client_cert_source_callback)

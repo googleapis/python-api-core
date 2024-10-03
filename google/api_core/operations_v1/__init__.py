@@ -25,5 +25,14 @@ __all__ = [
     "AbstractOperationsClient",
     "OperationsAsyncClient",
     "OperationsClient",
-    "OperationsRestTransport",
+    "OperationsRestTransport"
 ]
+
+try:
+    from google.api_core.operations_v1.transports.rest_asyncio import OperationsRestAsyncTransport  # noqa: F401
+    __all__.append("OperationsRestAsyncTransport")
+except ImportError:
+    # This import requires the `async_rest` extra.
+    # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
+    # as other transports are still available.
+    pass
