@@ -15,6 +15,10 @@
 import datetime
 from unittest import mock
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 import pytest
 
 try:
@@ -256,7 +260,7 @@ async def test_wrap_method_with_overriding_timeout_as_a_number():
 
 @pytest.mark.asyncio
 async def test_wrap_method_without_wrap_errors():
-    fake_call = mock.AsyncMock()
+    fake_call = AsyncMock()
 
     wrapped_method = gapic_v1.method_async.wrap_method(fake_call, kind="rest")
     with mock.patch("google.api_core.grpc_helpers_async.wrap_errors") as method:

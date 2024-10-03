@@ -15,6 +15,10 @@
 
 from unittest import mock
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 import pytest
 
 try:
@@ -55,9 +59,9 @@ def make_operation_future(client_operations_responses=None):
     if client_operations_responses is None:
         client_operations_responses = [make_operation_proto()]
 
-    refresh = mock.AsyncMock(spec=["__call__"], side_effect=client_operations_responses)
+    refresh = AsyncMock(spec=["__call__"], side_effect=client_operations_responses)
     refresh.responses = client_operations_responses
-    cancel = mock.AsyncMock(spec=["__call__"])
+    cancel = AsyncMock(spec=["__call__"])
     operation_future = operation_async.AsyncOperation(
         client_operations_responses[0],
         refresh,

@@ -14,6 +14,10 @@
 
 from unittest import mock
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 import pytest  # noqa: I202
 
 try:
@@ -50,7 +54,7 @@ class RpcErrorImpl(grpc.RpcError, grpc.Call):
 @pytest.mark.asyncio
 async def test_wrap_unary_errors():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
-    callable_ = mock.AsyncMock(spec=["__call__"], side_effect=grpc_error)
+    callable_ = AsyncMock(spec=["__call__"], side_effect=grpc_error)
 
     wrapped_callable = grpc_helpers_async._wrap_unary_errors(callable_)
 
@@ -170,7 +174,7 @@ async def test_wrap_stream_errors_stream_stream():
 async def test_wrap_stream_errors_raised():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
-    mock_call.wait_for_connection = mock.AsyncMock(side_effect=[grpc_error])
+    mock_call.wait_for_connection = AsyncMock(side_effect=[grpc_error])
     multicallable = mock.Mock(return_value=mock_call)
 
     wrapped_callable = grpc_helpers_async._wrap_stream_errors(
@@ -187,7 +191,7 @@ async def test_wrap_stream_errors_read():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
-    mock_call.read = mock.AsyncMock(side_effect=grpc_error)
+    mock_call.read = AsyncMock(side_effect=grpc_error)
     multicallable = mock.Mock(return_value=mock_call)
 
     wrapped_callable = grpc_helpers_async._wrap_stream_errors(
@@ -209,7 +213,7 @@ async def test_wrap_stream_errors_aiter():
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     mocked_aiter = mock.Mock(spec=["__anext__"])
-    mocked_aiter.__anext__ = mock.AsyncMock(
+    mocked_aiter.__anext__ = AsyncMock(
         side_effect=[mock.sentinel.response, grpc_error]
     )
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
@@ -232,7 +236,7 @@ async def test_wrap_stream_errors_aiter_non_rpc_error():
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     mocked_aiter = mock.Mock(spec=["__anext__"])
-    mocked_aiter.__anext__ = mock.AsyncMock(
+    mocked_aiter.__anext__ = AsyncMock(
         side_effect=[mock.sentinel.response, non_grpc_error]
     )
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
@@ -267,8 +271,8 @@ async def test_wrap_stream_errors_write():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
-    mock_call.write = mock.AsyncMock(side_effect=[None, grpc_error])
-    mock_call.done_writing = mock.AsyncMock(side_effect=[None, grpc_error])
+    mock_call.write = AsyncMock(side_effect=[None, grpc_error])
+    mock_call.done_writing = AsyncMock(side_effect=[None, grpc_error])
     multicallable = mock.Mock(return_value=mock_call)
 
     wrapped_callable = grpc_helpers_async._wrap_stream_errors(

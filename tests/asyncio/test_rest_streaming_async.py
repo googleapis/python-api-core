@@ -22,6 +22,10 @@ import time
 from typing import List, AsyncIterator
 from unittest import mock
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 import pytest  # noqa: I202
 
 import proto
@@ -303,7 +307,7 @@ async def test_next_not_array(response_type):
 @pytest.mark.parametrize("response_type", [EchoResponse, httpbody_pb2.HttpBody])
 async def test_cancel(response_type):
     with mock.patch.object(
-        ResponseMock, "close", new_callable=mock.AsyncMock
+        ResponseMock, "close", new_callable=AsyncMock
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
         itr = rest_streaming_async.AsyncResponseIterator(resp, response_type)
@@ -315,7 +319,7 @@ async def test_cancel(response_type):
 @pytest.mark.parametrize("response_type", [EchoResponse, httpbody_pb2.HttpBody])
 async def test_iterator_as_context_manager(response_type):
     with mock.patch.object(
-        ResponseMock, "close", new_callable=mock.AsyncMock
+        ResponseMock, "close", new_callable=AsyncMock
     ) as mock_method:
         resp = ResponseMock(responses=[], response_cls=response_type)
         async with rest_streaming_async.AsyncResponseIterator(resp, response_type):
