@@ -14,9 +14,7 @@
 
 """Package for interacting with the google.longrunning.operations meta-API."""
 
-from google.api_core.operations_v1.abstract_operations_client import (
-    AbstractOperationsClient,
-)
+from google.api_core.operations_v1.abstract_operations_client import AbstractOperationsClient
 from google.api_core.operations_v1.operations_async_client import OperationsAsyncClient
 from google.api_core.operations_v1.operations_client import OperationsClient
 from google.api_core.operations_v1.transports.rest import OperationsRestTransport
@@ -29,10 +27,14 @@ __all__ = [
 ]
 
 try:
-    from google.api_core.operations_v1.transports.rest_asyncio import OperationsRestAsyncTransport  # noqa: F401
-    __all__.append("OperationsRestAsyncTransport")
+    from google.api_core.operations_v1.transports.rest_asyncio import (
+        AsyncOperationsRestTransport,
+    )
+    from google.api_core.operations_v1.operations_rest_client_async import AsyncOperationsRestClient
+
+    __all__ += ["AsyncOperationsRestClient", "AsyncOperationsRestTransport"]
 except ImportError:
     # This import requires the `async_rest` extra.
-    # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
+    # Don't raise an exception if `AsyncOperationsRestTransport` cannot be imported
     # as other transports are still available.
     pass

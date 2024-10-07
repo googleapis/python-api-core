@@ -142,6 +142,8 @@ class OperationsRestTransport(OperationsTransport):
         self,
         request: operations_pb2.ListOperationsRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/723): Leverage `retry`
+        # to allow configuring retryable error codes.
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
         compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
@@ -218,6 +220,8 @@ class OperationsRestTransport(OperationsTransport):
         self,
         request: operations_pb2.GetOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/723): Leverage `retry`
+        # to allow configuring retryable error codes.
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
         compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
@@ -295,6 +299,8 @@ class OperationsRestTransport(OperationsTransport):
         self,
         request: operations_pb2.DeleteOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/723): Leverage `retry`
+        # to allow configuring retryable error codes.
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
         compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,
@@ -362,6 +368,8 @@ class OperationsRestTransport(OperationsTransport):
         self,
         request: operations_pb2.CancelOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/723): Leverage `retry`
+        # to allow configuring retryable error codes.
         retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: Optional[float] = None,
         compression: Optional[grpc.Compression] = gapic_v1.method.DEFAULT,

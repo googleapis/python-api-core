@@ -46,7 +46,7 @@ DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
 )
 
 
-class OperationsRestAsyncTransport(OperationsTransport):
+class AsyncOperationsRestTransport(OperationsTransport):
     """Asynchronous REST backend transport for Operations.
 
     Manages async long-running operations with an API service.
@@ -72,11 +72,19 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         host: str = "longrunning.googleapis.com",
         credentials: Optional[ga_credentials_async.Credentials] = None,
+        credentials_file: Optional[str] = None,
+        scopes: Optional[Sequence[str]] = None,
+        client_cert_source_for_mtls: Optional[Callable[[], Tuple[bytes, bytes]]] = None,
+        quota_project_id: Optional[str] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
         http_options: Optional[Dict] = None,
         path_prefix: str = "v1",
+        # TODO(https://github.com/googleapis/python-api-core/issues/715): Add docstring for `credentials_file` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/716): Add docstring for `scopes` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/717): Add docstring for `quota_project_id` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/718): Add docstring for `client_cert_source` to async REST transport.
     ) -> None:
         """Instantiate the transport.
 
@@ -105,12 +113,33 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 "v1" by default.
 
         """
+        unsupported_params = {
+            # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
+            "google.api_core.client_options.ClientOptions.credentials_file": credentials_file,
+            # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
+            "google.api_core.client_options.ClientOptions.scopes": scopes,
+            # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
+            "google.api_core.client_options.ClientOptions.quota_project_id": quota_project_id,
+            # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
+            "google.api_core.client_options.ClientOptions.client_cert_source": client_cert_source_for_mtls,
+            # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
+            "google.api_core.client_options.ClientOptions.client_cert_source": client_cert_source_for_mtls,
+        }
+        provided_unsupported_params = [
+            name for name, value in unsupported_params.items() if value is not None
+        ]
+        if provided_unsupported_params:
+            raise core_exceptions.AsyncRestUnsupportedParameterError(
+                f"The following provided parameters are not supported for `transport=rest_asyncio`: {', '.join(provided_unsupported_params)}"
+            )
+
         super().__init__(
             host=host,
             # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.
             credentials=credentials,  # type: ignore
             client_info=client_info,
-            always_use_jwt_access=always_use_jwt_access,
+            # TODO(https://github.com/googleapis/python-api-core/issues/725): Set always_use_jwt_access token when supported.
+            always_use_jwt_access=False,
         )
         # TODO(https://github.com/googleapis/python-api-core/issues/708): add support for
         # `default_host` in AsyncAuthorizedSession for feature parity with the synchronous
@@ -138,6 +167,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.get_operation: gapic_v1.method_async.wrap_method(
                 self.get_operation,
@@ -152,6 +182,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.delete_operation: gapic_v1.method_async.wrap_method(
                 self.delete_operation,
@@ -166,6 +197,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
             self.cancel_operation: gapic_v1.method_async.wrap_method(
                 self.cancel_operation,
@@ -180,6 +212,7 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 ),
                 default_timeout=10.0,
                 client_info=client_info,
+                kind="rest_asyncio",
             ),
         }
 
@@ -187,10 +220,12 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.ListOperationsRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> operations_pb2.ListOperationsResponse:  # pragma: NO COVER
+    ) -> operations_pb2.ListOperationsResponse:
         r"""Asynchronously call the list operations method over HTTP.
 
         Args:
@@ -262,10 +297,12 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.GetOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> operations_pb2.Operation:  # pragma: NO COVER
+    ) -> operations_pb2.Operation:
         r"""Asynchronously call the get operation method over HTTP.
 
         Args:
@@ -338,10 +375,12 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.DeleteOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> empty_pb2.Empty:  # pragma: NO COVER
+    ) -> empty_pb2.Empty:
         r"""Asynchronously call the delete operation method over HTTP.
 
         Args:
@@ -407,10 +446,14 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.CancelOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/710): Add coverage and remove `# pragma: NO COVER`.
-    ) -> empty_pb2.Empty:  # pragma: NO COVER
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
+    ) -> empty_pb2.Empty:
         r"""Asynchronously call the cancel operation method over HTTP.
 
         Args:
@@ -514,4 +557,4 @@ class OperationsRestAsyncTransport(OperationsTransport):
         return self._cancel_operation
 
 
-__all__ = ("OperationsRestAsyncTransport",)
+__all__ = ("AsyncOperationsRestTransport",)
