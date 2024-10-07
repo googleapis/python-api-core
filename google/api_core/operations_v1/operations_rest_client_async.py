@@ -101,7 +101,7 @@ class AsyncOperationsRestClient(AbstractOperationsBaseClient):
             client_options=client_options,
             client_info=client_info,
         )
-    
+
     async def get_operation(
         self,
         name: str,
