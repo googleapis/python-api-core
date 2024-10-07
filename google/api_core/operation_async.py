@@ -151,7 +151,9 @@ class AsyncOperation(async_future.AsyncFuture):
         # If the currently cached operation is done, no need to make another
         # RPC as it will not change once done.
         if not self._operation.done:
-            self._operation = await self._refresh(retry=retry)
+            # NOTE: Temporary change to not pass down retry until we investigate
+            # if it is used by async gRPC. It is not supported in async REST.
+            self._operation = await self._refresh()
             self._set_result_from_operation()
 
     async def done(self, retry=async_future.DEFAULT_RETRY):
