@@ -197,6 +197,8 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> operations_pb2.ListOperationsResponse:
         r"""Asynchronously call the list operations method over HTTP.
 
@@ -271,6 +273,8 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> operations_pb2.Operation:
         r"""Asynchronously call the get operation method over HTTP.
 
@@ -346,6 +350,8 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> empty_pb2.Empty:
         r"""Asynchronously call the delete operation method over HTTP.
 
@@ -414,6 +420,8 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> empty_pb2.Empty:
         r"""Asynchronously call the cancel operation method over HTTP.
 

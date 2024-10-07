@@ -97,7 +97,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         super().__init__(
             credentials=credentials,  # type: ignore
             # NOTE: If a transport is not provided, we force the client to use the async
-            # REST transport, as it should.
+            # REST transport.
             transport=transport or "rest_asyncio",
             client_options=client_options,
             client_info=client_info,
@@ -112,6 +112,8 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         page_token: Optional[str] = None,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> pagers.ListOperationsAsyncPager:
         r"""Lists operations that match the specified filter in the request.
         If the server doesn't support this method, it returns
@@ -190,6 +192,8 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> operations_pb2.Operation:
         r"""Gets the latest state of a long-running operation.
         Clients can use this method to poll the operation result
@@ -238,6 +242,8 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> None:
         r"""Deletes a long-running operation. This method indicates that the
         client is no longer interested in the operation result. It does
@@ -282,6 +288,8 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
+        # to allow configuring retryable error codes.
     ) -> None:
         r"""Starts asynchronous cancellation on a long-running operation.
         The server makes a best effort to cancel the operation, but
