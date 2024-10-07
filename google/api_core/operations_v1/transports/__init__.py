@@ -26,14 +26,14 @@ _transport_registry["rest"] = cast(OperationsTransport, OperationsRestTransport)
 __all__: Tuple[str, ...] = ("OperationsTransport", "OperationsRestTransport")
 
 try:
-    from .rest_asyncio import OperationsRestAsyncTransport
+    from .rest_asyncio import AsyncOperationsRestTransport
 
-    __all__ += ("OperationsRestAsyncTransport",)
+    __all__ += ("AsyncOperationsRestTransport",)
     _transport_registry["rest_asyncio"] = cast(
-        OperationsTransport, OperationsRestAsyncTransport
+        OperationsTransport, AsyncOperationsRestTransport
     )
 except ImportError:
     # This import requires the `async_rest` extra.
-    # Don't raise an exception if `OperationsRestAsyncTransport` cannot be imported
+    # Don't raise an exception if `AsyncOperationsRestTransport` cannot be imported
     # as other transports are still available.
     pass

@@ -46,7 +46,7 @@ try:
     import aiohttp  # noqa: F401
     import google.auth.aio.transport
     from google.auth.aio.transport.sessions import AsyncAuthorizedSession
-    from google.api_core.operations_v1 import AbstractOperationsAsyncClient
+    from google.api_core.operations_v1 import AsyncOperationsRestClient
     from google.auth.aio import credentials as ga_credentials_async
 
     GOOGLE_AUTH_AIO_INSTALLED = True
@@ -68,13 +68,13 @@ HTTP_OPTIONS = {
     ],
 }
 
-CLIENTS: List[Any] = [
+PYPARAM_CLIENT: List[Any] = [
     AbstractOperationsClient,
 ]
-CLIENTS_WITH_TRANSPORT = [
+PYPARAM_CLIENT_TRANSPORT_NAME = [
     [AbstractOperationsClient, transports.OperationsRestTransport, "rest"],
 ]
-CLIENTS_WITH_CREDENTIALS = [
+PYPARAM_CLIENT_TRANSPORT_CREDENTIALS = [
     [
         AbstractOperationsClient,
         transports.OperationsRestTransport,
@@ -83,18 +83,18 @@ CLIENTS_WITH_CREDENTIALS = [
 ]
 
 if GOOGLE_AUTH_AIO_INSTALLED:
-    CLIENTS.append(AbstractOperationsAsyncClient)
-    CLIENTS_WITH_TRANSPORT.append(
+    PYPARAM_CLIENT.append(AsyncOperationsRestClient)
+    PYPARAM_CLIENT_TRANSPORT_NAME.append(
         [
-            AbstractOperationsAsyncClient,
-            transports.OperationsRestAsyncTransport,
+            AsyncOperationsRestClient,
+            transports.AsyncOperationsRestTransport,
             "rest_asyncio",
         ]
     )
-    CLIENTS_WITH_CREDENTIALS.append(
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS.append(
         [
-            AbstractOperationsAsyncClient,
-            transports.OperationsRestAsyncTransport,
+            AsyncOperationsRestClient,
+            transports.AsyncOperationsRestTransport,
             ga_credentials_async.AnonymousCredentials(),
         ]
     )
@@ -114,11 +114,11 @@ def _get_session_type(is_async: bool):
 
 def _get_operations_client(is_async: bool, http_options=HTTP_OPTIONS):
     if is_async and GOOGLE_AUTH_AIO_INSTALLED:
-        async_transport = transports.rest_asyncio.OperationsRestAsyncTransport(
+        async_transport = transports.rest_asyncio.AsyncOperationsRestTransport(
             credentials=ga_credentials_async.AnonymousCredentials(),
             http_options=http_options,
         )
-        return AbstractOperationsAsyncClient(transport=async_transport)
+        return AsyncOperationsRestClient(transport=async_transport)
     else:
         sync_transport = transports.rest.OperationsRestTransport(
             credentials=ga_credentials.AnonymousCredentials(), http_options=http_options
@@ -169,7 +169,7 @@ def test__get_default_mtls_endpoint(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_operations_client_from_service_account_info(client_class):
     creds = ga_credentials.AnonymousCredentials()
@@ -196,7 +196,7 @@ def test_operations_client_from_service_account_info(client_class):
     [
         transports.OperationsRestTransport,
         # TODO(https://github.com/googleapis/python-api-core/issues/706): Add support for
-        # service account credentials in transports.OperationsRestAsyncTransport
+        # service account credentials in transports.AsyncOperationsRestTransport
     ],
 )
 def test_operations_client_service_account_always_use_jwt(transport_class):
@@ -217,7 +217,7 @@ def test_operations_client_service_account_always_use_jwt(transport_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_operations_client_from_service_account_file(client_class):
 
@@ -244,7 +244,7 @@ def test_operations_client_from_service_account_file(client_class):
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    CLIENTS_WITH_TRANSPORT,
+    PYPARAM_CLIENT_TRANSPORT_NAME,
 )
 def test_operations_client_get_transport_class(
     client_class, transport_class, transport_name
@@ -254,7 +254,7 @@ def test_operations_client_get_transport_class(
         transports.OperationsRestTransport,
     ]
     if GOOGLE_AUTH_AIO_INSTALLED:
-        available_transports.append(transports.OperationsRestAsyncTransport)
+        available_transports.append(transports.AsyncOperationsRestTransport)
     assert transport in available_transports
 
     transport = client_class.get_transport_class(transport_name)
@@ -481,7 +481,7 @@ def test_operations_client_mtls_env_auto(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    CLIENTS_WITH_TRANSPORT,
+    PYPARAM_CLIENT_TRANSPORT_NAME,
 )
 def test_operations_client_client_options_scopes(
     client_class, transport_class, transport_name
@@ -512,7 +512,7 @@ def test_operations_client_client_options_scopes(
 
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name",
-    CLIENTS_WITH_TRANSPORT,
+    PYPARAM_CLIENT_TRANSPORT_NAME,
 )
 def test_operations_client_client_options_credentials_file(
     client_class, transport_class, transport_name
@@ -1037,7 +1037,7 @@ async def test_cancel_operation_rest_failure_async():
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_credentials_transport_error(client_class, transport_class, credentials):
 
@@ -1068,7 +1068,7 @@ def test_credentials_transport_error(client_class, transport_class, credentials)
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_transport_instance(client_class, transport_class, credentials):
     # A client may be instantiated with a custom transport instance.
@@ -1081,7 +1081,7 @@ def test_transport_instance(client_class, transport_class, credentials):
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_transport_adc(client_class, transport_class, credentials):
     # Test default credentials are used if not provided.
@@ -1160,7 +1160,7 @@ def test_operations_base_transport_with_adc():
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_operations_auth_adc(client_class):
     # If no credentials are provided, we should use ADC credentials.
@@ -1185,7 +1185,7 @@ def test_operations_auth_adc(client_class):
 
 
 # TODO(https://github.com/googleapis/python-api-core/issues/705): Add
-# testing for `transports.OperationsRestAsyncTransport` once MTLS is supported
+# testing for `transports.AsyncOperationsRestTransport` once MTLS is supported
 # in `google.auth.aio.transport`.
 @pytest.mark.parametrize(
     "transport_class",
@@ -1206,7 +1206,7 @@ def test_operations_http_transport_client_cert_source_for_mtls(transport_class):
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_operations_host_no_port(client_class, transport_class, credentials):
     client = client_class(
@@ -1220,7 +1220,7 @@ def test_operations_host_no_port(client_class, transport_class, credentials):
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_operations_host_with_port(client_class, transport_class, credentials):
     client = client_class(
@@ -1234,7 +1234,7 @@ def test_operations_host_with_port(client_class, transport_class, credentials):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_common_billing_account_path(client_class):
     billing_account = "squid"
@@ -1247,7 +1247,7 @@ def test_common_billing_account_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_parse_common_billing_account_path(client_class):
     expected = {
@@ -1262,7 +1262,7 @@ def test_parse_common_billing_account_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_common_folder_path(client_class):
     folder = "whelk"
@@ -1275,7 +1275,7 @@ def test_common_folder_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_parse_common_folder_path(client_class):
     expected = {
@@ -1290,7 +1290,7 @@ def test_parse_common_folder_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_common_organization_path(client_class):
     organization = "oyster"
@@ -1303,7 +1303,7 @@ def test_common_organization_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_parse_common_organization_path(client_class):
     expected = {
@@ -1318,7 +1318,7 @@ def test_parse_common_organization_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_common_project_path(client_class):
     project = "cuttlefish"
@@ -1331,7 +1331,7 @@ def test_common_project_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_parse_common_project_path(client_class):
     expected = {
@@ -1346,7 +1346,7 @@ def test_parse_common_project_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_common_location_path(client_class):
     project = "winkle"
@@ -1361,7 +1361,7 @@ def test_common_location_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class",
-    CLIENTS,
+    PYPARAM_CLIENT,
 )
 def test_parse_common_location_path(client_class):
     expected = {
@@ -1377,7 +1377,7 @@ def test_parse_common_location_path(client_class):
 
 @pytest.mark.parametrize(
     "client_class,transport_class,credentials",
-    CLIENTS_WITH_CREDENTIALS,
+    PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_client_withDEFAULT_CLIENT_INFO(client_class, transport_class, credentials):
     client_info = gapic_v1.client_info.ClientInfo()

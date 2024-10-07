@@ -28,7 +28,7 @@ from google.api_core.operations_v1.transports.rest import OperationsRestTranspor
 
 try:
     from google.api_core.operations_v1.transports.rest_asyncio import (
-        OperationsRestAsyncTransport,
+        AsyncOperationsRestTransport,
     )
 
     HAS_ASYNC_REST_DEPENDENCIES = True
@@ -52,7 +52,7 @@ class AbstractOperationsBaseClientMeta(type):
     _transport_registry = OrderedDict()  # type: Dict[str, Type[OperationsTransport]]
     _transport_registry["rest"] = OperationsRestTransport
     if HAS_ASYNC_REST_DEPENDENCIES:
-        _transport_registry["rest_asyncio"] = OperationsRestAsyncTransport
+        _transport_registry["rest_asyncio"] = AsyncOperationsRestTransport
 
     def get_transport_class(
         cls,

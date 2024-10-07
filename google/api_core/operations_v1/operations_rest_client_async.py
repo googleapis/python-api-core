@@ -36,8 +36,8 @@ except ImportError as e:  # pragma: NO COVER
     ) from e
 
 
-class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
-    """Manages long-running operations with an API service for the asynchronous client.
+class AsyncOperationsRestClient(AbstractOperationsBaseClient):
+    """Manages long-running operations with a REST API service for the asynchronous client.
 
     When an API method normally takes long time to complete, it can be
     designed to return [Operation][google.api_core.operations_v1.Operation] to the
@@ -105,10 +105,10 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
     async def get_operation(
         self,
         name: str,
+        *,
         # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
         # to allow configuring retryable error codes.
         retry=gapic_v1.method_async.DEFAULT,
-        *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operations_pb2.Operation:
@@ -146,6 +146,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         # Send the request.
         response = await rpc(
             request,
+            retry=retry,
             timeout=timeout,
             metadata=metadata,
         )
@@ -157,12 +158,12 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         self,
         name: str,
         filter_: Optional[str] = None,
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
-        # to allow configuring retryable error codes.
-        retry=gapic_v1.method_async.DEFAULT,
         *,
         page_size: Optional[int] = None,
         page_token: Optional[str] = None,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListOperationsAsyncPager:
@@ -221,6 +222,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         # Send the request.
         response = await rpc(
             request,
+            retry=retry,
             timeout=timeout,
             metadata=metadata,
         )
@@ -240,10 +242,10 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
     async def delete_operation(
         self,
         name: str,
+        *,
         # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
         # to allow configuring retryable error codes.
         retry=gapic_v1.method_async.DEFAULT,
-        *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
@@ -280,6 +282,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         # Send the request.
         await rpc(
             request,
+            retry=retry,
             timeout=timeout,
             metadata=metadata,
         )
@@ -287,14 +290,12 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
     async def cancel_operation(
         self,
         name: Optional[str] = None,
+        *,
         # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
         # to allow configuring retryable error codes.
         retry=gapic_v1.method_async.DEFAULT,
-        *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> None:
         r"""Starts asynchronous cancellation on a long-running operation.
         The server makes a best effort to cancel the operation, but
@@ -338,6 +339,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         # Send the request.
         await rpc(
             request,
+            retry=retry,
             timeout=timeout,
             metadata=metadata,
         )

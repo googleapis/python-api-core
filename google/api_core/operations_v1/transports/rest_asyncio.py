@@ -46,7 +46,7 @@ DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
 )
 
 
-class OperationsRestAsyncTransport(OperationsTransport):
+class AsyncOperationsRestTransport(OperationsTransport):
     """Asynchronous REST backend transport for Operations.
 
     Manages async long-running operations with an API service.
@@ -220,10 +220,11 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.ListOperationsRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> operations_pb2.ListOperationsResponse:
         r"""Asynchronously call the list operations method over HTTP.
 
@@ -296,10 +297,11 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.GetOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> operations_pb2.Operation:
         r"""Asynchronously call the get operation method over HTTP.
 
@@ -373,10 +375,11 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.DeleteOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> empty_pb2.Empty:
         r"""Asynchronously call the delete operation method over HTTP.
 
@@ -443,6 +446,9 @@ class OperationsRestAsyncTransport(OperationsTransport):
         self,
         request: operations_pb2.CancelOperationRequest,
         *,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
         # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
@@ -551,4 +557,4 @@ class OperationsRestAsyncTransport(OperationsTransport):
         return self._cancel_operation
 
 
-__all__ = ("OperationsRestAsyncTransport",)
+__all__ = ("AsyncOperationsRestTransport",)
