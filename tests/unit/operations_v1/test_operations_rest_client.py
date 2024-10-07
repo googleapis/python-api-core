@@ -17,6 +17,7 @@ import os
 
 import mock
 import pytest
+from typing import Any
 
 try:
     import grpc  # noqa: F401
@@ -52,25 +53,6 @@ try:
 except ImportError:
     GOOGLE_AUTH_AIO_INSTALLED = False
 
-if GOOGLE_AUTH_AIO_INSTALLED:
-    TEST_TRANSPORT_CREDS_PARAMS = [
-        (
-            transports.OperationsRestTransport,
-            ga_credentials.AnonymousCredentials(),
-        ),
-        (
-            transports.OperationsRestAsyncTransport,
-            ga_credentials_async.AnonymousCredentials(),
-        ),
-    ]
-else:
-    TEST_TRANSPORT_CREDS_PARAMS = [
-        (
-            transports.OperationsRestTransport,
-            ga_credentials.AnonymousCredentials(),
-        )
-    ]
-
 HTTP_OPTIONS = {
     "google.longrunning.Operations.CancelOperation": [
         {"method": "post", "uri": "/v3/{name=operations/*}:cancel", "body": "*"},
@@ -86,43 +68,36 @@ HTTP_OPTIONS = {
     ],
 }
 
+CLIENTS: list[Any] = [
+    AbstractOperationsClient,
+]
+CLIENTS_WITH_TRANSPORT = [
+    [AbstractOperationsClient, transports.OperationsRestTransport, "rest"],
+]
+CLIENTS_WITH_CREDENTIALS = [
+    [
+        AbstractOperationsClient,
+        transports.OperationsRestTransport,
+        ga_credentials.AnonymousCredentials(),
+    ],
+]
 
 if GOOGLE_AUTH_AIO_INSTALLED:
-    CLIENTS = [AbstractOperationsClient, AbstractOperationsAsyncClient]
-    CLIENTS_WITH_TRANSPORT = [
-        (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
-        (
+    CLIENTS.append(AbstractOperationsAsyncClient)
+    CLIENTS_WITH_TRANSPORT.append(
+        [
             AbstractOperationsAsyncClient,
             transports.OperationsRestAsyncTransport,
             "rest_asyncio",
-        ),
-    ]
-    CLIENTS_WITH_CREDENTIALS = [
-        (
-            AbstractOperationsClient,
-            transports.OperationsRestTransport,
-            ga_credentials.AnonymousCredentials(),
-        ),
-        (
+        ]
+    )
+    CLIENTS_WITH_CREDENTIALS.append(
+        [
             AbstractOperationsAsyncClient,
             transports.OperationsRestAsyncTransport,
             ga_credentials_async.AnonymousCredentials(),
-        ),
-    ]
-else:
-    CLIENTS = [
-        AbstractOperationsClient,
-    ]
-    CLIENTS_WITH_TRANSPORT = [
-        (AbstractOperationsClient, transports.OperationsRestTransport, "rest"),
-    ]
-    CLIENTS_WITH_CREDENTIALS = [
-        (
-            AbstractOperationsClient,
-            transports.OperationsRestTransport,
-            ga_credentials.AnonymousCredentials(),
-        ),
-    ]
+        ]
+    )
 
 
 def client_cert_source_callback():
@@ -1105,10 +1080,10 @@ def test_transport_instance(client_class, transport_class, credentials):
 
 
 @pytest.mark.parametrize(
-    "transport_class,credentials",
-    TEST_TRANSPORT_CREDS_PARAMS,
+    "client_class,transport_class,credentials",
+    CLIENTS_WITH_CREDENTIALS,
 )
-def test_transport_adc(transport_class, credentials):
+def test_transport_adc(client_class, transport_class, credentials):
     # Test default credentials are used if not provided.
     with mock.patch.object(google.auth, "default") as adc:
         adc.return_value = (credentials, None)

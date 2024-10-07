@@ -25,17 +25,15 @@ from google.api_core.operations_v1.transports.base import (
 from google.api_core.operations_v1.abstract_operations_base_client import (
     AbstractOperationsBaseClient,
 )
+from google.longrunning import operations_pb2
 
 try:
     from google.auth.aio import credentials as ga_credentials  # type: ignore
 except ImportError as e:  # pragma: NO COVER
     raise ImportError(
-        "`google-api-core[async_rest]` is required to use asynchronous rest streaming. "
-        "Install the `async_rest` extra of `google-api-core` using "
+        "The `async_rest` extra of `google-api-core` is required to use long-running operations.  Install it by running "
         "`pip install google-api-core[async_rest]`."
     ) from e
-
-from google.longrunning import operations_pb2
 
 
 class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
