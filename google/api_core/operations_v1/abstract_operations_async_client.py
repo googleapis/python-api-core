@@ -101,18 +101,70 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
             client_options=client_options,
             client_info=client_info,
         )
+    
+    async def get_operation(
+        self,
+        name: str,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
+        *,
+        timeout: Optional[float] = None,
+        metadata: Sequence[Tuple[str, str]] = (),
+    ) -> operations_pb2.Operation:
+        r"""Gets the latest state of a long-running operation.
+        Clients can use this method to poll the operation result
+        at intervals as recommended by the API service.
+
+        Args:
+            name (str):
+                The name of the operation resource.
+            timeout (float): The timeout for this request.
+            metadata (Sequence[Tuple[str, str]]): Strings which should be
+                sent along with the request as metadata.
+
+        Returns:
+            google.longrunning.operations_pb2.Operation:
+                This resource represents a long-
+                running operation that is the result of a
+                network API call.
+
+        """
+
+        request = operations_pb2.GetOperationRequest(name=name)
+
+        # Wrap the RPC method; this adds retry and timeout information,
+        # and friendly error handling.
+        rpc = self._transport._wrapped_methods[self._transport.get_operation]
+
+        # Certain fields should be provided within the metadata header;
+        # add these here.
+        metadata = tuple(metadata or ()) + (
+            gapic_v1.routing_header.to_grpc_metadata((("name", request.name),)),
+        )
+
+        # Send the request.
+        response = await rpc(
+            request,
+            timeout=timeout,
+            metadata=metadata,
+        )
+
+        # Done; return the response.
+        return response
 
     async def list_operations(
         self,
         name: str,
         filter_: Optional[str] = None,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         *,
         page_size: Optional[int] = None,
         page_token: Optional[str] = None,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> pagers.ListOperationsAsyncPager:
         r"""Lists operations that match the specified filter in the request.
         If the server doesn't support this method, it returns
@@ -185,64 +237,15 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
         # Done; return the response.
         return response
 
-    async def get_operation(
-        self,
-        name: str,
-        *,
-        timeout: Optional[float] = None,
-        metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
-    ) -> operations_pb2.Operation:
-        r"""Gets the latest state of a long-running operation.
-        Clients can use this method to poll the operation result
-        at intervals as recommended by the API service.
-
-        Args:
-            name (str):
-                The name of the operation resource.
-            timeout (float): The timeout for this request.
-            metadata (Sequence[Tuple[str, str]]): Strings which should be
-                sent along with the request as metadata.
-
-        Returns:
-            google.longrunning.operations_pb2.Operation:
-                This resource represents a long-
-                running operation that is the result of a
-                network API call.
-
-        """
-
-        request = operations_pb2.GetOperationRequest(name=name)
-
-        # Wrap the RPC method; this adds retry and timeout information,
-        # and friendly error handling.
-        rpc = self._transport._wrapped_methods[self._transport.get_operation]
-
-        # Certain fields should be provided within the metadata header;
-        # add these here.
-        metadata = tuple(metadata or ()) + (
-            gapic_v1.routing_header.to_grpc_metadata((("name", request.name),)),
-        )
-
-        # Send the request.
-        response = await rpc(
-            request,
-            timeout=timeout,
-            metadata=metadata,
-        )
-
-        # Done; return the response.
-        return response
-
     async def delete_operation(
         self,
         name: str,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
-        # TODO(https://github.com/googleapis/python-api-core/issues/722): Add `retry` parameter
-        # to allow configuring retryable error codes.
     ) -> None:
         r"""Deletes a long-running operation. This method indicates that the
         client is no longer interested in the operation result. It does
@@ -284,6 +287,9 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
     async def cancel_operation(
         self,
         name: Optional[str] = None,
+        # TODO(https://github.com/googleapis/python-api-core/issues/722): Leverage `retry`
+        # to allow configuring retryable error codes.
+        retry=gapic_v1.method_async.DEFAULT,
         *,
         timeout: Optional[float] = None,
         metadata: Sequence[Tuple[str, str]] = (),
