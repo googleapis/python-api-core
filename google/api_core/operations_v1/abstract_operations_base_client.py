@@ -19,7 +19,6 @@ import re
 from typing import Dict, Optional, Type, Union
 
 from google.api_core import client_options as client_options_lib  # type: ignore
-from google.api_core import exceptions as core_exceptions  # type: ignore
 from google.api_core import gapic_v1  # type: ignore
 from google.api_core.operations_v1.transports.base import (
     DEFAULT_CLIENT_INFO,
@@ -359,41 +358,13 @@ class AbstractOperationsBaseClient(metaclass=AbstractOperationsBaseClientMeta):
             self._transport = transport
         else:
             Transport = type(self).get_transport_class(transport)
-            # NOTE: The conditional logic below to initialize the transport can be removed
-            # once we have feature parity with the sync transport.
-            if "async" in str(Transport).lower():
-                unsupported_params = {
-                    # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
-                    "google.api_core.client_options.ClientOptions.credentials_file": client_options.credentials_file,
-                    # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
-                    "google.api_core.client_options.ClientOptions.scopes": client_options.scopes,
-                    # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
-                    "google.api_core.client_options.ClientOptions.quota_project_id": client_options.quota_project_id,
-                    # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
-                    "google.api_core.client_options.ClientOptions.client_cert_source": client_options.client_cert_source,
-                }
-                provided_unsupported_params = [
-                    name
-                    for name, value in unsupported_params.items()
-                    if value is not None
-                ]
-                if provided_unsupported_params:
-                    raise core_exceptions.AsyncRestUnsupportedParameterError(
-                        f"The following provided parameters are not supported for `transport=rest_asyncio`: {', '.join(provided_unsupported_params)}"
-                    )
-                self._transport = Transport(
-                    credentials=credentials,
-                    host=api_endpoint,
-                    client_info=client_info,
-                )
-            else:
-                self._transport = Transport(
-                    credentials=credentials,
-                    credentials_file=client_options.credentials_file,
-                    host=api_endpoint,
-                    scopes=client_options.scopes,
-                    client_cert_source_for_mtls=client_cert_source_func,
-                    quota_project_id=client_options.quota_project_id,
-                    client_info=client_info,
-                    always_use_jwt_access=True,
-                )
+            self._transport = Transport(
+                credentials=credentials,
+                credentials_file=client_options.credentials_file,
+                host=api_endpoint,
+                scopes=client_options.scopes,
+                client_cert_source_for_mtls=client_cert_source_func,
+                quota_project_id=client_options.quota_project_id,
+                client_info=client_info,
+                always_use_jwt_access=True,
+            )

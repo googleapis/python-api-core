@@ -66,8 +66,7 @@ class AbstractOperationsAsyncClient(AbstractOperationsBaseClient):
                 are specified, the client will attempt to ascertain the
                 credentials from the environment.
             transport (Union[str, OperationsTransport]): The
-                transport to use. If set to None, a transport is chosen
-                automatically.
+                transport to use. If set to None, this defaults to 'rest_asyncio'.
             client_options (google.api_core.client_options.ClientOptions): Custom options for the
                 client. It won't take effect if a ``transport`` instance is provided.
                 (1) The ``api_endpoint`` property can be used to override the

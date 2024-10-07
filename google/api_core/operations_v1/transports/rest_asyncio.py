@@ -72,15 +72,19 @@ class OperationsRestAsyncTransport(OperationsTransport):
         *,
         host: str = "longrunning.googleapis.com",
         credentials: Optional[ga_credentials_async.Credentials] = None,
+        credentials_file: Optional[str] = None,
+        scopes: Optional[Sequence[str]] = None,
+        client_cert_source_for_mtls: Optional[Callable[[], Tuple[bytes, bytes]]] = None,
+        quota_project_id: Optional[str] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
         always_use_jwt_access: Optional[bool] = False,
         url_scheme: str = "https",
         http_options: Optional[Dict] = None,
         path_prefix: str = "v1",
-        # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
-        # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
-        # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
-        # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/715): Add docstring for `credentials_file` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/716): Add docstring for `scopes` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/717): Add docstring for `quota_project_id` to async REST transport.
+        # TODO(https://github.com/googleapis/python-api-core/issues/718): Add docstring for `client_cert_source` to async REST transport.
     ) -> None:
         """Instantiate the transport.
 
@@ -109,12 +113,33 @@ class OperationsRestAsyncTransport(OperationsTransport):
                 "v1" by default.
 
         """
+        unsupported_params = {
+            # TODO(https://github.com/googleapis/python-api-core/issues/715): Add support for `credentials_file` to async REST transport.
+            "google.api_core.client_options.ClientOptions.credentials_file": credentials_file,
+            # TODO(https://github.com/googleapis/python-api-core/issues/716): Add support for `scopes` to async REST transport.
+            "google.api_core.client_options.ClientOptions.scopes": scopes,
+            # TODO(https://github.com/googleapis/python-api-core/issues/717): Add support for `quota_project_id` to async REST transport.
+            "google.api_core.client_options.ClientOptions.quota_project_id": quota_project_id,
+            # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
+            "google.api_core.client_options.ClientOptions.client_cert_source": client_cert_source_for_mtls,
+            # TODO(https://github.com/googleapis/python-api-core/issues/718): Add support for `client_cert_source` to async REST transport.
+            "google.api_core.client_options.ClientOptions.client_cert_source": client_cert_source_for_mtls,
+        }
+        provided_unsupported_params = [
+            name for name, value in unsupported_params.items() if value is not None
+        ]
+        if provided_unsupported_params:
+            raise core_exceptions.AsyncRestUnsupportedParameterError(
+                f"The following provided parameters are not supported for `transport=rest_asyncio`: {', '.join(provided_unsupported_params)}"
+            )
+
         super().__init__(
             host=host,
             # TODO(https://github.com/googleapis/python-api-core/issues/709): Remove `type: ignore` when the linked issue is resolved.
             credentials=credentials,  # type: ignore
             client_info=client_info,
-            always_use_jwt_access=always_use_jwt_access,
+            # TODO(https://github.com/googleapis/python-api-core/issues/725): Set always_use_jwt_access token when supported.
+            always_use_jwt_access=False,
         )
         # TODO(https://github.com/googleapis/python-api-core/issues/708): add support for
         # `default_host` in AsyncAuthorizedSession for feature parity with the synchronous

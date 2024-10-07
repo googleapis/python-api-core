@@ -17,7 +17,7 @@ import os
 
 import mock
 import pytest
-from typing import Any
+from typing import Any, List
 
 try:
     import grpc  # noqa: F401
@@ -68,7 +68,7 @@ HTTP_OPTIONS = {
     ],
 }
 
-CLIENTS: list[Any] = [
+CLIENTS: List[Any] = [
     AbstractOperationsClient,
 ]
 CLIENTS_WITH_TRANSPORT = [
