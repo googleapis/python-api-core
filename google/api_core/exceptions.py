@@ -22,11 +22,19 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import http.client
-from typing import Dict
+from typing import Optional, Dict
 from typing import Union
 import warnings
 
 from google.rpc import error_details_pb2
+
+
+def _warn_could_not_import_grpcio_status():
+    warnings.warn(
+        "Please install grpcio-status to obtain helpful grpc error messages.",
+        ImportWarning,
+    )  # pragma: NO COVER
+
 
 try:
     import grpc
@@ -34,10 +42,7 @@ try:
     try:
         from grpc_status import rpc_status
     except ImportError:  # pragma: NO COVER
-        warnings.warn(
-            "Please install grpcio-status to obtain helpful grpc error messages.",
-            ImportWarning,
-        )
+        _warn_could_not_import_grpcio_status()
         rpc_status = None
 except ImportError:  # pragma: NO COVER
     grpc = None
@@ -437,6 +442,12 @@ class DeadlineExceeded(GatewayTimeout):
     grpc_status_code = grpc.StatusCode.DEADLINE_EXCEEDED if grpc is not None else None
 
 
+class AsyncRestUnsupportedParameterError(NotImplementedError):
+    """Raised when an unsupported parameter is configured against async rest transport."""
+
+    pass
+
+
 def exception_class_for_http_status(status_code):
     """Return the exception class for a specific HTTP status code.
 
@@ -471,6 +482,62 @@ def from_http_status(status_code, message, **kwargs):
     return error
 
 
+def _format_rest_error_message(error, method, url):
+    method = method.upper() if method else None
+    message = "{method} {url}: {error}".format(
+        method=method,
+        url=url,
+        error=error,
+    )
+    return message
+
+
+# NOTE: We're moving away from `from_http_status` because it expects an aiohttp response compared
+# to `format_http_response_error` which expects a more abstract response from google.auth and is
+# compatible with both sync and async response types.
+# TODO(https://github.com/googleapis/python-api-core/issues/691): Add type hint for response.
+def format_http_response_error(
+    response, method: str, url: str, payload: Optional[Dict] = None
+):
+    """Create a :class:`GoogleAPICallError` from a google auth rest response.
+
+    Args:
+        response Union[google.auth.transport.Response, google.auth.aio.transport.Response]: The HTTP response.
+        method Optional(str): The HTTP request method.
+        url Optional(str): The HTTP request url.
+        payload Optional(dict): The HTTP response payload. If not passed in, it is read from response for a response type of google.auth.transport.Response.
+
+    Returns:
+        GoogleAPICallError: An instance of the appropriate subclass of
+            :class:`GoogleAPICallError`, with the message and errors populated
+            from the response.
+    """
+    payload = {} if not payload else payload
+    error_message = payload.get("error", {}).get("message", "unknown error")
+    errors = payload.get("error", {}).get("errors", ())
+    # In JSON, details are already formatted in developer-friendly way.
+    details = payload.get("error", {}).get("details", ())
+    error_info = list(
+        filter(
+            lambda detail: detail.get("@type", "")
+            == "type.googleapis.com/google.rpc.ErrorInfo",
+            details,
+        )
+    )
+    error_info = error_info[0] if error_info else None
+    message = _format_rest_error_message(error_message, method, url)
+
+    exception = from_http_status(
+        response.status_code,
+        message,
+        errors=errors,
+        details=details,
+        response=response,
+        error_info=error_info,
+    )
+    return exception
+
+
 def from_http_response(response):
     """Create a :class:`GoogleAPICallError` from a :class:`requests.Response`.
 
@@ -486,35 +553,9 @@ def from_http_response(response):
         payload = response.json()
     except ValueError:
         payload = {"error": {"message": response.text or "unknown error"}}
-
-    error_message = payload.get("error", {}).get("message", "unknown error")
-    errors = payload.get("error", {}).get("errors", ())
-    # In JSON, details are already formatted in developer-friendly way.
-    details = payload.get("error", {}).get("details", ())
-    error_info = list(
-        filter(
-            lambda detail: detail.get("@type", "")
-            == "type.googleapis.com/google.rpc.ErrorInfo",
-            details,
-        )
+    return format_http_response_error(
+        response, response.request.method, response.request.url, payload
     )
-    error_info = error_info[0] if error_info else None
-
-    message = "{method} {url}: {error}".format(
-        method=response.request.method,
-        url=response.request.url,
-        error=error_message,
-    )
-
-    exception = from_http_status(
-        response.status_code,
-        message,
-        errors=errors,
-        details=details,
-        response=response,
-        error_info=error_info,
-    )
-    return exception
 
 
 def exception_class_for_grpc_status(status_code):
@@ -560,6 +601,9 @@ def _is_informative_grpc_error(rpc_exc):
 
 
 def _parse_grpc_error_details(rpc_exc):
+    if not rpc_status:  # pragma: NO COVER
+        _warn_could_not_import_grpcio_status()
+        return [], None
     try:
         status = rpc_status.from_call(rpc_exc)
     except NotImplementedError:  # workaround

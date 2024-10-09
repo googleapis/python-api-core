@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        option: ["", "_grpc_gcp", "_wo_grpc"]
+        option: ["", "_grpc_gcp", "_wo_grpc", "_w_prerelease_deps", "_w_async_rest_extra"]
         python:
           - "3.7"
           - "3.8"
@@ -47,6 +47,7 @@ jobs:
       with:
         name: coverage-artifact-${{ matrix.option }}-${{ matrix.python }}
         path: .coverage${{ matrix.option }}-${{ matrix.python }}
+        include-hidden-files: true
 
   report-coverage:
     name: cover
