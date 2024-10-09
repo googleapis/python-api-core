@@ -14,7 +14,7 @@
 
 try:
     from unittest import mock
-    from unittest.mock import AsyncMock  # pragma: NO COVER
+    from unittest.mock import AsyncMock  # pragma: NO COVER  # noqa: F401
 except ImportError:  # pragma: NO COVER
     import mock  # type: ignore
 import pytest  # noqa: I202
@@ -212,7 +212,9 @@ async def test_wrap_stream_errors_aiter():
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     mocked_aiter = mock.Mock(spec=["__anext__"])
-    mocked_aiter.__anext__ = mock.AsyncMock(side_effect=[mock.sentinel.response, grpc_error])
+    mocked_aiter.__anext__ = mock.AsyncMock(
+        side_effect=[mock.sentinel.response, grpc_error]
+    )
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
     multicallable = mock.Mock(return_value=mock_call)
 
