@@ -104,7 +104,7 @@ class Test_StreamingResponseIterator:
         wrapped.__next__.side_effect = exc
 
         obj = self._make_one(wrapped)
-        assert obj._stored_first_result is exc
+        assert obj._stored_first_error is exc
         with pytest.raises(exceptions.GoogleAPICallError):
             next(obj)
 
@@ -330,7 +330,7 @@ def test_wrap_stream_errors_iterator_initialization():
     wrapped_callable = grpc_helpers._wrap_stream_errors(callable_)
 
     it = wrapped_callable(1, 2, three="four")
-    assert it._stored_first_result is grpc_error
+    assert it._stored_first_error is grpc_error
 
     callable_.assert_called_once_with(1, 2, three="four")
     # should raise on first iteration
