@@ -96,7 +96,6 @@ def install_prerelease_dependencies(session, constraints_path):
             "google-auth",
             "googleapis-common-protos",
             # Exclude grpcio!=1.67.0rc1 which does not support python 3.13
-
             "grpcio!=1.67.0rc1",
             "grpcio-status",
             "proto-plus",
