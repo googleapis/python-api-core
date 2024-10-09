@@ -97,6 +97,9 @@ class _StreamingResponseIterator(Generic[P], grpc.Call):
         except StopIteration:
             # ignore stop iteration at this time. This should be handled outside of retry.
             pass
+        except grpc.RpcError as exc:
+            # If the pre-fetch fails, store exception to be raised on next() call.
+            self._stored_first_result = exc
 
     def __iter__(self) -> Iterator[P]:
         """This iterator is also an iterable that returns itself."""
@@ -112,6 +115,8 @@ class _StreamingResponseIterator(Generic[P], grpc.Call):
             if hasattr(self, "_stored_first_result"):
                 result = self._stored_first_result
                 del self._stored_first_result
+                if isinstance(result, Exception):
+                    raise result
                 return result
             return next(self._wrapped)
         except grpc.RpcError as exc:
