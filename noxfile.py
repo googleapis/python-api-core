@@ -38,6 +38,8 @@ nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
     "unit_wo_grpc",
+    "unit_w_prerelease_deps",
+    "unit_w_async_rest_extra",
     "cover",
     "pytype",
     "mypy",
@@ -109,7 +111,7 @@ def install_prerelease_dependencies(session, constraints_path):
         session.install(*other_deps)
 
 
-def default(session, install_grpc=True, prerelease=False):
+def default(session, install_grpc=True, prerelease=False, install_async_rest=False):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -122,26 +124,44 @@ def default(session, install_grpc=True, prerelease=False):
 
     session.install(
         "dataclasses",
-        "mock",
+        "mock; python_version=='3.7'",
         "pytest",
         "pytest-cov",
         "pytest-xdist",
     )
 
-    constraints_dir = str(CURRENT_DIRECTORY / "testing")
+    install_extras = []
+    if install_grpc:
+        install_extras.append("grpc")
 
+    constraints_dir = str(CURRENT_DIRECTORY / "testing")
+    if install_async_rest:
+        install_extras.append("async_rest")
+        constraints_type = "async-rest-"
+    else:
+        constraints_type = ""
+
+    lib_with_extras = f".[{','.join(install_extras)}]" if len(install_extras) else "."
     if prerelease:
         install_prerelease_dependencies(
-            session, f"{constraints_dir}/constraints-{PYTHON_VERSIONS[0]}.txt"
+            session,
+            f"{constraints_dir}/constraints-{constraints_type}{PYTHON_VERSIONS[0]}.txt",
         )
         # This *must* be the last install command to get the package from source.
-        session.install("-e", ".", "--no-deps")
+        session.install("-e", lib_with_extras, "--no-deps")
     else:
+        constraints_file = (
+            f"{constraints_dir}/constraints-{constraints_type}{session.python}.txt"
+        )
+        # fall back to standard constraints file
+        if not pathlib.Path(constraints_file).exists():
+            constraints_file = f"{constraints_dir}/constraints-{session.python}.txt"
+
         session.install(
             "-e",
-            ".[grpc]" if install_grpc else ".",
+            lib_with_extras,
             "-c",
-            f"{constraints_dir}/constraints-{session.python}.txt",
+            constraints_file,
         )
 
     # Print out package versions of dependencies
@@ -199,7 +219,7 @@ def unit(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_with_prerelease_deps(session):
+def unit_w_prerelease_deps(session):
     """Run the unit test suite."""
     default(session, prerelease=True)
 
@@ -229,6 +249,12 @@ def unit_wo_grpc(session):
     default(session, install_grpc=False)
 
 
+@nox.session(python=PYTHON_VERSIONS)
+def unit_w_async_rest_extra(session):
+    """Run the unit test suite with the `async_rest` extra"""
+    default(session, install_async_rest=True)
+
+
 @nox.session(python=DEFAULT_PYTHON_VERSION)
 def lint_setup_py(session):
     """Verify that setup.py is valid (including RST check)."""
@@ -249,13 +275,13 @@ def mypy(session):
     """Run type-checking."""
     # TODO(https://github.com/googleapis/python-api-core/issues/682):
     # Use the latest version of mypy instead of mypy<1.11.0
-    session.install(".[grpc]", "mypy<1.11.0")
+    session.install(".[grpc,async_rest]", "mypy<1.11.0")
     session.install(
         "types-setuptools",
         "types-requests",
         "types-protobuf",
-        "types-mock",
         "types-dataclasses",
+        "types-mock; python_version=='3.7'",
     )
     session.run("mypy", "google", "tests")
 
