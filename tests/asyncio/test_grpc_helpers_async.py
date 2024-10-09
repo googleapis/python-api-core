@@ -213,9 +213,7 @@ async def test_wrap_stream_errors_aiter():
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     mocked_aiter = mock.Mock(spec=["__anext__"])
-    mocked_aiter.__anext__ = AsyncMock(
-        side_effect=[mock.sentinel.response, grpc_error]
-    )
+    mocked_aiter.__anext__ = AsyncMock(side_effect=[mock.sentinel.response, grpc_error])
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
     multicallable = mock.Mock(return_value=mock_call)
 
