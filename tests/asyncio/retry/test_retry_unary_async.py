@@ -14,12 +14,11 @@
 
 import datetime
 import re
-from unittest import mock
-
 try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    from mock import AsyncMock
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 import pytest
 
 from google.api_core import exceptions
@@ -172,7 +171,7 @@ class TestAsyncRetry(Test_BaseRetry):
     @pytest.mark.asyncio
     async def test___call___and_execute_success(self, sleep):
         retry_ = retry_async.AsyncRetry()
-        target = AsyncMock(spec=["__call__"], return_value=42)
+        target = mock.AsyncMock(spec=["__call__"], return_value=42)
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
@@ -194,7 +193,7 @@ class TestAsyncRetry(Test_BaseRetry):
             predicate=retry_async.if_exception_type(ValueError)
         )
 
-        target = AsyncMock(spec=["__call__"], side_effect=[ValueError(), 42])
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[ValueError(), 42])
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
@@ -224,7 +223,7 @@ class TestAsyncRetry(Test_BaseRetry):
 
         monotonic_patcher = mock.patch("time.monotonic", return_value=0)
 
-        target = AsyncMock(spec=["__call__"], side_effect=[ValueError()] * 10)
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[ValueError()] * 10)
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
@@ -274,7 +273,7 @@ class TestAsyncRetry(Test_BaseRetry):
         # check the proper creation of the class
         assert retry_._on_error is _some_function
 
-        target = AsyncMock(spec=["__call__"], side_effect=[42])
+        target = mock.AsyncMock(spec=["__call__"], side_effect=[42])
         # __name__ is needed by functools.partial.
         target.__name__ = "target"
 
@@ -299,7 +298,7 @@ class TestAsyncRetry(Test_BaseRetry):
         # check the proper creation of the class
         assert retry_._on_error is _some_function
 
-        target = AsyncMock(
+        target = mock.AsyncMock(
             spec=["__call__"], side_effect=[ValueError(), ValueError(), 42]
         )
         # __name__ is needed by functools.partial.

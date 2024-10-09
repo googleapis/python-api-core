@@ -13,13 +13,12 @@
 # limitations under the License.
 
 
-from unittest import mock
-
-try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    from mock import AsyncMock
 import pytest
+try:
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 
 try:
     import grpc  # noqa: F401
@@ -59,9 +58,9 @@ def make_operation_future(client_operations_responses=None):
     if client_operations_responses is None:
         client_operations_responses = [make_operation_proto()]
 
-    refresh = AsyncMock(spec=["__call__"], side_effect=client_operations_responses)
+    refresh = mock.AsyncMock(spec=["__call__"], side_effect=client_operations_responses)
     refresh.responses = client_operations_responses
-    cancel = AsyncMock(spec=["__call__"])
+    cancel = mock.AsyncMock(spec=["__call__"])
     operation_future = operation_async.AsyncOperation(
         client_operations_responses[0],
         refresh,

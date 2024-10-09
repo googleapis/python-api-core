@@ -13,12 +13,11 @@
 # limitations under the License.
 
 import inspect
-from unittest import mock
-
 try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    from mock import AsyncMock
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 import pytest
 
 from google.api_core import page_iterator_async
@@ -62,7 +61,7 @@ class TestAsyncIterator:
         )
 
         async_iterator = PageAsyncIteratorImpl(None, None)
-        async_iterator._next_page = AsyncMock(side_effect=[page_1, page_2, None])
+        async_iterator._next_page = mock.AsyncMock(side_effect=[page_1, page_2, None])
 
         # Consume items and check the state of the async_iterator.
         assert async_iterator.num_results == 0
@@ -102,7 +101,7 @@ class TestAsyncIterator:
         page = page_iterator_async.Page(
             iterator, ("item",), page_iterator_async._item_to_value_identity
         )
-        iterator._next_page = AsyncMock(side_effect=[page, None])
+        iterator._next_page = mock.AsyncMock(side_effect=[page, None])
 
         assert iterator.num_results == 0
 
@@ -140,7 +139,7 @@ class TestAsyncIterator:
         )
 
         iterator = PageAsyncIteratorImpl(None, None)
-        iterator._next_page = AsyncMock(side_effect=[page1, page2, None])
+        iterator._next_page = mock.AsyncMock(side_effect=[page1, page2, None])
 
         items_aiter = iterator._items_aiter()
 
@@ -163,7 +162,7 @@ class TestAsyncIterator:
     @pytest.mark.asyncio
     async def test___aiter__(self):
         async_iterator = PageAsyncIteratorImpl(None, None)
-        async_iterator._next_page = AsyncMock(side_effect=[(1, 2), (3,), None])
+        async_iterator._next_page = mock.AsyncMock(side_effect=[(1, 2), (3,), None])
 
         assert not async_iterator._started
 
@@ -252,7 +251,7 @@ class TestAsyncGRPCIterator(object):
         response1 = mock.Mock(items=["a", "b"], next_page_token="1")
         response2 = mock.Mock(items=["c"], next_page_token="2")
         response3 = mock.Mock(items=["d"], next_page_token="")
-        method = AsyncMock(side_effect=[response1, response2, response3])
+        method = mock.AsyncMock(side_effect=[response1, response2, response3])
         iterator = page_iterator_async.AsyncGRPCIterator(
             mock.sentinel.client, method, request, "items"
         )
@@ -275,7 +274,7 @@ class TestAsyncGRPCIterator(object):
         response1 = mock.Mock(items=["a", "b"], next_page_token="1")
         response2 = mock.Mock(items=["c"], next_page_token="2")
         response3 = mock.Mock(items=["d"], next_page_token="")
-        method = AsyncMock(side_effect=[response1, response2, response3])
+        method = mock.AsyncMock(side_effect=[response1, response2, response3])
         iterator = page_iterator_async.AsyncGRPCIterator(
             mock.sentinel.client, method, request, "items", max_results=3
         )

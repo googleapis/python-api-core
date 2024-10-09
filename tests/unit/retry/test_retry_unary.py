@@ -13,14 +13,13 @@
 # limitations under the License.
 
 import datetime
-import re
-from unittest import mock
-
-try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    from mock import AsyncMock
 import pytest
+import re
+try:
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 
 from google.api_core import exceptions
 from google.api_core import retry
@@ -106,7 +105,7 @@ def test_retry_target_non_retryable_error(utcnow, sleep):
 @pytest.mark.asyncio
 async def test_retry_target_warning_for_retry(utcnow, sleep):
     predicate = retry.if_exception_type(ValueError)
-    target = AsyncMock(spec=["__call__"])
+    target = mock.AsyncMock(spec=["__call__"])
 
     with pytest.warns(Warning) as exc_info:
         # Note: predicate is just a filler and doesn't affect the test
