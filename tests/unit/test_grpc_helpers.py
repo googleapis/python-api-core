@@ -96,11 +96,17 @@ class Test_StreamingResponseIterator:
         assert list(wrapped) == ["a", "b", "c"]
 
     def test_ctor_w_rpc_error_on_prefetch(self):
+        """
+        prefetch errors should not be raised until the first iteration.
+        """
         wrapped = mock.MagicMock()
-        wrapped.__next__.side_effect = grpc.RpcError()
+        exc = grpc.RpcError()
+        wrapped.__next__.side_effect = exc
 
-        with pytest.raises(grpc.RpcError):
-            self._make_one(wrapped)
+        obj = self._make_one(wrapped)
+        assert obj._stored_first_result is exc
+        with pytest.raises(exceptions.GoogleAPICallError):
+            next(obj)
 
     def test___iter__(self):
         wrapped = self._make_wrapped("a", "b", "c")
@@ -323,11 +329,13 @@ def test_wrap_stream_errors_iterator_initialization():
 
     wrapped_callable = grpc_helpers._wrap_stream_errors(callable_)
 
-    with pytest.raises(exceptions.ServiceUnavailable) as exc_info:
-        wrapped_callable(1, 2, three="four")
+    it = wrapped_callable(1, 2, three="four")
+    assert it._stored_first_result is grpc_error
 
     callable_.assert_called_once_with(1, 2, three="four")
-    assert exc_info.value.response == grpc_error
+    # should raise on first iteration
+    with pytest.raises(exceptions.ServiceUnavailable):
+        next(it)
 
 
 def test_wrap_stream_errors_during_iteration():
