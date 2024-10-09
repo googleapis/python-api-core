@@ -96,6 +96,7 @@ def install_prerelease_dependencies(session, constraints_path):
             "google-auth",
             "googleapis-common-protos",
             # Exclude grpcio!=1.67.0rc1 which does not support python 3.13
+
             "grpcio!=1.67.0rc1",
             "grpcio-status",
             "proto-plus",
@@ -133,7 +134,8 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     install_extras = []
     if install_grpc:
-        install_extras.append("grpcio")
+        # Note: The extra is called `grpc` and not `grpcio`
+        install_extras.append("grpc")
 
     constraints_dir = str(CURRENT_DIRECTORY / "testing")
     if install_async_rest:
