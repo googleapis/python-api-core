@@ -48,6 +48,8 @@ You can also pass a mapping object.
 
 """
 
+from typing import Callable, Optional, Sequence
+
 
 class ClientOptions(object):
     """Client Options used to set options on clients.
@@ -88,15 +90,17 @@ class ClientOptions(object):
 
     def __init__(
         self,
-        api_endpoint=None,
-        client_cert_source=None,
-        client_encrypted_cert_source=None,
-        quota_project_id=None,
-        credentials_file=None,
-        scopes=None,
-        api_key=None,
-        api_audience=None,
-        universe_domain=None,
+        api_endpoint: Optional[str] = None,
+        client_cert_source: Optional[Callable[[], tuple[bytes, bytes]]] = None,
+        client_encrypted_cert_source: Optional[
+            Callable[[], tuple[str, str, bytes]]
+        ] = None,
+        quota_project_id: Optional[str] = None,
+        credentials_file: Optional[str] = None,
+        scopes: Optional[Sequence[str]] = None,
+        api_key: Optional[str] = None,
+        api_audience: Optional[str] = None,
+        universe_domain: Optional[str] = None,
     ):
         if client_cert_source and client_encrypted_cert_source:
             raise ValueError(
