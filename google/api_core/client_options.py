@@ -118,7 +118,7 @@ class ClientOptions(object):
         self.api_audience = api_audience
         self.universe_domain = universe_domain
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ClientOptions: " + repr(self.__dict__)
 
 
