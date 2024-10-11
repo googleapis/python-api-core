@@ -48,7 +48,7 @@ You can also pass a mapping object.
 
 """
 
-from typing import Callable, Optional, Sequence
+from typing import Callable, Mapping, Optional, Sequence
 
 
 class ClientOptions(object):
@@ -122,7 +122,7 @@ class ClientOptions(object):
         return "ClientOptions: " + repr(self.__dict__)
 
 
-def from_dict(options):
+def from_dict(options: Mapping[str, object]) -> ClientOptions:
     """Construct a client options object from a mapping object.
 
     Args:
