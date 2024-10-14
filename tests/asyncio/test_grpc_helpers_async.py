@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+try:
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER  # noqa: F401
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 import pytest  # noqa: I202
 
 try:
@@ -98,11 +102,39 @@ async def test_common_methods_in_wrapped_call():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "callable_type,expected_wrapper_type",
+    [
+        (grpc.aio.UnaryStreamMultiCallable, grpc_helpers_async._WrappedUnaryStreamCall),
+        (grpc.aio.StreamUnaryMultiCallable, grpc_helpers_async._WrappedStreamUnaryCall),
+        (
+            grpc.aio.StreamStreamMultiCallable,
+            grpc_helpers_async._WrappedStreamStreamCall,
+        ),
+    ],
+)
+async def test_wrap_errors_w_stream_type(callable_type, expected_wrapper_type):
+    class ConcreteMulticallable(callable_type):
+        def __call__(self, *args, **kwargs):
+            raise NotImplementedError("Should not be called")
+
+    with mock.patch.object(
+        grpc_helpers_async, "_wrap_stream_errors"
+    ) as wrap_stream_errors:
+        callable_ = ConcreteMulticallable()
+        grpc_helpers_async.wrap_errors(callable_)
+        assert wrap_stream_errors.call_count == 1
+        wrap_stream_errors.assert_called_once_with(callable_, expected_wrapper_type)
+
+
+@pytest.mark.asyncio
 async def test_wrap_stream_errors_unary_stream():
     mock_call = mock.Mock(aio.UnaryStreamCall, autospec=True)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedUnaryStreamCall
+    )
 
     await wrapped_callable(1, 2, three="four")
     multicallable.assert_called_once_with(1, 2, three="four")
@@ -114,7 +146,9 @@ async def test_wrap_stream_errors_stream_unary():
     mock_call = mock.Mock(aio.StreamUnaryCall, autospec=True)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamUnaryCall
+    )
 
     await wrapped_callable(1, 2, three="four")
     multicallable.assert_called_once_with(1, 2, three="four")
@@ -126,22 +160,13 @@ async def test_wrap_stream_errors_stream_stream():
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
 
     await wrapped_callable(1, 2, three="four")
     multicallable.assert_called_once_with(1, 2, three="four")
     assert mock_call.wait_for_connection.call_count == 1
-
-
-@pytest.mark.asyncio
-async def test_wrap_stream_errors_type_error():
-    mock_call = mock.Mock()
-    multicallable = mock.Mock(return_value=mock_call)
-
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
-
-    with pytest.raises(TypeError):
-        await wrapped_callable()
 
 
 @pytest.mark.asyncio
@@ -151,7 +176,9 @@ async def test_wrap_stream_errors_raised():
     mock_call.wait_for_connection = mock.AsyncMock(side_effect=[grpc_error])
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
 
     with pytest.raises(exceptions.InvalidArgument):
         await wrapped_callable()
@@ -166,7 +193,9 @@ async def test_wrap_stream_errors_read():
     mock_call.read = mock.AsyncMock(side_effect=grpc_error)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
 
     wrapped_call = await wrapped_callable(1, 2, three="four")
     multicallable.assert_called_once_with(1, 2, three="four")
@@ -189,7 +218,9 @@ async def test_wrap_stream_errors_aiter():
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
     wrapped_call = await wrapped_callable()
 
     with pytest.raises(exceptions.InvalidArgument) as exc_info:
@@ -210,7 +241,9 @@ async def test_wrap_stream_errors_aiter_non_rpc_error():
     mock_call.__aiter__ = mock.Mock(return_value=mocked_aiter)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
     wrapped_call = await wrapped_callable()
 
     with pytest.raises(TypeError) as exc_info:
@@ -224,7 +257,9 @@ async def test_wrap_stream_errors_aiter_called_multiple_times():
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
     wrapped_call = await wrapped_callable()
 
     assert wrapped_call.__aiter__() == wrapped_call.__aiter__()
@@ -239,7 +274,9 @@ async def test_wrap_stream_errors_write():
     mock_call.done_writing = mock.AsyncMock(side_effect=[None, grpc_error])
     multicallable = mock.Mock(return_value=mock_call)
 
-    wrapped_callable = grpc_helpers_async._wrap_stream_errors(multicallable)
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
 
     wrapped_call = await wrapped_callable()
 
@@ -295,7 +332,9 @@ def test_wrap_errors_streaming(wrap_stream_errors):
     result = grpc_helpers_async.wrap_errors(callable_)
 
     assert result == wrap_stream_errors.return_value
-    wrap_stream_errors.assert_called_once_with(callable_)
+    wrap_stream_errors.assert_called_once_with(
+        callable_, grpc_helpers_async._WrappedUnaryStreamCall
+    )
 
 
 @pytest.mark.parametrize(
