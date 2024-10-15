@@ -26,12 +26,6 @@ description = "Google API client core library"
 
 package_root = os.path.abspath(os.path.dirname(__file__))
 
-
-version = {}
-with open(os.path.join(package_root, "google/api_core/version.py")) as fp:
-    exec(fp.read(), version)
-version = version["__version__"]
-
 readme_filename = os.path.join(package_root, "README.rst")
 with io.open(readme_filename, encoding="utf-8") as readme_file:
     readme = readme_file.read()
@@ -45,7 +39,6 @@ packages = [
 ]
 
 setuptools.setup(
-    version=version,
     description=description,
     long_description=readme,
     url="https://github.com/googleapis/python-api-core",
