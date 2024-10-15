@@ -17,10 +17,6 @@ import os
 import setuptools
 
 
-# Package metadata.
-
-description = "Google API client core library"
-
 # Setup boilerplate below this line.
 
 package_root = os.path.abspath(os.path.dirname(__file__))
@@ -34,7 +30,6 @@ packages = [
 ]
 
 setuptools.setup(
-    description=description,
     url="https://github.com/googleapis/python-api-core",
     platforms="Posix; MacOS X; Windows",
     packages=packages,
