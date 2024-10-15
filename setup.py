@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import os
 
 import setuptools
@@ -25,10 +24,6 @@ description = "Google API client core library"
 # Setup boilerplate below this line.
 
 package_root = os.path.abspath(os.path.dirname(__file__))
-
-readme_filename = os.path.join(package_root, "README.rst")
-with io.open(readme_filename, encoding="utf-8") as readme_file:
-    readme = readme_file.read()
 
 # Only include packages under the 'google' namespace. Do not include tests,
 # benchmarks, etc.
