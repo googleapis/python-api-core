@@ -133,7 +133,7 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     install_extras = []
     if install_grpc:
-        # Note: The extra is called `grpc` and not `grpcio`
+        # Note: The extra is called `grpc` and not `grpcio`.
         install_extras.append("grpc")
 
     constraints_dir = str(CURRENT_DIRECTORY / "testing")
