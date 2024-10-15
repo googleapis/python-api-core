@@ -30,7 +30,6 @@ packages = [
 ]
 
 setuptools.setup(
-    url="https://github.com/googleapis/python-api-core",
     platforms="Posix; MacOS X; Windows",
     packages=packages,
     include_package_data=True,
