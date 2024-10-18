@@ -449,7 +449,7 @@ class _CallableStub(object):
         request, timeout, metadata, compression, and credentials."""
 
     def __call__(
-        self, request, timeout=None, metadata=None, credentials=None, compression=None
+        self, request, timeout=None, metadata=None, credentials=None, compression=None, raw_response_callback=None
     ):
         self._channel.requests.append(_ChannelRequest(self._method, request))
         self.calls.append(
@@ -474,6 +474,7 @@ class _CallableStub(object):
             raise response
 
         if response is not None:
+            raw_response_callback(response)
             return response
 
         raise ValueError('Method stub for "{}" has no response.'.format(self._method))
