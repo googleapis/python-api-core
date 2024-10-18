@@ -79,11 +79,12 @@ class _WrappedCall(aio.Call):
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
 
+from typing import Union
 class _WrappedUnaryResponseMixin(Generic[P], _WrappedCall):
-    def __await__(self) -> Iterator[P]:
+    def __await__(self) -> Union[Iterator[P], _WrappedCall]:
         try:
             response = yield from self._call.__await__()
-            return response
+            return response,self._call
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 

@@ -88,15 +88,17 @@ class _GapicCallable(object):
         timeout,
         compression,
         metadata=None,
+        raw_response_callback=None
     ):
         self._target = target
         self._retry = retry
         self._timeout = timeout
         self._compression = compression
         self._metadata = metadata
+        self._raw_response_callback = raw_response_callback
 
     def __call__(
-        self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs
+        self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, raw_response_callback=None, **kwargs
     ):
         """Invoke the low-level RPC with retry, timeout, compression, and metadata."""
 
