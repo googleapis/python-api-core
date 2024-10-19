@@ -48,7 +48,7 @@ You can also pass a mapping object.
 
 """
 
-from typing import Callable, Mapping, Optional, Sequence
+from typing import Callable, Mapping, Optional, Sequence, Tuple
 
 
 class ClientOptions(object):
@@ -57,11 +57,11 @@ class ClientOptions(object):
     Args:
         api_endpoint (Optional[str]): The desired API endpoint, e.g.,
             compute.googleapis.com
-        client_cert_source (Optional[Callable[[], (bytes, bytes)]]): A callback
+        client_cert_source (Optional[Callable[[], Tuple[bytes, bytes]]]): A callback
             which returns client certificate bytes and private key bytes both in
             PEM format. ``client_cert_source`` and ``client_encrypted_cert_source``
             are mutually exclusive.
-        client_encrypted_cert_source (Optional[Callable[[], (str, str, bytes)]]):
+        client_encrypted_cert_source (Optional[Callable[[], Tuple[str, str, bytes]]]):
             A callback which returns client certificate file path, encrypted
             private key file path, and the passphrase bytes.``client_cert_source``
             and ``client_encrypted_cert_source`` are mutually exclusive.
@@ -91,9 +91,9 @@ class ClientOptions(object):
     def __init__(
         self,
         api_endpoint: Optional[str] = None,
-        client_cert_source: Optional[Callable[[], tuple[bytes, bytes]]] = None,
+        client_cert_source: Optional[Callable[[], Tuple[bytes, bytes]]] = None,
         client_encrypted_cert_source: Optional[
-            Callable[[], tuple[str, str, bytes]]
+            Callable[[], Tuple[str, str, bytes]]
         ] = None,
         quota_project_id: Optional[str] = None,
         credentials_file: Optional[str] = None,
