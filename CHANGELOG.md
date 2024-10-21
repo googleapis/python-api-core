@@ -4,6 +4,42 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.21.0](https://github.com/googleapis/python-api-core/compare/v2.20.0...v2.21.0) (2024-10-07)
+
+
+### Features
+
+* Add support for asynchronous long running operations ([#724](https://github.com/googleapis/python-api-core/issues/724)) ([aaed69b](https://github.com/googleapis/python-api-core/commit/aaed69b6f1d694cd7e561e2aa03fdd8d6cfb369a))
+
+
+### Bug Fixes
+
+* Set chunk size for async stream content ([#702](https://github.com/googleapis/python-api-core/issues/702)) ([45b8a6d](https://github.com/googleapis/python-api-core/commit/45b8a6db5a5c75acdd8be896d0152f11608c7e51))
+
+## [2.20.0](https://github.com/googleapis/python-api-core/compare/v2.19.2...v2.20.0) (2024-09-18)
+
+
+### Features
+
+* Add async unsupported paramater exception ([#694](https://github.com/googleapis/python-api-core/issues/694)) ([8c137fe](https://github.com/googleapis/python-api-core/commit/8c137feb6e880fdd93d1248d9b6c10002dc3c096))
+* Add support for asynchronous rest streaming ([#686](https://github.com/googleapis/python-api-core/issues/686)) ([1b7bb6d](https://github.com/googleapis/python-api-core/commit/1b7bb6d1b721e4ee1561e8e4a347846d7fdd7c27))
+* Add support for creating exceptions from an asynchronous response ([#688](https://github.com/googleapis/python-api-core/issues/688)) ([1c4b0d0](https://github.com/googleapis/python-api-core/commit/1c4b0d079f2103a7b5562371a7bd1ada92528de3))
+
+## [2.19.2](https://github.com/googleapis/python-api-core/compare/v2.19.1...v2.19.2) (2024-08-16)
+
+
+### Bug Fixes
+
+* Fail gracefully if could not import `rpc_status` module ([#680](https://github.com/googleapis/python-api-core/issues/680)) ([7ccbf57](https://github.com/googleapis/python-api-core/commit/7ccbf5738fa236649f9a155055c71789362b5c4c))
+
+## [2.19.1](https://github.com/googleapis/python-api-core/compare/v2.19.0...v2.19.1) (2024-06-19)
+
+
+### Bug Fixes
+
+* Add support for protobuf 5.x ([#644](https://github.com/googleapis/python-api-core/issues/644)) ([fda0ca6](https://github.com/googleapis/python-api-core/commit/fda0ca6f0664ac5044671591ed62618175a7393f))
+* Ignore unknown fields in rest streaming. ([#651](https://github.com/googleapis/python-api-core/issues/651)) ([1203fb9](https://github.com/googleapis/python-api-core/commit/1203fb97d2685535f89113e944c4764c1deb595e))
+
 ## [2.19.0](https://github.com/googleapis/python-api-core/compare/v2.18.0...v2.19.0) (2024-04-29)
 
 

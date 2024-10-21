@@ -14,7 +14,11 @@
 
 import inspect
 
-import mock
+try:
+    from unittest import mock
+    from unittest.mock import AsyncMock  # pragma: NO COVER  # noqa: F401
+except ImportError:  # pragma: NO COVER
+    import mock  # type: ignore
 import pytest
 
 from google.api_core import page_iterator_async
@@ -106,6 +110,7 @@ class TestAsyncIterator:
         await page_aiter.__anext__()
 
         assert iterator.num_results == 1
+        await page_aiter.aclose()
 
     @pytest.mark.asyncio
     async def test__page_aiter_no_increment(self):
@@ -118,6 +123,7 @@ class TestAsyncIterator:
 
         # results should still be 0 after fetching a page.
         assert iterator.num_results == 0
+        await page_aiter.aclose()
 
     @pytest.mark.asyncio
     async def test__items_aiter(self):

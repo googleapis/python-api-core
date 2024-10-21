@@ -30,12 +30,15 @@ description = "Google API client core library"
 release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
     "googleapis-common-protos >= 1.56.2, < 2.0.dev0",
-    "protobuf>=3.19.5,<5.0.0.dev0,!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5",
+    "protobuf>=3.19.5,<6.0.0.dev0,!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5",
     "proto-plus >= 1.22.3, <2.0.0dev",
     "google-auth >= 2.14.1, < 3.0.dev0",
     "requests >= 2.18.0, < 3.0.0.dev0",
 ]
 extras = {
+    "async_rest": [
+        "google-auth[aiohttp] >= 2.35.0, < 3.0.dev0",
+    ],
     "grpc": [
         "grpcio >= 1.33.2, < 2.0dev",
         "grpcio >= 1.49.1, < 2.0dev; python_version>='3.11'",
@@ -90,6 +93,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Operating System :: OS Independent",
         "Topic :: Internet",
     ],
