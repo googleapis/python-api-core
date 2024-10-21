@@ -4,6 +4,20 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.22.0](https://github.com/googleapis/python-api-core/compare/v2.21.0...v2.22.0) (2024-10-21)
+
+
+### Features
+
+* Add caching to GapicCallable ([#666](https://github.com/googleapis/python-api-core/issues/666)) ([1695119](https://github.com/googleapis/python-api-core/commit/169511959497bd4509305c5424532e817c6a9cb2))
+* Add support for python 3.13 ([#696](https://github.com/googleapis/python-api-core/issues/696)) ([46b3d3a](https://github.com/googleapis/python-api-core/commit/46b3d3abaa1bae28e9d788d7c3006224cd6f74d5))
+
+
+### Bug Fixes
+
+* Add type hints to ClientOptions ([#735](https://github.com/googleapis/python-api-core/issues/735)) ([b91ed19](https://github.com/googleapis/python-api-core/commit/b91ed19210148dfa49ec790c4dd5f4a7bff80954))
+* Switch to unittest.mock from mock ([#713](https://github.com/googleapis/python-api-core/issues/713)) ([8c53381](https://github.com/googleapis/python-api-core/commit/8c533819b7e212aa2f1d695a7ce08629f4fb2daf))
+
 ## [2.21.0](https://github.com/googleapis/python-api-core/compare/v2.20.0...v2.21.0) (2024-10-07)
 
 
