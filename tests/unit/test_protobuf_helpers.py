@@ -69,7 +69,7 @@ def test_from_any_pb_failure():
     with pytest.raises(
         TypeError,
         match=re.escape(
-            "Could not convert `google.protobuf.any_pb2.Any` with underlying type `google.type.Date` to `google.type.TimeOfDay`"
+            "Could not convert `google.type.Date` with underlying type `google.protobuf.any_pb2.Any` to `google.type.TimeOfDay`"
         ),
     ):
         protobuf_helpers.from_any_pb(timeofday_pb2.TimeOfDay, in_message)
