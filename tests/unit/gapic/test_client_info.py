@@ -29,3 +29,18 @@ def test_to_grpc_metadata():
     metadata = info.to_grpc_metadata()
 
     assert metadata == (client_info.METRICS_METADATA_KEY, info.to_user_agent())
+
+
+def test_to_grpc_metadata_with_custom_user_agent():
+    info = client_info.ClientInfo(user_agent="my-custom-data")
+    user_agent = info.to_user_agent()
+    assert "my-custom-data" in user_agent
+
+    metadata = info.to_grpc_metadata()
+
+    assert metadata == (
+        client_info.METRICS_METADATA_KEY,
+        user_agent,
+        client_info.USER_AGENT_KEY,
+        user_agent,
+    )

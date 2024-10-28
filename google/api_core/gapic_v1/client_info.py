@@ -22,6 +22,7 @@ from google.api_core import client_info
 
 
 METRICS_METADATA_KEY = "x-goog-api-client"
+USER_AGENT_KEY = "user-agent"
 
 
 class ClientInfo(client_info.ClientInfo):
@@ -51,7 +52,27 @@ class ClientInfo(client_info.ClientInfo):
 
     def to_grpc_metadata(self):
         """Returns the gRPC metadata for this client info."""
-        return (METRICS_METADATA_KEY, self.to_user_agent())
+
+        user_agent = self.to_user_agent()
+        metadata = (
+            METRICS_METADATA_KEY,
+            user_agent,
+        )
+
+        # In accordance with go/cloud-api-headers-2019, we don't normally
+        # populate the user-agent header. But, if the user explicitly has set a
+        # user-agent, then populate it so it can appear in audit logs. See:
+        # https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest
+        if self.user_agent is not None:
+            metadata = metadata + (
+                USER_AGENT_KEY,
+                # Populate with the same information as the metrics key to
+                # avoid breaking internal pipelines that use the user-agent
+                # interchangeably with the metrics header.
+                user_agent,
+            )
+
+        return metadata
 
 
 DEFAULT_CLIENT_INFO = ClientInfo()
