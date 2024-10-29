@@ -238,7 +238,7 @@ def wrap_method(
             ) from exc
     func = grpc_helpers.wrap_errors(func)
     if client_info is not None:
-        user_agent_metadata = [client_info.to_grpc_metadata()]
+        user_agent_metadata = client_info.to_grpc_metadata()
     else:
         user_agent_metadata = None
 
