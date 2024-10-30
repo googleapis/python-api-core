@@ -52,14 +52,11 @@ class ClientInfo(client_info.ClientInfo):
 
     def to_grpc_metadata(self):
         """Returns the gRPC metadata for this client info."""
+        return (METRICS_METADATA_KEY, self.to_user_agent())
 
-        user_agent = self.to_user_agent()
-        metadata = [
-            (
-                METRICS_METADATA_KEY,
-                user_agent,
-            )
-        ]
+    def to_metadata_tuples(self):
+        """Returns the gRPC metadata as a list of tuples."""
+        metadata = [self.to_grpc_metadata()]
 
         # In accordance with go/cloud-api-headers-2019, we don't normally
         # populate the user-agent header. But, if the user explicitly has set a
@@ -72,7 +69,7 @@ class ClientInfo(client_info.ClientInfo):
                     # Populate with the same information as the metrics key to
                     # avoid breaking internal pipelines that use the user-agent
                     # interchangeably with the metrics header.
-                    user_agent,
+                    self.to_user_agent(),
                 )
             )
 

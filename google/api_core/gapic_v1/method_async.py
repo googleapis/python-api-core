@@ -46,7 +46,7 @@ def wrap_method(
     if kind == _DEFAULT_ASYNC_TRANSPORT_KIND:
         func = grpc_helpers_async.wrap_errors(func)
 
-    metadata = client_info.to_grpc_metadata() if client_info is not None else None
+    metadata = client_info.to_metadata_tuples() if client_info is not None else None
 
     return functools.wraps(func)(
         _GapicCallable(

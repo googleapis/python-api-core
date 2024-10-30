@@ -23,20 +23,20 @@ except ImportError:
 from google.api_core.gapic_v1 import client_info
 
 
-def test_to_grpc_metadata():
+def test_to_metadata_tuples():
     info = client_info.ClientInfo()
 
-    metadata = info.to_grpc_metadata()
+    metadata = info.to_metadata_tuples()
 
     assert metadata == [(client_info.METRICS_METADATA_KEY, info.to_user_agent())]
 
 
-def test_to_grpc_metadata_with_custom_user_agent():
+def test_to_metadata_tuples_with_custom_user_agent():
     info = client_info.ClientInfo(user_agent="my-custom-data")
     user_agent = info.to_user_agent()
     assert "my-custom-data" in user_agent
 
-    metadata = info.to_grpc_metadata()
+    metadata = info.to_metadata_tuples()
 
     assert metadata == [
         (

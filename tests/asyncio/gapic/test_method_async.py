@@ -57,7 +57,7 @@ async def test_wrap_method_basic():
     metadata = method.call_args[1]["metadata"]
     assert len(metadata) == 1
     client_info = gapic_v1.client_info.DEFAULT_CLIENT_INFO
-    user_agent_metadata = client_info.to_grpc_metadata()
+    user_agent_metadata = client_info.to_metadata_tuples()
     for item in user_agent_metadata:
         assert item in metadata
 
@@ -94,7 +94,7 @@ async def test_wrap_method_with_custom_client_info():
 
     # Check that the custom client info was specified in the metadata.
     metadata = method.call_args[1]["metadata"]
-    user_agent_metadata = client_info.to_grpc_metadata()
+    user_agent_metadata = client_info.to_metadata_tuples()
     for item in user_agent_metadata:
         assert item in metadata
 
