@@ -22,6 +22,7 @@ import asyncio
 import functools
 
 from typing import AsyncGenerator, Generic, Iterator, Optional, TypeVar
+from typing import Tuple, Union
 
 import grpc
 from grpc import aio
@@ -39,10 +40,12 @@ P = TypeVar("P")
 class _WrappedCall(aio.Call):
     def __init__(self):
         self._call = None
+        self._callback = False
 
-    def with_call(self, call):
+    def with_call(self, call, callback=False):
         """Supplies the call object separately to keep __init__ clean."""
         self._call = call
+        self._callback=callback
         return self
 
     async def initial_metadata(self):
@@ -78,12 +81,14 @@ class _WrappedCall(aio.Call):
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
-
 class _WrappedUnaryResponseMixin(Generic[P], _WrappedCall):
-    def __await__(self) -> Iterator[P]:
+    def __await__(self) -> Union[Iterator[P], Tuple[Iterator[P], _WrappedCall]]:
         try:
             response = yield from self._call.__await__()
-            return response
+            if self._callback:
+                return (response, self._call)
+            else:
+                return response
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
@@ -162,8 +167,10 @@ def _wrap_unary_errors(callable_):
 
     @functools.wraps(callable_)
     def error_remapped_callable(*args, **kwargs):
+        with_call = kwargs.pop('with_call', False)
         call = callable_(*args, **kwargs)
-        return _WrappedUnaryUnaryCall().with_call(call)
+        # TODO pass callback arg rather than setting it here
+        return _WrappedUnaryUnaryCall().with_call(call, callback=with_call)
 
     return error_remapped_callable
 

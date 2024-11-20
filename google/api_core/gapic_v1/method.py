@@ -88,12 +88,14 @@ class _GapicCallable(object):
         timeout,
         compression,
         metadata=None,
+        with_call=False,
     ):
         self._target = target
         self._retry = retry
         self._timeout = timeout
         self._compression = compression
         self._metadata = metadata
+        self._with_call = with_call
 
     def __call__(
         self, *args, timeout=DEFAULT, retry=DEFAULT, compression=DEFAULT, **kwargs
@@ -127,7 +129,8 @@ class _GapicCallable(object):
             kwargs["metadata"] = metadata
         if self._compression is not None:
             kwargs["compression"] = compression
-
+        if self._with_call:
+            kwargs["with_call"] = self._with_call
         return wrapped_func(*args, **kwargs)
 
 
