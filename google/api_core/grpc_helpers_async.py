@@ -169,7 +169,6 @@ def _wrap_unary_errors(callable_):
     def error_remapped_callable(*args, **kwargs):
         with_call = kwargs.pop('with_call', False)
         call = callable_(*args, **kwargs)
-        # TODO pass callback arg rather than setting it here
         return _WrappedUnaryUnaryCall().with_call(call, callback=with_call)
 
     return error_remapped_callable
