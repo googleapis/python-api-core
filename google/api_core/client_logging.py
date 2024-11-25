@@ -3,7 +3,7 @@ import json
 import re
 import os
 
-LOGGING_INITIALIZED = False
+_LOGGING_INITIALIZED = False
 
 # TODO(<add-link>): Update Request / Response messages.
 REQUEST_MESSAGE = "Sending request ..."
@@ -13,15 +13,15 @@ RESPONSE_MESSAGE = "Receiving response ..."
 _recognized_logging_fields = ["httpRequest", "rpcName", "serviceName"] # Additional fields to be Logged.
 
 def logger_configured(logger):
-  return logger.hasHandlers() or logger.level != logging.NOTSET
+  return logger.hasHandlers() or logger.level != logging.NOTSET or logger.propagate == False
 
 def initialize_logging():
-   global LOGGING_INITIALIZED
-   if LOGGING_INITIALIZED:
+   global _LOGGING_INITIALIZED
+   if _LOGGING_INITIALIZED:
      return
    scopes = os.getenv("GOOGLE_SDK_PYTHON_LOGGING_SCOPE")
    setup_logging(scopes)
-   LOGGING_INITIALIZED = True
+   _LOGGING_INITIALIZED = True
 
 def parse_logging_scopes(scopes):
   if not scopes:
@@ -31,7 +31,7 @@ def parse_logging_scopes(scopes):
   namespaces = [scopes]
   return namespaces
 
-def default_settings(logger):
+def configure_defaults(logger):
    if not logger_configured(logger):
         console_handler = logging.StreamHandler()
         logger.setLevel("DEBUG")
@@ -54,8 +54,8 @@ def setup_logging(scopes):
       # This will either create a module level logger or get the reference of the base logger instantiated above.
       logger = logging.getLogger(namespace)
 
-      # Set default settings.
-      default_settings(logger)
+      # Configure default settings.
+      configure_defaults(logger)
 
 class StructuredLogFormatter(logging.Formatter):
     def format(self, record):

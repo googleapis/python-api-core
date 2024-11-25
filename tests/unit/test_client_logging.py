@@ -1,17 +1,20 @@
 import logging
 import pytest
 
-from google.api_core.client_logging import BaseLogger
+# Test expected behaviour for warnings, propagation, handler + formatter.
 
+def test_setup_logging_w_no_scopes():
+    # TODO(in-progress): 
+    pass
 
-def test_base_logger(caplog):
+def test_setup_logging_w_base_scope():
+    # TODO(in-progress): 
+    pass
 
-    logger = BaseLogger().get_logger()
+def test_setup_logging_w_module_scope():
+    # TODO(in-progress): 
+    pass
 
-    with caplog.at_level(logging.INFO, logger="google"):
-        logger.info("This is a test message.")
-
-    assert "This is a test message." in caplog.text
-    assert caplog.records[0].name == "google"
-    assert caplog.records[0].levelname == "INFO"
-    assert caplog.records[0].message == "This is a test message."
+def test_setup_logging_w_incorrect_scope():
+    # TODO(in-progress): 
+    pass
