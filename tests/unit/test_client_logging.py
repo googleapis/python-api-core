@@ -1,20 +1,62 @@
 import logging
 import pytest
 
+from google.api_core.client_logging import setup_logging
 # Test expected behaviour for warnings, propagation, handler + formatter.
 
+def reset_logger(scope):
+    logger = logging.getLogger(scope)
+    logger.handlers = []
+    logger.setLevel(logging.NOTSET)
+    logger.propagate = True
+    
 def test_setup_logging_w_no_scopes():
-    # TODO(in-progress): 
-    pass
+    setup_logging()
+    base_logger = logging.getLogger("google")
+    assert base_logger.handlers == []
+    assert base_logger.propagate == False
+    assert base_logger.level == logging.NOTSET
+
+    reset_logger("google")
+
 
 def test_setup_logging_w_base_scope():
-    # TODO(in-progress): 
-    pass
+    setup_logging("google")
+    base_logger = logging.getLogger("google")
+    assert isinstance(base_logger.handlers[0], logging.StreamHandler)
+    assert base_logger.propagate == False
+    assert base_logger.level == logging.DEBUG
+
+    reset_logger("google")
 
 def test_setup_logging_w_module_scope():
-    # TODO(in-progress): 
-    pass
+    setup_logging("google.foo")
+    
+    base_logger = logging.getLogger("google")
+    assert base_logger.handlers == []
+    assert base_logger.propagate == False
+    assert base_logger.level == logging.NOTSET
+
+    module_logger = logging.getLogger("google.foo")
+    assert isinstance(module_logger.handlers[0], logging.StreamHandler)
+    assert module_logger.propagate == False
+    assert module_logger.level == logging.DEBUG
+
+
+    reset_logger("google")
 
 def test_setup_logging_w_incorrect_scope():
-    # TODO(in-progress): 
-    pass
+    setup_logging("foo")
+    
+    base_logger = logging.getLogger("google")
+    assert base_logger.handlers == []
+    assert base_logger.propagate == False
+    assert base_logger.level == logging.NOTSET
+
+    # TODO: update test once we add logic to ignore an incorrect scope.
+    logger = logging.getLogger("foo")
+    assert isinstance(logger.handlers[0], logging.StreamHandler)
+    assert logger.propagate == False
+    assert logger.level == logging.DEBUG
+
+    reset_logger("google")
