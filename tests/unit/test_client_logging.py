@@ -2,7 +2,9 @@ import logging
 import pytest
 
 from google.api_core.client_logging import setup_logging
-# Test expected behaviour for warnings, propagation, handler + formatter.
+
+# TODO: We should not be testing against the "google" logger
+# and should mock `base_logger` instead.
 
 def reset_logger(scope):
     logger = logging.getLogger(scope)
