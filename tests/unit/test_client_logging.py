@@ -96,10 +96,9 @@ def test_initialize_logging():
     with mock.patch("os.getenv", return_value="foo.bar"):
         with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
             initialize_logging()
-    
+
     assert base_logger.propagate == True
     assert module_logger.propagate == True
-
 
     reset_logger("foo")
     reset_logger("foo.bar")
