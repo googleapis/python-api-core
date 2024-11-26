@@ -6,9 +6,6 @@ from typing import List, Optional
 
 _LOGGING_INITIALIZED = False
 _BASE_LOGGER_NAME = "google"
-# TODO(https://github.com/googleapis/python-api-core/issues/760): Update Request / Response messages.
-REQUEST_MESSAGE = "Sending request "
-RESPONSE_MESSAGE = "Receiving response "
 
 # TODO(https://github.com/googleapis/python-api-core/issues/761): Update this list to support additional logging fields
 _recognized_logging_fields = [
