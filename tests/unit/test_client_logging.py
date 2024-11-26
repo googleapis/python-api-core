@@ -4,7 +4,6 @@ import mock
 
 from google.api_core.client_logging import (
     setup_logging,
-    parse_logging_scopes,
     initialize_logging,
 )
 
@@ -24,7 +23,7 @@ def test_setup_logging_w_no_scopes():
         assert base_logger.propagate == False
         assert base_logger.level == logging.NOTSET
 
-    reset_logger("google")
+    reset_logger("foo")
 
 
 def test_setup_logging_w_base_scope():
@@ -35,7 +34,7 @@ def test_setup_logging_w_base_scope():
     assert base_logger.propagate == False
     assert base_logger.level == logging.DEBUG
 
-    reset_logger("google")
+    reset_logger("foo")
 
 
 def test_setup_logging_w_module_scope():
@@ -52,8 +51,8 @@ def test_setup_logging_w_module_scope():
     assert module_logger.propagate == False
     assert module_logger.level == logging.DEBUG
 
-    reset_logger("google")
-    reset_logger("google.foo")
+    reset_logger("foo")
+    reset_logger("foo.bar")
 
 
 def test_setup_logging_w_incorrect_scope():
@@ -71,8 +70,8 @@ def test_setup_logging_w_incorrect_scope():
     assert logger.propagate == False
     assert logger.level == logging.DEBUG
 
-    reset_logger("google")
     reset_logger("foo")
+    reset_logger("abc")
 
 
 def test_initialize_logging():
@@ -91,5 +90,16 @@ def test_initialize_logging():
     assert module_logger.propagate == False
     assert module_logger.level == logging.DEBUG
 
-    reset_logger("google")
-    reset_logger("google.foo")
+    base_logger.propagate = True
+    module_logger.propagate = True
+
+    with mock.patch("os.getenv", return_value="foo.bar"):
+        with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
+            initialize_logging()
+    
+    assert base_logger.propagate == True
+    assert module_logger.propagate == True
+
+
+    reset_logger("foo")
+    reset_logger("foo.bar")
