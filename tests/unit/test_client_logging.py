@@ -46,6 +46,7 @@ def test_setup_logging_w_module_scope():
 
 
     reset_logger("google")
+    reset_logger("google.foo")
 
 def test_setup_logging_w_incorrect_scope():
     setup_logging("foo")
