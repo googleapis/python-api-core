@@ -6,8 +6,8 @@ import os
 _LOGGING_INITIALIZED = False
 _BASE_LOGGER_NAME = "google"
 # TODO(https://github.com/googleapis/python-api-core/issues/760): Update Request / Response messages.
-REQUEST_MESSAGE = "Sending request ..."
-RESPONSE_MESSAGE = "Receiving response ..."
+REQUEST_MESSAGE = "Sending request "
+RESPONSE_MESSAGE = "Receiving response "
 
 # TODO(https://github.com/googleapis/python-api-core/issues/761): Update this list to support additional logging fields
 _recognized_logging_fields = ["httpRequest", "rpcName", "serviceName"] # Additional fields to be Logged.
@@ -55,7 +55,6 @@ def setup_logging(scopes=[]):
       configure_defaults(logger)
 
     # disable log propagation at base logger level to the root logger only if a base logger is not already configured via code changes.
-    # Maybe we do this at the end?
     base_logger = logging.getLogger(_BASE_LOGGER_NAME)
     if not logger_configured(base_logger):
         base_logger.propagate = False

@@ -55,10 +55,11 @@ def test_setup_logging_w_incorrect_scope():
     assert base_logger.propagate == False
     assert base_logger.level == logging.NOTSET
 
-    # TODO: update test once we add logic to ignore an incorrect scope.
+    # TODO(https://github.com/googleapis/python-api-core/issues/759): update test once we add logic to ignore an incorrect scope.
     logger = logging.getLogger("foo")
     assert isinstance(logger.handlers[0], logging.StreamHandler)
     assert logger.propagate == False
     assert logger.level == logging.DEBUG
 
     reset_logger("google")
+    reset_logger("foo")
