@@ -1,7 +1,8 @@
 import logging
 import json
-import re
 import os
+
+from typing import List, Optional
 
 _LOGGING_INITIALIZED = False
 _BASE_LOGGER_NAME = "google"
@@ -19,9 +20,7 @@ _recognized_logging_fields = [
 
 def logger_configured(logger):
     return (
-        logger.handlers != []
-        or logger.level != logging.NOTSET
-        or logger.propagate == False
+        logger.handlers != [] or logger.level != logging.NOTSET or not logger.propagate
     )
 
 
@@ -34,7 +33,7 @@ def initialize_logging():
     _LOGGING_INITIALIZED = True
 
 
-def parse_logging_scopes(scopes):
+def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     if not scopes:
         return []
     # TODO(https://github.com/googleapis/python-api-core/issues/759): check if the namespace is a valid namespace.
