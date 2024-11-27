@@ -38,6 +38,18 @@ def test_setup_logging_w_base_scope():
     reset_logger("foo")
 
 
+def test_setup_logging_w_configured_scope():
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
+        base_logger = logging.getLogger("foo")
+        base_logger.propagate = False
+        setup_logging("foo")
+        assert base_logger.handlers == []
+        assert not base_logger.propagate
+        assert base_logger.level == logging.NOTSET
+
+    reset_logger("foo")
+
+
 def test_setup_logging_w_module_scope():
     with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
         setup_logging("foo.bar")

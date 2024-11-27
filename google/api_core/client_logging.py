@@ -15,12 +15,14 @@ _recognized_logging_fields = [
 ]  # Additional fields to be Logged.
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 def logger_configured(logger):
     return (
         logger.handlers != [] or logger.level != logging.NOTSET or not logger.propagate
     )
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 def initialize_logging():
     global _LOGGING_INITIALIZED
     if _LOGGING_INITIALIZED:
@@ -30,6 +32,7 @@ def initialize_logging():
     _LOGGING_INITIALIZED = True
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     if not scopes:
         return []
@@ -40,6 +43,7 @@ def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     return namespaces
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 def configure_defaults(logger):
     if not logger_configured(logger):
         console_handler = logging.StreamHandler()
@@ -50,6 +54,7 @@ def configure_defaults(logger):
         logger.addHandler(console_handler)
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 def setup_logging(scopes=""):
 
     # only returns valid logger scopes (namespaces)
@@ -69,6 +74,7 @@ def setup_logging(scopes=""):
         base_logger.propagate = False
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
 class StructuredLogFormatter(logging.Formatter):
     # TODO(https://github.com/googleapis/python-api-core/issues/761): ensure that additional fields such as
     # function name, file name, and line no. appear in a log output.
