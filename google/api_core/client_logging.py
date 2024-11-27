@@ -7,7 +7,7 @@ from typing import List, Optional
 _LOGGING_INITIALIZED = False
 _BASE_LOGGER_NAME = "google"
 
-# TODO(https://github.com/googleapis/python-api-core/issues/761): Update this list to support additional logging fields
+# TODO(https://github.com/googleapis/python-api-core/issues/761): Update this list to support additional logging fields.
 _recognized_logging_fields = [
     "httpRequest",
     "rpcName",
@@ -50,7 +50,7 @@ def configure_defaults(logger):
         logger.addHandler(console_handler)
 
 
-def setup_logging(scopes=[]):
+def setup_logging(scopes=""):
 
     # only returns valid logger scopes (namespaces)
     # this list has at most one element.
@@ -70,6 +70,8 @@ def setup_logging(scopes=[]):
 
 
 class StructuredLogFormatter(logging.Formatter):
+    # TODO(https://github.com/googleapis/python-api-core/issues/761): ensure that additional fields such as
+    # function name, file name, and line no. appear in a log output.
     def format(self, record):
         log_obj = {
             "timestamp": self.formatTime(record),
