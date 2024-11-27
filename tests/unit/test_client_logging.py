@@ -17,62 +17,62 @@ def reset_logger(scope):
 
 
 def test_setup_logging_w_no_scopes():
-    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
         setup_logging()
-        base_logger = logging.getLogger("foo")
+        base_logger = logging.getLogger("foogle")
         assert base_logger.handlers == []
         assert not base_logger.propagate
         assert base_logger.level == logging.NOTSET
 
-    reset_logger("foo")
+    reset_logger("foogle")
 
 
 def test_setup_logging_w_base_scope():
-    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
-        setup_logging("foo")
-        base_logger = logging.getLogger("foo")
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
+        setup_logging("foogle")
+        base_logger = logging.getLogger("foogle")
         assert isinstance(base_logger.handlers[0], logging.StreamHandler)
         assert not base_logger.propagate
         assert base_logger.level == logging.DEBUG
 
-    reset_logger("foo")
+    reset_logger("foogle")
 
 
 def test_setup_logging_w_configured_scope():
-    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
-        base_logger = logging.getLogger("foo")
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
+        base_logger = logging.getLogger("foogle")
         base_logger.propagate = False
-        setup_logging("foo")
+        setup_logging("foogle")
         assert base_logger.handlers == []
         assert not base_logger.propagate
         assert base_logger.level == logging.NOTSET
 
-    reset_logger("foo")
+    reset_logger("foogle")
 
 
 def test_setup_logging_w_module_scope():
-    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
-        setup_logging("foo.bar")
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
+        setup_logging("foogle.bar")
 
-        base_logger = logging.getLogger("foo")
+        base_logger = logging.getLogger("foogle")
         assert base_logger.handlers == []
         assert not base_logger.propagate
         assert base_logger.level == logging.NOTSET
 
-        module_logger = logging.getLogger("foo.bar")
+        module_logger = logging.getLogger("foogle.bar")
         assert isinstance(module_logger.handlers[0], logging.StreamHandler)
         assert not module_logger.propagate
         assert module_logger.level == logging.DEBUG
 
-    reset_logger("foo")
-    reset_logger("foo.bar")
+    reset_logger("foogle")
+    reset_logger("foogle.bar")
 
 
 def test_setup_logging_w_incorrect_scope():
-    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
+    with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
         setup_logging("abc")
 
-        base_logger = logging.getLogger("foo")
+        base_logger = logging.getLogger("foogle")
         assert base_logger.handlers == []
         assert not base_logger.propagate
         assert base_logger.level == logging.NOTSET
@@ -83,22 +83,22 @@ def test_setup_logging_w_incorrect_scope():
         assert not logger.propagate
         assert logger.level == logging.DEBUG
 
-    reset_logger("foo")
+    reset_logger("foogle")
     reset_logger("abc")
 
 
 def test_initialize_logging():
 
-    with mock.patch("os.getenv", return_value="foo.bar"):
-        with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foo"):
+    with mock.patch("os.getenv", return_value="foogle.bar"):
+        with mock.patch("google.api_core.client_logging._BASE_LOGGER_NAME", "foogle"):
             initialize_logging()
 
-            base_logger = logging.getLogger("foo")
+            base_logger = logging.getLogger("foogle")
             assert base_logger.handlers == []
             assert not base_logger.propagate
             assert base_logger.level == logging.NOTSET
 
-            module_logger = logging.getLogger("foo.bar")
+            module_logger = logging.getLogger("foogle.bar")
             assert isinstance(module_logger.handlers[0], logging.StreamHandler)
             assert not module_logger.propagate
             assert module_logger.level == logging.DEBUG
@@ -112,17 +112,17 @@ def test_initialize_logging():
             assert base_logger.propagate
             assert module_logger.propagate
 
-    reset_logger("foo")
-    reset_logger("foo.bar")
+    reset_logger("foogle")
+    reset_logger("foogle.bar")
 
 
 def test_structured_log_formatter():
     # TODO(https://github.com/googleapis/python-api-core/issues/761): Test additional fields when implemented.
     record = logging.LogRecord(
-        name="foo",
+        name="Appelation",
         level=logging.DEBUG,
         msg="This is a test message.",
-        pathname="foo/bar",
+        pathname="some/path",
         lineno=25,
         args=None,
         exc_info=None,
@@ -134,7 +134,7 @@ def test_structured_log_formatter():
     formatted_msg = StructuredLogFormatter().format(record)
     parsed_msg = json.loads(formatted_msg)
 
-    assert parsed_msg["name"] == "foo"
+    assert parsed_msg["name"] == "Appelation"
     assert parsed_msg["severity"] == "DEBUG"
     assert parsed_msg["message"] == "This is a test message."
     assert parsed_msg["rpcName"] == "bar"

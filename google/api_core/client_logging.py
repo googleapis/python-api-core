@@ -7,6 +7,8 @@ from typing import List, Optional
 _LOGGING_INITIALIZED = False
 _BASE_LOGGER_NAME = "google"
 
+# Fields to be included in the StructuredLogFormatter.
+#
 # TODO(https://github.com/googleapis/python-api-core/issues/761): Update this list to support additional logging fields.
 _recognized_logging_fields = [
     "httpRequest",
@@ -15,15 +17,36 @@ _recognized_logging_fields = [
 ]  # Additional fields to be Logged.
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def logger_configured(logger):
+    """Determines whether `logger` has non-default configuration
+
+    Args:
+      logger: The logger to check.
+
+    Returns:
+      bool: Whether the logger has any non-default configuration.
+    """
     return (
         logger.handlers != [] or logger.level != logging.NOTSET or not logger.propagate
     )
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def initialize_logging():
+    """Initializes "google" loggers, partly based on the environment variable
+
+    Initializes the "google" logger and any loggers (at the "google"
+    level or lower) specified by the environment variable
+    GOOGLE_SDK_PYTHON_LOGGING_SCOPE, as long as none of these loggers
+    were previously configured. If any such loggers (including the
+    "google" logger) are initialized, they are set to NOT propagate
+    log events up to their parent loggers.
+
+    This initialization is executed only once, and hence the
+    environment variable is only processed the first time this
+    function is called.
+    """
     global _LOGGING_INITIALIZED
     if _LOGGING_INITIALIZED:
         return
@@ -32,8 +55,18 @@ def initialize_logging():
     _LOGGING_INITIALIZED = True
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
+    """Returns a list of logger names.
+
+    Splits the single string of comma-separated logger names into a list of individual logger name strings.
+
+    Args:
+      scopes: The name of a single logger. (In the future, this will be a comma-separated list of multiple loggers.)
+
+    Returns:
+      A list of all the logger names in scopes.
+    """
     if not scopes:
         return []
     # TODO(https://github.com/googleapis/python-api-core/issues/759): check if the namespace is a valid namespace.
@@ -43,8 +76,9 @@ def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     return namespaces
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def configure_defaults(logger):
+    """Configures `logger` to emit structured info to stdout."""
     if not logger_configured(logger):
         console_handler = logging.StreamHandler()
         logger.setLevel("DEBUG")
@@ -54,8 +88,22 @@ def configure_defaults(logger):
         logger.addHandler(console_handler)
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def setup_logging(scopes=""):
+    """Sets up logging for the specified `scopes`.
+
+    If the loggers specified in `scopes` have not been previously
+    configured, this will configure them to emit structured log
+    entries to stdout, and to not propagate their log events to their
+    parent loggers. Additionally, if the "google" logger (whether it
+    was specified in `scopes` or not) was not previously configured,
+    it will also configure it to not propagate log events to the root
+    logger.
+
+    Args:
+      scopes: The name of a single logger. (In the future, this will be a comma-separated list of multiple loggers.)
+
+    """
 
     # only returns valid logger scopes (namespaces)
     # this list has at most one element.
