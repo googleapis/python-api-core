@@ -91,7 +91,7 @@ def configure_defaults(logger):
         logger.addHandler(console_handler)
 
 
-def setup_logging(scopes: str=""):
+def setup_logging(scopes: str = ""):
     """Sets up logging for the specified `scopes`.
 
     If the loggers specified in `scopes` have not been previously
