@@ -57,6 +57,7 @@ a ``retry`` parameter that allows you to configure the behavior:
 from __future__ import annotations
 
 import functools
+import logging
 import sys
 import time
 import inspect
@@ -81,6 +82,7 @@ if TYPE_CHECKING:
 
 _ASYNC_RETRY_WARNING = "Using the synchronous google.api_core.retry.Retry with asynchronous calls may lead to unexpected results. Please use google.api_core.retry_async.AsyncRetry instead."
 
+_LOGGER = logging.getLogger(__name__)
 
 def retry_target(
     target: Callable[_P, _R],
@@ -138,17 +140,62 @@ def retry_target(
 
     deadline = time.monotonic() + timeout if timeout is not None else None
     error_list: list[Exception] = []
+    attempt = 0
+    rpc_call_id = None
 
     for sleep in sleep_generator:
         try:
+            if logging.isEnabledFor(logging.DEBUG):
+                # Is there an easy way of getting the fields of interest at this level in the call?
+                #
+                # Otherwise, maybe we compute the request ID in the client and pass it in to the retry logic as a parameter
+                #  client:
+                #     response = Library.listBooks(..., requestID=582) # the 582 would be a unique ID computed on the fly
+                #  api_core:
+                #     loggingDebug(f"Calling {rpc_call_id}:{attempt} for request {requestID}")
+                # Logging output:
+                #   TIME1: client: Initiating RPC ListBooks (requestID=582, details=....)
+                #   TIME2: google_api_core: Call 582:0 STARTED
+                #   TIME3: google_api_core: Call 582:0 FAILED
+                #   TIME4: google_api_core: Call 582:1 STARTED
+                #   TIME5: google_api_core: Call 582:1 SUCCEEDED
+                #
+                # Note that this means we have two uses of IDs: one
+                # for the high-level call at the client level
+                # (request_id), and one for each individual RPC retry
+                # call (call_id); the latter is the concatenation of
+                # the request_id and the retry-attempt. I think that
+                # makes sense for logging purposes.
+                #
+                # Anyway, the following code does NOT assume the above.
+
+                rpc_call_id = rpc_call_id or hash(target)
+                logging.debug(f"Call {rpc_call_id}:{attempt} STARTED.",
+                              extra={
+                                  "rpcCallId": rpc_call_id,
+                                  "retryAttempt": attempt,
+                                  "rpcCallStatus": "START"})
+                attempt += 1
             result = target()
             if inspect.isawaitable(result):
                 warnings.warn(_ASYNC_RETRY_WARNING)
+            if logging.isEnabledFor(logging.DEBUG):
+                logging.debug(f"Call {rpc_call_id}:{attempt}. SUCCEEDED.",
+                              extra={
+                                  "rpcCallId": rpc_call_id,
+                                  "retryAttempt": attempt,
+                                  "rpcCallStatus": "SUCCESS"})
             return result
 
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
+            if logging.isEnabledFor(logging.DEBUG):
+                logging.debug(f"Call {rpc_call_id}:{attempt}. FAILED.",
+                              extra={
+                                  "rpcCallId": rpc_call_id,
+                                  "retryAttempt": attempt,
+                                  "rpcCallStatus": "FAILURE"})
             # defer to shared logic for handling errors
             _retry_error_helper(
                 exc,
