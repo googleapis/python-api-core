@@ -145,7 +145,7 @@ def retry_target(
 
     for sleep in sleep_generator:
         try:
-            if logging.isEnabledFor(logging.DEBUG):
+            if _LOGGER.isEnabledFor(logging.DEBUG):
                 # Is there an easy way of getting the fields of interest at this level in the call?
                 #
                 # Otherwise, maybe we compute the request ID in the client and pass it in to the retry logic as a parameter
@@ -179,7 +179,7 @@ def retry_target(
             result = target()
             if inspect.isawaitable(result):
                 warnings.warn(_ASYNC_RETRY_WARNING)
-            if logging.isEnabledFor(logging.DEBUG):
+            if _LOGGER.isEnabledFor(logging.DEBUG):
                 logging.debug(f"Call {rpc_call_id}:{attempt}. SUCCEEDED.",
                               extra={
                                   "rpcCallId": rpc_call_id,
@@ -190,7 +190,7 @@ def retry_target(
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
-            if logging.isEnabledFor(logging.DEBUG):
+            if _LOGGER.isEnabledFor(logging.DEBUG):
                 logging.debug(f"Call {rpc_call_id}:{attempt}. FAILED.",
                               extra={
                                   "rpcCallId": rpc_call_id,
