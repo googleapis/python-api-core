@@ -152,7 +152,7 @@ def retry_target(
                 #  client:
                 #     response = Library.listBooks(..., requestID=582) # the 582 would be a unique ID computed on the fly
                 #  api_core:
-                #     loggingDebug(f"Calling {rpc_call_id}:{attempt} for request {requestID}")
+                #     loggingDebug(f"Calling {requestID}:{attempt}  STARTED")
                 # Logging output:
                 #   TIME1: client: Initiating RPC ListBooks (requestID=582, details=....)
                 #   TIME2: google_api_core: Call 582:0 STARTED
