@@ -14,11 +14,17 @@ _recognized_logging_fields = [
     "httpRequest",
     "rpcName",
     "serviceName",
+    "credentialsType",
+    "credentialInfo",
+    "universeDomain",
+    "request",
+    "response",
+    "metadata",
+    "retryAttempt",
 ]  # Additional fields to be Logged.
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
-def logger_configured(logger):
+def logger_configured(logger) -> bool:
     """Determines whether `logger` has non-default configuration
 
     Args:
@@ -32,7 +38,6 @@ def logger_configured(logger):
     )
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def initialize_logging():
     """Initializes "google" loggers, partly based on the environment variable
 
@@ -55,7 +60,6 @@ def initialize_logging():
     _LOGGING_INITIALIZED = True
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     """Returns a list of logger names.
 
@@ -76,7 +80,6 @@ def parse_logging_scopes(scopes: Optional[str] = None) -> List[str]:
     return namespaces
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 def configure_defaults(logger):
     """Configures `logger` to emit structured info to stdout."""
     if not logger_configured(logger):
@@ -88,8 +91,7 @@ def configure_defaults(logger):
         logger.addHandler(console_handler)
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
-def setup_logging(scopes=""):
+def setup_logging(scopes: str=""):
     """Sets up logging for the specified `scopes`.
 
     If the loggers specified in `scopes` have not been previously
@@ -122,11 +124,11 @@ def setup_logging(scopes=""):
         base_logger.propagate = False
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/763): Add documentation.
+# TODO(https://github.com/googleapis/python-api-core/issues/763): Expand documentation.
 class StructuredLogFormatter(logging.Formatter):
     # TODO(https://github.com/googleapis/python-api-core/issues/761): ensure that additional fields such as
     # function name, file name, and line no. appear in a log output.
-    def format(self, record):
+    def format(self, record: logging.LogRecord):
         log_obj = {
             "timestamp": self.formatTime(record),
             "severity": record.levelname,
