@@ -275,7 +275,7 @@ def pytype(session):
 @nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
     """Run type-checking."""
-    session.install(".[grpc]", "mypy")
+    session.install(".[grpc,async_rest]", "mypy")
     session.install(
         "types-setuptools",
         "types-requests",
