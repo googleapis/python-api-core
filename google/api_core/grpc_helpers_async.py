@@ -36,7 +36,7 @@ P = TypeVar("P")
 # extra Python function spreads to every single send and receive.
 
 
-class _WrappedCall(aio.Call):
+class _WrappedCall(Generic[P], aio.Call):
     def __init__(self):
         self._call = None
 
