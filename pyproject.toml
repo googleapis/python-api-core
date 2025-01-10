@@ -67,6 +67,7 @@ grpc = [
 ]
 grpcgcp = ["grpcio-gcp >= 0.2.2, < 1.0.dev0"]
 grpcio-gcp = ["grpcio-gcp >= 0.2.2, < 1.0.dev0"]
+tracing = ["opentelemetry-sdk >= 1.22.0"]
 
 [tool.setuptools.dynamic]
 version = { attr = "google.api_core.version.__version__" }
