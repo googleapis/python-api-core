@@ -119,11 +119,10 @@ class TimeToDeadlineTimeout(object):
                 # is deprecated, and should be treated the same as the `timeout`,
                 # it is still possible for `deadline` argument in google.api_core.retry.Retry
                 # to be larger than the `timeout`.
-                # Avoid setting negative timeout or timeout less than 5 seconds when the `timeout`
-                # has expired.
                 # See https://github.com/googleapis/python-api-core/issues/654
-                # Revert back to the original timeout when this happens
-                if remaining_timeout < 5:
+                # Only positive non-zero timeouts are supported.
+                # Revert back to the initial timeout for negative or 0 timeout values.
+                if remaining_timeout < 1:
                     remaining_timeout = self._timeout
 
                 kwargs["timeout"] = remaining_timeout

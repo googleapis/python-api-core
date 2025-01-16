@@ -82,7 +82,7 @@ class TestTimeToDeadlineTimeout(object):
         wrapped()
         target.assert_called_with(timeout=41.0)
         wrapped()
-        target.assert_called_with(timeout=42.0)
+        target.assert_called_with(timeout=3.0)
         wrapped()
         target.assert_called_with(timeout=42.0)
         wrapped()
