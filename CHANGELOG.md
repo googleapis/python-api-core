@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.24.1](https://github.com/googleapis/python-api-core/compare/v2.24.0...v2.24.1) (2025-01-16)
+
+
+### Bug Fixes
+
+* Resolve the issue where rpc timeout of 0 is used when timeout expires ([#776](https://github.com/googleapis/python-api-core/issues/776)) ([a5604a5](https://github.com/googleapis/python-api-core/commit/a5604a55070c6d92618d078191bf99f4c168d5f6))
+
 ## [2.24.0](https://github.com/googleapis/python-api-core/compare/v2.23.0...v2.24.0) (2024-12-06)
 
 
