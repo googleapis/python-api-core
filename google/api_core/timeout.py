@@ -117,7 +117,7 @@ class TimeToDeadlineTimeout(object):
 
                 # Although the `deadline` parameter in `google.api_core.retry.Retry`
                 # is deprecated, and should be treated the same as the `timeout`,
-                # it is still possible for `deadline` argument in google.api_core.retry.Retry
+                # it is still possible for `deadline` argument in `google.api_core.retry.Retry`
                 # to be larger than the `timeout`.
                 # See https://github.com/googleapis/python-api-core/issues/654
                 # Only positive non-zero timeouts are supported.
