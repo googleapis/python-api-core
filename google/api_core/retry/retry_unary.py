@@ -139,7 +139,7 @@ def retry_target(
     deadline = time.monotonic() + timeout if timeout is not None else None
     error_list: list[Exception] = []
 
-    for sleep in sleep_generator:
+    while True:
         try:
             result = target()
             if inspect.isawaitable(result):
@@ -150,10 +150,10 @@ def retry_target(
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             # defer to shared logic for handling errors
-            _retry_error_helper(
+            next_sleep = _retry_error_helper(
                 exc,
                 deadline,
-                sleep,
+                sleep_generator,
                 error_list,
                 predicate,
                 on_error,
@@ -161,9 +161,7 @@ def retry_target(
                 timeout,
             )
             # if exception not raised, sleep before next attempt
-            time.sleep(sleep)
-
-    raise ValueError("Sleep generator stopped yielding sleep values.")
+            time.sleep(next_sleep)
 
 
 class Retry(_BaseRetry):

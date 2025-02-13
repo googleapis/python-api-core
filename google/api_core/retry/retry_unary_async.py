@@ -150,17 +150,17 @@ async def retry_target(
     deadline = time.monotonic() + timeout if timeout is not None else None
     error_list: list[Exception] = []
 
-    for sleep in sleep_generator:
+    while True:
         try:
             return await target()
         # pylint: disable=broad-except
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             # defer to shared logic for handling errors
-            _retry_error_helper(
+            next_sleep = _retry_error_helper(
                 exc,
                 deadline,
-                sleep,
+                sleep_generator,
                 error_list,
                 predicate,
                 on_error,
@@ -168,9 +168,7 @@ async def retry_target(
                 timeout,
             )
             # if exception not raised, sleep before next attempt
-            await asyncio.sleep(sleep)
-
-    raise ValueError("Sleep generator stopped yielding sleep values.")
+            await asyncio.sleep(next_sleep)
 
 
 class AsyncRetry(_BaseRetry):
