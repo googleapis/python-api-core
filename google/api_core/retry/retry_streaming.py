@@ -59,8 +59,8 @@ def retry_target_stream(
         [List[Exception], RetryFailureReason, Optional[float]],
         Tuple[Exception, Optional[Exception]],
     ] = build_retry_error,
-    init_args: _P.args = (),
-    init_kwargs: _P.kwargs = {},
+    init_args: tuple = (),
+    init_kwargs: dict = {},
     **kwargs,
 ) -> Generator[_Y, Any, None]:
     """Create a generator wrapper that retries the wrapped stream if it fails.
@@ -107,8 +107,9 @@ def retry_target_stream(
         time.monotonic() + timeout if timeout is not None else None
     )
     error_list: list[Exception] = []
+    sleep_iter = iter(sleep_generator)
 
-    for sleep in sleep_generator:
+    while True:
         # Start a new retry loop
         try:
             # Note: in the future, we can add a ResumptionStrategy object
@@ -121,10 +122,10 @@ def retry_target_stream(
         # This function explicitly must deal with broad exceptions.
         except Exception as exc:
             # defer to shared logic for handling errors
-            _retry_error_helper(
+            next_sleep = _retry_error_helper(
                 exc,
                 deadline,
-                sleep,
+                sleep_iter,
                 error_list,
                 predicate,
                 on_error,
@@ -132,9 +133,7 @@ def retry_target_stream(
                 timeout,
             )
             # if exception not raised, sleep before next attempt
-            time.sleep(sleep)
-
-    raise ValueError("Sleep generator stopped yielding sleep values.")
+            time.sleep(next_sleep)
 
 
 class StreamingRetry(_BaseRetry):
