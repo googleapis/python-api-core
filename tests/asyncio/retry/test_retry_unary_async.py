@@ -136,9 +136,7 @@ async def test_retry_target_timeout_exceeded(monotonic, sleep, use_deadline_arg)
 @pytest.mark.asyncio
 async def test_retry_target_bad_sleep_generator():
     with pytest.raises(ValueError, match="Sleep generator"):
-        await retry_async.retry_target(
-            mock.sentinel.target, lambda x: True, [], None
-        )
+        await retry_async.retry_target(mock.sentinel.target, lambda x: True, [], None)
 
 
 class TestAsyncRetry(Test_BaseRetry):
