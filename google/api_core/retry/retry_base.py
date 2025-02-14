@@ -214,6 +214,8 @@ def _retry_error_helper(
         raise final_exc from source_exc
     if on_error_fn is not None:
         on_error_fn(exc)
+    # next_sleep is fetched after the on_error callback to allow clients
+    # to update sleep_generator values dynamically in response to errors
     try:
         next_sleep = next(sleep_generator)
     except StopIteration:
