@@ -33,7 +33,7 @@ def test_retry_streaming_target_bad_sleep_generator():
     with pytest.raises(
         ValueError, match="Sleep generator stopped yielding sleep values"
     ):
-        next(retry_streaming.retry_target_stream(None, None, [], None))
+        next(retry_streaming.retry_target_stream(None, lambda x: True, [], None))
 
 
 class TestStreamingRetry(Test_BaseRetry):
