@@ -109,7 +109,7 @@ class _WrappedStreamResponseMixin(Generic[P], _WrappedCall):
                     response_payload = google.protobuf.json_format.MessageToJson(result)
                 else:
                     response_payload = (
-                        f"{type(result).__name__}: {pickle.dumps(result)}"
+                        f"{type(result).__name__}: {str(pickle.dumps(result))}"
                     )
                 grpc_response = {
                     "payload": response_payload,
