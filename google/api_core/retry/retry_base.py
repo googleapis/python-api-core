@@ -202,7 +202,7 @@ def _retry_error_helper(
        - original_timeout_val: the original timeout value for the retry (in seconds),
            to be passed to the exception factory for building an error message
     Returns:
-        - the next backoff value to use
+        - the sleep value chosen before the next attempt
     """
     error_list.append(exc)
     if not predicate_fn(exc):
