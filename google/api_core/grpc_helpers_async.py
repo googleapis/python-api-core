@@ -20,16 +20,22 @@ functions. This module is implementing the same surface with AsyncIO semantics.
 
 import asyncio
 import functools
+import logging
+import pickle
 
 from typing import AsyncGenerator, Generic, Iterator, Optional, TypeVar
 
+import google.protobuf.json_format
 import grpc
 from grpc import aio
+import proto
 
 from google.api_core import exceptions, grpc_helpers
 
 # denotes the proto response type for grpc calls
 P = TypeVar("P")
+
+_LOGGER = logging.getLogger(__name__)
 
 # NOTE(lidiz) Alternatively, we can hack "__getattribute__" to perform
 # automatic patching for us. But that means the overhead of creating an
@@ -94,7 +100,28 @@ class _WrappedStreamResponseMixin(Generic[P], _WrappedCall):
 
     async def read(self) -> P:
         try:
-            return await self._call.read()
+            result = await self._call.read()
+            logging_enabled = _LOGGER.isEnabledFor(logging.DEBUG)
+            if logging_enabled:  # pragma: NO COVER
+                if isinstance(result, proto.Message):
+                    response_payload = type(result).to_json(result)
+                elif isinstance(result, google.protobuf.message.Message):
+                    response_payload = google.protobuf.json_format.MessageToJson(result)
+                else:
+                    response_payload = (
+                        f"{type(result).__name__}: {pickle.dumps(result)}"
+                    )
+                grpc_response = {
+                    "payload": response_payload,
+                    "status": "OK",
+                }
+                _LOGGER.debug(
+                    f"Received response of type {type(result)} via gRPC stream",
+                    extra={
+                        "response": grpc_response,
+                    },
+                )
+            return result
         except grpc.RpcError as rpc_error:
             raise exceptions.from_grpc_error(rpc_error) from rpc_error
 
@@ -219,7 +246,7 @@ def create_channel(
     default_host=None,
     compression=None,
     attempt_direct_path: Optional[bool] = False,
-    **kwargs
+    **kwargs,
 ):
     """Create an AsyncIO secure channel with credentials.
 

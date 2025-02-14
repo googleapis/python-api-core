@@ -17,9 +17,13 @@ from typing import Generic, Iterator, Optional, TypeVar
 
 import collections
 import functools
+import logging
+import pickle
 import warnings
 
+import google.protobuf.json_format
 import grpc
+import proto
 
 from google.api_core import exceptions
 import google.auth
@@ -48,6 +52,7 @@ if PROTOBUF_VERSION[0:2] == "3.":  # pragma: NO COVER
 else:
     HAS_GRPC_GCP = False
 
+_LOGGER = logging.getLogger(__name__)
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
@@ -113,7 +118,29 @@ class _StreamingResponseIterator(Generic[P], grpc.Call):
                 result = self._stored_first_result
                 del self._stored_first_result
                 return result
-            return next(self._wrapped)
+            result = next(self._wrapped)
+
+            logging_enabled = _LOGGER.isEnabledFor(logging.DEBUG)
+            if logging_enabled:  # pragma: NO COVER
+                if isinstance(result, proto.Message):
+                    response_payload = type(result).to_json(result)
+                elif isinstance(result, google.protobuf.message.Message):
+                    response_payload = google.protobuf.json_format.MessageToJson(result)
+                else:
+                    response_payload = (
+                        f"{type(result).__name__}: {pickle.dumps(result)}"
+                    )
+                grpc_response = {
+                    "payload": response_payload,
+                    "status": "OK",
+                }
+                _LOGGER.debug(
+                    f"Received response of type {type(result)} via gRPC stream",
+                    extra={
+                        "response": grpc_response,
+                    },
+                )
+            return result
         except grpc.RpcError as exc:
             # If the stream has already returned data, we cannot recover here.
             raise exceptions.from_grpc_error(exc) from exc
