@@ -109,6 +109,7 @@ async def retry_target_stream(
     deadline = time.monotonic() + timeout if timeout else None
     # keep track of retryable exceptions we encounter to pass in to exception_factory
     error_list: list[Exception] = []
+    sleep_iter = iter(sleep_generator)
     target_is_generator: bool | None = None
 
     while True:
@@ -177,7 +178,7 @@ async def retry_target_stream(
             next_sleep = _retry_error_helper(
                 exc,
                 deadline,
-                sleep_generator,
+                sleep_iter,
                 error_list,
                 predicate,
                 on_error,

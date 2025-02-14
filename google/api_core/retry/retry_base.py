@@ -25,7 +25,7 @@ import random
 import time
 
 from enum import Enum
-from typing import Any, Callable, Optional, Iterable, TYPE_CHECKING
+from typing import Any, Callable, Optional, Iterator, TYPE_CHECKING
 
 import requests.exceptions
 
@@ -174,7 +174,7 @@ def build_retry_error(
 def _retry_error_helper(
     exc: Exception,
     deadline: float | None,
-    sleep_generator: Iterable[float],
+    sleep_generator: Iterator[float],
     error_list: list[Exception],
     predicate_fn: Callable[[Exception], bool],
     on_error_fn: Callable[[Exception], None] | None,

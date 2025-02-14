@@ -107,6 +107,7 @@ def retry_target_stream(
         time.monotonic() + timeout if timeout is not None else None
     )
     error_list: list[Exception] = []
+    sleep_iter = iter(sleep_generator)
 
     while True:
         # Start a new retry loop
@@ -124,7 +125,7 @@ def retry_target_stream(
             next_sleep = _retry_error_helper(
                 exc,
                 deadline,
-                sleep_generator,
+                sleep_iter,
                 error_list,
                 predicate,
                 on_error,
