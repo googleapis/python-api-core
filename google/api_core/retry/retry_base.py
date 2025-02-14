@@ -174,7 +174,7 @@ def build_retry_error(
 def _retry_error_helper(
     exc: Exception,
     deadline: float | None,
-    sleep_generator: Iterator[float],
+    sleep_iterator: Iterator[float],
     error_list: list[Exception],
     predicate_fn: Callable[[Exception], bool],
     on_error_fn: Callable[[Exception], None] | None,
@@ -194,7 +194,7 @@ def _retry_error_helper(
     Args:
        - exc: the exception that was raised
        - deadline: the deadline for the retry, calculated as a diff from time.monotonic()
-       - sleep_generator: iterable to draw the next backoff value from
+       - sleep_iterator: iterator to draw the next backoff value from
        - error_list: the list of exceptions that have been raised so far
        - predicate_fn: takes `exc` and returns true if the operation should be retried
        - on_error_fn: callback to execute when a retryable error occurs
@@ -214,10 +214,10 @@ def _retry_error_helper(
         raise final_exc from source_exc
     if on_error_fn is not None:
         on_error_fn(exc)
-    # next_sleep is fetched after the on_error callback to allow clients
-    # to update sleep_generator values dynamically in response to errors
+    # next_sleep is fetched after the on_error callback, to allow clients
+    # to update sleep_iterator values dynamically in response to errors
     try:
-        next_sleep = next(sleep_generator)
+        next_sleep = next(sleep_iterator)
     except StopIteration:
         raise ValueError("Sleep generator stopped yielding sleep values.") from exc
     if deadline is not None and time.monotonic() + next_sleep > deadline:
