@@ -117,21 +117,21 @@ class BaseResponseIterator:
         if issubclass(self._response_message_cls, proto.Message):
 
             def grab(this):
-                result = this._ready_objs.popleft()
+                response_payload = this._ready_objs.popleft()
                 if logging_enabled:  # pragma: NO COVER
-                    self._log_result(result)
+                    self._log_response_payload(response_payload)
                 return this._response_message_cls.from_json(
-                    result, ignore_unknown_fields=True
+                    response_payload, ignore_unknown_fields=True
                 )
 
             return grab
         elif issubclass(self._response_message_cls, google.protobuf.message.Message):
 
             def grab(this):
-                result = this._ready_objs.popleft()
+                response_payload = this._ready_objs.popleft()
                 if logging_enabled:  # pragma: NO COVER
-                    self._log_result(result)
-                return Parse(result, this._response_message_cls())
+                    self._log_response_payload(response_payload)
+                return Parse(response_payload, this._response_message_cls())
 
             return grab
         else:
