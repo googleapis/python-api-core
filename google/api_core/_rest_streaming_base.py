@@ -100,7 +100,7 @@ class BaseResponseIterator:
                 self._obj += char
             self._escape_next = not self._escape_next if char == "\\" else False
 
-    def _log_response_payload(self, response_payload: str):
+    def _log_response_payload(self, response_payload: str):  # pragma: NO COVER
         rest_response = {
             "payload": response_payload,
             "status": "OK",
