@@ -15,6 +15,7 @@
 """Helpers for server-side streaming in REST."""
 
 from collections import deque
+import logging
 import string
 from typing import Deque, Union
 import types
@@ -22,6 +23,8 @@ import types
 import proto
 import google.protobuf.message
 from google.protobuf.json_format import Parse
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BaseResponseIterator:
@@ -97,19 +100,38 @@ class BaseResponseIterator:
                 self._obj += char
             self._escape_next = not self._escape_next if char == "\\" else False
 
+    def _log_response_payload(self, response_payload: str):
+        rest_response = {
+            "payload": response_payload,
+            "status": "OK",
+        }
+        _LOGGER.debug(
+            "Received response via REST stream",
+            extra={
+                "response": rest_response,
+            },
+        )
+
     def _create_grab(self):
+        logging_enabled = _LOGGER.isEnabledFor(logging.DEBUG)
         if issubclass(self._response_message_cls, proto.Message):
 
             def grab(this):
+                result = this._ready_objs.popleft()
+                if logging_enabled:  # pragma: NO COVER
+                    self._log_result(result)
                 return this._response_message_cls.from_json(
-                    this._ready_objs.popleft(), ignore_unknown_fields=True
+                    result, ignore_unknown_fields=True
                 )
 
             return grab
         elif issubclass(self._response_message_cls, google.protobuf.message.Message):
 
             def grab(this):
-                return Parse(this._ready_objs.popleft(), this._response_message_cls())
+                result = this._ready_objs.popleft()
+                if logging_enabled:  # pragma: NO COVER
+                    self._log_result(result)
+                return Parse(result, this._response_message_cls())
 
             return grab
         else:
