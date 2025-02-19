@@ -117,9 +117,8 @@ class _StreamingResponseIterator(Generic[P], grpc.Call):
             if hasattr(self, "_stored_first_result"):
                 result = self._stored_first_result
                 del self._stored_first_result
-                return result
-            result = next(self._wrapped)
-
+            else:
+                result = next(self._wrapped)
             logging_enabled = _LOGGER.isEnabledFor(logging.DEBUG)
             if logging_enabled:  # pragma: NO COVER
                 if isinstance(result, proto.Message):
