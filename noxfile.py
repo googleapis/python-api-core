@@ -281,7 +281,7 @@ def mypy(session):
         "types-requests",
         "types-protobuf",
         "types-dataclasses",
-        "types-mock; python_version=='3.7'",
+        "types-mock; python_version=='3.8'",
     )
     session.run("mypy", "google", "tests")
 
