@@ -146,7 +146,7 @@ def test_retry_target_timeout_exceeded(monotonic, sleep, use_deadline_arg):
 
 def test_retry_target_bad_sleep_generator():
     with pytest.raises(ValueError, match="Sleep generator"):
-        retry.retry_target(mock.sentinel.target, mock.sentinel.predicate, [], None)
+        retry.retry_target(mock.sentinel.target, lambda x: True, [], None)
 
 
 class TestRetry(Test_BaseRetry):
