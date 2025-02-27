@@ -38,6 +38,7 @@ nox.options.sessions = [
     "unit",
     "unit_grpc_gcp",
     "unit_wo_grpc",
+    "unit_wo_tracing",
     "unit_w_prerelease_deps",
     "unit_w_async_rest_extra",
     "cover",
@@ -111,7 +112,13 @@ def install_prerelease_dependencies(session, constraints_path):
         session.install(*other_deps)
 
 
-def default(session, install_grpc=True, prerelease=False, install_async_rest=False):
+def default(
+    session,
+    install_grpc=True,
+    prerelease=False,
+    install_async_rest=False,
+    install_tracing=True,
+):
     """Default unit test session.
 
     This is intended to be run **without** an interpreter set, so
@@ -134,6 +141,9 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
     if install_grpc:
         # Note: The extra is called `grpc` and not `grpcio`.
         install_extras.append("grpc")
+
+    if install_tracing:
+        install_extras.append("tracing")
 
     constraints_dir = str(CURRENT_DIRECTORY / "testing")
     if install_async_rest:
@@ -249,6 +259,10 @@ def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
     default(session, install_grpc=False)
 
+@nox.session(python=PYTHON_VERSIONS)
+def unit_wo_tracing(session):
+    """Run the unit test suite w/o tracing installed"""
+    default(session, install_tracing=False)
 
 @nox.session(python=PYTHON_VERSIONS)
 def unit_w_async_rest_extra(session):
