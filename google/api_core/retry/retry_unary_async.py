@@ -151,6 +151,8 @@ async def retry_target(
     error_list: list[Exception] = []
     sleep_iter = iter(sleep_generator)
 
+    # continue trying until an attempt completes, or a terminal exception is raised in _retry_error_helper
+    # TODO: support max_attempts argument: https://github.com/googleapis/python-api-core/issues/535
     while True:
         try:
             return await target()
