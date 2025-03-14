@@ -170,7 +170,10 @@ def test_exception_with_error_code():
     assert isinstance(exception, exceptions.NotFound)
 
 
-def test_unexpected_result():
+def test_no_result():
+    # As per the link below, `Some services might not provide a result`.
+    # Neither `error` or `response`.
+    # See https://github.com/googleapis/googleapis/blob/a6c9ed2d33105cb3dc9a0867a0a5d761b049b932/google/longrunning/operations.proto#L141
     responses = [
         make_operation_proto(),
         # Second operation response is done, but has not error or response.
@@ -178,9 +181,9 @@ def test_unexpected_result():
     ]
     future, _, _ = make_operation_future(responses)
 
-    exception = future.exception()
+    response = future.result()
 
-    assert "Unexpected state" in "{!r}".format(exception)
+    assert response is None
 
 
 def test__refresh_http():

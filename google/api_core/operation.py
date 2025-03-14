@@ -144,11 +144,10 @@ class Operation(polling.PollingFuture):
                 )
                 self.set_exception(exception)
             else:
-                exception = exceptions.GoogleAPICallError(
-                    "Unexpected state: Long-running operation had neither "
-                    "response nor error set."
-                )
-                self.set_exception(exception)
+                # As per the link below, `Some services might not provide a result`.
+                # Neither `error` or `response`.
+                # See https://github.com/googleapis/googleapis/blob/a6c9ed2d33105cb3dc9a0867a0a5d761b049b932/google/longrunning/operations.proto#L141
+                self.set_result(None)
 
     def _refresh_and_update(self, retry=None):
         """Refresh the operation and update the result if needed.

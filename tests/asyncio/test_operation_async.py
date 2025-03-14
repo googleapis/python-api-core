@@ -164,7 +164,10 @@ async def test_exception():
 
 @mock.patch("asyncio.sleep", autospec=True)
 @pytest.mark.asyncio
-async def test_unexpected_result(unused_sleep):
+async def test_no_result(unused_sleep):
+    # As per the link below, `Some services might not provide a result`.
+    # Neither `error` or `response`.
+    # See https://github.com/googleapis/googleapis/blob/a6c9ed2d33105cb3dc9a0867a0a5d761b049b932/google/longrunning/operations.proto#L141
     responses = [
         make_operation_proto(),
         # Second operation response is done, but has not error or response.
@@ -172,9 +175,9 @@ async def test_unexpected_result(unused_sleep):
     ]
     future, _, _ = make_operation_future(responses)
 
-    exception = await future.exception()
+    response = await future.result()
 
-    assert "Unexpected state" in "{!r}".format(exception)
+    assert response is None
 
 
 @pytest.mark.asyncio
