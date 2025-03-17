@@ -39,6 +39,35 @@ async def test_retry_streaming_target_bad_sleep_generator():
         await retry_target_stream(None, lambda x: True, [], None).__anext__()
 
 
+@mock.patch("asyncio.sleep", autospec=True)
+@pytest.mark.asyncio
+async def test_retry_streaming_target_dynamic_backoff(sleep):
+    """
+    sleep_generator should be iterated after on_error, to support dynamic backoff
+    """
+    from functools import partial
+    from google.api_core.retry.retry_streaming_async import retry_target_stream
+
+    sleep.side_effect = RuntimeError("stop after sleep")
+    # start with empty sleep generator; values are added after exception in push_sleep_value
+    sleep_values = []
+    error_target = partial(TestAsyncStreamingRetry._generator_mock, error_on=0)
+    inserted_sleep = 99
+
+    def push_sleep_value(err):
+        sleep_values.append(inserted_sleep)
+
+    with pytest.raises(RuntimeError):
+        await retry_target_stream(
+            error_target,
+            predicate=lambda x: True,
+            sleep_generator=sleep_values,
+            on_error=push_sleep_value,
+        ).__anext__()
+    assert sleep.call_count == 1
+    sleep.assert_called_once_with(inserted_sleep)
+
+
 class TestAsyncStreamingRetry(Test_BaseRetry):
     def _make_one(self, *args, **kwargs):
         return retry_streaming_async.AsyncStreamingRetry(*args, **kwargs)
@@ -66,8 +95,8 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             str(retry_),
         )
 
+    @staticmethod
     async def _generator_mock(
-        self,
         num=5,
         error_on=None,
         exceptions_seen=None,
@@ -87,7 +116,7 @@ class TestAsyncStreamingRetry(Test_BaseRetry):
             for i in range(num):
                 if sleep_time:
                     await asyncio.sleep(sleep_time)
-                if error_on and i == error_on:
+                if error_on is not None and i == error_on:
                     raise ValueError("generator mock error")
                 yield i
         except (Exception, BaseException, GeneratorExit) as e:
