@@ -85,9 +85,7 @@ def test_to_user_agent_full():
 
     user_agent = info.to_user_agent()
 
-    assert (
-        user_agent == "app-name/1.0 gl-python/1 grpc/2 gax/3 gapic/4 gccl/5 pb/6"
-    )
+    assert user_agent == "app-name/1.0 gl-python/1 grpc/2 gax/3 gapic/4 gccl/5 pb/6"
 
 
 def test_to_user_agent_rest():
