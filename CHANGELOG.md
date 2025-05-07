@@ -4,7 +4,7 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
-## [2.25.0](https://github.com/googleapis/python-api-core/compare/v2.24.2...v2.25.0) (2025-05-06)
+## [2.25.0rc1](https://github.com/googleapis/python-api-core/compare/v2.24.2....2.25.0rc1) (2025-05-06)
 
 
 ### Features
