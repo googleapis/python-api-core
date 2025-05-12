@@ -186,7 +186,7 @@ async def test_wrap_stream_errors_raised():
 
 
 @pytest.mark.asyncio
-async def test_wrap_stream_errors_read():
+async def test_wrap_stream_errors_read_with_grpc_error():
     grpc_error = RpcErrorImpl(grpc.StatusCode.INVALID_ARGUMENT)
 
     mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
@@ -204,6 +204,23 @@ async def test_wrap_stream_errors_read():
     with pytest.raises(exceptions.InvalidArgument) as exc_info:
         await wrapped_call.read()
     assert exc_info.value.response == grpc_error
+
+
+@pytest.mark.asyncio
+async def test_wrap_stream_errors_read_without_grpc_error():
+    mock_call = mock.Mock(aio.StreamStreamCall, autospec=True)
+
+    mock_call.read = mock.AsyncMock()
+    multicallable = mock.Mock(return_value=mock_call)
+
+    wrapped_callable = grpc_helpers_async._wrap_stream_errors(
+        multicallable, grpc_helpers_async._WrappedStreamStreamCall
+    )
+
+    wrapped_call = await wrapped_callable(1, 2, three="four")
+    multicallable.assert_called_once_with(1, 2, three="four")
+    assert mock_call.wait_for_connection.call_count == 1
+    await wrapped_call.read()
 
 
 @pytest.mark.asyncio
