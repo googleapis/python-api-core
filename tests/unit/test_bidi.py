@@ -926,7 +926,7 @@ class TestBackgroundConsumer(object):
         lead to the consumer halting should also stop the thread and rpc.
         """
         caplog.set_level(logging.DEBUG)
-        bidi_rpc = mock.create_autospec(bidi.BidiRpc, instance=True)
+        bidi_rpc = mock.create_autospec(bidi.ResumableBidiRpc, instance=True)
         bidi_rpc.is_active = True
         on_response = mock.Mock(spec=["__call__"])
 
@@ -935,6 +935,9 @@ class TestBackgroundConsumer(object):
         consumer = bidi.BackgroundConsumer(bidi_rpc, on_response)
 
         consumer.start()
+
+        # let the background thread run for a while before exiting
+        time.sleep(0.1)
 
         # We want to make sure that close is called, which will surface the error to the caller.
         bidi_rpc.close.assert_called_once()
