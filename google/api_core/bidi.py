@@ -684,6 +684,7 @@ class BackgroundConsumer(object):
                 exc,
             )
 
+        self.stop()
         _LOGGER.info("%s exiting", _BIDIRECTIONAL_CONSUMER_NAME)
 
     def start(self):
