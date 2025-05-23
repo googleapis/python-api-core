@@ -926,7 +926,7 @@ class TestBackgroundConsumer(object):
       lead to the consumer halting should also stop the thread and rpc.
       """
       caplog.set_level(logging.DEBUG)
-      bidi_rpc = mock.create_autospec(bidi.BidiRpc, instance=True)
+      bidi_rpc = mock.create_autospec(bidi.ResumableBidiRpc, instance=True)
       bidi_rpc.is_active = True
       on_response = mock.Mock(spec=["__call__"])
 
