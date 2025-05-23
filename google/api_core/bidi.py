@@ -676,6 +676,7 @@ class BackgroundConsumer(object):
                 exc,
                 exc_info=True,
             )
+            self.stop()
 
         except Exception as exc:
             _LOGGER.exception(
@@ -683,6 +684,7 @@ class BackgroundConsumer(object):
                 _BIDIRECTIONAL_CONSUMER_NAME,
                 exc,
             )
+            self.stop()
 
         _LOGGER.info("%s exiting", _BIDIRECTIONAL_CONSUMER_NAME)
 

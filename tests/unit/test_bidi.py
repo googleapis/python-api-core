@@ -918,3 +918,26 @@ class TestBackgroundConsumer(object):
         error_logs = [r.message for r in caplog.records if r.levelname == "ERROR"]
         assert not error_logs, f"Found unexpected ERROR logs: {error_logs}"
         bidi_rpc.is_active = False
+
+    def test_fatal_exceptions_will_shutdown_consumer(self, caplog):
+        """
+        https://github.com/googleapis/python-api-core/issues/820
+        Exceptions thrown in the BackgroundConsumer that
+        lead to the consumer halting should also stop the thread and rpc.
+        """
+        caplog.set_level(logging.DEBUG)
+        bidi_rpc = mock.create_autospec(bidi.ResumableBidiRpc, instance=True)
+        bidi_rpc.is_active = True
+        on_response = mock.Mock(spec=["__call__"])
+
+        bidi_rpc.open.side_effect = ValueError()
+
+        consumer = bidi.BackgroundConsumer(bidi_rpc, on_response)
+
+        consumer.start()
+
+        # let the background thread run for a while before exiting
+        time.sleep(0.1)
+
+        # We want to make sure that close is called, which will surface the error to the caller.
+        bidi_rpc.close.assert_called_once()
