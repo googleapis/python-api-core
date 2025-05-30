@@ -923,7 +923,7 @@ class TestBackgroundConsumer(object):
         """
         https://github.com/googleapis/python-api-core/issues/820
         Exceptions thrown in the BackgroundConsumer not caught by `should_recover` / `should_terminate`
-        on the RPC should be bubbled back to the caller through `on_fatal_exception` if passed.
+        on the RPC should be bubbled back to the caller through `on_fatal_exception`, if passed.
         """
         caplog.set_level(logging.DEBUG)
 
