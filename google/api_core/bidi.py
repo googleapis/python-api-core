@@ -624,12 +624,17 @@ class BackgroundConsumer(object):
             ``open()``ed yet.
         on_response (Callable[[protobuf.Message], None]): The callback to
             be called for every response on the stream.
+        reraise_exceptions (bool): Whether to reraise exceptions during
+            the lifetime of the consumer, generally those that are not
+            handled by `BidiRpc`'s `should_recover` or `should_terminate`.
+            Default `False`.
     """
 
-    def __init__(self, bidi_rpc, on_response):
+    def __init__(self, bidi_rpc, on_response, reraise_exceptions=False):
         self._bidi_rpc = bidi_rpc
         self._on_response = on_response
         self._paused = False
+        self._reraise_exceptions = reraise_exceptions
         self._wake = threading.Condition()
         self._thread = None
         self._operational_lock = threading.Lock()
@@ -676,7 +681,8 @@ class BackgroundConsumer(object):
                 exc,
                 exc_info=True,
             )
-            self.stop()
+            if self._reraise_exceptions:
+                raise
 
         except Exception as exc:
             _LOGGER.exception(
@@ -684,7 +690,8 @@ class BackgroundConsumer(object):
                 _BIDIRECTIONAL_CONSUMER_NAME,
                 exc,
             )
-            self.stop()
+            if self._reraise_exceptions:
+                raise
 
         _LOGGER.info("%s exiting", _BIDIRECTIONAL_CONSUMER_NAME)
 
@@ -696,8 +703,8 @@ class BackgroundConsumer(object):
                 name=_BIDIRECTIONAL_CONSUMER_NAME,
                 target=self._thread_main,
                 args=(ready,),
+                daemon=True,
             )
-            thread.daemon = True
             thread.start()
             # Other parts of the code rely on `thread.is_alive` which
             # isn't sufficient to know if a thread is active, just that it may
