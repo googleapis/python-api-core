@@ -624,17 +624,15 @@ class BackgroundConsumer(object):
             ``open()``ed yet.
         on_response (Callable[[protobuf.Message], None]): The callback to
             be called for every response on the stream.
-        reraise_exceptions (bool): Whether to reraise exceptions during
-            the lifetime of the consumer, generally those that are not
-            handled by `BidiRpc`'s `should_recover` or `should_terminate`.
-            Default `False`.
+        on_fatal_exception (Callable[[Exception], None]): The callback to
+            be called on fatal errors during consumption. Default None.
     """
 
-    def __init__(self, bidi_rpc, on_response, reraise_exceptions=False):
+    def __init__(self, bidi_rpc, on_response, on_fatal_exception=None):
         self._bidi_rpc = bidi_rpc
         self._on_response = on_response
         self._paused = False
-        self._reraise_exceptions = reraise_exceptions
+        self._on_fatal_exception = on_fatal_exception
         self._wake = threading.Condition()
         self._thread = None
         self._operational_lock = threading.Lock()
@@ -681,8 +679,8 @@ class BackgroundConsumer(object):
                 exc,
                 exc_info=True,
             )
-            if self._reraise_exceptions:
-                raise
+            if self._on_fatal_exception is not None:
+                self._on_fatal_exception(exc)
 
         except Exception as exc:
             _LOGGER.exception(
@@ -690,8 +688,8 @@ class BackgroundConsumer(object):
                 _BIDIRECTIONAL_CONSUMER_NAME,
                 exc,
             )
-            if self._reraise_exceptions:
-                raise
+            if self._on_fatal_exception is not None:
+                self._on_fatal_exception(exc)
 
         _LOGGER.info("%s exiting", _BIDIRECTIONAL_CONSUMER_NAME)
 
@@ -734,6 +732,7 @@ class BackgroundConsumer(object):
 
             self._thread = None
             self._on_response = None
+            self._on_fatal_exception = None
 
     @property
     def is_active(self):
