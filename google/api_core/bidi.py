@@ -715,7 +715,7 @@ class BackgroundConsumer(object):
     def stop(self):
         """Stop consuming the stream and shutdown the background thread.
 
-        WARNING: Cannot be called within `_thread_main`, since it is not
+        NOTE: Cannot be called within `_thread_main`, since it is not
         possible to join a thread to itself.
         """
         with self._operational_lock:
