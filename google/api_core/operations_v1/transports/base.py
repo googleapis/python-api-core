@@ -98,7 +98,7 @@ class OperationsTransport(abc.ABC):
                 "https", but for testing or local servers,
                 "http" can be specified.
         """
-        maybe_url_match = re.match("^(?P<scheme>http(?:s)?://)?(?P<host>.*)$", host)
+        maybe_url_match = re.match(r"^(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*://)?(?P<host>.*)$", host)
         if maybe_url_match is None:
             raise ValueError(
                 f"Unexpected hostname structure: {host}"
@@ -109,7 +109,11 @@ class OperationsTransport(abc.ABC):
         host = f"{url_scheme}://{host}" if not url_match_items["scheme"] else host
 
         # Save the hostname. Default to port 443 (HTTPS) if none is specified.
-        if ":" not in host:
+        host_part = host.split("://")[-1]
+        if host_part != "longrunning.googleapis.com" and (
+            (host_part.startswith("[") and "]" in host_part and "]:" not in host_part) or  # IPv6 without port
+            (not host_part.startswith("[") and ":" not in host_part)  # Not IPv6 and no port
+        ):
             host += ":443"  # pragma: NO COVER
         self._host = host
 
