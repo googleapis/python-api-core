@@ -22,3 +22,4 @@ from google.api_core import version as api_core_version
 
 __version__ = api_core_version.__version__
 check_python_version = _python_version_support.check_python_version
+check_python_version(package="package google-api-core (google.api_core)")
