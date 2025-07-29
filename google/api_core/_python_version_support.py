@@ -37,10 +37,10 @@ class VersionInfo(NamedTuple):
     python_beta: Optional[datetime.date]
     python_start: datetime.date
     python_eol: datetime.date
-    gapic_start: Optional[datetime.date] = None
+    gapic_start: Optional[datetime.date] = None  # unused
     gapic_deprecation: Optional[datetime.date] = None
     gapic_end: Optional[datetime.date] = None
-    dep_unpatchable_cve: Optional[datetime.date] = None
+    dep_unpatchable_cve: Optional[datetime.date] = None  # unused
 
 
 PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
@@ -97,7 +97,8 @@ def _flatten_message(text: str) -> str:
     return textwrap.dedent(text).strip().replace("\n", " ")
 
 
-def check_python_version(today: Optional[datetime.date] = None) -> PythonVersionStatus:
+def check_python_version(package: Optional[str] = "this package",
+                         today: Optional[datetime.date] = None) -> PythonVersionStatus:
     """Check the running Python version and issue a support warning if needed.
 
     Args:
@@ -146,9 +147,9 @@ def check_python_version(today: Optional[datetime.date] = None) -> PythonVersion
         message = _flatten_message(
             f"""
             You are using a non-supported Python version ({py_version_str}).
-            You will receive no updates to this client library. We suggest
+            Google will not post any further updates to {package}. We suggest
             you upgrade to the latest Python version, or at least Python
-            {min_python(today)}, and then update this library.
+            {min_python(today)}, and then update {package}.
             """
         )
         logging.warning(message)
@@ -159,11 +160,10 @@ def check_python_version(today: Optional[datetime.date] = None) -> PythonVersion
         message = _flatten_message(
             f"""
             You are using a Python version ({py_version_str}) past its end
-            of life. This client library will continue receiving critical
-            bug fixes on a best-effort basis, but not any other fixes or
+            of life. Google will update {package} with critical
+            bug fixes on a best-effort basis, but not with any other fixes or
             features. We suggest you upgrade to the latest Python version,
-            or at least Python {min_python(today)}, and then update this
-            library.
+            or at least Python {min_python(today)}, and then update {package}.
             """
         )
         logging.warning(message)
@@ -172,12 +172,12 @@ def check_python_version(today: Optional[datetime.date] = None) -> PythonVersion
     if gapic_deprecation <= today <= gapic_end:
         message = _flatten_message(
             f"""
-            You are using a Python version ({py_version_str}), which new
-            releases of this client library will stop supporting when it
+            You are using a Python version ({py_version_str}),
+            which Google will stop supporting in {package} when it
             reaches its end of life ({version_info.python_eol}). We
-            suggest you upgrade to the latest Python version, or at least
-            Python {min_python(version_info.python_eol)}, and then update
-            this library.
+            suggest you upgrade to the latest Python version, or at
+            least Python {min_python(version_info.python_eol)}, and
+            then update {package}.
             """
         )
         logging.warning(message)
