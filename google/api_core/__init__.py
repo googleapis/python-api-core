@@ -17,6 +17,8 @@
 This package contains common code and utilities used by Google client libraries.
 """
 
+from google.api_core import _python_version_support
 from google.api_core import version as api_core_version
 
 __version__ = api_core_version.__version__
+check_python_version = _python_version_support.check_python_version
