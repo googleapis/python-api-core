@@ -62,6 +62,25 @@ def warn_deprecation_for_versions_less_than(
     next_supported_version: str,
     message_template: Optional[str] = None,
 ):
+    """Issue a deprecation warning for outdated versions of `dependency_name`.
+
+    If `dependency_name` is installed at a version less than
+    `next_supported_versions`, this issues a warning using either a
+    default `message_template` or one provided by the user. The
+    default `message_template informs users that they will not receive
+    future updates `dependent_package` if `dependency_name` is somehow
+    pinned to a version lower than `next_supported_version`.
+
+    Args:
+      dependent_package: The distribution name of the package that needs `dependency_name`.
+      dependency_name: The distribution name oft he dependency to check.
+      next_supported_version: The version number below which a deprecation warning will be logged.
+      message_template: A custom default message template to replace
+        the default. This `message_template` is treated as an
+        f-string, where the following variables are defined:
+        `dependency_name`, `dependent_package`,
+        `next_supported_version`, and `version_used`.
+    """
     if not dependent_package or not dependency_name or not next_supported_version:
         return
     version_used = get_dependency_version(dependency_name)
