@@ -52,7 +52,7 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
             version_string = pkg_resources.get_distribution(dependency_name).version
             return parse_version(version_string)
 
-    except:
+    except Exception:
         return None
 
 
