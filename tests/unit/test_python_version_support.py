@@ -30,8 +30,9 @@ from google.api_core._python_version_support import (
 VersionInfoMock = namedtuple("VersionInfoMock", ["major", "minor"])
 
 
-def _create_failure_message(expected, result, py_version, date,
-                            gapic_dep, py_eol, eol_warn, gapic_end):
+def _create_failure_message(
+    expected, result, py_version, date, gapic_dep, py_eol, eol_warn, gapic_end
+):
     """Create a detailed failure message for a test."""
     return textwrap.dedent(
         f"""
@@ -98,38 +99,49 @@ def generate_tracked_version_test_cases():
 
         for name, params in test_cases.items():
             yield pytest.param(
-                version_tuple, params["date"], params["expected"],
-                gapic_dep, gapic_end, eol_warning_starts,
-                id=f"{py_version_str}-{name}"
+                version_tuple,
+                params["date"],
+                params["expected"],
+                gapic_dep,
+                gapic_end,
+                eol_warning_starts,
+                id=f"{py_version_str}-{name}",
             )
 
 
 @pytest.mark.parametrize(
     "version_tuple, mock_date, expected_status, gapic_dep, gapic_end, eol_warning_starts",
-    generate_tracked_version_test_cases()
+    generate_tracked_version_test_cases(),
 )
 def test_all_tracked_versions_and_date_scenarios(
-    version_tuple, mock_date, expected_status, gapic_dep, gapic_end,
-    eol_warning_starts
+    version_tuple, mock_date, expected_status, gapic_dep, gapic_end, eol_warning_starts
 ):
     """Test all outcomes for each tracked version using parametrization."""
-    mock_py_v = VersionInfoMock(
-        major=version_tuple[0], minor=version_tuple[1]
-    )
+    mock_py_v = VersionInfoMock(major=version_tuple[0], minor=version_tuple[1])
 
     with patch("google.api_core._python_version_support.sys.version_info", mock_py_v):
-        with patch("google.api_core._python_version_support.logging.warning") as mock_log:
+        with patch(
+            "google.api_core._python_version_support.logging.warning"
+        ) as mock_log:
             result = check_python_version(today=mock_date)
 
-            if ((result != expected_status) or
-                (result != PythonVersionStatus.PYTHON_VERSION_SUPPORTED) and mock_log.call_count != 1):
+            if (
+                (result != expected_status)
+                or (result != PythonVersionStatus.PYTHON_VERSION_SUPPORTED)
+                and mock_log.call_count != 1
+            ):
                 py_version_str = f"{version_tuple[0]}.{version_tuple[1]}"
                 version_info = PYTHON_VERSION_INFO[version_tuple]
 
                 fail_msg = _create_failure_message(
-                    expected_status, result, py_version_str,
-                    mock_date, gapic_dep, version_info.python_eol,
-                    eol_warning_starts, gapic_end
+                    expected_status,
+                    result,
+                    py_version_str,
+                    mock_date,
+                    gapic_dep,
+                    version_info.python_eol,
+                    eol_warning_starts,
+                    gapic_end,
                 )
                 pytest.fail(fail_msg, pytrace=False)
 
@@ -138,41 +150,51 @@ def test_override_gapic_end_only():
     """Test behavior when only gapic_end is manually overridden."""
     version_tuple = (3, 9)
     original_info = PYTHON_VERSION_INFO[version_tuple]
-    mock_py_version = VersionInfoMock(
-        major=version_tuple[0], minor=version_tuple[1]
-    )
+    mock_py_version = VersionInfoMock(major=version_tuple[0], minor=version_tuple[1])
 
     custom_gapic_end = original_info.python_eol + datetime.timedelta(days=212)
     overridden_info = original_info._replace(gapic_end=custom_gapic_end)
 
-    with patch("google.api_core._python_version_support.sys.version_info", mock_py_version):
-        with patch.dict('google.api_core._python_version_support.PYTHON_VERSION_INFO', {version_tuple: overridden_info}):
+    with patch(
+        "google.api_core._python_version_support.sys.version_info", mock_py_version
+    ):
+        with patch.dict(
+            "google.api_core._python_version_support.PYTHON_VERSION_INFO",
+            {version_tuple: overridden_info},
+        ):
             result_at_boundary = check_python_version(today=custom_gapic_end)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
 
             result_after_boundary = check_python_version(
                 today=custom_gapic_end + datetime.timedelta(days=1)
             )
-            assert result_after_boundary == PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
+            assert (
+                result_after_boundary == PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
+            )
 
 
 def test_override_gapic_deprecation_only():
     """Test behavior when only gapic_deprecation is manually overridden."""
     version_tuple = (3, 9)
     original_info = PYTHON_VERSION_INFO[version_tuple]
-    mock_py_version = VersionInfoMock(
-        major=version_tuple[0], minor=version_tuple[1]
-    )
+    mock_py_version = VersionInfoMock(major=version_tuple[0], minor=version_tuple[1])
 
     custom_gapic_dep = original_info.python_eol - datetime.timedelta(days=120)
     overridden_info = original_info._replace(gapic_deprecation=custom_gapic_dep)
 
-    with patch("google.api_core._python_version_support.sys.version_info", mock_py_version):
-        with patch.dict('google.api_core._python_version_support.PYTHON_VERSION_INFO', {version_tuple: overridden_info}):
+    with patch(
+        "google.api_core._python_version_support.sys.version_info", mock_py_version
+    ):
+        with patch.dict(
+            "google.api_core._python_version_support.PYTHON_VERSION_INFO",
+            {version_tuple: overridden_info},
+        ):
             result_before_boundary = check_python_version(
                 today=custom_gapic_dep - datetime.timedelta(days=1)
             )
-            assert result_before_boundary == PythonVersionStatus.PYTHON_VERSION_SUPPORTED
+            assert (
+                result_before_boundary == PythonVersionStatus.PYTHON_VERSION_SUPPORTED
+            )
 
             result_at_boundary = check_python_version(today=custom_gapic_dep)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_DEPRECATED
@@ -182,8 +204,12 @@ def test_untracked_older_version_is_unsupported():
     """Test that an old, untracked version is unsupported and logs."""
     mock_py_version = VersionInfoMock(major=3, minor=6)
 
-    with patch("google.api_core._python_version_support.sys.version_info", mock_py_version):
-        with patch("google.api_core._python_version_support.logging.warning") as mock_log:
+    with patch(
+        "google.api_core._python_version_support.sys.version_info", mock_py_version
+    ):
+        with patch(
+            "google.api_core._python_version_support.logging.warning"
+        ) as mock_log:
             mock_date = datetime.date(2025, 1, 15)
             result = check_python_version(today=mock_date)
 
@@ -197,8 +223,12 @@ def test_untracked_newer_version_is_supported():
     """Test that a new, untracked version is supported and does not log."""
     mock_py_version = VersionInfoMock(major=4, minor=0)
 
-    with patch("google.api_core._python_version_support.sys.version_info", mock_py_version):
-        with patch("google.api_core._python_version_support.logging.warning") as mock_log:
+    with patch(
+        "google.api_core._python_version_support.sys.version_info", mock_py_version
+    ):
+        with patch(
+            "google.api_core._python_version_support.logging.warning"
+        ) as mock_log:
             mock_date = datetime.date(2025, 1, 15)
             result = check_python_version(today=mock_date)
 
