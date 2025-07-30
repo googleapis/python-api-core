@@ -97,8 +97,9 @@ def _flatten_message(text: str) -> str:
     return textwrap.dedent(text).strip().replace("\n", " ")
 
 
-def check_python_version(package: Optional[str] = "this package",
-                         today: Optional[datetime.date] = None) -> PythonVersionStatus:
+def check_python_version(
+    package: Optional[str] = "this package", today: Optional[datetime.date] = None
+) -> PythonVersionStatus:
     """Check the running Python version and issue a support warning if needed.
 
     Args:

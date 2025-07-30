@@ -40,6 +40,7 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
     try:
         if sys.version_info >= (3, 8):
             from importlib import metadata
+
             version_string = metadata.version(dependency_name)
             return parse_version(version_string)
 
@@ -47,6 +48,7 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
         else:
             # Use pkg_resources, which is part of setuptools.
             import pkg_resources
+
             version_string = pkg_resources.get_distribution(dependency_name).version
             return parse_version(version_string)
 
@@ -54,10 +56,12 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
         return None
 
 
-def warn_deprecation_for_versions_less_than(dependent_package:str,
-                                            dependency_name:str,
-                                            next_supported_version:str,
-                                            message_template: Optional[str] = None):
+def warn_deprecation_for_versions_less_than(
+    dependent_package: str,
+    dependency_name: str,
+    next_supported_version: str,
+    message_template: Optional[str] = None,
+):
     if not dependent_package or not dependency_name or not next_supported_version:
         return
     version_used = get_dependency_version(dependency_name)
@@ -83,7 +87,11 @@ def warn_deprecation_for_versions_less_than(dependent_package:str,
                 dependency_name=dependency_name,
                 next_supported_version=next_supported_version,
                 version_used=version_used,
-            ))
+            )
+        )
+
 
 def check_dependency_versions(dependent_package: str):
-    warn_deprecation_for_versions_less_than(dependent_package, "protobuf (google.protobuf)", "4.25.8")
+    warn_deprecation_for_versions_less_than(
+        dependent_package, "protobuf (google.protobuf)", "4.25.8"
+    )
