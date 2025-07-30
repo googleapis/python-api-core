@@ -72,9 +72,11 @@ def warn_deprecation_for_versions_less_than(
     pinned to a version lower than `next_supported_version`.
 
     Args:
-      dependent_package: The distribution name of the package that needs `dependency_name`.
+      dependent_package: The distribution name of the package that
+        needs `dependency_name`.
       dependency_name: The distribution name oft he dependency to check.
-      next_supported_version: The version number below which a deprecation warning will be logged.
+      next_supported_version: The version number below which a deprecation
+        warning will be logged.
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
@@ -111,6 +113,17 @@ def warn_deprecation_for_versions_less_than(
 
 
 def check_dependency_versions(dependent_package: str):
+    """Bundle checks for all package dependencies.
+
+    This function can be called by all depndents of google.api_core,
+    to emit needed deprecation warnings for any of their
+    dependencies. The dependencies to check should be updated here.
+
+    Args:
+      dependent_package: The distribution name of the calling package, whose
+        dependencies we're checking.
+
+    """
     warn_deprecation_for_versions_less_than(
         dependent_package, "protobuf (google.protobuf)", "4.25.8"
     )
