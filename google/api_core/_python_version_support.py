@@ -99,6 +99,44 @@ def _flatten_message(text: str) -> str:
     return textwrap.dedent(text).strip().replace("\n", " ")
 
 
+# TODO: Remove once we no longer support Python3.7
+if sys.version_info < (3, 8):
+
+    def _get_pypi_package_name(module_name):
+        """Determine the PyPI package name for a given module name."""
+        return None
+
+else:
+    from importlib import metadata
+
+    def _get_pypi_package_name(module_name):
+        """Determine the PyPI package name for a given module name."""
+        try:
+            # Get the mapping of modules to distributions
+            module_to_distributions = metadata.packages_distributions()
+
+            # Check if the module is found in the mapping
+            if module_name in module_to_distributions:
+                # The value is a list of distribution names, take the first one
+                return module_to_distributions[module_name][0]
+            else:
+                return None  # Module not found in the mapping
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
+
+def _get_distribution_and_import_packages(import_package: str) -> Optional[str]:
+    """Return a pretty string with distribution & import package names."""
+    distribution_package = _get_pypi_package_name(import_package)
+    dependency_distribution_and_import_packages = (
+        f"package {distribution_package} ({import_package})"
+        if distribution_package
+        else import_package
+    )
+    return dependency_distribution_and_import_packages, distribution_package
+
+
 def check_python_version(
     package: Optional[str] = "this package", today: Optional[datetime.date] = None
 ) -> PythonVersionStatus:
@@ -111,6 +149,7 @@ def check_python_version(
         The support status of the current Python version.
     """
     today = today or datetime.date.today()
+    package_label, _ = _get_distribution_and_import_packages(package)
 
     python_version = sys.version_info
     version_tuple = (python_version.major, python_version.minor)
@@ -135,9 +174,7 @@ def check_python_version(
     gapic_deprecation = version_info.gapic_deprecation or (
         version_info.python_eol - DEPRECATION_WARNING_PERIOD
     )
-    gapic_end = version_info.gapic_end or (
-        version_info.python_eol + EOL_GRACE_PERIOD
-    )
+    gapic_end = version_info.gapic_end or (version_info.python_eol + EOL_GRACE_PERIOD)
 
     def min_python(date: datetime.date) -> str:
         """Find the minimum supported Python version for a given date."""
@@ -148,12 +185,11 @@ def check_python_version(
 
     if gapic_end < today:
         message = _flatten_message(
-            f"""
-            You are using a non-supported Python version ({py_version_str}).
-            Google will not post any further updates to {package}. We suggest
-            you upgrade to the latest Python version, or at least Python
-            {min_python(today)}, and then update {package}.
-            """
+            f"""You are using a non-supported Python version
+            ({py_version_str}).  Google will not post any further
+            updates to {package_label}. We suggest you upgrade to the
+            latest Python version, or at least Python
+            {min_python(today)}, and then update {package_label}. """
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
@@ -161,27 +197,24 @@ def check_python_version(
     eol_date = version_info.python_eol + EOL_GRACE_PERIOD
     if eol_date <= today <= gapic_end:
         message = _flatten_message(
-            f"""
-            You are using a Python version ({py_version_str}) past its end
-            of life. Google will update {package} with critical
-            bug fixes on a best-effort basis, but not with any other fixes or
-            features. We suggest you upgrade to the latest Python version,
-            or at least Python {min_python(today)}, and then update {package}.
-            """
+            f"""You are using a Python version ({py_version_str})
+            past its end of life. Google will update {package_label}
+            with critical bug fixes on a best-effort basis, but not
+            with any other fixes or features. We suggest you upgrade
+            to the latest Python version, or at least Python
+            {min_python(today)}, and then update {package_label}."""
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_EOL
 
     if gapic_deprecation <= today <= gapic_end:
         message = _flatten_message(
-            f"""
-            You are using a Python version ({py_version_str}),
-            which Google will stop supporting in {package} when it
-            reaches its end of life ({version_info.python_eol}). We
+            f"""You are using a Python version ({py_version_str}),
+            which Google will stop supporting in {package_label} when
+            it reaches its end of life ({version_info.python_eol}). We
             suggest you upgrade to the latest Python version, or at
             least Python {min_python(version_info.python_eol)}, and
-            then update {package}.
-            """
+            then update {package_label}."""
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_DEPRECATED

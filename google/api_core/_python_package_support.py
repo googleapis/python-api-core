@@ -17,7 +17,10 @@
 import logging
 import sys
 from typing import Optional
-from ._python_version_support import _flatten_message
+from ._python_version_support import (
+    _flatten_message,
+    _get_distribution_and_import_packages,
+)
 
 # It is a good practice to alias the Version class for clarity in type hints.
 from packaging.version import parse as parse_version, Version as PackagingVersion
@@ -57,62 +60,79 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
 
 
 def warn_deprecation_for_versions_less_than(
-    dependent_package: str,
-    dependency_name: str,
+    dependent_import_package: str,
+    dependency_import_package: str,
     next_supported_version: str,
     message_template: Optional[str] = None,
 ):
-    """Issue a deprecation warning for outdated versions of `dependency_name`.
+    """Issue any needed deprecation warnings for `dependency_import_package`.
 
-    If `dependency_name` is installed at a version less than
+    If `dependency_import_package` is installed at a version less than
     `next_supported_versions`, this issues a warning using either a
     default `message_template` or one provided by the user. The
     default `message_template informs users that they will not receive
-    future updates `dependent_package` if `dependency_name` is somehow
-    pinned to a version lower than `next_supported_version`.
+    future updates `dependent_import_package` if
+    `dependency_import_package` is somehow pinned to a version lower
+    than `next_supported_version`.
 
     Args:
-      dependent_package: The distribution name of the package that
-        needs `dependency_name`.
-      dependency_name: The distribution name oft he dependency to check.
+      dependent_import_package: The import name of the package that
+        needs `dependency_import_package`.
+      dependency_import_package: The import name of the dependency to check.
       next_supported_version: The version number below which a deprecation
         warning will be logged.
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
-        `dependency_name`, `dependent_package`,
-        `next_supported_version`, and `version_used`.
+        `dependency_import_package`, `dependent_import_package`;
+        `dependency_packages` and `dependent_packages`, which contain both the
+         distribution and import packages for the dependency and the dependent,
+         respectively; and `next_supported_version`, and `version_used`, which
+         refer to supported and currently-used versions of the dependency.
+
     """
-    if not dependent_package or not dependency_name or not next_supported_version:
+    if (
+        not dependent_import_package
+        or not dependency_import_package
+        or not next_supported_version
+    ):
         return
-    version_used = get_dependency_version(dependency_name)
+    version_used = get_dependency_version(dependency_import_package)
     if not version_used:
         return
     if version_used < parse_version(next_supported_version):
+        (
+            dependency_packages,
+            dependency_distribution_package,
+        ) = _get_distribution_and_import_packages(dependency_import_package)
+        (
+            dependent_packages,
+            dependent_distribution_package,
+        ) = _get_distribution_and_import_packages(dependent_import_package)
         message_template = message_template or _flatten_message(
-            """DEPRECATION: Package {dependent_package} depends on
-            {dependency_name}, currently installed at version
+            """DEPRECATION: Package {dependent_packages} depends on
+            {dependency_packages}, currently installed at version
             {version_used.__str__}. Future updates to
-            {dependent_package} will require {dependency_name} at
+            {dependent_packages} will require {dependency_packages} at
             version {next_supported_version} or higher. Please ensure
             that either (a) your Python environment doesn't pin the
-            version of {dependency_name}, so that updates to
-            {dependent_package} can require the higher version, or (b)
-            you manually update your Python environment to use at
+            version of {dependency_packages}, so that updates to
+            {dependent_packages} can require the higher version, or
+            (b) you manually update your Python environment to use at
             least version {next_supported_version} of
-            {dependency_name}."""
+            {dependency_packages}."""
         )
         logging.warning(
             message_template.format(
-                dependent_package=dependent_package,
-                dependency_name=dependency_name,
+                dependent_import_package=dependent_import_package,
+                dependency_import_package=dependency_import_package,
                 next_supported_version=next_supported_version,
                 version_used=version_used,
             )
         )
 
 
-def check_dependency_versions(dependent_package: str):
+def check_dependency_versions(dependent_import_package: str):
     """Bundle checks for all package dependencies.
 
     This function can be called by all dependents of google.api_core,
@@ -120,10 +140,10 @@ def check_dependency_versions(dependent_package: str):
     dependencies. The dependencies to check should be updated here.
 
     Args:
-      dependent_package: The distribution name of the calling package, whose
+      dependent_import_package: The distribution name of the calling package, whose
         dependencies we're checking.
 
     """
     warn_deprecation_for_versions_less_than(
-        dependent_package, "protobuf (google.protobuf)", "4.25.8"
+        dependent_import_package, "google.protobuf", "4.25.8"
     )

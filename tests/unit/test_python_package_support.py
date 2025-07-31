@@ -48,7 +48,9 @@ def test_get_dependency_version_py37(mock_get_distribution):
     mock_get_distribution.assert_called_once_with("another-package")
 
     # Test package not found
-    mock_get_distribution.side_effect = Exception  # pkg_resources has its own exception types
+    mock_get_distribution.side_effect = (
+        Exception  # pkg_resources has its own exception types
+    )
     assert get_dependency_version("not-a-package") is None
 
 
@@ -58,34 +60,29 @@ def test_warn_deprecation_for_versions_less_than(mock_log_warning, mock_get_vers
     """Test the deprecation warning logic."""
     # Case 1: Installed version is less than required, should warn.
     mock_get_version.return_value = parse_version("1.0.0")
-    warn_deprecation_for_versions_less_than(
-        "my-package", "dep-package", "2.0.0"
-    )
+    warn_deprecation_for_versions_less_than("my-package", "dep-package", "2.0.0")
     mock_log_warning.assert_called_once()
-    assert "DEPRECATION: Package my-package depends on dep-package" in mock_log_warning.call_args[0][0]
+    assert (
+        "DEPRECATION: Package my-package depends on dep-package"
+        in mock_log_warning.call_args[0][0]
+    )
 
     # Case 2: Installed version is equal to required, should not warn.
     mock_log_warning.reset_mock()
     mock_get_version.return_value = parse_version("2.0.0")
-    warn_deprecation_for_versions_less_than(
-        "my-package", "dep-package", "2.0.0"
-    )
+    warn_deprecation_for_versions_less_than("my-package", "dep-package", "2.0.0")
     mock_log_warning.assert_not_called()
 
     # Case 3: Installed version is greater than required, should not warn.
     mock_log_warning.reset_mock()
     mock_get_version.return_value = parse_version("3.0.0")
-    warn_deprecation_for_versions_less_than(
-        "my-package", "dep-package", "2.0.0"
-    )
+    warn_deprecation_for_versions_less_than("my-package", "dep-package", "2.0.0")
     mock_log_warning.assert_not_called()
 
     # Case 4: Dependency not found, should not warn.
     mock_log_warning.reset_mock()
     mock_get_version.return_value = None
-    warn_deprecation_for_versions_less_than(
-        "my-package", "dep-package", "2.0.0"
-    )
+    warn_deprecation_for_versions_less_than("my-package", "dep-package", "2.0.0")
     mock_log_warning.assert_not_called()
 
     # Case 5: Custom message template.
@@ -96,4 +93,7 @@ def test_warn_deprecation_for_versions_less_than(mock_log_warning, mock_get_vers
         "my-package", "dep-package", "2.0.0", message_template=template
     )
     mock_log_warning.assert_called_once()
-    assert "Custom warning for dep-package used by my-package." in mock_log_warning.call_args[0][0]
+    assert (
+        "Custom warning for dep-package used by my-package."
+        in mock_log_warning.call_args[0][0]
+    )
