@@ -115,7 +115,7 @@ def warn_deprecation_for_versions_less_than(
 def check_dependency_versions(dependent_package: str):
     """Bundle checks for all package dependencies.
 
-    This function can be called by all depndents of google.api_core,
+    This function can be called by all dependents of google.api_core,
     to emit needed deprecation warnings for any of their
     dependencies. The dependencies to check should be updated here.
 
