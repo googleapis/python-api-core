@@ -185,11 +185,13 @@ def check_python_version(
 
     if gapic_end < today:
         message = _flatten_message(
-            f"""You are using a non-supported Python version
+            f"""
+            You are using a non-supported Python version
             ({py_version_str}).  Google will not post any further
             updates to {package_label}. We suggest you upgrade to the
             latest Python version, or at least Python
-            {min_python(today)}, and then update {package_label}. """
+            {min_python(today)}, and then update {package_label}.
+            """
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
@@ -197,24 +199,28 @@ def check_python_version(
     eol_date = version_info.python_eol + EOL_GRACE_PERIOD
     if eol_date <= today <= gapic_end:
         message = _flatten_message(
-            f"""You are using a Python version ({py_version_str})
+            f"""
+            You are using a Python version ({py_version_str})
             past its end of life. Google will update {package_label}
             with critical bug fixes on a best-effort basis, but not
             with any other fixes or features. We suggest you upgrade
             to the latest Python version, or at least Python
-            {min_python(today)}, and then update {package_label}."""
+            {min_python(today)}, and then update {package_label}.
+            """
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_EOL
 
     if gapic_deprecation <= today <= gapic_end:
         message = _flatten_message(
-            f"""You are using a Python version ({py_version_str}),
+            f"""
+            You are using a Python version ({py_version_str}),
             which Google will stop supporting in {package_label} when
             it reaches its end of life ({version_info.python_eol}). We
             suggest you upgrade to the latest Python version, or at
             least Python {min_python(version_info.python_eol)}, and
-            then update {package_label}."""
+            then update {package_label}.
+            """
         )
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_DEPRECATED

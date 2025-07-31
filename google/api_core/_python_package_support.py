@@ -110,7 +110,8 @@ def warn_deprecation_for_versions_less_than(
             dependent_distribution_package,
         ) = _get_distribution_and_import_packages(dependent_import_package)
         message_template = message_template or _flatten_message(
-            """DEPRECATION: Package {dependent_packages} depends on
+            """
+            DEPRECATION: Package {dependent_packages} depends on
             {dependency_packages}, currently installed at version
             {version_used.__str__}. Future updates to
             {dependent_packages} will require {dependency_packages} at
@@ -120,12 +121,15 @@ def warn_deprecation_for_versions_less_than(
             {dependent_packages} can require the higher version, or
             (b) you manually update your Python environment to use at
             least version {next_supported_version} of
-            {dependency_packages}."""
+            {dependency_packages}.
+            """
         )
         logging.warning(
             message_template.format(
                 dependent_import_package=dependent_import_package,
                 dependency_import_package=dependency_import_package,
+                dependency_packages=dependency_packages,
+                dependent_packages=dependent_packages,
                 next_supported_version=next_supported_version,
                 version_used=version_used,
             )
