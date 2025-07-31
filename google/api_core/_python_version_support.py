@@ -90,6 +90,8 @@ PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
 LOWEST_TRACKED_VERSION = min(PYTHON_VERSION_INFO.keys())
 FAKE_PAST_DATE = datetime.date(1970, 1, 1)
 FAKE_FUTURE_DATE = datetime.date(9000, 1, 1)
+DEPRECATION_WARNING_PERIOD = datetime.timedelta(days=365)
+EOL_GRACE_PERIOD = datetime.timedelta(weeks=1)
 
 
 def _flatten_message(text: str) -> str:
@@ -131,10 +133,10 @@ def check_python_version(
             )
 
     gapic_deprecation = version_info.gapic_deprecation or (
-        version_info.python_eol - datetime.timedelta(days=365)
+        version_info.python_eol - DEPRECATION_WARNING_PERIOD
     )
     gapic_end = version_info.gapic_end or (
-        version_info.python_eol + datetime.timedelta(weeks=1)
+        version_info.python_eol + EOL_GRACE_PERIOD
     )
 
     def min_python(date: datetime.date) -> str:
@@ -156,7 +158,7 @@ def check_python_version(
         logging.warning(message)
         return PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
 
-    eol_date = version_info.python_eol + datetime.timedelta(weeks=1)
+    eol_date = version_info.python_eol + EOL_GRACE_PERIOD
     if eol_date <= today <= gapic_end:
         message = _flatten_message(
             f"""
