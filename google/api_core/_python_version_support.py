@@ -19,7 +19,7 @@ import enum
 import logging
 import sys
 import textwrap
-from typing import NamedTuple, Optional, Dict, Tuple
+from typing import Any, NamedTuple, Optional, Dict, Tuple
 
 
 class PythonVersionStatus(enum.Enum):
@@ -126,7 +126,7 @@ else:
             return None
 
 
-def _get_distribution_and_import_packages(import_package: str) -> Optional[str]:
+def _get_distribution_and_import_packages(import_package: str) -> Tuple[str, Any]:
     """Return a pretty string with distribution & import package names."""
     distribution_package = _get_pypi_package_name(import_package)
     dependency_distribution_and_import_packages = (
@@ -138,7 +138,7 @@ def _get_distribution_and_import_packages(import_package: str) -> Optional[str]:
 
 
 def check_python_version(
-    package: Optional[str] = "this package", today: Optional[datetime.date] = None
+    package: str = "this package", today: Optional[datetime.date] = None
 ) -> PythonVersionStatus:
     """Check the running Python version and issue a support warning if needed.
 
@@ -188,7 +188,7 @@ def check_python_version(
             f"""
             You are using a non-supported Python version
             ({py_version_str}).  Google will not post any further
-            updates to {package_label}. We suggest you upgrade to the
+            updates to {package_label}. Please upgrade to the
             latest Python version, or at least Python
             {min_python(today)}, and then update {package_label}.
             """
@@ -203,7 +203,7 @@ def check_python_version(
             You are using a Python version ({py_version_str})
             past its end of life. Google will update {package_label}
             with critical bug fixes on a best-effort basis, but not
-            with any other fixes or features. We suggest you upgrade
+            with any other fixes or features. Please upgrade
             to the latest Python version, or at least Python
             {min_python(today)}, and then update {package_label}.
             """
@@ -214,10 +214,10 @@ def check_python_version(
     if gapic_deprecation <= today <= gapic_end:
         message = _flatten_message(
             f"""
-            You are using a Python version ({py_version_str}),
+            You are using a Python version ({py_version_str})
             which Google will stop supporting in {package_label} when
-            it reaches its end of life ({version_info.python_eol}). We
-            suggest you upgrade to the latest Python version, or at
+            it reaches its end of life ({version_info.python_eol}). Please
+            upgrade to the latest Python version, or at
             least Python {min_python(version_info.python_eol)}, and
             then update {package_label}.
             """
