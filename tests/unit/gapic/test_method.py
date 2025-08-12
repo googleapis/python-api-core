@@ -198,7 +198,8 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
         method, default_retry, default_timeout
     )
 
-    result = wrapped_method(timeout=22)
+    specified_timeout = 22
+    result = wrapped_method(timeout=specified_timeout)
 
     assert result == 42
 
