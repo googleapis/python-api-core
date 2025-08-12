@@ -177,7 +177,7 @@ def test_wrap_method_with_overriding_retry_timeout_compression(unused_sleep):
         method, default_retry, default_timeout, default_compression
     )
 
-    specified_timeout = 22
+    specified_timeout = 22.0
     result = wrapped_method(
         retry=retry.Retry(retry.if_exception_type(exceptions.NotFound)),
         timeout=timeout.ConstantTimeout(specified_timeout),
@@ -201,7 +201,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
         method, default_retry, default_timeout
     )
 
-    specified_timeout = 22
+    specified_timeout = 22.0
     result = wrapped_method(timeout=specified_timeout)
 
     assert result == 42
