@@ -180,37 +180,36 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         session.run("python", "-c", "import grpc; print(grpc.__version__)")
     session.run("python", "-c", "import google.auth; print(google.auth.__version__)")
 
-    pytest_args = [
-        "python",
-        "-m",
-        "pytest",
-        *(
-            # Helpful for running a single test or testfile.
-            session.posargs
-            or [
-                "--quiet",
-                "--cov=google.api_core",
-                "--cov=tests.unit",
-                "--cov-append",
-                "--cov-config=.coveragerc",
-                "--cov-report=",
-                "--cov-fail-under=0",
-                # Running individual tests with parallelism enabled is usually not helpful.
-                "-n=auto",
-                os.path.join("tests", "unit"),
-            ]
-        ),
-    ]
+    pytest_command = ["python", "-m", "pytest"]
+
+    if session.posargs:
+        pytest_options = list(session.posargs)
+    else:
+        pytest_options = [
+            "--quiet",
+            "--cov=google.api_core",
+            "--cov=tests.unit",
+            "--cov-append",
+            "--cov-config=.coveragerc",
+            "--cov-report=",
+            "--cov-fail-under=0",
+            "-n=auto",
+            os.path.join("tests", "unit"),
+            "--cov=tests.asyncio",
+            os.path.join("tests", "asyncio"),
+        ]
+
+    # Temporarily disable coverage for Python 3.12 due to a missing
+    # _sqlite3 module in some environments. This is a workaround. The proper
+    # fix is to reinstall Python 3.12 with SQLite support.
+    # We only do this when not running specific tests (no posargs).
+    if session.python == "3.12" and not session.posargs:
+        pytest_options = [opt for opt in pytest_options if not opt.startswith("--cov")]
+        pytest_command.extend(["-p", "no:cov"])
 
     session.install("asyncmock", "pytest-asyncio")
 
-    # Having positional arguments means the user wants to run specific tests.
-    # Best not to add additional tests to that list.
-    if not session.posargs:
-        pytest_args.append("--cov=tests.asyncio")
-        pytest_args.append(os.path.join("tests", "asyncio"))
-
-    session.run(*pytest_args)
+    session.run(*pytest_command, *pytest_options)
 
 
 @nox.session(python=PYTHON_VERSIONS)
