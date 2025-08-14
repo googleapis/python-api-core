@@ -22,13 +22,11 @@ except ImportError:  # pragma: NO COVER
 import pytest
 
 try:
-    import grpc
     from grpc import aio
 except ImportError:  # pragma: NO COVER
     pytest.skip("No GRPC", allow_module_level=True)
 
 from google.api_core import bidi_async
-from google.api_core import exceptions
 
 
 async def consume_async_generator(gen):
