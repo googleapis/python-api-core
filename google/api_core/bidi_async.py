@@ -1,4 +1,4 @@
-# Copyright 2020, Google LLC
+# Copyright 2024, Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import asyncio
 import logging
 
 from google.api_core import exceptions
+from google.api_core.bidi_base import BidiRpcBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class _AsyncRequestQueueGenerator:
                 request.
     """
 
-    def __init__(self, queue: asyncio.Queue, period: float = 1, initial_request=None):
+    def __init__(self, queue: asyncio.Queue, period: float = 0.1, initial_request=None):
         self._queue = queue
         self._period = period
         self._initial_request = initial_request
@@ -122,7 +123,7 @@ class _AsyncRequestQueueGenerator:
             yield item
 
 
-class AsyncBidiRpc:
+class AsyncBidiRpc(BidiRpcBase):
     """A helper for consuming a async bi-directional streaming RPC.
 
     This maps gRPC's built-in interface which uses a request iterator and a
@@ -161,35 +162,9 @@ class AsyncBidiRpc:
             the request.
     """
 
-    def __init__(self, start_rpc, initial_request=None, metadata=None):
-        self._start_rpc = start_rpc
-        self._initial_request = initial_request
-        self._rpc_metadata = metadata
-        self._request_queue = asyncio.Queue()
-        self._request_generator = None
-        self._callbacks = []
-        self.call = None
-        self._loop = asyncio.get_event_loop()
-
-    def add_done_callback(self, callback):
-        """Adds a callback that will be called when the RPC terminates.
-
-        This occurs when the RPC errors or is successfully terminated.
-
-        Args:
-            callback (Callable[[grpc.Future], None]): The callback to execute.
-                It will be provided with the same gRPC future as the underlying
-                stream which will also be a :class:`grpc.aio.Call`.
-        """
-        self._callbacks.append(callback)
-
-    def _on_call_done(self, future):
-        # This occurs when the RPC errors or is successfully terminated.
-        # Note that grpc's "future" here can also be a grpc.RpcError.
-        # See note in https://github.com/grpc/grpc/issues/10885#issuecomment-302651331
-        # that `grpc.RpcError` is also `grpc.aio.Call`.
-        for callback in self._callbacks:
-            callback(future)
+    def _create_queue(self):
+        """Create a queue for requests."""
+        return asyncio.Queue()
 
     async def open(self):
         """Opens the stream."""
@@ -268,8 +243,3 @@ class AsyncBidiRpc:
     def is_active(self):
         """bool: True if this stream is currently open and active."""
         return self.call is not None and not self.call.done()
-
-    @property
-    def pending_requests(self):
-        """int: Returns an estimate of the number of queued requests."""
-        return self._request_queue.qsize()

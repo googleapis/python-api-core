@@ -22,6 +22,7 @@ import threading
 import time
 
 from google.api_core import exceptions
+from google.api_core.bidi_base import BidiRpcBase
 
 _LOGGER = logging.getLogger(__name__)
 _BIDIRECTIONAL_CONSUMER_NAME = "Thread-ConsumeBidirectionalStream"
@@ -201,7 +202,7 @@ class _Throttle(object):
         )
 
 
-class BidiRpc(object):
+class BidiRpc(BidiRpcBase):
     """A helper for consuming a bi-directional streaming RPC.
 
     This maps gRPC's built-in interface which uses a request iterator and a
@@ -240,35 +241,9 @@ class BidiRpc(object):
             the request.
     """
 
-    def __init__(self, start_rpc, initial_request=None, metadata=None):
-        self._start_rpc = start_rpc
-        self._initial_request = initial_request
-        self._rpc_metadata = metadata
-        self._request_queue = queue_module.Queue()
-        self._request_generator = None
-        self._is_active = False
-        self._callbacks = []
-        self.call = None
-
-    def add_done_callback(self, callback):
-        """Adds a callback that will be called when the RPC terminates.
-
-        This occurs when the RPC errors or is successfully terminated.
-
-        Args:
-            callback (Callable[[grpc.Future], None]): The callback to execute.
-                It will be provided with the same gRPC future as the underlying
-                stream which will also be a :class:`grpc.Call`.
-        """
-        self._callbacks.append(callback)
-
-    def _on_call_done(self, future):
-        # This occurs when the RPC errors or is successfully terminated.
-        # Note that grpc's "future" here can also be a grpc.RpcError.
-        # See note in https://github.com/grpc/grpc/issues/10885#issuecomment-302651331
-        # that `grpc.RpcError` is also `grpc.call`.
-        for callback in self._callbacks:
-            callback(future)
+    def _create_queue(self):
+        """Create a queue for requests."""
+        return queue_module.Queue()
 
     def open(self):
         """Opens the stream."""
@@ -351,11 +326,6 @@ class BidiRpc(object):
     def is_active(self):
         """bool: True if this stream is currently open and active."""
         return self.call is not None and self.call.is_active()
-
-    @property
-    def pending_requests(self):
-        """int: Returns an estimate of the number of queued requests."""
-        return self._request_queue.qsize()
 
 
 def _never_terminate(future_or_error):

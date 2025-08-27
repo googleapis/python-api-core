@@ -14,10 +14,12 @@
 
 import asyncio
 
+from unittest import mock
+
 try:
-    from unittest import mock
+    from unittest.mock import AsyncMock
 except ImportError:  # pragma: NO COVER
-    import mock  # type: ignore
+    from asyncmock import AsyncMock
 
 import pytest
 
@@ -138,9 +140,9 @@ class Test_AsyncRequestQueueGenerator:
 def make_async_rpc():
     """Makes a mock async RPC used to test Bidi classes."""
     call = mock.create_autospec(aio.StreamStreamCall, instance=True)
-    rpc = mock.AsyncMock(spec=aio.StreamStreamMultiCallable)
+    rpc = AsyncMock()
 
-    async def rpc_side_effect(request, metadata=None):
+    def rpc_side_effect(request, metadata=None):
         call.done.return_value = False
         return call
 
@@ -151,7 +153,7 @@ def make_async_rpc():
         return True
 
     call.cancel.side_effect = cancel_side_effect
-    call.read = mock.AsyncMock()
+    call.read = AsyncMock()
 
     return rpc, call
 
@@ -167,7 +169,6 @@ class AsyncClosedCall:
         raise self.exception
 
 
-@pytest.mark.asyncio
 class TestAsyncBidiRpc:
     def test_initial_state(self):
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
@@ -182,6 +183,7 @@ class TestAsyncBidiRpc:
 
         callback.assert_called_once_with(mock.sentinel.future)
 
+    @pytest.mark.asyncio
     async def test_metadata(self):
         rpc, call = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc, metadata=mock.sentinel.A)
@@ -192,6 +194,7 @@ class TestAsyncBidiRpc:
         rpc.assert_awaited_once()
         assert rpc.call_args.kwargs["metadata"] == mock.sentinel.A
 
+    @pytest.mark.asyncio
     async def test_open(self):
         rpc, call = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc)
@@ -202,6 +205,7 @@ class TestAsyncBidiRpc:
         assert bidi_rpc.is_active
         call.add_done_callback.assert_called_once_with(bidi_rpc._on_call_done)
 
+    @pytest.mark.asyncio
     async def test_open_error_already_open(self):
         rpc, _ = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc)
@@ -211,6 +215,7 @@ class TestAsyncBidiRpc:
         with pytest.raises(ValueError):
             await bidi_rpc.open()
 
+    @pytest.mark.asyncio
     async def test_close(self):
         rpc, call = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc)
@@ -228,10 +233,12 @@ class TestAsyncBidiRpc:
         assert bidi_rpc._initial_request is None
         assert not bidi_rpc._callbacks
 
+    @pytest.mark.asyncio
     async def test_close_no_rpc(self):
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
         await bidi_rpc.close()
 
+    @pytest.mark.asyncio
     async def test_send(self):
         rpc, call = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc)
@@ -242,12 +249,14 @@ class TestAsyncBidiRpc:
         assert bidi_rpc.pending_requests == 1
         assert await bidi_rpc._request_queue.get() is mock.sentinel.request
 
+    @pytest.mark.asyncio
     async def test_send_not_open(self):
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
 
         with pytest.raises(ValueError):
             await bidi_rpc.send(mock.sentinel.request)
 
+    @pytest.mark.asyncio
     async def test_send_dead_rpc(self):
         error = ValueError()
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
@@ -258,15 +267,17 @@ class TestAsyncBidiRpc:
 
         assert exc_info.value == error
 
+    @pytest.mark.asyncio
     async def test_recv(self):
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
         bidi_rpc.call = mock.create_autospec(aio.Call, instance=True)
-        bidi_rpc.call.read = mock.AsyncMock(return_value=mock.sentinel.response)
+        bidi_rpc.call.read = AsyncMock(return_value=mock.sentinel.response)
 
         response = await bidi_rpc.recv()
 
         assert response == mock.sentinel.response
 
+    @pytest.mark.asyncio
     async def test_recv_not_open(self):
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
 
