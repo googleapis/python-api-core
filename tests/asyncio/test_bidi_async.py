@@ -17,10 +17,7 @@ import asyncio
 
 from unittest import mock
 
-try:
-    from unittest.mock import AsyncMock
-except ImportError:  # pragma: NO COVER
-    from asyncmock import AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -31,17 +28,11 @@ except ImportError:  # pragma: NO COVER
 
 from google.api_core import bidi_async
 
-try:
-    aiter
-except NameError:
+
+if sys.version < (3, 10):  # type: ignore[operator]
 
     def aiter(obj):
         return obj.__aiter__()
-
-
-try:
-    anext
-except NameError:
 
     async def anext(obj):
         return await obj.__anext__()
@@ -193,7 +184,7 @@ class TestAsyncBidiRpc:
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(
-        sys.version_info < (3, 8),
+        sys.version_info < (3, 8),  # type: ignore[operator]
         reason="Python 3.8 below doesnt provide support for assert_awaited_once",
     )
     async def test_metadata(self):
