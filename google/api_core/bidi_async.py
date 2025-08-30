@@ -59,10 +59,6 @@ class _AsyncRequestQueueGenerator:
 
         Args:
             queue (asyncio.Queue): The request queue.
-            period (float): The number of seconds to wait for items from the queue
-                before checking if the RPC is cancelled. In practice, this
-                determines the maximum amount of time the request consumption
-                task will live after the RPC is cancelled.
             initial_request (Union[protobuf.Message,
                     Callable[[], protobuf.Message]]): The initial request to
                 yield. This is done independently of the request queue to allow for
@@ -70,9 +66,8 @@ class _AsyncRequestQueueGenerator:
                 request.
     """
 
-    def __init__(self, queue: asyncio.Queue, period: float = 0.1, initial_request=None):
+    def __init__(self, queue: asyncio.Queue, initial_request=None):
         self._queue = queue
-        self._period = period
         self._initial_request = initial_request
         self.call = None
 
@@ -91,18 +86,7 @@ class _AsyncRequestQueueGenerator:
                 yield self._initial_request
 
         while True:
-            try:
-                item = self._queue.get_nowait()
-            except asyncio.QueueEmpty:
-                if not self._is_active():
-                    _LOGGER.debug(
-                        "Empty queue and inactive call, exiting request generator."
-                    )
-                    return
-                else:
-                    # call is still active, keep waiting for queue items.
-                    await asyncio.sleep(self._period)
-                    continue
+            item = await self._queue.get()
 
             # The consumer explicitly sent "None", indicating that the request
             # should end.

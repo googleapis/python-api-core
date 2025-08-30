@@ -1,4 +1,4 @@
-# Copyright 2020, Google LLC All rights reserved.
+# Copyright 2025, Google LLC All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,13 +31,6 @@ except ImportError:  # pragma: NO COVER
 from google.api_core import bidi_async
 
 
-async def consume_async_generator(gen):
-    items = []
-    async for item in gen:
-        items.append(item)
-    return items
-
-
 @pytest.mark.asyncio
 class Test_AsyncRequestQueueGenerator:
     async def test_bounded_consume(self):
@@ -48,21 +41,22 @@ class Test_AsyncRequestQueueGenerator:
         await q.put(mock.sentinel.A)
         await q.put(mock.sentinel.B)
 
-        generator = bidi_async._AsyncRequestQueueGenerator(q, period=0.01)
+        generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
         items = []
-        gen_aiter = generator.__aiter__()
+        gen_aiter = aiter(generator)
 
-        items.append(await gen_aiter.__anext__())
-        items.append(await gen_aiter.__anext__())
+        items.append(await anext(gen_aiter))
+        items.append(await anext(gen_aiter))
 
         # At this point, the queue is empty. The next call to anext will sleep.
         # We make the call inactive.
         call.done.return_value = True
 
-        with pytest.raises(StopAsyncIteration):
-            await gen_aiter.__anext__()
+        with pytest.raises(asyncio.TimeoutError):
+            async with asyncio.timeout(1):
+                await anext(gen_aiter)
 
         assert items == [mock.sentinel.A, mock.sentinel.B]
 
@@ -76,9 +70,7 @@ class Test_AsyncRequestQueueGenerator:
         )
         generator.call = call
 
-        items = await consume_async_generator(generator)
-
-        assert items == [mock.sentinel.A]
+        assert await anext(aiter(generator)) == mock.sentinel.A
 
     async def test_yield_initial_callable_and_exit(self):
         q = asyncio.Queue()
@@ -90,9 +82,7 @@ class Test_AsyncRequestQueueGenerator:
         )
         generator.call = call
 
-        items = await consume_async_generator(generator)
-
-        assert items == [mock.sentinel.A]
+        assert await anext(aiter(generator)) == mock.sentinel.A
 
     async def test_exit_when_inactive_with_item(self):
         q = asyncio.Queue()
@@ -104,9 +94,13 @@ class Test_AsyncRequestQueueGenerator:
         generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
-        items = await consume_async_generator(generator)
+        with pytest.raises(StopAsyncIteration) as exc_info:
+            assert await anext(aiter(generator))
+            assert (
+                exc_info.value.args[0]
+                == "Inactive call, replacing item on queue and exiting request generator."
+            )
 
-        assert items == []
         # Make sure it put the item back.
         assert not q.empty()
         assert await q.get() == mock.sentinel.A
@@ -119,9 +113,9 @@ class Test_AsyncRequestQueueGenerator:
         generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
-        items = await consume_async_generator(generator)
-
-        assert items == []
+        with pytest.raises(asyncio.TimeoutError):
+            async with asyncio.timeout(1):
+                await anext(aiter(generator))
 
     async def test_exit_with_stop(self):
         q = asyncio.Queue()
@@ -132,9 +126,9 @@ class Test_AsyncRequestQueueGenerator:
         generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
-        items = await consume_async_generator(generator)
-
-        assert items == []
+        with pytest.raises(StopAsyncIteration) as exc_info:
+            assert await anext(aiter(generator))
+            assert exc_info.value.args[0] == "Cleanly exiting request generator."
 
 
 def make_async_rpc():

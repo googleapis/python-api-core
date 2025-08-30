@@ -1,4 +1,4 @@
-# Copyright 2024, Google LLC
+# Copyright 2025, Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # You may obtain a copy of the License at
@@ -68,21 +68,21 @@ class BidiRpcBase:
         for callback in self._callbacks:
             callback(future)
 
-    def open(self):
-        """Opens the stream."""
-        raise NotImplementedError("Not implemented in base class")
+    # def open(self):
+    #     """Opens the stream."""
+    #     raise NotImplementedError("Not implemented in base class")
 
-    def close(self):
-        """Closes the stream."""
-        raise NotImplementedError("Not implemented in base class")
+    # def close(self):
+    #     """Closes the stream."""
+    #     raise NotImplementedError("Not implemented in base class")
 
-    def send(self, request):
-        """Queue a message to be sent on the stream."""
-        raise NotImplementedError("Not implemented in base class")
+    # def send(self, request):
+    #     """Queue a message to be sent on the stream."""
+    #     raise NotImplementedError("Not implemented in base class")
 
-    def recv(self):
-        """Wait for a message to be returned from the stream."""
-        raise NotImplementedError("Not implemented in base class")
+    # def recv(self):
+    #     """Wait for a message to be returned from the stream."""
+    #     raise NotImplementedError("Not implemented in base class")
 
     @property
     def is_active(self):
