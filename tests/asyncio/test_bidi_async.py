@@ -17,7 +17,11 @@ import asyncio
 
 from unittest import mock
 
-from unittest.mock import AsyncMock
+try:
+    from unittest.mock import AsyncMock
+except ImportError:  # pragma: NO COVER
+    from mock import AsyncMock  # type: ignore
+
 
 import pytest
 
