@@ -10,11 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Base class for Bi-directional streaming RPC helpers."""
+"""Base class for bi-directional streaming RPC helpers."""
 
 
 class BidiRpcBase:
-    """A base helper for consuming a bi-directional streaming RPC.
+    """A base class for consuming a bi-directional streaming RPC.
 
     This maps gRPC's built-in interface which uses a request iterator and a
     response iterator into a socket-like :func:`send` and :func:`recv`. This
@@ -25,8 +25,9 @@ class BidiRpcBase:
     This does *not* retry the stream on errors.
 
     Args:
-        start_rpc (grpc.StreamStreamMultiCallable): The gRPC method used to
-            start the RPC.
+        start_rpc (Union[grpc.StreamStreamMultiCallable,
+                    grpc.aio.StreamStreamMultiCallable]): The gRPC method used
+                    to start the RPC.
         initial_request (Union[protobuf.Message,
                 Callable[[], protobuf.Message]]): The initial request to
             yield. This is useful if an initial request is needed to start the
@@ -67,22 +68,6 @@ class BidiRpcBase:
         # that `grpc.RpcError` is also `grpc.aio.Call`.
         for callback in self._callbacks:
             callback(future)
-
-    # def open(self):
-    #     """Opens the stream."""
-    #     raise NotImplementedError("Not implemented in base class")
-
-    # def close(self):
-    #     """Closes the stream."""
-    #     raise NotImplementedError("Not implemented in base class")
-
-    # def send(self, request):
-    #     """Queue a message to be sent on the stream."""
-    #     raise NotImplementedError("Not implemented in base class")
-
-    # def recv(self):
-    #     """Wait for a message to be returned from the stream."""
-    #     raise NotImplementedError("Not implemented in base class")
 
     @property
     def is_active(self):

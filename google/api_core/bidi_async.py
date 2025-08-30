@@ -26,44 +26,44 @@ _LOGGER = logging.getLogger(__name__)
 class _AsyncRequestQueueGenerator:
     """An async helper for sending requests to a gRPC stream from a Queue.
 
-        This generator takes requests off a given queue and yields them to gRPC.
+    This generator takes requests off a given queue and yields them to gRPC.
 
-        This helper is useful when you have an indeterminate, indefinite, or
-        otherwise open-ended set of requests to send through a request-streaming
-        (or bidirectional) RPC.
+    This helper is useful when you have an indeterminate, indefinite, or
+    otherwise open-ended set of requests to send through a request-streaming
+    (or bidirectional) RPC.
 
-        The reason this is necessary is because gRPC takes an async iterator as the
-        request for request-streaming RPCs. gRPC consumes this iterator to allow
-        it to block while generating requests for the stream. However, if the
-        generator blocks indefinitely gRPC will not be able to clean up the task
-        as it'll be blocked on `anext(iterator)` and not be able to check the
-        channel status to stop iterating. This helper mitigates that by waiting
-        on the queue with a timeout and checking the RPC state before yielding.
+    The reason this is necessary
 
-        Finally, it allows for retrying without swapping queues because if it does
-        pull an item off the queue when the RPC is inactive, it'll immediately put
-        it back and then exit. This is necessary because yielding the item in this
-        case will cause gRPC to discard it. In practice, this means that the order
+    is because it's let's user have control on the when they would want to
+    send requests proto messages instead of sending all of them initilally.
+
+    This is achieved via asynchronous queue (asyncio.Queue),
+    gRPC awaits until there's a message in the queue.
+
+    Finally, it allows for retrying without swapping queues because if it does
+    pull an item off the queue when the RPC is inactive, it'll immediately put
+    it back and then exit. This is necessary because yielding the item in this
+    case will cause gRPC to discard it. In practice, this means that the order
     of messages is not guaranteed. If such a thing is necessary it would be
-        easy to use a priority queue.
+    easy to use a priority queue.
 
-        Example::
+    Example::
 
-            requests = _AsyncRequestQueueGenerator(q)
-            call = await stub.StreamingRequest(requests)
-            requests.call = call
+        requests = _AsyncRequestQueueGenerator(q)
+        call = await stub.StreamingRequest(requests)
+        requests.call = call
 
-            async for response in call:
-                print(response)
-                await q.put(...)
+        async for response in call:
+            print(response)
+            await q.put(...)
 
-        Args:
-            queue (asyncio.Queue): The request queue.
-            initial_request (Union[protobuf.Message,
-                    Callable[[], protobuf.Message]]): The initial request to
-                yield. This is done independently of the request queue to allow for
-                easily restarting streams that require some initial configuration
-                request.
+    Args:
+        queue (asyncio.Queue): The request queue.
+        initial_request (Union[protobuf.Message,
+                Callable[[], protobuf.Message]]): The initial request to
+            yield. This is done independently of the request queue to allow for
+            easily restarting streams that require some initial configuration
+            request.
     """
 
     def __init__(self, queue: asyncio.Queue, initial_request=None):
