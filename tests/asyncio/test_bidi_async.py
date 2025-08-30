@@ -55,8 +55,7 @@ class Test_AsyncRequestQueueGenerator:
         call.done.return_value = True
 
         with pytest.raises(asyncio.TimeoutError):
-            async with asyncio.timeout(1):
-                await anext(gen_aiter)
+            await asyncio.wait_for(anext(gen_aiter), timeout=1)
 
         assert items == [mock.sentinel.A, mock.sentinel.B]
 
@@ -114,8 +113,7 @@ class Test_AsyncRequestQueueGenerator:
         generator.call = call
 
         with pytest.raises(asyncio.TimeoutError):
-            async with asyncio.timeout(1):
-                await anext(aiter(generator))
+            await asyncio.wait_for(anext(aiter(generator)), timeout=1)
 
     async def test_exit_with_stop(self):
         q = asyncio.Queue()
