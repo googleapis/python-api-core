@@ -29,7 +29,7 @@ except ImportError:  # pragma: NO COVER
 from google.api_core import bidi_async
 
 
-if sys.version < (3, 10):  # type: ignore[operator]
+if sys.version_info < (3, 10):  # type: ignore[operator]
 
     def aiter(obj):
         return obj.__aiter__()
