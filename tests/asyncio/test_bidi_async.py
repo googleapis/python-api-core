@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import asyncio
 
 from unittest import mock
@@ -191,6 +192,10 @@ class TestAsyncBidiRpc:
         callback.assert_called_once_with(mock.sentinel.future)
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        sys.version_info < (3, 8),
+        reason="Python 3.8 below doesnt provide support for assert_awaited_once",
+    )
     async def test_metadata(self):
         rpc, call = make_async_rpc()
         bidi_rpc = bidi_async.AsyncBidiRpc(rpc, metadata=mock.sentinel.A)
