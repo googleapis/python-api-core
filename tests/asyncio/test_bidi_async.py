@@ -30,6 +30,21 @@ except ImportError:  # pragma: NO COVER
 
 from google.api_core import bidi_async
 
+try:
+    aiter
+except NameError:
+
+    def aiter(obj):
+        return obj.__aiter__()
+
+
+try:
+    anext
+except NameError:
+
+    async def anext(obj):
+        return await obj.__anext__()
+
 
 @pytest.mark.asyncio
 class Test_AsyncRequestQueueGenerator:
