@@ -31,6 +31,7 @@ except ImportError:  # pragma: NO COVER
     pytest.skip("No GRPC", allow_module_level=True)
 
 from google.api_core import bidi_async
+from google.api_core import exceptions
 
 
 if sys.version_info < (3, 10):  # type: ignore[operator]
@@ -221,6 +222,23 @@ class TestAsyncBidiRpc:
 
         with pytest.raises(ValueError):
             await bidi_rpc.open()
+
+    @pytest.mark.asyncio
+    async def test_open_error_call_error(self):
+        rpc, _ = make_async_rpc()
+        expected_exception = exceptions.GoogleAPICallError(
+            "test", response=mock.sentinel.response
+        )
+        rpc.side_effect = expected_exception
+        bidi_rpc = bidi_async.AsyncBidiRpc(rpc)
+        callback = mock.Mock(spec=["__call__"])
+        bidi_rpc.add_done_callback(callback)
+
+        with pytest.raises(exceptions.GoogleAPICallError) as exc_info:
+            await bidi_rpc.open()
+
+        assert exc_info.value == expected_exception
+        callback.assert_called_once_with(mock.sentinel.response)
 
     @pytest.mark.asyncio
     async def test_close(self):
