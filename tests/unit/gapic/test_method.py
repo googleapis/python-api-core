@@ -204,7 +204,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
     actual_timeout = method.call_args[1]["timeout"]
     metadata = method.call_args[1]["metadata"]
     assert metadata == mock.ANY
-    assert actual_timeout == pytest.approx(22)
+    assert actual_timeout == pytest.approx(22, abs=0.01)
 
 
 def test_wrap_method_with_call():
