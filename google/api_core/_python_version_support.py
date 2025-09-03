@@ -25,6 +25,7 @@ from typing import Any, NamedTuple, Optional, Dict, Tuple
 class PythonVersionStatus(enum.Enum):
     """Represent the support status of a Python version."""
 
+    PYTHON_VERSION_STATUS_UNSPECIFIED = "PYTHON_VERSION_STATUS_UNSPECIFIED"
     PYTHON_VERSION_UNSUPPORTED = "PYTHON_VERSION_UNSUPPORTED"
     PYTHON_VERSION_EOL = "PYTHON_VERSION_EOL"
     PYTHON_VERSION_DEPRECATED = "PYTHON_VERSION_DEPRECATED"
