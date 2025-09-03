@@ -23,7 +23,7 @@ from google.api_core import version as api_core_version
 
 __version__ = api_core_version.__version__
 
-# TODO: Until dependent artifacts require this version of
+# NOTE: Until dependent artifacts require this version of
 # google.api_core, the functionality below must be made available
 # manually in those artifacts.
 
