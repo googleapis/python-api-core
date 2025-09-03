@@ -105,7 +105,7 @@ def test_warn_deprecation_for_versions_less_than(
         ("my-package (my.package)", "my-package"),
     ]
     mock_get_version.return_value = parse_version("1.0.0")
-    template = "Custom warning for {dependency_packages} used by {dependent_packages}."
+    template = "Custom warning for {dependency_package} used by {dependent_package}."
     warn_deprecation_for_versions_less_than(
         "my.package", "dep.package", "2.0.0", message_template=template
     )
