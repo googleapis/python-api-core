@@ -4,6 +4,13 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.25.2](https://github.com/googleapis/python-api-core/compare/v2.25.1...v2.25.2) (2025-09-04)
+
+
+### Bug Fixes
+
+* Fix async tests and round-off error in test expectations ([#837](https://github.com/googleapis/python-api-core/issues/837)) ([14a5978](https://github.com/googleapis/python-api-core/commit/14a59789e144905bd6c82180ad07a52bf1f84f02))
+
 ## [2.25.1](https://github.com/googleapis/python-api-core/compare/v2.25.0...v2.25.1) (2025-06-02)
 
 
