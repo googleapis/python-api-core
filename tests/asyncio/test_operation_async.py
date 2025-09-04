@@ -178,7 +178,7 @@ async def test_unexpected_result(unused_sleep):
 
 
 @pytest.mark.asyncio
-def test_from_gapic():
+async def test_from_gapic():
     operation_proto = make_operation_proto(done=True)
     operations_client = mock.create_autospec(
         operations_v1.OperationsClient, instance=True
