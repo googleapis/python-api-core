@@ -85,7 +85,7 @@ async def test_constructor():
 
 
 @pytest.mark.asyncio
-def test_metadata():
+async def test_metadata():
     expected_metadata = struct_pb2.Struct()
     future, _, _ = make_operation_future(
         [make_operation_proto(metadata=expected_metadata)]
