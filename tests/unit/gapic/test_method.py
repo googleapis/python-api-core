@@ -177,17 +177,16 @@ def test_wrap_method_with_overriding_retry_timeout_compression(unused_sleep):
         method, default_retry, default_timeout, default_compression
     )
 
-    specified_timeout = 22.0
     result = wrapped_method(
         retry=retry.Retry(retry.if_exception_type(exceptions.NotFound)),
-        timeout=timeout.ConstantTimeout(specified_timeout),
+        timeout=timeout.ConstantTimeout(22),
         compression=grpc.Compression.Deflate,
     )
 
     assert result == 42
     assert method.call_count == 2
     method.assert_called_with(
-        timeout=specified_timeout,
+        timeout=22,
         compression=grpc.Compression.Deflate,
         metadata=mock.ANY,
     )
@@ -201,8 +200,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
         method, default_retry, default_timeout
     )
 
-    specified_timeout = 22.0
-    result = wrapped_method(timeout=specified_timeout)
+    result = wrapped_method(timeout=22)
 
     assert result == 42
 
