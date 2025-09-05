@@ -100,10 +100,10 @@ def _flatten_message(text: str) -> str:
     return textwrap.dedent(text).strip().replace("\n", " ")
 
 
-# TODO: Remove once we no longer support Python3.7
+# TODO: Remove once we no longer support Python 3.7
 if sys.version_info < (3, 8):
 
-    def _get_pypi_package_name(module_name):
+    def _get_pypi_package_name(module_name):  # pragma: NO COVER
         """Determine the PyPI package name for a given module name."""
         return None
 

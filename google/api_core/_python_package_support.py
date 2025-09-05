@@ -49,7 +49,7 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
 
         # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
         # this code path once we drop support for Python 3.7
-        else:
+        else:  # pragma: NO COVER
             # Use pkg_resources, which is part of setuptools.
             import pkg_resources
 
