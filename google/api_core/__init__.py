@@ -17,6 +17,18 @@
 This package contains common code and utilities used by Google client libraries.
 """
 
+from google.api_core import _python_package_support
+from google.api_core import _python_version_support
 from google.api_core import version as api_core_version
 
 __version__ = api_core_version.__version__
+
+# NOTE: Until dependent artifacts require this version of
+# google.api_core, the functionality below must be made available
+# manually in those artifacts.
+
+check_python_version = _python_version_support.check_python_version
+check_python_version(package="google.api_core")
+
+check_dependency_versions = _python_package_support.check_dependency_versions
+check_dependency_versions("google.api_core")
