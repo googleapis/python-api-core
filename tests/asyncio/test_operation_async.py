@@ -83,6 +83,7 @@ async def test_constructor():
     assert future.metadata is None
     assert await future.running()
 
+
 @pytest.mark.asyncio
 async def test_metadata():
     expected_metadata = struct_pb2.Struct()
