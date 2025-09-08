@@ -201,6 +201,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
     result = wrapped_method(timeout=22)
 
     assert result == 42
+
     actual_timeout = method.call_args[1]["timeout"]
     metadata = method.call_args[1]["metadata"]
     assert metadata == mock.ANY
