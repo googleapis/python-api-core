@@ -24,9 +24,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class _AsyncRequestQueueGenerator:
-    """_AsyncRequestQueueGenerator is a helper class for sending asynchronous requests to a gRPC stream from a Queue.
+    """_AsyncRequestQueueGenerator is a helper class for sending asynchronous
+      requests to a gRPC stream from a Queue.
 
-    This generator takes asynchronous requests off a given queue and yields them to gRPC.
+    This generator takes asynchronous requests off a given queue and yields them
+    to gRPC.
 
     This helper is useful when you have an indeterminate, indefinite, or
     otherwise open-ended set of requests to send through a request-streaming
