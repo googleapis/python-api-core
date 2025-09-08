@@ -833,7 +833,7 @@ class TestBackgroundConsumer(object):
 
         # Wait for the consumer's thread to exit.
         while consumer.is_active:
-            pass
+            pass  # pragma: NO COVER
 
         assert callback.call_args.args[0] == grpc.StatusCode.INVALID_ARGUMENT
 
