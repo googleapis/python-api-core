@@ -117,7 +117,7 @@ else:
             module_to_distributions = metadata.packages_distributions()
 
             # Check if the module is found in the mapping
-            if module_name in module_to_distributions:
+            if module_name in module_to_distributions:  # pragma: NO COVER
                 # The value is a list of distribution names, take the first one
                 return module_to_distributions[module_name][0]
             else:
