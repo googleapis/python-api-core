@@ -96,7 +96,7 @@ def warn_deprecation_for_versions_less_than(
         not dependent_import_package
         or not dependency_import_package
         or not next_supported_version
-    ):
+    ):  # pragma: NO COVER
         return
     version_used = get_dependency_version(dependency_import_package)
     if not version_used:
