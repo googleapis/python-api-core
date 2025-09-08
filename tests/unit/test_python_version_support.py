@@ -34,7 +34,7 @@ def _create_failure_message(
     expected, result, py_version, date, gapic_dep, py_eol, eol_warn, gapic_end
 ):
     """Create a detailed failure message for a test."""
-    return textwrap.dedent(
+    return textwrap.dedent(  # pragma: NO COVER
         f"""
         --- Test Failed ---
         Expected status: {expected.name}
@@ -129,7 +129,7 @@ def test_all_tracked_versions_and_date_scenarios(
                 (result != expected_status)
                 or (result != PythonVersionStatus.PYTHON_VERSION_SUPPORTED)
                 and mock_log.call_count != 1
-            ):
+            ):  # pragma: NO COVER
                 py_version_str = f"{version_tuple[0]}.{version_tuple[1]}"
                 version_info = PYTHON_VERSION_INFO[version_tuple]
 
