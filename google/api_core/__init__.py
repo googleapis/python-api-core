@@ -33,4 +33,6 @@ check_python_version(package="google.api_core")
 check_dependency_versions = _python_package_support.check_dependency_versions
 check_dependency_versions("google.api_core")
 
-warn_deprecation_for_versions_less_than = _python_package_support.warn_deprecation_for_versions_less_than
+warn_deprecation_for_versions_less_than = (
+    _python_package_support.warn_deprecation_for_versions_less_than
+)
