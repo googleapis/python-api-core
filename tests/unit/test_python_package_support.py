@@ -24,6 +24,8 @@ from google.api_core._python_package_support import (
 )
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
+# this mark once we drop support for Python 3.7
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires python3.8 or higher")
 @patch("importlib.metadata.version")
 def test_get_dependency_version_py38_plus(mock_version):
@@ -37,6 +39,8 @@ def test_get_dependency_version_py38_plus(mock_version):
     assert get_dependency_version("not-a-package") is None
 
 
+# TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
+# this test function once we drop support for Python 3.7
 @pytest.mark.skipif(sys.version_info >= (3, 8), reason="requires python3.7")
 @patch("pkg_resources.get_distribution")
 def test_get_dependency_version_py37(mock_get_distribution):

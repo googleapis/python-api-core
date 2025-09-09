@@ -96,11 +96,12 @@ EOL_GRACE_PERIOD = datetime.timedelta(weeks=1)
 
 
 def _flatten_message(text: str) -> str:
-    """Dedent a multi-line string and flattens it into a single line."""
+    """Dedent a multi-line string and flatten it into a single line."""
     return textwrap.dedent(text).strip().replace("\n", " ")
 
 
-# TODO: Remove once we no longer support Python 3.7
+# TODO(https://github.com/googleapis/python-api-core/issues/835): Remove once we
+# no longer support Python 3.7
 if sys.version_info < (3, 8):
 
     def _get_pypi_package_name(module_name):  # pragma: NO COVER

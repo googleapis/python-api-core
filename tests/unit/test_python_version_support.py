@@ -162,6 +162,10 @@ def test_override_gapic_end_only():
             "google.api_core._python_version_support.PYTHON_VERSION_INFO",
             {version_tuple: overridden_info},
         ):
+            result_before_boundary = check_python_version(
+                today=custom_gapic_end + datetime.timedelta(days=-1))
+            assert result_before_boundary == PythonVersionStatus.PYTHON_VERSION_DEPRECATED
+
             result_at_boundary = check_python_version(today=custom_gapic_end)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
 
@@ -221,7 +225,7 @@ def test_untracked_older_version_is_unsupported():
 
 def test_untracked_newer_version_is_supported():
     """Test that a new, untracked version is supported and does not log."""
-    mock_py_version = VersionInfoMock(major=4, minor=0)
+    mock_py_version = VersionInfoMock(major=40, minor=0)
 
     with patch(
         "google.api_core._python_version_support.sys.version_info", mock_py_version

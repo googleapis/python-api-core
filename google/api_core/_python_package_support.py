@@ -22,7 +22,6 @@ from ._python_version_support import (
     _get_distribution_and_import_packages,
 )
 
-# It is a good practice to alias the Version class for clarity in type hints.
 from packaging.version import parse as parse_version, Version as PackagingVersion
 
 
@@ -72,7 +71,7 @@ def warn_deprecation_for_versions_less_than(
     `next_supported_version`, this issues a warning using either a
     default `message_template` or one provided by the user. The
     default `message_template` informs the user that they will not receive
-    future updates `dependent_import_package` if
+    future updates for `dependent_import_package` if
     `dependency_import_package` is somehow pinned to a version lower
     than `next_supported_version`.
 
@@ -80,16 +79,20 @@ def warn_deprecation_for_versions_less_than(
       dependent_import_package: The import name of the package that
         needs `dependency_import_package`.
       dependency_import_package: The import name of the dependency to check.
-      next_supported_version: The version number below which a deprecation
-        warning will be logged.
+      next_supported_version: The dependency_import_package version number
+        below which a deprecation warning will be logged.
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
         `dependency_import_package`, `dependent_import_package` and
-        `dependency_package`, `dependent_package`, which contain both the
-         import and distribution packages for the dependency and the dependent,
-         respectively; and `next_supported_version` and `version_used`, which
-         refer to supported and currently-used versions of the dependency.
+        `dependency_distribution_package` and
+        `dependent_distribution_package` and `dependency_package`,
+        `dependent_package` , which contain the import packages, the
+        distribution packages, and pretty string with both the
+        distribution and import packages for the dependency and the
+        dependent, respectively; and `next_supported_version` and
+        `version_used`, which refer to supported and currently-used
+        versions of the dependency.
 
     """
     if (
@@ -129,6 +132,8 @@ def warn_deprecation_for_versions_less_than(
             message_template.format(
                 dependent_import_package=dependent_import_package,
                 dependency_import_package=dependency_import_package,
+                dependent_distribution_package=dependent_distribution_package,
+                dependency_distribution_package=dependency_distribution_package,
                 dependency_package=dependency_package,
                 dependent_package=dependent_package,
                 next_supported_version=next_supported_version,
