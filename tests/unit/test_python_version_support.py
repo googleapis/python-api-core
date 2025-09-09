@@ -165,9 +165,7 @@ def test_override_gapic_end_only():
             result_before_boundary = check_python_version(
                 today=custom_gapic_end + datetime.timedelta(days=-1)
             )
-            assert (
-                result_before_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
-            )
+            assert result_before_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
 
             result_at_boundary = check_python_version(today=custom_gapic_end)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
