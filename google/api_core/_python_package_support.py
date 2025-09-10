@@ -14,7 +14,7 @@
 
 """Code to check versions of dependencies used by Google Cloud Client Libraries."""
 
-import logging
+import warnings
 import sys
 from typing import Optional
 from ._python_version_support import (
@@ -128,7 +128,7 @@ def warn_deprecation_for_versions_less_than(
             {dependency_package}.
             """
         )
-        logging.warning(
+        warnings.warn(
             message_template.format(
                 dependent_import_package=dependent_import_package,
                 dependency_import_package=dependency_import_package,

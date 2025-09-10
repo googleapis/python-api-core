@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+import warnings
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -60,9 +61,8 @@ def test_get_dependency_version_py37(mock_get_distribution):
 
 @patch("google.api_core._python_package_support._get_distribution_and_import_packages")
 @patch("google.api_core._python_package_support.get_dependency_version")
-@patch("google.api_core._python_package_support.logging.warning")
 def test_warn_deprecation_for_versions_less_than(
-    mock_log_warning, mock_get_version, mock_get_packages
+    mock_get_version, mock_get_packages
 ):
     """Test the deprecation warning logic."""
     # Mock the helper function to return predictable package strings
@@ -73,36 +73,37 @@ def test_warn_deprecation_for_versions_less_than(
 
     # Case 1: Installed version is less than required, should warn.
     mock_get_version.return_value = parse_version("1.0.0")
-    warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
-    mock_log_warning.assert_called_once()
+    with pytest.warns(UserWarning) as record:
+        warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
+    assert len(record) == 1
     assert (
         "DEPRECATION: Package my-package (my.package) depends on dep-package (dep.package)"
-        in mock_log_warning.call_args[0][0]
+        in str(record[0].message)
     )
 
-    # Case 2: Installed version is equal to required, should not warn.
-    mock_log_warning.reset_mock()
-    mock_get_packages.reset_mock()
-    mock_get_version.return_value = parse_version("2.0.0")
-    warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
-    mock_log_warning.assert_not_called()
+    # Cases where no warning should be issued
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")  # Capture all warnings
 
-    # Case 3: Installed version is greater than required, should not warn.
-    mock_log_warning.reset_mock()
-    mock_get_packages.reset_mock()
-    mock_get_version.return_value = parse_version("3.0.0")
-    warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
-    mock_log_warning.assert_not_called()
+        # Case 2: Installed version is equal to required, should not warn.
+        mock_get_packages.reset_mock()
+        mock_get_version.return_value = parse_version("2.0.0")
+        warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
-    # Case 4: Dependency not found, should not warn.
-    mock_log_warning.reset_mock()
-    mock_get_packages.reset_mock()
-    mock_get_version.return_value = None
-    warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
-    mock_log_warning.assert_not_called()
+        # Case 3: Installed version is greater than required, should not warn.
+        mock_get_packages.reset_mock()
+        mock_get_version.return_value = parse_version("3.0.0")
+        warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
+
+        # Case 4: Dependency not found, should not warn.
+        mock_get_packages.reset_mock()
+        mock_get_version.return_value = None
+        warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
+
+        # Assert that no warnings were recorded
+        assert len(w) == 0
 
     # Case 5: Custom message template.
-    mock_log_warning.reset_mock()
     mock_get_packages.reset_mock()
     mock_get_packages.side_effect = [
         ("dep-package (dep.package)", "dep-package"),
@@ -110,11 +111,12 @@ def test_warn_deprecation_for_versions_less_than(
     ]
     mock_get_version.return_value = parse_version("1.0.0")
     template = "Custom warning for {dependency_package} used by {dependent_package}."
-    warn_deprecation_for_versions_less_than(
-        "my.package", "dep.package", "2.0.0", message_template=template
-    )
-    mock_log_warning.assert_called_once()
+    with pytest.warns(UserWarning) as record:
+        warn_deprecation_for_versions_less_than(
+            "my.package", "dep.package", "2.0.0", message_template=template
+        )
+    assert len(record) == 1
     assert (
         "Custom warning for dep-package (dep.package) used by my-package (my.package)."
-        in mock_log_warning.call_args[0][0]
+        in str(record[0].message)
     )

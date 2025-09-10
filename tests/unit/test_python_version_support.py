@@ -15,6 +15,7 @@
 import pytest
 import datetime
 import textwrap
+import warnings
 from collections import namedtuple
 
 from unittest.mock import patch
@@ -120,30 +121,33 @@ def test_all_tracked_versions_and_date_scenarios(
     mock_py_v = VersionInfoMock(major=version_tuple[0], minor=version_tuple[1])
 
     with patch("google.api_core._python_version_support.sys.version_info", mock_py_v):
-        with patch(
-            "google.api_core._python_version_support.logging.warning"
-        ) as mock_log:
-            result = check_python_version(today=mock_date)
+        # Supported versions should not issue warnings
+        if expected_status == PythonVersionStatus.PYTHON_VERSION_SUPPORTED:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                result = check_python_version(today=mock_date)
+                assert len(w) == 0
+        # All other statuses should issue a warning
+        else:
+            with pytest.warns(UserWarning) as record:
+                result = check_python_version(today=mock_date)
+            assert len(record) == 1
 
-            if (
-                (result != expected_status)
-                or (result != PythonVersionStatus.PYTHON_VERSION_SUPPORTED)
-                and mock_log.call_count != 1
-            ):  # pragma: NO COVER
-                py_version_str = f"{version_tuple[0]}.{version_tuple[1]}"
-                version_info = PYTHON_VERSION_INFO[version_tuple]
+        if result != expected_status:  # pragma: NO COVER
+            py_version_str = f"{version_tuple[0]}.{version_tuple[1]}"
+            version_info = PYTHON_VERSION_INFO[version_tuple]
 
-                fail_msg = _create_failure_message(
-                    expected_status,
-                    result,
-                    py_version_str,
-                    mock_date,
-                    gapic_dep,
-                    version_info.python_eol,
-                    eol_warning_starts,
-                    gapic_end,
-                )
-                pytest.fail(fail_msg, pytrace=False)
+            fail_msg = _create_failure_message(
+                expected_status,
+                result,
+                py_version_str,
+                mock_date,
+                gapic_dep,
+                version_info.python_eol,
+                eol_warning_starts,
+                gapic_end,
+            )
+            pytest.fail(fail_msg, pytrace=False)
 
 
 def test_override_gapic_end_only():
@@ -212,16 +216,13 @@ def test_untracked_older_version_is_unsupported():
     with patch(
         "google.api_core._python_version_support.sys.version_info", mock_py_version
     ):
-        with patch(
-            "google.api_core._python_version_support.logging.warning"
-        ) as mock_log:
+        with pytest.warns(UserWarning) as record:
             mock_date = datetime.date(2025, 1, 15)
             result = check_python_version(today=mock_date)
 
             assert result == PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
-            mock_log.assert_called_once()
-            call_args = mock_log.call_args[0][0]
-            assert "non-supported" in call_args
+            assert len(record) == 1
+            assert "non-supported" in str(record[0].message)
 
 
 def test_untracked_newer_version_is_supported():
@@ -231,11 +232,10 @@ def test_untracked_newer_version_is_supported():
     with patch(
         "google.api_core._python_version_support.sys.version_info", mock_py_version
     ):
-        with patch(
-            "google.api_core._python_version_support.logging.warning"
-        ) as mock_log:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             mock_date = datetime.date(2025, 1, 15)
             result = check_python_version(today=mock_date)
 
             assert result == PythonVersionStatus.PYTHON_VERSION_SUPPORTED
-            mock_log.assert_not_called()
+            assert len(w) == 0
