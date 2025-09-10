@@ -61,9 +61,7 @@ def test_get_dependency_version_py37(mock_get_distribution):
 
 @patch("google.api_core._python_package_support._get_distribution_and_import_packages")
 @patch("google.api_core._python_package_support.get_dependency_version")
-def test_warn_deprecation_for_versions_less_than(
-    mock_get_version, mock_get_packages
-):
+def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_packages):
     """Test the deprecation warning logic."""
     # Mock the helper function to return predictable package strings
     mock_get_packages.side_effect = [
