@@ -44,7 +44,7 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
             from importlib import metadata
 
             version_string = metadata.version(dependency_name)
-            return parse_version(version_string)
+            return (parse_version(version_string), version_string)
 
         # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
         # this code path once we drop support for Python 3.7
@@ -53,10 +53,10 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
             import pkg_resources
 
             version_string = pkg_resources.get_distribution(dependency_name).version
-            return parse_version(version_string)
+            return (parse_version(version_string), version_string)
 
     except Exception:
-        return None
+        return (None, "--")
 
 
 def warn_deprecation_for_versions_less_than(
@@ -101,7 +101,7 @@ def warn_deprecation_for_versions_less_than(
         or not next_supported_version
     ):  # pragma: NO COVER
         return
-    version_used = get_dependency_version(dependency_import_package)
+    (version_used, version_used_string) = get_dependency_version(dependency_import_package)
     if not version_used:
         return
     if version_used < parse_version(next_supported_version):
@@ -117,7 +117,7 @@ def warn_deprecation_for_versions_less_than(
             """
             DEPRECATION: Package {dependent_package} depends on
             {dependency_package}, currently installed at version
-            {version_used.__str__()}. Future updates to
+            {version_used_string}. Future updates to
             {dependent_package} will require {dependency_package} at
             version {next_supported_version} or higher. Please ensure
             that either (a) your Python environment doesn't pin the
