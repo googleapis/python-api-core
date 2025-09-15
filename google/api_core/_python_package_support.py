@@ -117,7 +117,7 @@ def warn_deprecation_for_versions_less_than(
             """
             DEPRECATION: Package {dependent_package} depends on
             {dependency_package}, currently installed at version
-            {version_used.__str__}. Future updates to
+            {version_used.__str__()}. Future updates to
             {dependent_package} will require {dependency_package} at
             version {next_supported_version} or higher. Please ensure
             that either (a) your Python environment doesn't pin the
