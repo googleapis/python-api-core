@@ -235,8 +235,8 @@ class OperationsTransport(abc.ABC):
             A dict representation of the protocol buffer message.
         """
         # TODO(https://github.com/googleapis/python-api-core/issues/643): For backwards compatibility
-        # with protobuf 3.x 4.x, Remove once support for protobuf 3.x and 4.x is dropped.
-        if PROTOBUF_VERSION[0:2] in ["3.", "4."]:
+        # with protobuf 4.x, Remove once support for protobuf 4.x is dropped.
+        if PROTOBUF_VERSION[0:2] == "4.":
             result = json_format.MessageToDict(
                 message,
                 preserving_proto_field_name=True,

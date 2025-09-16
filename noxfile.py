@@ -226,25 +226,6 @@ def unit_w_prerelease_deps(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_grpc_gcp(session):
-    """
-    Run the unit test suite with grpcio-gcp installed.
-    `grpcio-gcp` doesn't support protobuf 4+.
-    Remove extra `grpcgcp` when protobuf 3.x is dropped.
-    https://github.com/googleapis/python-api-core/issues/594
-    """
-    constraints_path = str(
-        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-    )
-    # Install grpcio-gcp
-    session.install("-e", ".[grpcgcp]", "-c", constraints_path)
-    # Install protobuf < 4.0.0
-    session.install("protobuf<4.0.0")
-
-    default(session)
-
-
-@nox.session(python=PYTHON_VERSIONS)
 def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
     default(session, install_grpc=False)
