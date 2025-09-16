@@ -129,7 +129,7 @@ def test_all_tracked_versions_and_date_scenarios(
                 assert len(w) == 0
         # All other statuses should issue a warning
         else:
-            with pytest.warns(UserWarning) as record:
+            with pytest.warns(FutureWarning) as record:
                 result = check_python_version(today=mock_date)
             assert len(record) == 1
 
@@ -216,7 +216,7 @@ def test_untracked_older_version_is_unsupported():
     with patch(
         "google.api_core._python_version_support.sys.version_info", mock_py_version
     ):
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(FutureWarning) as record:
             mock_date = datetime.date(2025, 1, 15)
             result = check_python_version(today=mock_date)
 

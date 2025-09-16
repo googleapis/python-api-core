@@ -16,7 +16,7 @@
 
 import warnings
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 from ._python_version_support import (
     _flatten_message,
     _get_distribution_and_import_packages,
@@ -25,7 +25,9 @@ from ._python_version_support import (
 from packaging.version import parse as parse_version, Version as PackagingVersion
 
 
-def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
+def get_dependency_version(
+    dependency_name: str,
+) -> Tuple[Optional[PackagingVersion], str]:
     """Get the parsed version of an installed package dependency.
 
     This function checks for an installed package and returns its version
@@ -36,8 +38,9 @@ def get_dependency_version(dependency_name: str) -> Optional[PackagingVersion]:
         dependency_name: The distribution name of the package (e.g., 'requests').
 
     Returns:
-        A `packaging.version.Version` object, or `None` if the package
-        is not found or another error occurs during version discovery.
+        A tuple containing the `packaging.version.Version` object and the
+        version string, or `(None, '--')` if the package is not found or
+        another error occurs during version discovery.
     """
     try:
         if sys.version_info >= (3, 8):
@@ -90,9 +93,9 @@ def warn_deprecation_for_versions_less_than(
         `dependent_package` , which contain the import packages, the
         distribution packages, and pretty string with both the
         distribution and import packages for the dependency and the
-        dependent, respectively; and `next_supported_version` and
-        `version_used`, which refer to supported and currently-used
-        versions of the dependency.
+        dependent, respectively; and `next_supported_version`,
+        `version_used`, and `version_used_string`, which refer to supported
+        and currently-used versions of the dependency.
 
     """
     if (
@@ -138,7 +141,9 @@ def warn_deprecation_for_versions_less_than(
                 dependent_package=dependent_package,
                 next_supported_version=next_supported_version,
                 version_used=version_used,
-            )
+                version_used_string=version_used_string
+            ),
+            FutureWarning
         )
 
 
