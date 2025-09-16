@@ -195,7 +195,7 @@ def check_python_version(
             {min_python(today)}, and then update {package_label}.
             """
         )
-        warnings.warn(message)
+        warnings.warn(message, FutureWarning)
         return PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
 
     eol_date = version_info.python_eol + EOL_GRACE_PERIOD
@@ -210,7 +210,7 @@ def check_python_version(
             {min_python(today)}, and then update {package_label}.
             """
         )
-        warnings.warn(message)
+        warnings.warn(message, FutureWarning)
         return PythonVersionStatus.PYTHON_VERSION_EOL
 
     if gapic_deprecation <= today <= gapic_end:
@@ -224,7 +224,7 @@ def check_python_version(
             then update {package_label}.
             """
         )
-        warnings.warn(message)
+        warnings.warn(message, FutureWarning)
         return PythonVersionStatus.PYTHON_VERSION_DEPRECATED
 
     return PythonVersionStatus.PYTHON_VERSION_SUPPORTED
