@@ -368,21 +368,6 @@ def create_channel(
         quota_project_id=quota_project_id,
         default_host=default_host,
     )
-
-    # Note that grpcio-gcp is deprecated
-    if HAS_GRPC_GCP:  # pragma: NO COVER
-        if compression is not None and compression != grpc.Compression.NoCompression:
-            warnings.warn(
-                "The `compression` argument is ignored for grpc_gcp.secure_channel creation.",
-                DeprecationWarning,
-            )
-        if attempt_direct_path:
-            warnings.warn(
-                """The `attempt_direct_path` argument is ignored for grpc_gcp.secure_channel creation.""",
-                DeprecationWarning,
-            )
-        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
-
     if attempt_direct_path:
         target = _modify_target_for_direct_path(target)
 

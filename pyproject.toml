@@ -65,8 +65,6 @@ grpc = [
   "grpcio-status >= 1.33.2, < 2.0.0",
   "grpcio-status >= 1.49.1, < 2.0.0; python_version >= '3.11'",
 ]
-grpcgcp = ["grpcio-gcp >= 0.2.2, < 1.0.0"]
-grpcio-gcp = ["grpcio-gcp >= 0.2.2, < 1.0.0"]
 
 [tool.setuptools.dynamic]
 version = { attr = "google.api_core.version.__version__" }
