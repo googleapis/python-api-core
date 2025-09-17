@@ -34,10 +34,9 @@ class _AsyncRequestQueueGenerator:
     otherwise open-ended set of requests to send through a request-streaming
     (or bidirectional) RPC.
 
-    The reason this is necessary
-
-    is because it's let's user have control on the when they would want to
-    send requests proto messages instead of sending all of them initilally.
+    The reason this is necessary is because it lets the user have control on
+    when they would want to send requests proto messages instead of sending all
+    of them initilally.
 
     This is achieved via asynchronous queue (asyncio.Queue),
     gRPC awaits until there's a message in the queue.
@@ -220,7 +219,7 @@ class AsyncBidiRpc(BidiRpcBase):
             protobuf.Message: The received message.
         """
         if self.call is None:
-            raise ValueError("Can not recv() on an RPC that has never been open()ed.")
+            raise ValueError("Can not recv() on an RPC that has never been opened.")
 
         return await self.call.read()
 
