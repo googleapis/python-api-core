@@ -225,7 +225,6 @@ def test_operations_client_service_account_always_use_jwt(transport_class):
     PYPARAM_CLIENT,
 )
 def test_operations_client_from_service_account_file(client_class):
-
     if "async" in str(client_class):
         # TODO(): Add support for service account creds to async REST transport.
         with pytest.raises(NotImplementedError):
@@ -1045,7 +1044,6 @@ async def test_cancel_operation_rest_failure_async():
     PYPARAM_CLIENT_TRANSPORT_CREDENTIALS,
 )
 def test_credentials_transport_error(client_class, transport_class, credentials):
-
     # It is an error to provide credentials and a transport instance.
     transport = transport_class(credentials=credentials)
     with pytest.raises(ValueError):
