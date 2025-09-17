@@ -28,7 +28,7 @@ BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
 
-PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 DEFAULT_PYTHON_VERSION = "3.10"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
@@ -36,7 +36,6 @@ CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
 # 'docfx' is excluded since it only needs to run in 'docs-presubmit'
 nox.options.sessions = [
     "unit",
-    "unit_grpc_gcp",
     "unit_wo_grpc",
     "unit_w_prerelease_deps",
     "unit_w_async_rest_extra",
@@ -124,7 +123,6 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     session.install(
         "dataclasses",
-        "mock; python_version=='3.7'",
         "pytest",
         "pytest-cov",
         "pytest-xdist",
@@ -226,25 +224,6 @@ def unit_w_prerelease_deps(session):
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def unit_grpc_gcp(session):
-    """
-    Run the unit test suite with grpcio-gcp installed.
-    `grpcio-gcp` doesn't support protobuf 4+.
-    Remove extra `grpcgcp` when protobuf 3.x is dropped.
-    https://github.com/googleapis/python-api-core/issues/594
-    """
-    constraints_path = str(
-        CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-    )
-    # Install grpcio-gcp
-    session.install("-e", ".[grpcgcp]", "-c", constraints_path)
-    # Install protobuf < 4.0.0
-    session.install("protobuf<4.0.0")
-
-    default(session)
-
-
-@nox.session(python=PYTHON_VERSIONS)
 def unit_wo_grpc(session):
     """Run the unit test suite w/o grpcio installed"""
     default(session, install_grpc=False)
@@ -280,7 +259,6 @@ def mypy(session):
         "types-requests",
         "types-protobuf",
         "types-dataclasses",
-        "types-mock; python_version=='3.7'",
     )
     session.run("mypy", "google", "tests")
 

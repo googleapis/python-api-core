@@ -16,7 +16,7 @@ common helpers used by all Google API clients. For more information, see the
 
 Supported Python Versions
 -------------------------
-Python >= 3.7
+Python >= 3.8
 
 
 Unsupported Python Versions

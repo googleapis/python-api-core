@@ -27,7 +27,6 @@ def get_client_encrypted_cert():
 
 
 def test_constructor():
-
     options = client_options.ClientOptions(
         api_endpoint="foo.googleapis.com",
         client_cert_source=get_client_cert,
@@ -54,7 +53,6 @@ def test_constructor():
 
 
 def test_constructor_with_encrypted_cert_source():
-
     options = client_options.ClientOptions(
         api_endpoint="foo.googleapis.com",
         client_encrypted_cert_source=get_client_encrypted_cert,
@@ -78,7 +76,6 @@ def test_constructor_with_both_cert_sources():
 
 
 def test_constructor_with_api_key():
-
     options = client_options.ClientOptions(
         api_endpoint="foo.googleapis.com",
         client_cert_source=get_client_cert,
