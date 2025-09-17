@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 name = "google-api-core"
 authors = [{ name = "Google LLC", email = "googleapis-packages@google.com" }]
 license = { text = "Apache 2.0" }
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 readme = "README.rst"
 description = "Google API client core library"
 classifiers = [
@@ -33,7 +33,6 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -75,7 +74,7 @@ version = { attr = "google.api_core.version.__version__" }
 include = ["google*"]
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 namespace_packages = true
 ignore_missing_imports = true
 
@@ -87,9 +86,6 @@ filterwarnings = [
   "ignore:.*The --rsyncdir command line argument and rsyncdirs config variable are deprecated:DeprecationWarning",
   # Remove once https://github.com/protocolbuffers/protobuf/issues/12186 is fixed
   "ignore:.*custom tp_new.*in Python 3.14:DeprecationWarning",
-  # Remove once support for python 3.7 is dropped
-  # This warning only appears when using python 3.7
-  "ignore:.*Using or importing the ABCs from.*collections:DeprecationWarning",
   # Remove once support for grpcio-gcp is deprecated
   # See https://github.com/googleapis/python-api-core/blob/42e8b6e6f426cab749b34906529e8aaf3f133d75/google/api_core/grpc_helpers.py#L39-L45
   "ignore:.*Support for grpcio-gcp is deprecated:DeprecationWarning",
@@ -100,6 +96,4 @@ filterwarnings = [
   "ignore:.*pkg_resources is deprecated as an API:DeprecationWarning",
   # Remove once https://github.com/grpc/grpc/issues/35086 is fixed (and version newer than 1.60.0 is published)
   "ignore:There is no current event loop:DeprecationWarning",
-  # Remove after support for Python 3.7 is dropped
-  "ignore:After January 1, 2024, new releases of this library will drop support for Python 3.7:DeprecationWarning",
 ]

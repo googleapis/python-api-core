@@ -16,7 +16,6 @@ jobs:
       matrix:
         option: ["", "_wo_grpc", "_w_prerelease_deps", "_w_async_rest_extra"]
         python:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
@@ -25,8 +24,6 @@ jobs:
           - "3.13"
           - "3.14"
         exclude:
-          - option: "_wo_grpc"
-            python: 3.7
           - option: "_wo_grpc"
             python: 3.8
           - option: "_wo_grpc"

@@ -11,7 +11,6 @@ branchProtectionRules:
     # No Kokoro:  the following are Github actions
     - 'lint'
     - 'mypy'
-    - 'unit-3.7'
     - 'unit-3.8'
     - 'unit-3.9'
     - 'unit-3.10'
@@ -24,7 +23,6 @@ branchProtectionRules:
     - 'unit_wo_grpc-3.12'
     - 'unit_wo_grpc-3.13'
     - 'unit_wo_grpc-3.14'
-    - 'unit_w_prerelease_deps-3.7'
     - 'unit_w_prerelease_deps-3.8'
     - 'unit_w_prerelease_deps-3.9'
     - 'unit_w_prerelease_deps-3.10'
@@ -32,7 +30,6 @@ branchProtectionRules:
     - 'unit_w_prerelease_deps-3.12'
     - 'unit_w_prerelease_deps-3.13'
     - 'unit_w_prerelease_deps-3.14'
-    - 'unit_w_async_rest_extra-3.7'
     - 'unit_w_async_rest_extra-3.8'
     - 'unit_w_async_rest_extra-3.9'
     - 'unit_w_async_rest_extra-3.10'
