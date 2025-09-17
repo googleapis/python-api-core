@@ -17,7 +17,6 @@ from typing import Generic, Iterator, Optional, TypeVar
 
 import collections
 import functools
-import warnings
 
 import grpc
 
