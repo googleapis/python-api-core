@@ -153,7 +153,7 @@ class AsyncBidiRpc(BidiRpcBase):
     async def open(self):
         """Opens the stream."""
         if self.is_active:
-            raise ValueError("Can not open an already open stream.")
+            raise ValueError("Cannot open an already open stream.")
 
         request_generator = _AsyncRequestQueueGenerator(
             self._request_queue, initial_request=self._initial_request
@@ -168,8 +168,6 @@ class AsyncBidiRpc(BidiRpcBase):
 
         request_generator.call = call
 
-        # TODO: api_core should expose the future interface for wrapped
-        # callables as well.
         if hasattr(call, "_wrapped"):  # pragma: NO COVER
             call._wrapped.add_done_callback(self._on_call_done)
         else:
