@@ -104,7 +104,9 @@ def warn_deprecation_for_versions_less_than(
         or not next_supported_version
     ):  # pragma: NO COVER
         return
-    (version_used, version_used_string) = get_dependency_version(dependency_import_package)
+    (version_used, version_used_string) = get_dependency_version(
+        dependency_import_package
+    )
     if not version_used:
         return
     if version_used < parse_version(next_supported_version):
@@ -141,9 +143,9 @@ def warn_deprecation_for_versions_less_than(
                 dependent_package=dependent_package,
                 next_supported_version=next_supported_version,
                 version_used=version_used,
-                version_used_string=version_used_string
+                version_used_string=version_used_string,
             ),
-            FutureWarning
+            FutureWarning,
         )
 
 
