@@ -49,7 +49,10 @@ def test_get_dependency_version_py37(mock_get_distribution):
     mock_dist = MagicMock()
     mock_dist.version = "4.5.6"
     mock_get_distribution.return_value = mock_dist
-    assert get_dependency_version("another-package") == (parse_version("4.5.6"), "4.5.6")
+    assert get_dependency_version("another-package") == (
+        parse_version("4.5.6"),
+        "4.5.6",
+    )
     mock_get_distribution.assert_called_once_with("another-package")
 
     # Test package not found
@@ -61,9 +64,7 @@ def test_get_dependency_version_py37(mock_get_distribution):
 
 @patch("google.api_core._python_package_support._get_distribution_and_import_packages")
 @patch("google.api_core._python_package_support.get_dependency_version")
-def test_warn_deprecation_for_versions_less_than(
-    mock_get_version, mock_get_packages
-):
+def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_packages):
     """Test the deprecation warning logic."""
     # Mock the helper function to return predictable package strings
     mock_get_packages.side_effect = [
