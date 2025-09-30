@@ -560,8 +560,18 @@ def test_operations_client_client_options_credentials_file(
             )
 
 
-def test_list_operations_rest():
-    client = _get_operations_client(is_async=False)
+@pytest.mark.parametrize(
+    "credentials_file",
+    [None, "credentials.json"],
+)
+def test_list_operations_rest(credentials_file):
+    sync_transport = transports.rest.OperationsRestTransport(
+        credentials_file=credentials_file,
+        http_options=HTTP_OPTIONS,
+    )
+
+    client = AbstractOperationsClient(transport=sync_transport)
+
     # Mock the http request call within the method and fake a response.
     with mock.patch.object(_get_session_type(is_async=False), "request") as req:
         # Designate an appropriate value for the returned response.
