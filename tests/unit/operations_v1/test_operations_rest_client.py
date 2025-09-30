@@ -369,6 +369,25 @@ def test_operations_client_client_options(
         )
 
 
+    # Check the case credentials_file is provided
+    options = client_options.ClientOptions(credentials_file="credentials.json")
+    with mock.patch.object(transport_class, "__init__") as patched:
+        patched.return_value = None
+        client = client_class(client_options=options, transport=transport_name)
+        patched.assert_called_once_with(
+            credentials=None,
+            credentials_file="credentials.json",
+            host=client.DEFAULT_ENDPOINT,
+            scopes=None,
+            client_cert_source_for_mtls=None,
+            quota_project_id=None,
+            client_info=transports.base.DEFAULT_CLIENT_INFO,
+            always_use_jwt_access=True,
+        )
+
+
+
+
 # TODO: Add support for mtls in async REST
 @pytest.mark.parametrize(
     "client_class,transport_class,transport_name,use_client_cert_env",
