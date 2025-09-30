@@ -368,7 +368,6 @@ def test_operations_client_client_options(
             always_use_jwt_access=True,
         )
 
-
     # Check the case credentials_file is provided
     options = client_options.ClientOptions(credentials_file="credentials.json")
     with mock.patch.object(transport_class, "__init__") as patched:
@@ -384,8 +383,6 @@ def test_operations_client_client_options(
             client_info=transports.base.DEFAULT_CLIENT_INFO,
             always_use_jwt_access=True,
         )
-
-
 
 
 # TODO: Add support for mtls in async REST
