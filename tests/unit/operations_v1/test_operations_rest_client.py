@@ -564,7 +564,12 @@ def test_operations_client_client_options_credentials_file(
     "credentials_file",
     [None, "credentials.json"],
 )
-def test_list_operations_rest(credentials_file):
+@mock.patch(
+    "google.auth.default",
+    autospec=True,
+    return_value=(mock.sentinel.credentials, mock.sentinel.project),
+)
+def test_list_operations_rest(google_auth_default, credentials_file):
     sync_transport = transports.rest.OperationsRestTransport(
         credentials_file=credentials_file,
         http_options=HTTP_OPTIONS,
