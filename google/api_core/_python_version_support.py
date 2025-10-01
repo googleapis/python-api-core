@@ -60,7 +60,8 @@ PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
         python_beta=datetime.date(2020, 5, 18),
         python_start=datetime.date(2020, 10, 5),
         python_eol=datetime.date(2025, 10, 5),  # TODO: specify day when announced
-        gapic_end=datetime.date(2025, 10, 5) + datetime.timedelta(days=90),  # TODO: specify day when announced
+        gapic_end=datetime.date(2025, 10, 5)
+        + datetime.timedelta(days=90),  # TODO: specify day when announced
     ),
     (3, 10): VersionInfo(
         python_beta=datetime.date(2021, 5, 3),
