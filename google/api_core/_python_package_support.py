@@ -66,6 +66,7 @@ def warn_deprecation_for_versions_less_than(
     dependent_import_package: str,
     dependency_import_package: str,
     next_supported_version: str,
+    recommended_version: Optional[str] = None,
     message_template: Optional[str] = None,
 ):
     """Issue any needed deprecation warnings for `dependency_import_package`.
@@ -84,6 +85,8 @@ def warn_deprecation_for_versions_less_than(
       dependency_import_package: The import name of the dependency to check.
       next_supported_version: The dependency_import_package version number
         below which a deprecation warning will be logged.
+      recommended_version: If provided, the recommended next version, which
+        could be higher than `next_supported_version`.
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
@@ -118,17 +121,22 @@ def warn_deprecation_for_versions_less_than(
             dependent_package,
             dependent_distribution_package,
         ) = _get_distribution_and_import_packages(dependent_import_package)
+
+        recommendation = (
+            " (we recommend {recommended_version})" if recommended_version else ""
+        )
         message_template = message_template or _flatten_message(
             """
             DEPRECATION: Package {dependent_package} depends on
             {dependency_package}, currently installed at version
             {version_used_string}. Future updates to
             {dependent_package} will require {dependency_package} at
-            version {next_supported_version} or higher. Please ensure
-            that either (a) your Python environment doesn't pin the
-            version of {dependency_package}, so that updates to
-            {dependent_package} can require the higher version, or
-            (b) you manually update your Python environment to use at
+            version {next_supported_version} or
+            higher{recommendation}. Please ensure that either (a) your
+            Python environment doesn't pin the version of
+            {dependency_package}, so that updates to
+            {dependent_package} can require the higher version, or (b)
+            you manually update your Python environment to use at
             least version {next_supported_version} of
             {dependency_package}.
             """
@@ -142,6 +150,7 @@ def warn_deprecation_for_versions_less_than(
                 dependency_package=dependency_package,
                 dependent_package=dependent_package,
                 next_supported_version=next_supported_version,
+                recommendation=recommendation,
                 version_used=version_used,
                 version_used_string=version_used_string,
             ),
@@ -162,5 +171,5 @@ def check_dependency_versions(dependent_import_package: str):
 
     """
     warn_deprecation_for_versions_less_than(
-        dependent_import_package, "google.protobuf", "4.25.8"
+        dependent_import_package, "google.protobuf", "4.25.8", recommended_version="6.x"
     )
