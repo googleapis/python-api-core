@@ -287,7 +287,7 @@ class TestAsyncBidiRpc:
         bidi_rpc = bidi_async.AsyncBidiRpc(None)
         bidi_rpc.call = AsyncClosedCall(error)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError):
             await bidi_rpc.send(mock.sentinel.request)
 
     @pytest.mark.asyncio
