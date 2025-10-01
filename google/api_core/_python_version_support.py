@@ -60,6 +60,7 @@ PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
         python_beta=datetime.date(2020, 5, 18),
         python_start=datetime.date(2020, 10, 5),
         python_eol=datetime.date(2025, 10, 5),  # TODO: specify day when announced
+        gapic_end=datetime.date(2025, 10, 5) + datetime.timedelta(days=90),  # TODO: specify day when announced
     ),
     (3, 10): VersionInfo(
         python_beta=datetime.date(2021, 5, 3),
@@ -155,7 +156,7 @@ def check_python_version(
 
     python_version = sys.version_info
     version_tuple = (python_version.major, python_version.minor)
-    py_version_str = f"{python_version.major}.{python_version.minor}"
+    py_version_str = sys.version.split()[0]
 
     version_info = PYTHON_VERSION_INFO.get(version_tuple)
 
@@ -188,11 +189,11 @@ def check_python_version(
     if gapic_end < today:
         message = _flatten_message(
             f"""
-            You are using a non-supported Python version
-            ({py_version_str}).  Google will not post any further
-            updates to {package_label}. Please upgrade to the
-            latest Python version, or at least Python
-            {min_python(today)}, and then update {package_label}.
+            You are using a non-supported Python version ({py_version_str}).
+            Google will not post any further updates to {package_label}
+            supporting this Python version. Please upgrade to the latest Python
+            version, or at least Python {min_python(today)}, and then update
+            {package_label}.
             """
         )
         warnings.warn(message, FutureWarning)
@@ -216,12 +217,12 @@ def check_python_version(
     if gapic_deprecation <= today <= gapic_end:
         message = _flatten_message(
             f"""
-            You are using a Python version ({py_version_str})
-            which Google will stop supporting in {package_label} when
-            it reaches its end of life ({version_info.python_eol}). Please
-            upgrade to the latest Python version, or at
-            least Python {min_python(version_info.python_eol)}, and
-            then update {package_label}.
+            You are using a Python version ({py_version_str}) which Google will
+            stop supporting in new releases of {package_label} once it reaches
+            its end of life ({version_info.python_eol}). Please upgrade to the
+            latest Python version, or at least Python
+            {min_python(version_info.python_eol)}, to continue receiving updates
+            for {package_label} past that date.
             """
         )
         warnings.warn(message, FutureWarning)
