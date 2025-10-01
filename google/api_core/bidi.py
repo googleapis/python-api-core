@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Bi-directional streaming RPC helpers."""
+"""Helpers for synchronous bidirectional streaming RPCs."""
 
 import collections
 import datetime
@@ -28,6 +28,28 @@ _LOGGER = logging.getLogger(__name__)
 _BIDIRECTIONAL_CONSUMER_NAME = "Thread-ConsumeBidirectionalStream"
 
 
+#   The reason this is necessary is because gRPC takes an iterator as the
+#   request for request-streaming RPCs. gRPC consumes this iterator in another
+#   thread to allow it to block while generating requests for the stream.
+#   However, if the generator blocks indefinitely gRPC will not be able to
+#   clean up the thread as it'll be blocked on `next(iterator)` and not be able
+#   to check the channel status to stop iterating. This helper mitigates that
+#   by waiting on the queue with a timeout and checking the RPC state before
+#   yielding.
+#
+#   Finally, it allows for retrying without swapping queues because if it does
+#   pull an item off the queue when the RPC is inactive, it'll immediately put
+#   it back and then exit. This is necessary because yielding the item in this
+#   case will cause gRPC to discard it. In practice, this means that the order
+#   of messages is not guaranteed. If such a thing is necessary it would be
+#   easy to use a priority queue.
+#
+#    Note that it is possible to accomplish this behavior without "spinning"
+#   (using a queue timeout). One possible way would be to use more threads to
+#   multiplex the grpc end event with the queue, another possible way is to
+#   use selectors and a custom event/queue object. Both of these approaches
+#   are significant from an engineering perspective for small benefit - the
+#   CPU consumed by spinning is pretty minuscule.
 class _RequestQueueGenerator(object):
     """A helper for sending requests to a gRPC stream from a Queue.
 
@@ -37,21 +59,6 @@ class _RequestQueueGenerator(object):
     otherwise open-ended set of requests to send through a request-streaming
     (or bidirectional) RPC.
 
-    The reason this is necessary is because gRPC takes an iterator as the
-    request for request-streaming RPCs. gRPC consumes this iterator in another
-    thread to allow it to block while generating requests for the stream.
-    However, if the generator blocks indefinitely gRPC will not be able to
-    clean up the thread as it'll be blocked on `next(iterator)` and not be able
-    to check the channel status to stop iterating. This helper mitigates that
-    by waiting on the queue with a timeout and checking the RPC state before
-    yielding.
-
-    Finally, it allows for retrying without swapping queues because if it does
-    pull an item off the queue when the RPC is inactive, it'll immediately put
-    it back and then exit. This is necessary because yielding the item in this
-    case will cause gRPC to discard it. In practice, this means that the order
-    of messages is not guaranteed. If such a thing is necessary it would be
-    easy to use a priority queue.
 
     Example::
 
@@ -63,12 +70,6 @@ class _RequestQueueGenerator(object):
             print(response)
             q.put(...)
 
-    Note that it is possible to accomplish this behavior without "spinning"
-    (using a queue timeout). One possible way would be to use more threads to
-    multiplex the grpc end event with the queue, another possible way is to
-    use selectors and a custom event/queue object. Both of these approaches
-    are significant from an engineering perspective for small benefit - the
-    CPU consumed by spinning is pretty minuscule.
 
     Args:
         queue (queue_module.Queue): The request queue.
@@ -248,7 +249,7 @@ class BidiRpc(BidiRpcBase):
     def open(self):
         """Opens the stream."""
         if self.is_active:
-            raise ValueError("Can not open an already open stream.")
+            raise ValueError("Cannot open an already open stream.")
 
         request_generator = _RequestQueueGenerator(
             self._request_queue, initial_request=self._initial_request
@@ -297,7 +298,7 @@ class BidiRpc(BidiRpcBase):
             request (protobuf.Message): The request to send.
         """
         if self.call is None:
-            raise ValueError("Can not send() on an RPC that has never been opened.")
+            raise ValueError("Cannot send on an RPC that has never been opened.")
 
         # Don't use self.is_active(), as ResumableBidiRpc will overload it
         # to mean something semantically different.
@@ -318,13 +319,13 @@ class BidiRpc(BidiRpcBase):
             protobuf.Message: The received message.
         """
         if self.call is None:
-            raise ValueError("Can not recv() on an RPC that has never been open()ed.")
+            raise ValueError("Cannot recv on an RPC that has never been opened.")
 
         return next(self.call)
 
     @property
     def is_active(self):
-        """bool: True if this stream is currently open and active."""
+        """True if this stream is currently open and active."""
         return self.call is not None and self.call.is_active()
 
 
@@ -514,7 +515,7 @@ class ResumableBidiRpc(BidiRpc):
             call = self.call
 
         if call is None:
-            raise ValueError("Can not send() on an RPC that has never been open()ed.")
+            raise ValueError("Cannot send on an RPC that has never been opened.")
 
         # Don't use self.is_active(), as ResumableBidiRpc will overload it
         # to mean something semantically different.
@@ -533,7 +534,7 @@ class ResumableBidiRpc(BidiRpc):
             call = self.call
 
         if call is None:
-            raise ValueError("Can not recv() on an RPC that has never been open()ed.")
+            raise ValueError("Cannot recv on an RPC that has never been opened.")
 
         return next(call)
 

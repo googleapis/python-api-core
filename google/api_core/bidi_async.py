@@ -16,37 +16,42 @@
 
 import asyncio
 import logging
+from typing import Callable, Optional, Union
+
+from grpc import aio
 
 from google.api_core import exceptions
 from google.api_core.bidi_base import BidiRpcBase
 
+from google.protobuf.message import Message as ProtobufMessage
+
+
 _LOGGER = logging.getLogger(__name__)
 
 
+# The reason this is necessary is because it lets the user have control on
+# when they would want to send requests proto messages instead of sending all
+# of them initially.
+#
+# This is achieved via asynchronous queue (asyncio.Queue),
+# gRPC awaits until there's a message in the queue.
+#
+# Finally, it allows for retrying without swapping queues because if it does
+# pull an item off the queue when the RPC is inactive, it'll immediately put
+# it back and then exit. This is necessary because yielding the item in this
+# case will cause gRPC to discard it. In practice, this means that the order
+# of messages is not guaranteed. If preserving order is necessary it would be
+# easy to use a priority queue.
 class _AsyncRequestQueueGenerator:
     """_AsyncRequestQueueGenerator is a helper class for sending asynchronous
       requests to a gRPC stream from a Queue.
 
-    This generator takes asynchronous requests off a given queue and yields them
-    to gRPC.
+    This generator takes asynchronous requests off a given `asyncio.Queue` and
+    yields them to gRPC.
 
-    This helper is useful when you have an indeterminate, indefinite, or
-    otherwise open-ended set of requests to send through a request-streaming
-    (or bidirectional) RPC.
-
-    The reason this is necessary is because it lets the user have control on
-    when they would want to send requests proto messages instead of sending all
-    of them initilally.
-
-    This is achieved via asynchronous queue (asyncio.Queue),
-    gRPC awaits until there's a message in the queue.
-
-    Finally, it allows for retrying without swapping queues because if it does
-    pull an item off the queue when the RPC is inactive, it'll immediately put
-    it back and then exit. This is necessary because yielding the item in this
-    case will cause gRPC to discard it. In practice, this means that the order
-    of messages is not guaranteed. If such a thing is necessary it would be
-    easy to use a priority queue.
+    It's useful when you have an indeterminate, indefinite, or otherwise
+    open-ended set of requests to send through a request-streaming (or
+    bidirectional) RPC.
 
     Example::
 
@@ -60,22 +65,30 @@ class _AsyncRequestQueueGenerator:
 
     Args:
         queue (asyncio.Queue): The request queue.
-        initial_request (Union[protobuf.Message,
-                Callable[[], protobuf.Message]]): The initial request to
+        initial_request (Union[ProtobufMessage,
+                Callable[[], ProtobufMessage]]): The initial request to
             yield. This is done independently of the request queue to allow for
             easily restarting streams that require some initial configuration
             request.
     """
 
-    def __init__(self, queue: asyncio.Queue, initial_request=None):
+    def __init__(
+        self,
+        queue: asyncio.Queue,
+        initial_request: Optional[
+            Union[ProtobufMessage, Callable[[], ProtobufMessage]]
+        ] = None,
+    ) -> None:
         self._queue = queue
         self._initial_request = initial_request
-        self.call = None
+        self.call: Optional[aio.Call] = None
 
-    def _is_active(self):
-        """
-        Returns true if the call is not set or not completed.
-        """
+    def _is_active(self) -> bool:
+        """Returns true if the call is not set or not completed."""
+        # Note: there is a possibility that this starts *before* the call
+        # property is set. So we have to check if self.call is set before
+        # seeing if it's active. We need to return True if self.call is None.
+        # See https://github.com/googleapis/python-api-core/issues/560.
         return self.call is None or not self.call.done()
 
     async def __aiter__(self):
@@ -133,24 +146,24 @@ class AsyncBidiRpc(BidiRpcBase):
             await rpc.send(example_pb2.StreamingRpcRequest(
                 data='example'))
 
-    This does *not* retry the stream on errors. See :class:`AsyncResumableBidiRpc`.
+    This does *not* retry the stream on errors.
 
     Args:
         start_rpc (grpc.aio.StreamStreamMultiCallable): The gRPC method used to
             start the RPC.
-        initial_request (Union[protobuf.Message,
-                Callable[[], protobuf.Message]]): The initial request to
+        initial_request (Union[ProtobufMessage,
+                Callable[[], ProtobufMessage]]): The initial request to
             yield. This is useful if an initial request is needed to start the
             stream.
         metadata (Sequence[Tuple(str, str)]): RPC metadata to include in
             the request.
     """
 
-    def _create_queue(self):
+    def _create_queue(self) -> asyncio.Queue:
         """Create a queue for requests."""
         return asyncio.Queue()
 
-    async def open(self):
+    async def open(self) -> None:
         """Opens the stream."""
         if self.is_active:
             raise ValueError("Cannot open an already open stream.")
@@ -176,7 +189,7 @@ class AsyncBidiRpc(BidiRpcBase):
         self._request_generator = request_generator
         self.call = call
 
-    async def close(self):
+    async def close(self) -> None:
         """Closes the stream."""
         if self.call is None:
             return
@@ -189,39 +202,37 @@ class AsyncBidiRpc(BidiRpcBase):
         # Don't set self.call to None. Keep it around so that send/recv can
         # raise the error.
 
-    async def send(self, request):
+    async def send(self, request: ProtobufMessage) -> None:
         """Queue a message to be sent on the stream.
 
         If the underlying RPC has been closed, this will raise.
 
         Args:
-            request (protobuf.Message): The request to send.
+            request (ProtobufMessage): The request to send.
         """
         if self.call is None:
-            raise ValueError("Can not send() on an RPC that has never been opened.")
+            raise ValueError("Cannot send on an RPC that has never been opened.")
 
-        # Don't use self.is_active(), as ResumableBidiRpc will overload it
-        # to mean something semantically different.
         if not self.call.done():
             await self._request_queue.put(request)
         else:
             # calling read should cause the call to raise.
             await self.call.read()
 
-    async def recv(self):
+    async def recv(self) -> ProtobufMessage:
         """Wait for a message to be returned from the stream.
 
         If the underlying RPC has been closed, this will raise.
 
         Returns:
-            protobuf.Message: The received message.
+            ProtobufMessage: The received message.
         """
         if self.call is None:
-            raise ValueError("Can not recv() on an RPC that has never been opened.")
+            raise ValueError("Cannot recv on an RPC that has never been opened.")
 
         return await self.call.read()
 
     @property
-    def is_active(self):
-        """bool: True if this stream is currently open and active."""
+    def is_active(self) -> bool:
+        """Whether the stream is currently open and active."""
         return self.call is not None and not self.call.done()

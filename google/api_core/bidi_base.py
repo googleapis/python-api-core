@@ -71,10 +71,10 @@ class BidiRpcBase:
 
     @property
     def is_active(self):
-        """bool: True if this stream is currently open and active."""
+        """True if the gRPC call is not done yet."""
         raise NotImplementedError("`is_active` is not implemented.")
 
     @property
     def pending_requests(self):
-        """int: Returns an estimate of the number of queued requests."""
+        """Estimate of the number of queued requests."""
         return self._request_queue.qsize()
