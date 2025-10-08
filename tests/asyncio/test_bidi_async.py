@@ -123,7 +123,7 @@ class Test_AsyncRequestQueueGenerator:
         generator.call = call
 
         with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(anext(aiter(generator)), timeout=.01)
+            await asyncio.wait_for(anext(aiter(generator)), timeout=0.01)
 
     async def test_exit_with_stop(self):
         q = asyncio.Queue()
