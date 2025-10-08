@@ -62,14 +62,10 @@ Repository = "https://github.com/googleapis/python-api-core"
 async_rest = ["google-auth[aiohttp] >= 2.35.0, < 3.0.0"]
 grpc = [
   "grpcio >= 1.33.2, < 2.0.0",
-  "grpcio >= 1.49.1, < 2.0.0; python_version == '3.11'",
-  "grpcio >= 1.59.0, < 2.0.0; python_version == '3.12'",
-  "grpcio >= 1.67.0, < 2.0.0; python_version == '3.13'",
+  "grpcio >= 1.49.1, < 2.0.0; python_version >= '3.11'",
   "grpcio >= 1.75.1, < 2.0.0; python_version >= '3.14'",
   "grpcio-status >= 1.33.2, < 2.0.0",
-  "grpcio-status >= 1.49.1, < 2.0.0; python_version == '3.11'",
-  "grpcio-status >= 1.59.0, < 2.0.0; python_version == '3.12'",
-  "grpcio-status >= 1.67.0, < 2.0.0; python_version == '3.13'",
+  "grpcio-status >= 1.49.1, < 2.0.0; python_version >= '3.11'",
   "grpcio-status >= 1.75.1, < 2.0.0; python_version >= '3.14'",
 ]
 grpcgcp = ["grpcio-gcp >= 0.2.2, < 1.0.0"]
