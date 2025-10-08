@@ -146,6 +146,8 @@ class AsyncBidiRpc(BidiRpcBase):
             await rpc.send(example_pb2.StreamingRpcRequest(
                 data='example'))
 
+        await rpc.close()
+
     This does *not* retry the stream on errors.
 
     Args:
@@ -181,6 +183,8 @@ class AsyncBidiRpc(BidiRpcBase):
 
         request_generator.call = call
 
+        # TODO: api_core should expose the future interface for wrapped
+        # callables as well.
         if hasattr(call, "_wrapped"):  # pragma: NO COVER
             call._wrapped.add_done_callback(self._on_call_done)
         else:

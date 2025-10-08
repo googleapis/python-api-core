@@ -67,7 +67,7 @@ class Test_AsyncRequestQueueGenerator:
         call.done.return_value = True
 
         with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(anext(gen_aiter), timeout=1)
+            await asyncio.wait_for(anext(gen_aiter), timeout=0.01)
 
         assert items == [mock.sentinel.A, mock.sentinel.B]
 
@@ -105,12 +105,10 @@ class Test_AsyncRequestQueueGenerator:
         generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
-        with pytest.raises(StopAsyncIteration) as exc_info:
+        with pytest.raises(
+            StopAsyncIteration,
+        ):
             assert await anext(aiter(generator))
-            assert (
-                exc_info.value.args[0]
-                == "Inactive call, replacing item on queue and exiting request generator."
-            )
 
         # Make sure it put the item back.
         assert not q.empty()
@@ -125,7 +123,7 @@ class Test_AsyncRequestQueueGenerator:
         generator.call = call
 
         with pytest.raises(asyncio.TimeoutError):
-            await asyncio.wait_for(anext(aiter(generator)), timeout=1)
+            await asyncio.wait_for(anext(aiter(generator)), timeout=.01)
 
     async def test_exit_with_stop(self):
         q = asyncio.Queue()
@@ -136,9 +134,8 @@ class Test_AsyncRequestQueueGenerator:
         generator = bidi_async._AsyncRequestQueueGenerator(q)
         generator.call = call
 
-        with pytest.raises(StopAsyncIteration) as exc_info:
+        with pytest.raises(StopAsyncIteration):
             assert await anext(aiter(generator))
-            assert exc_info.value.args[0] == "Cleanly exiting request generator."
 
 
 def make_async_rpc():
@@ -190,7 +187,7 @@ class TestAsyncBidiRpc:
     @pytest.mark.asyncio
     @pytest.mark.skipif(
         sys.version_info < (3, 8),  # type: ignore[operator]
-        reason="Python 3.8 below doesnt provide support for assert_awaited_once",
+        reason="Versions of Python below 3.8 don't provide support for assert_awaited_once",
     )
     async def test_metadata(self):
         rpc, call = make_async_rpc()

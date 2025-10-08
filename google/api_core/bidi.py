@@ -28,28 +28,6 @@ _LOGGER = logging.getLogger(__name__)
 _BIDIRECTIONAL_CONSUMER_NAME = "Thread-ConsumeBidirectionalStream"
 
 
-#   The reason this is necessary is because gRPC takes an iterator as the
-#   request for request-streaming RPCs. gRPC consumes this iterator in another
-#   thread to allow it to block while generating requests for the stream.
-#   However, if the generator blocks indefinitely gRPC will not be able to
-#   clean up the thread as it'll be blocked on `next(iterator)` and not be able
-#   to check the channel status to stop iterating. This helper mitigates that
-#   by waiting on the queue with a timeout and checking the RPC state before
-#   yielding.
-#
-#   Finally, it allows for retrying without swapping queues because if it does
-#   pull an item off the queue when the RPC is inactive, it'll immediately put
-#   it back and then exit. This is necessary because yielding the item in this
-#   case will cause gRPC to discard it. In practice, this means that the order
-#   of messages is not guaranteed. If such a thing is necessary it would be
-#   easy to use a priority queue.
-#
-#    Note that it is possible to accomplish this behavior without "spinning"
-#   (using a queue timeout). One possible way would be to use more threads to
-#   multiplex the grpc end event with the queue, another possible way is to
-#   use selectors and a custom event/queue object. Both of these approaches
-#   are significant from an engineering perspective for small benefit - the
-#   CPU consumed by spinning is pretty minuscule.
 class _RequestQueueGenerator(object):
     """A helper for sending requests to a gRPC stream from a Queue.
 
@@ -98,6 +76,31 @@ class _RequestQueueGenerator(object):
         return self.call is None or self.call.is_active()
 
     def __iter__(self):
+        # The reason this is necessary is because gRPC takes an iterator as the
+        # request for request-streaming RPCs. gRPC consumes this iterator in
+        # another thread to allow it to block while generating requests for
+        # the stream. However, if the generator blocks indefinitely gRPC will
+        # not be able to clean up the thread as it'll be blocked on
+        # `next(iterator)` and not be able to check the channel status to stop
+        # iterating. This helper mitigates that by waiting on the queue with
+        # a timeout and checking the RPC state before yielding.
+        #
+        # Finally, it allows for retrying without swapping queues because if
+        # it does pull an item off the queue when the RPC is inactive, it'll
+        # immediately put it back and then exit. This is necessary because
+        # yielding the item in this case will cause gRPC to discard it. In
+        # practice, this means that the order of messages is not guaranteed.
+        # If such a thing is necessary it would be easy to use a priority
+        # queue.
+        #
+        # Note that it is possible to accomplish this behavior without
+        # "spinning" (using a queue timeout). One possible way would be to use
+        # more threads to multiplex the grpc end event with the queue, another
+        # possible way is to use selectors and a custom event/queue object.
+        # Both of these approaches are significant from an engineering
+        # perspective for small benefit - the CPU consumed by spinning is
+        # pretty minuscule.
+
         if self._initial_request is not None:
             if callable(self._initial_request):
                 yield self._initial_request()

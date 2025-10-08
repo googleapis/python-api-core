@@ -55,9 +55,13 @@ class BidiRpcBase:
         This occurs when the RPC errors or is successfully terminated.
 
         Args:
-            callback (Callable[[grpc.Future], None]): The callback to execute.
-                It will be provided with the same gRPC future as the underlying
-                stream which will also be a :class:`grpc.aio.Call`.
+            callback (Union[Callable[[grpc.Future], None], Callable[[Any], None]]):
+                The callback to execute after gRPC call completed (success or
+                failure).
+
+                For sync streaming gRPC: Callable[[grpc.Future], None]
+
+                For async streaming gRPC: Callable[[Any], None]
         """
         self._callbacks.append(callback)
 
@@ -65,7 +69,11 @@ class BidiRpcBase:
         # This occurs when the RPC errors or is successfully terminated.
         # Note that grpc's "future" here can also be a grpc.RpcError.
         # See note in https://github.com/grpc/grpc/issues/10885#issuecomment-302651331
-        # that `grpc.RpcError` is also `grpc.aio.Call`.
+        # that `grpc.RpcError` is also `grpc.Call`.
+        # for asynchronous gRPC call it would be `grpc.aio.AioRpcError`
+
+        # Note: sync callbacks can be limiting for async code, because you can't
+        # await anything in a sync callback.
         for callback in self._callbacks:
             callback(future)
 
