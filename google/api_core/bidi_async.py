@@ -176,8 +176,9 @@ class AsyncBidiRpc(BidiRpcBase):
         try:
             call = await self._start_rpc(request_generator, metadata=self._rpc_metadata)
         except exceptions.GoogleAPICallError as exc:
-            # The original `grpc.RpcError` (which is usually also a `grpc.Call`) is
-            # available from the ``response`` property on the mapped exception.
+            # The original `grpc.aio.AioRpcError` (which is usually also a
+            # `grpc.aio.Call`) is available from the ``response`` property on
+            # the mapped exception.
             self._on_call_done(exc.response)
             raise
 
