@@ -29,19 +29,7 @@ from google.protobuf.message import Message as ProtobufMessage
 _LOGGER = logging.getLogger(__name__)
 
 
-# The reason this is necessary is because it lets the user have control on
-# when they would want to send requests proto messages instead of sending all
-# of them initially.
-#
-# This is achieved via asynchronous queue (asyncio.Queue),
-# gRPC awaits until there's a message in the queue.
-#
-# Finally, it allows for retrying without swapping queues because if it does
-# pull an item off the queue when the RPC is inactive, it'll immediately put
-# it back and then exit. This is necessary because yielding the item in this
-# case will cause gRPC to discard it. In practice, this means that the order
-# of messages is not guaranteed. If preserving order is necessary it would be
-# easy to use a priority queue.
+
 class _AsyncRequestQueueGenerator:
     """_AsyncRequestQueueGenerator is a helper class for sending asynchronous
       requests to a gRPC stream from a Queue.
@@ -92,6 +80,20 @@ class _AsyncRequestQueueGenerator:
         return self.call is None or not self.call.done()
 
     async def __aiter__(self):
+        # The reason this is necessary is because it lets the user have
+        # control on when they would want to send requests proto messages
+        # instead of sending all of them initially.
+        #
+        # This is achieved via asynchronous queue (asyncio.Queue),
+        # gRPC awaits until there's a message in the queue.
+        #
+        # Finally, it allows for retrying without swapping queues because if
+        # it does pull an item off the queue when the RPC is inactive, it'll
+        # immediately put it back and then exit. This is necessary because
+        # yielding the item in this case will cause gRPC to discard it. In
+        # practice, this means that the order of messages is not guaranteed.
+        # If preserving order is necessary it would be easy to use a priority
+        # queue.
         if self._initial_request is not None:
             if callable(self._initial_request):
                 yield self._initial_request()
