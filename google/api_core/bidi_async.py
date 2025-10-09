@@ -29,7 +29,6 @@ from google.protobuf.message import Message as ProtobufMessage
 _LOGGER = logging.getLogger(__name__)
 
 
-
 class _AsyncRequestQueueGenerator:
     """_AsyncRequestQueueGenerator is a helper class for sending asynchronous
       requests to a gRPC stream from a Queue.
@@ -218,7 +217,7 @@ class AsyncBidiRpc(BidiRpcBase):
             request (ProtobufMessage): The request to send.
         """
         if self.call is None:
-            raise ValueError("Cannot send on an RPC that has never been opened.")
+            raise ValueError("Cannot send on an RPC stream that has never been opened.")
 
         if not self.call.done():
             await self._request_queue.put(request)
@@ -235,7 +234,7 @@ class AsyncBidiRpc(BidiRpcBase):
             ProtobufMessage: The received message.
         """
         if self.call is None:
-            raise ValueError("Cannot recv on an RPC that has never been opened.")
+            raise ValueError("Cannot recv on an RPC stream that has never been opened.")
 
         return await self.call.read()
 

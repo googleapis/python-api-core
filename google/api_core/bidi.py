@@ -303,7 +303,7 @@ class BidiRpc(BidiRpcBase):
             request (protobuf.Message): The request to send.
         """
         if self.call is None:
-            raise ValueError("Cannot send on an RPC that has never been opened.")
+            raise ValueError("Cannot send on an RPC stream that has never been opened.")
 
         # Don't use self.is_active(), as ResumableBidiRpc will overload it
         # to mean something semantically different.
@@ -324,7 +324,7 @@ class BidiRpc(BidiRpcBase):
             protobuf.Message: The received message.
         """
         if self.call is None:
-            raise ValueError("Cannot recv on an RPC that has never been opened.")
+            raise ValueError("Cannot recv on an RPC stream that has never been opened.")
 
         return next(self.call)
 
