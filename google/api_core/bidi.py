@@ -232,6 +232,8 @@ class BidiRpc(BidiRpcBase):
             rpc.send(example_pb2.StreamingRpcRequest(
                 data='example'))
 
+        rpc.close()
+
     This does *not* retry the stream on errors. See :class:`ResumableBidiRpc`.
 
     Args:
