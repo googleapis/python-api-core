@@ -35,6 +35,7 @@ class PythonVersionStatus(enum.Enum):
 class VersionInfo(NamedTuple):
     """Hold release and support date information for a Python version."""
 
+    version: str
     python_beta: Optional[datetime.date]
     python_start: datetime.date
     python_eol: datetime.date
@@ -44,55 +45,67 @@ class VersionInfo(NamedTuple):
     dep_unpatchable_cve: Optional[datetime.date] = None  # unused
 
 
-PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
+PYTHON_VERSIONS: list[VersionInfo] = [
     # Refer to https://devguide.python.org/versions/ and the PEPs linked therefrom.
-    (3, 7): VersionInfo(
+    VersionInfo(
+        version="3.7",
         python_beta=None,
         python_start=datetime.date(2018, 6, 27),
         python_eol=datetime.date(2023, 6, 27),
     ),
-    (3, 8): VersionInfo(
+    VersionInfo(
+        version="3.8",
         python_beta=None,
         python_start=datetime.date(2019, 10, 14),
         python_eol=datetime.date(2024, 10, 7),
     ),
-    (3, 9): VersionInfo(
+    VersionInfo(
+        version="3.9",
         python_beta=datetime.date(2020, 5, 18),
         python_start=datetime.date(2020, 10, 5),
-        python_eol=datetime.date(2025, 10, 5),  # TODO: specify day when announced
-        gapic_end=datetime.date(2025, 10, 5)
-        + datetime.timedelta(days=90),  # TODO: specify day when announced
+        python_eol=datetime.date(2025, 10, 5),
+        gapic_end=datetime.date(2025, 10, 5) + datetime.timedelta(days=90),
     ),
-    (3, 10): VersionInfo(
+    VersionInfo(
+        version="3.10",
         python_beta=datetime.date(2021, 5, 3),
         python_start=datetime.date(2021, 10, 4),
         python_eol=datetime.date(2026, 10, 4),  # TODO: specify day when announced
     ),
-    (3, 11): VersionInfo(
+    VersionInfo(
+        version="3.11",
         python_beta=datetime.date(2022, 5, 8),
         python_start=datetime.date(2022, 10, 24),
         python_eol=datetime.date(2027, 10, 24),  # TODO: specify day when announced
     ),
-    (3, 12): VersionInfo(
+    VersionInfo(
+        version="3.12",
         python_beta=datetime.date(2023, 5, 22),
         python_start=datetime.date(2023, 10, 2),
         python_eol=datetime.date(2028, 10, 2),  # TODO: specify day when announced
     ),
-    (3, 13): VersionInfo(
+    VersionInfo(
+        version="3.13",
         python_beta=datetime.date(2024, 5, 8),
         python_start=datetime.date(2024, 10, 7),
         python_eol=datetime.date(2029, 10, 7),  # TODO: specify day when announced
     ),
-    (3, 14): VersionInfo(
+    VersionInfo(
+        version="3.14",
         python_beta=datetime.date(2025, 5, 7),
         python_start=datetime.date(2025, 10, 7),
         python_eol=datetime.date(2030, 10, 7),  # TODO: specify day when announced
     ),
+]
+
+PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
+    tuple(map(int, info.version.split("."))): info for info in PYTHON_VERSIONS
 }
 
+
 LOWEST_TRACKED_VERSION = min(PYTHON_VERSION_INFO.keys())
-FAKE_PAST_DATE = datetime.date(1970, 1, 1)
-FAKE_FUTURE_DATE = datetime.date(9000, 1, 1)
+FAKE_PAST_DATE = datetime.date.min + datetime.timedelta(days=900)
+FAKE_FUTURE_DATE = datetime.date.max - datetime.timedelta(days=900)
 DEPRECATION_WARNING_PERIOD = datetime.timedelta(days=365)
 EOL_GRACE_PERIOD = datetime.timedelta(weeks=1)
 
@@ -164,12 +177,14 @@ def check_python_version(
     if not version_info:
         if version_tuple < LOWEST_TRACKED_VERSION:
             version_info = VersionInfo(
+                version="0.0",
                 python_beta=FAKE_PAST_DATE,
                 python_start=FAKE_PAST_DATE,
                 python_eol=FAKE_PAST_DATE,
             )
         else:
             version_info = VersionInfo(
+                version="999.0",
                 python_beta=FAKE_FUTURE_DATE,
                 python_start=FAKE_FUTURE_DATE,
                 python_eol=FAKE_FUTURE_DATE,
