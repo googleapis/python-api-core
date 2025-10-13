@@ -16,18 +16,23 @@
 
 import warnings
 import sys
-from typing import Optional, Tuple
+from typing import Optional
+
+from collections import namedtuple
+
 from ._python_version_support import (
     _flatten_message,
     _get_distribution_and_import_packages,
 )
 
-from packaging.version import parse as parse_version, Version as PackagingVersion
+from packaging.version import parse as parse_version
+
+DependencyVersion = namedtuple("DependencyVersion", ["version", "version_string"])
 
 
 def get_dependency_version(
     dependency_name: str,
-) -> Tuple[Optional[PackagingVersion], str]:
+) -> DependencyVersion:
     """Get the parsed version of an installed package dependency.
 
     This function checks for an installed package and returns its version
@@ -38,16 +43,16 @@ def get_dependency_version(
         dependency_name: The distribution name of the package (e.g., 'requests').
 
     Returns:
-        A tuple containing the `packaging.version.Version` object and the
-        version string, or `(None, '--')` if the package is not found or
-        another error occurs during version discovery.
+        A DependencyVersion namedtuple with `version` and `version_string`
+        attributes, or `DependencyVersion(None, '--')` if the package is not
+        found or another error occurs during version discovery.
     """
     try:
         if sys.version_info >= (3, 8):
             from importlib import metadata
 
             version_string = metadata.version(dependency_name)
-            return (parse_version(version_string), version_string)
+            return DependencyVersion(parse_version(version_string), version_string)
 
         # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
         # this code path once we drop support for Python 3.7
@@ -56,10 +61,10 @@ def get_dependency_version(
             import pkg_resources
 
             version_string = pkg_resources.get_distribution(dependency_name).version
-            return (parse_version(version_string), version_string)
+            return DependencyVersion(parse_version(version_string), version_string)
 
     except Exception:
-        return (None, "--")
+        return DependencyVersion(None, "--")
 
 
 def warn_deprecation_for_versions_less_than(
@@ -107,12 +112,10 @@ def warn_deprecation_for_versions_less_than(
         or not next_supported_version
     ):  # pragma: NO COVER
         return
-    (version_used, version_used_string) = get_dependency_version(
-        dependency_import_package
-    )
-    if not version_used:
+    dependency_version = get_dependency_version(dependency_import_package)
+    if not dependency_version.version:
         return
-    if version_used < parse_version(next_supported_version):
+    if dependency_version.version < parse_version(next_supported_version):
         (
             dependency_package,
             dependency_distribution_package,
@@ -151,8 +154,8 @@ def warn_deprecation_for_versions_less_than(
                 dependent_package=dependent_package,
                 next_supported_version=next_supported_version,
                 recommendation=recommendation,
-                version_used=version_used,
-                version_used_string=version_used_string,
+                version_used=dependency_version.version,
+                version_used_string=dependency_version.version_string,
             ),
             FutureWarning,
         )

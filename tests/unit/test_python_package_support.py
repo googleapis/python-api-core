@@ -22,6 +22,7 @@ from packaging.version import parse as parse_version
 from google.api_core._python_package_support import (
     get_dependency_version,
     warn_deprecation_for_versions_less_than,
+    DependencyVersion,
 )
 
 
@@ -32,12 +33,13 @@ from google.api_core._python_package_support import (
 def test_get_dependency_version_py38_plus(mock_version):
     """Test get_dependency_version on Python 3.8+."""
     mock_version.return_value = "1.2.3"
-    assert get_dependency_version("some-package") == (parse_version("1.2.3"), "1.2.3")
+    expected = DependencyVersion(parse_version("1.2.3"), "1.2.3")
+    assert get_dependency_version("some-package") == expected
     mock_version.assert_called_once_with("some-package")
 
     # Test package not found
     mock_version.side_effect = ImportError
-    assert get_dependency_version("not-a-package") == (None, "--")
+    assert get_dependency_version("not-a-package") == DependencyVersion(None, "--")
 
 
 # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
@@ -49,17 +51,15 @@ def test_get_dependency_version_py37(mock_get_distribution):
     mock_dist = MagicMock()
     mock_dist.version = "4.5.6"
     mock_get_distribution.return_value = mock_dist
-    assert get_dependency_version("another-package") == (
-        parse_version("4.5.6"),
-        "4.5.6",
-    )
+    expected = DependencyVersion(parse_version("4.5.6"), "4.5.6")
+    assert get_dependency_version("another-package") == expected
     mock_get_distribution.assert_called_once_with("another-package")
 
     # Test package not found
     mock_get_distribution.side_effect = (
         Exception  # pkg_resources has its own exception types
     )
-    assert get_dependency_version("not-a-package") == (None, "--")
+    assert get_dependency_version("not-a-package") == DependencyVersion(None, "--")
 
 
 @patch("google.api_core._python_package_support._get_distribution_and_import_packages")
@@ -72,7 +72,7 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         ("my-package (my.package)", "my-package"),
     ]
 
-    mock_get_version.return_value = (parse_version("1.0.0"), "1.0.0")
+    mock_get_version.return_value = DependencyVersion(parse_version("1.0.0"), "1.0.0")
     with pytest.warns(FutureWarning) as record:
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
     assert len(record) == 1
@@ -87,17 +87,21 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
 
         # Case 2: Installed version is equal to required, should not warn.
         mock_get_packages.reset_mock()
-        mock_get_version.return_value = (parse_version("2.0.0"), "2.0.0")
+        mock_get_version.return_value = DependencyVersion(
+            parse_version("2.0.0"), "2.0.0"
+        )
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
         # Case 3: Installed version is greater than required, should not warn.
         mock_get_packages.reset_mock()
-        mock_get_version.return_value = (parse_version("3.0.0"), "3.0.0")
+        mock_get_version.return_value = DependencyVersion(
+            parse_version("3.0.0"), "3.0.0"
+        )
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
         # Case 4: Dependency not found, should not warn.
         mock_get_packages.reset_mock()
-        mock_get_version.return_value = (None, "--")
+        mock_get_version.return_value = DependencyVersion(None, "--")
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
         # Assert that no warnings were recorded
@@ -109,7 +113,7 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         ("dep-package (dep.package)", "dep-package"),
         ("my-package (my.package)", "my-package"),
     ]
-    mock_get_version.return_value = (parse_version("1.0.0"), "1.0.0")
+    mock_get_version.return_value = DependencyVersion(parse_version("1.0.0"), "1.0.0")
     template = "Custom warning for {dependency_package} used by {dependent_package}."
     with pytest.warns(FutureWarning) as record:
         warn_deprecation_for_versions_less_than(
