@@ -74,28 +74,28 @@ def get_dependency_version(
 def warn_deprecation_for_versions_less_than(
     dependent_import_package: str,
     dependency_import_package: str,
-    next_supported_version: str,
+    minimum_fully_supported_version: str,
     recommended_version: Optional[str] = None,
     message_template: Optional[str] = None,
 ):
     """Issue any needed deprecation warnings for `dependency_import_package`.
 
     If `dependency_import_package` is installed at a version less than
-    `next_supported_version`, this issues a warning using either a
+    `minimum_fully_supported_version`, this issues a warning using either a
     default `message_template` or one provided by the user. The
     default `message_template` informs the user that they will not receive
     future updates for `dependent_import_package` if
     `dependency_import_package` is somehow pinned to a version lower
-    than `next_supported_version`.
+    than `minimum_fully_supported_version`.
 
     Args:
       dependent_import_package: The import name of the package that
         needs `dependency_import_package`.
       dependency_import_package: The import name of the dependency to check.
-      next_supported_version: The dependency_import_package version number
+      minimum_fully_supported_version: The dependency_import_package version number
         below which a deprecation warning will be logged.
       recommended_version: If provided, the recommended next version, which
-        could be higher than `next_supported_version`.
+        could be higher than `minimum_fully_supported_version`.
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
@@ -105,7 +105,7 @@ def warn_deprecation_for_versions_less_than(
         `dependent_package` , which contain the import packages, the
         distribution packages, and pretty string with both the
         distribution and import packages for the dependency and the
-        dependent, respectively; and `next_supported_version`,
+        dependent, respectively; and `minimum_fully_supported_version`,
         `version_used`, and `version_used_string`, which refer to supported
         and currently-used versions of the dependency.
 
@@ -113,13 +113,13 @@ def warn_deprecation_for_versions_less_than(
     if (
         not dependent_import_package
         or not dependency_import_package
-        or not next_supported_version
+        or not minimum_fully_supported_version
     ):  # pragma: NO COVER
         return
     dependency_version = get_dependency_version(dependency_import_package)
     if not dependency_version.version:
         return
-    if dependency_version.version < parse_version(next_supported_version):
+    if dependency_version.version < parse_version(minimum_fully_supported_version):
         (
             dependency_package,
             dependency_distribution_package,
@@ -138,13 +138,13 @@ def warn_deprecation_for_versions_less_than(
             {dependency_package}, currently installed at version
             {version_used_string}. Future updates to
             {dependent_package} will require {dependency_package} at
-            version {next_supported_version} or
+            version {minimum_fully_supported_version} or
             higher{recommendation}. Please ensure that either (a) your
             Python environment doesn't pin the version of
             {dependency_package}, so that updates to
             {dependent_package} can require the higher version, or (b)
             you manually update your Python environment to use at
-            least version {next_supported_version} of
+            least version {minimum_fully_supported_version} of
             {dependency_package}.
             """
         )
@@ -156,7 +156,7 @@ def warn_deprecation_for_versions_less_than(
                 dependency_distribution_package=dependency_distribution_package,
                 dependency_package=dependency_package,
                 dependent_package=dependent_package,
-                next_supported_version=next_supported_version,
+                minimum_fully_supported_version=minimum_fully_supported_version,
                 recommendation=recommendation,
                 version_used=dependency_version.version,
                 version_used_string=dependency_version.version_string,
