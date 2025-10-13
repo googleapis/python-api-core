@@ -114,7 +114,7 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         ("my-package (my.package)", "my-package"),
     ]
     mock_get_version.return_value = DependencyVersion(parse_version("1.0.0"), "1.0.0")
-    template = "Custom warning for {dependency_package} used by {dependent_package}."
+    template = "Custom warning for {dependency_package} used by {consumer_package}."
     with pytest.warns(FutureWarning) as record:
         warn_deprecation_for_versions_less_than(
             "my.package", "dep.package", "2.0.0", message_template=template

@@ -72,7 +72,7 @@ def get_dependency_version(
 
 
 def warn_deprecation_for_versions_less_than(
-    dependent_import_package: str,
+    consumer_import_package: str,
     dependency_import_package: str,
     minimum_fully_supported_version: str,
     recommended_version: Optional[str] = None,
@@ -84,12 +84,12 @@ def warn_deprecation_for_versions_less_than(
     `minimum_fully_supported_version`, this issues a warning using either a
     default `message_template` or one provided by the user. The
     default `message_template` informs the user that they will not receive
-    future updates for `dependent_import_package` if
+    future updates for `consumer_import_package` if
     `dependency_import_package` is somehow pinned to a version lower
     than `minimum_fully_supported_version`.
 
     Args:
-      dependent_import_package: The import name of the package that
+      consumer_import_package: The import name of the package that
         needs `dependency_import_package`.
       dependency_import_package: The import name of the dependency to check.
       minimum_fully_supported_version: The dependency_import_package version number
@@ -99,19 +99,19 @@ def warn_deprecation_for_versions_less_than(
       message_template: A custom default message template to replace
         the default. This `message_template` is treated as an
         f-string, where the following variables are defined:
-        `dependency_import_package`, `dependent_import_package` and
+        `dependency_import_package`, `consumer_import_package` and
         `dependency_distribution_package` and
-        `dependent_distribution_package` and `dependency_package`,
-        `dependent_package` , which contain the import packages, the
+        `consumer_distribution_package` and `dependency_package`,
+        `consumer_package` , which contain the import packages, the
         distribution packages, and pretty string with both the
         distribution and import packages for the dependency and the
-        dependent, respectively; and `minimum_fully_supported_version`,
+        consumer, respectively; and `minimum_fully_supported_version`,
         `version_used`, and `version_used_string`, which refer to supported
         and currently-used versions of the dependency.
 
     """
     if (
-        not dependent_import_package
+        not consumer_import_package
         or not dependency_import_package
         or not minimum_fully_supported_version
     ):  # pragma: NO COVER
@@ -125,24 +125,24 @@ def warn_deprecation_for_versions_less_than(
             dependency_distribution_package,
         ) = _get_distribution_and_import_packages(dependency_import_package)
         (
-            dependent_package,
-            dependent_distribution_package,
-        ) = _get_distribution_and_import_packages(dependent_import_package)
+            consumer_package,
+            consumer_distribution_package,
+        ) = _get_distribution_and_import_packages(consumer_import_package)
 
         recommendation = (
             " (we recommend {recommended_version})" if recommended_version else ""
         )
         message_template = message_template or _flatten_message(
             """
-            DEPRECATION: Package {dependent_package} depends on
+            DEPRECATION: Package {consumer_package} depends on
             {dependency_package}, currently installed at version
             {version_used_string}. Future updates to
-            {dependent_package} will require {dependency_package} at
+            {consumer_package} will require {dependency_package} at
             version {minimum_fully_supported_version} or
             higher{recommendation}. Please ensure that either (a) your
             Python environment doesn't pin the version of
             {dependency_package}, so that updates to
-            {dependent_package} can require the higher version, or (b)
+            {consumer_package} can require the higher version, or (b)
             you manually update your Python environment to use at
             least version {minimum_fully_supported_version} of
             {dependency_package}.
@@ -150,12 +150,12 @@ def warn_deprecation_for_versions_less_than(
         )
         warnings.warn(
             message_template.format(
-                dependent_import_package=dependent_import_package,
+                consumer_import_package=consumer_import_package,
                 dependency_import_package=dependency_import_package,
-                dependent_distribution_package=dependent_distribution_package,
+                consumer_distribution_package=consumer_distribution_package,
                 dependency_distribution_package=dependency_distribution_package,
                 dependency_package=dependency_package,
-                dependent_package=dependent_package,
+                consumer_package=consumer_package,
                 minimum_fully_supported_version=minimum_fully_supported_version,
                 recommendation=recommendation,
                 version_used=dependency_version.version,
@@ -165,7 +165,7 @@ def warn_deprecation_for_versions_less_than(
         )
 
 
-def check_dependency_versions(dependent_import_package: str):
+def check_dependency_versions(consumer_import_package: str):
     """Bundle checks for all package dependencies.
 
     This function can be called by all dependents of google.api_core,
@@ -173,10 +173,10 @@ def check_dependency_versions(dependent_import_package: str):
     dependencies. The dependencies to check should be updated here.
 
     Args:
-      dependent_import_package: The distribution name of the calling package, whose
+      consumer_import_package: The distribution name of the calling package, whose
         dependencies we're checking.
 
     """
     warn_deprecation_for_versions_less_than(
-        dependent_import_package, "google.protobuf", "4.25.8", recommended_version="6.x"
+        consumer_import_package, "google.protobuf", "4.25.8", recommended_version="6.x"
     )
