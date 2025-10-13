@@ -23,13 +23,32 @@ from typing import Any, NamedTuple, Optional, Dict, Tuple
 
 
 class PythonVersionStatus(enum.Enum):
-    """Represent the support status of a Python version."""
+    """Support status of a Python version in this client library artifact release.
+
+    "Support", in this context, means that this release of a client library
+    artifact is configured to run on the currently configured version of
+    Python.
+    """
 
     PYTHON_VERSION_STATUS_UNSPECIFIED = "PYTHON_VERSION_STATUS_UNSPECIFIED"
-    PYTHON_VERSION_UNSUPPORTED = "PYTHON_VERSION_UNSUPPORTED"
-    PYTHON_VERSION_EOL = "PYTHON_VERSION_EOL"
-    PYTHON_VERSION_DEPRECATED = "PYTHON_VERSION_DEPRECATED"
+
     PYTHON_VERSION_SUPPORTED = "PYTHON_VERSION_SUPPORTED"
+    """This Python version is fully supported, so the artifact running on this
+    version will have all features and bug fixes."""
+
+    PYTHON_VERSION_DEPRECATED = "PYTHON_VERSION_DEPRECATED"
+    """This Python version is still supported, but support will end within a
+    year. At that time, there will be no more releases for this artifact
+    running under this Python version."""
+
+    PYTHON_VERSION_EOL = "PYTHON_VERSION_EOL"
+    """This Python version has reached its end of life in the Python community
+    (see https://devguide.python.org/versions/), and this artifact will cease
+    supporting this Python version within the next few releases."""
+
+    PYTHON_VERSION_UNSUPPORTED = "PYTHON_VERSION_UNSUPPORTED"
+    """This release of the client library artifact may not be the latest, since
+    current releases no longer support this Python version."""
 
 
 class VersionInfo(NamedTuple):
