@@ -27,8 +27,24 @@ from ._python_version_support import (
 
 from packaging.version import parse as parse_version
 
-DependencyVersion = namedtuple("DependencyVersion", ["version", "version_string"])
+# Here we list all the packages for which we want to issue warnings
+# about deprecated and unsupported versions.
+_DependencyConstraint = namedtuple(
+    "_DependencyConstraint",
+    ["package_name", "minimum_fully_supported_version", "recommended_version"],
+)
+_PACKAGE_DEPENDENCY_WARNINGS = [
+    _DependencyConstraint(
+        "google.protobuf",
+        minimum_fully_supported_version="4.25.8",
+        recommended_version="6.x",
+    )
+]
 
+
+DependencyVersion = namedtuple("DependencyVersion", ["version", "version_string"])
+# Version string we provide in a DependencyVersion when we can't determine the version of a
+# package.
 UNKNOWN_VERSION_STRING = "--"
 
 
@@ -177,6 +193,10 @@ def check_dependency_versions(consumer_import_package: str):
         dependencies we're checking.
 
     """
-    warn_deprecation_for_versions_less_than(
-        consumer_import_package, "google.protobuf", "4.25.8", recommended_version="6.x"
-    )
+    for package_info in _PACKAGE_DEPENDENCY_WARNINGS:
+        warn_deprecation_for_versions_less_than(
+            consumer_import_package,
+            package_info.package_name,
+            package_info.minimum_fully_supported_version,
+            recommended_version=package_info.recommended_version,
+        )
