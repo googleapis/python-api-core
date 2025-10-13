@@ -27,12 +27,13 @@ __version__ = api_core_version.__version__
 # google.api_core, the functionality below must be made available
 # manually in those artifacts.
 
+# expose dependency checks for external callers
 check_python_version = _python_version_support.check_python_version
-check_python_version(package="google.api_core")
-
 check_dependency_versions = _python_package_support.check_dependency_versions
-check_dependency_versions("google.api_core")
-
 warn_deprecation_for_versions_less_than = (
     _python_package_support.warn_deprecation_for_versions_less_than
 )
+
+# perform version checks against api_core, and emit warnings if needed
+check_python_version(package="google.api_core")
+check_dependency_versions("google.api_core")
