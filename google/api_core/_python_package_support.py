@@ -29,6 +29,8 @@ from packaging.version import parse as parse_version
 
 DependencyVersion = namedtuple("DependencyVersion", ["version", "version_string"])
 
+UNKNOWN_VERSION_STRING = "--"
+
 
 def get_dependency_version(
     dependency_name: str,
@@ -43,9 +45,11 @@ def get_dependency_version(
         dependency_name: The distribution name of the package (e.g., 'requests').
 
     Returns:
-        A DependencyVersion namedtuple with `version` and `version_string`
-        attributes, or `DependencyVersion(None, '--')` if the package is not
-        found or another error occurs during version discovery.
+        A DependencyVersion namedtuple with `version` and
+        `version_string` attributes, or `DependencyVersion(None,
+        UNKNOWN_VERSION_STRING)` if the package is not found or
+        another error occurs during version discovery.
+
     """
     try:
         if sys.version_info >= (3, 8):
@@ -64,7 +68,7 @@ def get_dependency_version(
             return DependencyVersion(parse_version(version_string), version_string)
 
     except Exception:
-        return DependencyVersion(None, "--")
+        return DependencyVersion(None, UNKNOWN_VERSION_STRING)
 
 
 def warn_deprecation_for_versions_less_than(
