@@ -117,9 +117,10 @@ PYTHON_VERSIONS: list[VersionInfo] = [
     ),
 ]
 
-PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
-    tuple(map(int, info.version.split("."))): info for info in PYTHON_VERSIONS
-}
+PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {}
+for info in PYTHON_VERSIONS:
+    major, minor = map(int, info.version.split("."))
+    PYTHON_VERSION_INFO[(major, minor)] = info
 
 
 LOWEST_TRACKED_VERSION = min(PYTHON_VERSION_INFO.keys())
