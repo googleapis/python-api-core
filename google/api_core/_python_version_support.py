@@ -221,7 +221,7 @@ def check_python_version(
         for version, info in sorted(PYTHON_VERSION_INFO.items()):
             if info.python_start <= date < info.python_eol:
                 return f"{version[0]}.{version[1]}"
-        return "at a supported version"
+        return "at a currently supported version [https://devguide.python.org/versions]"
 
     if gapic_end < today:
         message = _flatten_message(
