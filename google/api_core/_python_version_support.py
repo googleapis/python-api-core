@@ -19,7 +19,7 @@ import enum
 import warnings
 import sys
 import textwrap
-from typing import Any, NamedTuple, Optional, Dict, Tuple
+from typing import Any, List, NamedTuple, Optional, Dict, Tuple
 
 
 class PythonVersionStatus(enum.Enum):
@@ -64,7 +64,7 @@ class VersionInfo(NamedTuple):
     dep_unpatchable_cve: Optional[datetime.date] = None  # unused
 
 
-PYTHON_VERSIONS: list[VersionInfo] = [
+PYTHON_VERSIONS: List[VersionInfo] = [
     # Refer to https://devguide.python.org/versions/ and the PEPs linked therefrom.
     VersionInfo(
         version="3.7",
