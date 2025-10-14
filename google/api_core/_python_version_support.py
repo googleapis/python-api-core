@@ -123,8 +123,20 @@ PYTHON_VERSION_INFO: Dict[Tuple[int, int], VersionInfo] = {
 
 
 LOWEST_TRACKED_VERSION = min(PYTHON_VERSION_INFO.keys())
-FAKE_PAST_DATE = datetime.date.min + datetime.timedelta(days=900)
-FAKE_FUTURE_DATE = datetime.date.max - datetime.timedelta(days=900)
+_FAKE_PAST_DATE = datetime.date.min + datetime.timedelta(days=900)
+_FAKE_PAST_VERSION = VersionInfo(
+    version="0.0",
+    python_beta=_FAKE_PAST_DATE,
+    python_start=_FAKE_PAST_DATE,
+    python_eol=_FAKE_PAST_DATE,
+)
+_FAKE_FUTURE_DATE = datetime.date.max - datetime.timedelta(days=900)
+_FAKE_FUTURE_VERSION = VersionInfo(
+    version="999.0",
+    python_beta=_FAKE_FUTURE_DATE,
+    python_start=_FAKE_FUTURE_DATE,
+    python_eol=_FAKE_FUTURE_DATE,
+)
 DEPRECATION_WARNING_PERIOD = datetime.timedelta(days=365)
 EOL_GRACE_PERIOD = datetime.timedelta(weeks=1)
 
@@ -195,19 +207,9 @@ def check_python_version(
 
     if not version_info:
         if version_tuple < LOWEST_TRACKED_VERSION:
-            version_info = VersionInfo(
-                version="0.0",
-                python_beta=FAKE_PAST_DATE,
-                python_start=FAKE_PAST_DATE,
-                python_eol=FAKE_PAST_DATE,
-            )
+            version_info = _FAKE_PAST_VERSION
         else:
-            version_info = VersionInfo(
-                version="999.0",
-                python_beta=FAKE_FUTURE_DATE,
-                python_start=FAKE_FUTURE_DATE,
-                python_eol=FAKE_FUTURE_DATE,
-            )
+            version_info = _FAKE_FUTURE_VERSION
 
     gapic_deprecation = version_info.gapic_deprecation or (
         version_info.python_eol - DEPRECATION_WARNING_PERIOD
