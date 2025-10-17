@@ -132,7 +132,9 @@ from google.api_core._python_package_support import (
 )
 
 
-@patch("google.api_core._python_package_support.warn_deprecation_for_versions_less_than")
+@patch(
+    "google.api_core._python_package_support.warn_deprecation_for_versions_less_than"
+)
 def test_check_dependency_versions_with_custom_warnings(mock_warn):
     """Test check_dependency_versions with custom warning parameters."""
     custom_warning1 = DependencyConstraint("pkg1", "1.0.0", "2.0.0")
@@ -141,5 +143,9 @@ def test_check_dependency_versions_with_custom_warnings(mock_warn):
     check_dependency_versions("my-consumer", custom_warning1, custom_warning2)
 
     assert mock_warn.call_count == 2
-    mock_warn.assert_any_call("my-consumer", "pkg1", "1.0.0", recommended_version="2.0.0")
-    mock_warn.assert_any_call("my-consumer", "pkg2", "2.0.0", recommended_version="3.0.0")
+    mock_warn.assert_any_call(
+        "my-consumer", "pkg1", "1.0.0", recommended_version="2.0.0"
+    )
+    mock_warn.assert_any_call(
+        "my-consumer", "pkg2", "2.0.0", recommended_version="3.0.0"
+    )
