@@ -124,3 +124,22 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         "Custom warning for dep-package (dep.package) used by my-package (my.package)."
         in str(record[0].message)
     )
+
+
+from google.api_core._python_package_support import (
+    check_dependency_versions,
+    DependencyConstraint,
+)
+
+
+@patch("google.api_core._python_package_support.warn_deprecation_for_versions_less_than")
+def test_check_dependency_versions_with_custom_warnings(mock_warn):
+    """Test check_dependency_versions with custom warning parameters."""
+    custom_warning1 = DependencyConstraint("pkg1", "1.0.0", "2.0.0")
+    custom_warning2 = DependencyConstraint("pkg2", "2.0.0", "3.0.0")
+
+    check_dependency_versions("my-consumer", custom_warning1, custom_warning2)
+
+    assert mock_warn.call_count == 2
+    mock_warn.assert_any_call("my-consumer", "pkg1", "1.0.0", recommended_version="2.0.0")
+    mock_warn.assert_any_call("my-consumer", "pkg2", "2.0.0", recommended_version="3.0.0")
