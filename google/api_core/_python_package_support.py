@@ -29,12 +29,12 @@ from packaging.version import parse as parse_version
 
 # Here we list all the packages for which we want to issue warnings
 # about deprecated and unsupported versions.
-_DependencyConstraint = namedtuple(
-    "_DependencyConstraint",
+DependencyConstraint = namedtuple(
+    "DependencyConstraint",
     ["package_name", "minimum_fully_supported_version", "recommended_version"],
 )
 _PACKAGE_DEPENDENCY_WARNINGS = [
-    _DependencyConstraint(
+    DependencyConstraint(
         "google.protobuf",
         minimum_fully_supported_version="4.25.8",
         recommended_version="6.x",
@@ -181,19 +181,26 @@ def warn_deprecation_for_versions_less_than(
         )
 
 
-def check_dependency_versions(consumer_import_package: str):
+def check_dependency_versions(
+    consumer_import_package: str, *package_dependency_warnings: DependencyConstraint
+):
     """Bundle checks for all package dependencies.
 
-    This function can be called by all dependents of google.api_core,
+    This function can be called by all consumers of google.api_core,
     to emit needed deprecation warnings for any of their
-    dependencies. The dependencies to check should be updated here.
+    dependencies. The dependencies to check can be passed as arguments, or if
+    none are provided, it will default to the list in
+    `_PACKAGE_DEPENDENCY_WARNINGS`.
 
     Args:
       consumer_import_package: The distribution name of the calling package, whose
         dependencies we're checking.
-
+      *package_dependency_warnings: A variable number of DependencyConstraint
+        objects, each specifying a dependency to check.
     """
-    for package_info in _PACKAGE_DEPENDENCY_WARNINGS:
+    if not package_dependency_warnings:
+        package_dependency_warnings = tuple(_PACKAGE_DEPENDENCY_WARNINGS)
+    for package_info in package_dependency_warnings:
         warn_deprecation_for_versions_less_than(
             consumer_import_package,
             package_info.package_name,

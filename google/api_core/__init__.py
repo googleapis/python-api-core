@@ -33,6 +33,7 @@ check_dependency_versions = _python_package_support.check_dependency_versions
 warn_deprecation_for_versions_less_than = (
     _python_package_support.warn_deprecation_for_versions_less_than
 )
+DependencyConstraint = _python_package_support.DependencyConstraint
 
 # perform version checks against api_core, and emit warnings if needed
 check_python_version(package="google.api_core")
