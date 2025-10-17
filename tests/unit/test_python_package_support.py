@@ -22,6 +22,8 @@ from packaging.version import parse as parse_version
 from google.api_core._python_package_support import (
     get_dependency_version,
     warn_deprecation_for_versions_less_than,
+    check_dependency_versions,
+    DependencyConstraint,
     DependencyVersion,
 )
 
@@ -124,12 +126,6 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         "Custom warning for dep-package (dep.package) used by my-package (my.package)."
         in str(record[0].message)
     )
-
-
-from google.api_core._python_package_support import (
-    check_dependency_versions,
-    DependencyConstraint,
-)
 
 
 @patch(
