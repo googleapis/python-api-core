@@ -22,6 +22,7 @@ from unittest.mock import patch
 
 # Code to be tested
 from google.api_core._python_version_support import (
+    _flatten_message,
     check_python_version,
     PythonVersionStatus,
     PYTHON_VERSION_INFO,
@@ -29,6 +30,17 @@ from google.api_core._python_version_support import (
 
 # Helper object for mocking sys.version_info
 VersionInfoMock = namedtuple("VersionInfoMock", ["major", "minor"])
+
+
+def test_flatten_message():
+    """Test that _flatten_message correctly dedents and flattens a string."""
+    input_text = """
+        This is a multi-line
+        string with some
+            indentation.
+    """
+    expected_output = "This is a multi-line string with some indentation."
+    assert _flatten_message(input_text) == expected_output
 
 
 def _create_failure_message(
