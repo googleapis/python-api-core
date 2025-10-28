@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 
 from google.api_core._python_package_support import (
-    _parse_version_to_tuple,
+    parse_version_to_tuple,
     get_dependency_version,
     warn_deprecation_for_versions_less_than,
     check_dependency_versions,
@@ -42,7 +42,7 @@ def test_get_dependency_version(mocker, version_string_to_test):
             "importlib_metadata.version", return_value=version_string_to_test
         )
     expected = DependencyVersion(
-        _parse_version_to_tuple(version_string_to_test), version_string_to_test
+        parse_version_to_tuple(version_string_to_test), version_string_to_test
     )
     assert get_dependency_version("some-package") == expected
 
@@ -64,7 +64,7 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
     ]
 
     mock_get_version.return_value = DependencyVersion(
-        _parse_version_to_tuple("1.0.0"), "1.0.0"
+        parse_version_to_tuple("1.0.0"), "1.0.0"
     )
     with pytest.warns(FutureWarning) as record:
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
@@ -81,14 +81,14 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         # Case 2: Installed version is equal to required, should not warn.
         mock_get_packages.reset_mock()
         mock_get_version.return_value = DependencyVersion(
-            _parse_version_to_tuple("2.0.0"), "2.0.0"
+            parse_version_to_tuple("2.0.0"), "2.0.0"
         )
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
         # Case 3: Installed version is greater than required, should not warn.
         mock_get_packages.reset_mock()
         mock_get_version.return_value = DependencyVersion(
-            _parse_version_to_tuple("3.0.0"), "3.0.0"
+            parse_version_to_tuple("3.0.0"), "3.0.0"
         )
         warn_deprecation_for_versions_less_than("my.package", "dep.package", "2.0.0")
 
@@ -107,7 +107,7 @@ def test_warn_deprecation_for_versions_less_than(mock_get_version, mock_get_pack
         ("my-package (my.package)", "my-package"),
     ]
     mock_get_version.return_value = DependencyVersion(
-        _parse_version_to_tuple("1.0.0"), "1.0.0"
+        parse_version_to_tuple("1.0.0"), "1.0.0"
     )
     template = "Custom warning for {dependency_package} used by {consumer_package}."
     with pytest.warns(FutureWarning) as record:

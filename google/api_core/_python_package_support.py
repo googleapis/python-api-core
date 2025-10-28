@@ -55,7 +55,7 @@ DependencyVersion = namedtuple("DependencyVersion", ["version", "version_string"
 UNKNOWN_VERSION_STRING = "--"
 
 
-def _parse_version_to_tuple(version_string: str) -> ParsedVersion:
+def parse_version_to_tuple(version_string: str) -> ParsedVersion:
     """Safely converts a semantic version string to a comparable tuple of integers.
 
     Example: "4.25.8" -> (4, 25, 8)
@@ -100,11 +100,11 @@ def get_dependency_version(
     """
     try:
         version_string: str = metadata.version(dependency_name)
-        parsed_version = _parse_version_to_tuple(version_string)
+        parsed_version = parse_version_to_tuple(version_string)
         return DependencyVersion(parsed_version, version_string)
     except Exception:
         # Catch exceptions from metadata.version() (e.g., PackageNotFoundError)
-        # or errors during _parse_version_to_tuple
+        # or errors during parse_version_to_tuple
         return DependencyVersion(None, UNKNOWN_VERSION_STRING)
 
 
@@ -158,7 +158,7 @@ def warn_deprecation_for_versions_less_than(
     if not dependency_version.version:
         return
 
-    if dependency_version.version < _parse_version_to_tuple(
+    if dependency_version.version < parse_version_to_tuple(
         minimum_fully_supported_version
     ):
         (
