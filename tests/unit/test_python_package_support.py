@@ -41,7 +41,9 @@ def test_get_dependency_version(mocker, version_string_to_test):
         mock_importlib = mocker.patch(
             "importlib_metadata.version", return_value=version_string_to_test
         )
-    expected = DependencyVersion(_parse_version_to_tuple(version_string_to_test), version_string_to_test)
+    expected = DependencyVersion(
+        _parse_version_to_tuple(version_string_to_test), version_string_to_test
+    )
     assert get_dependency_version("some-package") == expected
 
     mock_importlib.assert_called_once_with("some-package")
