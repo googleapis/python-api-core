@@ -158,10 +158,9 @@ def warn_deprecation_for_versions_less_than(
     if not dependency_version.version:
         return
 
-    minimum_version_tuple = _parse_version_to_tuple(minimum_fully_supported_version)
-
-    # Compare the version tuples directly
-    if dependency_version.version < minimum_version_tuple:
+    if dependency_version.version < _parse_version_to_tuple(
+        minimum_fully_supported_version
+    ):
         (
             dependency_package,
             dependency_distribution_package,
