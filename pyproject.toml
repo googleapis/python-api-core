@@ -51,6 +51,7 @@ dependencies = [
   "proto-plus >= 1.25.0, < 2.0.0; python_version >= '3.13'",
   "google-auth >= 2.14.1, < 3.0.0",
   "requests >= 2.18.0, < 3.0.0",
+  "packaging >= 25.0",
 ]
 dynamic = ["version"]
 
