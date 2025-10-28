@@ -60,9 +60,13 @@ def _parse_version_to_tuple(version_string: str) -> ParsedVersion:
 
     Example: "4.25.8" -> (4, 25, 8)
     Ignores non-numeric parts and handles common version formats.
+
+    Args:
+        version_string: Version string in the format "x.y.z" or "x.y.z<suffix>"
+
+    Returns:
+        Tuple of integers for the parsed version string.
     """
-    # Simple split and try to convert to int. Non-numeric parts are ignored
-    # or will raise an exception that is handled in the caller.
     parts = []
     for part in version_string.split("."):
         try:
