@@ -28,19 +28,20 @@ from google.api_core._python_package_support import (
 )
 
 
-def test_get_dependency_version(mocker):
+@pytest.mark.parametrize("version_string_to_test", ["1.2.3", "1.2.3b1"])
+def test_get_dependency_version(mocker, version_string_to_test):
     """Test get_dependency_version."""
     if sys.version_info >= (3, 8):
         mock_importlib = mocker.patch(
-            "importlib.metadata.version", return_value="1.2.3"
+            "importlib.metadata.version", return_value=version_string_to_test
         )
     else:
         # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
         # `importlib_metadata` once we drop support for Python 3.7
         mock_importlib = mocker.patch(
-            "importlib_metadata.version", return_value="1.2.3"
+            "importlib_metadata.version", return_value=version_string_to_test
         )
-    expected = DependencyVersion(_parse_version_to_tuple("1.2.3"), "1.2.3")
+    expected = DependencyVersion(_parse_version_to_tuple(version_string_to_test), version_string_to_test)
     assert get_dependency_version("some-package") == expected
 
     mock_importlib.assert_called_once_with("some-package")
