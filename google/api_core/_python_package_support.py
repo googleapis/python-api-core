@@ -99,8 +99,7 @@ def get_dependency_version(
 
     """
     try:
-        version_string: str
-        version_string = metadata.version(dependency_name)
+        version_string: str = metadata.version(dependency_name)
         parsed_version = _parse_version_to_tuple(version_string)
         return DependencyVersion(parsed_version, version_string)
     except Exception:
