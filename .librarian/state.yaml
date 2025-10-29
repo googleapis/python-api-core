@@ -1,0 +1,11 @@
+image: us-central1-docker.pkg.dev/cloud-sdk-librarian-prod/images-prod/python-librarian-generator:latest
+libraries:
+  - id: google-api-core
+    version: 2.29.0
+    last_generated_commit: ""
+    apis: []
+    source_roots:
+      - .
+    preserve_regex: []
+    remove_regex: []
+    tag_format: v{version}
