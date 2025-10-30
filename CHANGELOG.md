@@ -4,6 +4,27 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.28.1](https://github.com/googleapis/python-api-core/compare/v2.28.0...v2.28.1) (2025-10-28)
+
+
+### Bug Fixes
+
+* Remove dependency on packaging and pkg_resources ([#852](https://github.com/googleapis/python-api-core/issues/852)) ([ca59a86](https://github.com/googleapis/python-api-core/commit/ca59a863b08a79c2bf0607f9085de1417422820b))
+
+## [2.28.0](https://github.com/googleapis/python-api-core/compare/v2.27.0...v2.28.0) (2025-10-24)
+
+
+### Features
+
+* Provide and use Python version support check ([#832](https://github.com/googleapis/python-api-core/issues/832)) ([d36e896](https://github.com/googleapis/python-api-core/commit/d36e896f98a2371c4d58ce1a7a3bc1a77a081836))
+
+## [2.27.0](https://github.com/googleapis/python-api-core/compare/v2.26.0...v2.27.0) (2025-10-22)
+
+
+### Features
+
+* Support for async bidi streaming apis ([#836](https://github.com/googleapis/python-api-core/issues/836)) ([9530548](https://github.com/googleapis/python-api-core/commit/95305480d234b6dd0903960db020e55125a997e0))
+
 ## [2.26.0](https://github.com/googleapis/python-api-core/compare/v2.25.2...v2.26.0) (2025-10-08)
 
 
