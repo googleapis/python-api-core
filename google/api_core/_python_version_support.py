@@ -16,10 +16,14 @@
 
 import datetime
 import enum
+import logging
 import warnings
 import sys
 import textwrap
 from typing import Any, List, NamedTuple, Optional, Dict, Tuple
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class PythonVersionStatus(enum.Enum):
@@ -171,7 +175,7 @@ else:
             else:
                 return None  # Module not found in the mapping
         except Exception as e:
-            print(f"An error occurred: {e}")
+            _LOGGER.error("An error occurred: %s", e)
             return None
 
 
