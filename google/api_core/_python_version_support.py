@@ -172,11 +172,10 @@ else:
             if module_name in module_to_distributions:  # pragma: NO COVER
                 # The value is a list of distribution names, take the first one
                 return module_to_distributions[module_name][0]
-            else:
-                return None  # Module not found in the mapping
         except Exception as e:
             _LOGGER.error("An error occurred: %s", e)
-            return None
+
+        return None
 
 
 def _get_distribution_and_import_packages(import_package: str) -> Tuple[str, Any]:
