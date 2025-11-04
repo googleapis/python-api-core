@@ -173,7 +173,11 @@ else:
                 # The value is a list of distribution names, take the first one
                 return module_to_distributions[module_name][0]
         except Exception as e:
-            _LOGGER.info(f"An error occurred while determining PyPI package name for {module_name}: {e}")
+            _LOGGER.info(
+                "An error occurred while determining PyPI package name for %s: %s",
+                module_name,
+                e,
+            )
 
         return None
 
