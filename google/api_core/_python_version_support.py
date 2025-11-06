@@ -173,7 +173,7 @@ else:
             if module_name in module_to_distributions:  # pragma: NO COVER
                 # The value is a list of distribution names, take the first one
                 return module_to_distributions[module_name][0]
-        except Exception as e:
+        except Exception as e:  # pragma: NO COVER
             _LOGGER.info(
                 "An error occurred while determining PyPI package name for %s: %s",
                 module_name,
