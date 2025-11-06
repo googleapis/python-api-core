@@ -151,9 +151,10 @@ def _flatten_message(text: str) -> str:
     return " ".join(textwrap.dedent(text).strip().split())
 
 
-# TODO(https://github.com/googleapis/python-api-core/issues/835): Remove once we
-# no longer support Python 3.7
-if sys.version_info < (3, 8):
+# TODO(https://github.com/googleapis/python-api-core/issues/835):
+# Remove once we no longer support Python 3.9.
+# `metadata.packages_distributions()` is only supported in Python 3.10 and newer
+if sys.version_info < (3, 10):
 
     def _get_pypi_package_name(module_name):  # pragma: NO COVER
         """Determine the PyPI package name for a given module name."""
