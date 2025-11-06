@@ -153,7 +153,8 @@ def _flatten_message(text: str) -> str:
 
 # TODO(https://github.com/googleapis/python-api-core/issues/835):
 # Remove once we no longer support Python 3.9.
-# `metadata.packages_distributions()` is only supported in Python 3.10 and newer
+# `importlib.metadata.packages_distributions()` is only supported in Python 3.10 and newer
+# https://docs.python.org/3/library/importlib.metadata.html#importlib.metadata.packages_distributions
 if sys.version_info < (3, 10):
 
     def _get_pypi_package_name(module_name):  # pragma: NO COVER
