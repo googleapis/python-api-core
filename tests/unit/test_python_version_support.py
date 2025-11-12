@@ -178,17 +178,20 @@ def test_override_gapic_end_only():
             "google.api_core._python_version_support.PYTHON_VERSION_INFO",
             {version_tuple: overridden_info},
         ):
-            result_before_boundary = check_python_version(
-                today=custom_gapic_end + datetime.timedelta(days=-1)
-            )
+            with pytest.warns(FutureWarning):
+                result_before_boundary = check_python_version(
+                    today=custom_gapic_end + datetime.timedelta(days=-1)
+                )
             assert result_before_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
 
-            result_at_boundary = check_python_version(today=custom_gapic_end)
+            with pytest.warns(FutureWarning):
+                result_at_boundary = check_python_version(today=custom_gapic_end)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_EOL
 
-            result_after_boundary = check_python_version(
-                today=custom_gapic_end + datetime.timedelta(days=1)
-            )
+            with pytest.warns(FutureWarning):
+                result_after_boundary = check_python_version(
+                    today=custom_gapic_end + datetime.timedelta(days=1)
+                )
             assert (
                 result_after_boundary == PythonVersionStatus.PYTHON_VERSION_UNSUPPORTED
             )
@@ -217,7 +220,8 @@ def test_override_gapic_deprecation_only():
                 result_before_boundary == PythonVersionStatus.PYTHON_VERSION_SUPPORTED
             )
 
-            result_at_boundary = check_python_version(today=custom_gapic_dep)
+            with pytest.warns(FutureWarning):
+                result_at_boundary = check_python_version(today=custom_gapic_dep)
             assert result_at_boundary == PythonVersionStatus.PYTHON_VERSION_DEPRECATED
 
 
