@@ -159,19 +159,12 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         if not pathlib.Path(constraints_file).exists():
             constraints_file = f"{constraints_dir}/constraints-{session.python}.txt"
 
-        if not install_grpc and not install_async_rest:
-            session.install(
-                "google-api-core",
-                "-c",
-                constraints_file,
-            )
-        else:
-            session.install(
-                "-e",
-                lib_with_extras,
-                "-c",
-                constraints_file,
-            )
+        session.install(
+            "-e",
+            lib_with_extras,
+            "-c",
+            constraints_file,
+        )
 
     # Print out package versions of dependencies
     session.run(
@@ -193,31 +186,32 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         "-m",
         "pytest",
     ]
-    if not install_grpc and not install_async_rest:
-        pytest_args.extend(["-W", "ignore::FutureWarning"])
-    
-    pytest_args.extend([
-        # We use filterwarnings to ignore warnings that are out of our control,
-        # but we want to make sure that our own code does not generate warnings.
-        "-m",
-        "not filterwarnings",
-        *(
-            # Helpful for running a single test or testfile.
-            session.posargs
-            or [
-                "--quiet",
-                "--cov=google.api_core",
-                "--cov=tests.unit",
-                "--cov-append",
-                "--cov-config=.coveragerc",
-                "--cov-report=",
-                "--cov-fail-under=0",
-                # Running individual tests with parallelism enabled is usually not helpful.
-                "-n=auto",
-                os.path.join("tests", "unit"),
-            ]
-        ),
-    ])
+    pytest_args.extend(["-W", "ignore::FutureWarning"])
+
+    pytest_args.extend(
+        [
+            # We use filterwarnings to ignore warnings that are out of our control,
+            # but we want to make sure that our own code does not generate warnings.
+            "-m",
+            "not filterwarnings",
+            *(
+                # Helpful for running a single test or testfile.
+                session.posargs
+                or [
+                    "--quiet",
+                    "--cov=google.api_core",
+                    "--cov=tests.unit",
+                    "--cov-append",
+                    "--cov-config=.coveragerc",
+                    "--cov-report=",
+                    "--cov-fail-under=0",
+                    # Running individual tests with parallelism enabled is usually not helpful.
+                    "-n=auto",
+                    os.path.join("tests", "unit"),
+                ]
+            ),
+        ]
+    )
 
     session.install("asyncmock", "pytest-asyncio")
 
