@@ -111,7 +111,7 @@ filterwarnings = [
   # Remove after support for Python 3.7 is dropped
   "ignore:After January 1, 2024, new releases of this library will drop support for Python 3.7:DeprecationWarning",
   # Remove after support for Python 3.10 is dropped
-  "ignore:.*You are using a Python version \\(3\\.10:FutureWarning",
+  "ignore:.*You are using a.* Python version \\(3\\.10:FutureWarning",
   # Remove after support for Python 3.11 is dropped
-  "ignore:.*You are using a Python version \\(3\\.11:FutureWarning",
+  "ignore:.*You are using a.* Python version \\(3\\.11:FutureWarning",
 ]
