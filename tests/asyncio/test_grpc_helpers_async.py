@@ -681,7 +681,7 @@ def test_create_channel_with_credentials_file_and_scopes(
     with pytest.warns(DeprecationWarning):
         # The `credentials_file` argument is deprecated by
         # the Google Cloud Auth library (`google-auth`), which is the
-        # upstream dependency responsible for handling authentication.        
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file, scopes=scopes
         )
