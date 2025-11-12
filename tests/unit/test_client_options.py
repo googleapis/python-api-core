@@ -28,6 +28,9 @@ def get_client_encrypted_cert():
 
 def test_constructor():
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         options = client_options.ClientOptions(
             api_endpoint="foo.googleapis.com",
             client_cert_source=get_client_cert,
@@ -103,6 +106,9 @@ def test_constructor_with_api_key():
 def test_constructor_with_both_api_key_and_credentials_file():
     with pytest.raises(ValueError):
         with pytest.warns(DeprecationWarning):
+            # The `credentials_file` argument is deprecated by
+            # the Google Cloud Auth library (`google-auth`), which is the
+            # upstream dependency responsible for handling authentication.
             client_options.ClientOptions(
                 api_key="api-key",
                 credentials_file="path/to/credentials.json",

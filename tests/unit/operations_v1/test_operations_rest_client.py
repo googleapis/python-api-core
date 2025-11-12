@@ -370,6 +370,9 @@ def test_operations_client_client_options(
 
     # Check the case credentials_file is provided
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         options = client_options.ClientOptions(credentials_file="credentials.json")
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
@@ -541,6 +544,9 @@ def test_operations_client_client_options_credentials_file(
 ):
     # Check the case credentials file is provided.
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         options = client_options.ClientOptions(credentials_file="credentials.json")
     if "async" in str(client_class):
         with mock.patch.object(transport_class, "__init__") as patched:
@@ -584,6 +590,9 @@ def test_operations_client_client_options_credentials_file(
 def test_list_operations_rest(google_auth_default, credentials_file):
     if credentials_file is not None:
         with pytest.warns(DeprecationWarning):
+            # The `credentials_file` argument is deprecated by
+            # the Google Cloud Auth library (`google-auth`), which is the
+            # upstream dependency responsible for handling authentication.
             sync_transport = transports.rest.OperationsRestTransport(
                 credentials_file=credentials_file,
                 http_options=HTTP_OPTIONS,
@@ -1150,6 +1159,9 @@ def test_operations_base_transport_error():
     # Passing both a credentials object and credentials_file should raise an error
     with pytest.raises(core_exceptions.DuplicateCredentialArgs):
         with pytest.warns(DeprecationWarning):
+            # The `credentials_file` argument is deprecated by
+            # the Google Cloud Auth library (`google-auth`), which is the
+            # upstream dependency responsible for handling authentication.
             transports.OperationsTransport(
                 credentials=ga_credentials.AnonymousCredentials(),
                 credentials_file="credentials.json",
@@ -1192,6 +1204,9 @@ def test_operations_base_transport_with_credentials_file():
         Transport.return_value = None
         load_creds.return_value = (ga_credentials.AnonymousCredentials(), None)
         with pytest.warns(DeprecationWarning):
+            # The `credentials_file` argument is deprecated by
+            # the Google Cloud Auth library (`google-auth`), which is the
+            # upstream dependency responsible for handling authentication.
             transports.OperationsTransport(
                 credentials_file="credentials.json",
                 quota_project_id="octopus",

@@ -582,6 +582,9 @@ def test_create_channel_explicit_with_duplicate_credentials():
 
     with pytest.raises(exceptions.DuplicateCredentialArgs):
         with pytest.warns(DeprecationWarning):
+            # The `credentials_file` argument is deprecated by
+            # the Google Cloud Auth library (`google-auth`), which is the
+            # upstream dependency responsible for handling authentication.
             grpc_helpers.create_channel(
                 target,
                 credentials_file="credentials.json",
@@ -712,6 +715,9 @@ def test_create_channel_with_credentials_file(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers.create_channel(target, credentials_file=credentials_file)
 
     google.auth.load_credentials_from_file.assert_called_once_with(
@@ -745,6 +751,9 @@ def test_create_channel_with_credentials_file_and_scopes(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers.create_channel(
             target, credentials_file=credentials_file, scopes=scopes
         )
@@ -780,6 +789,9 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers.create_channel(
             target, credentials_file=credentials_file, default_scopes=default_scopes
         )

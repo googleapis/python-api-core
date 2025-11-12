@@ -522,6 +522,9 @@ def test_create_channel_explicit_with_duplicate_credentials():
     target = "example:443"
 
     with pytest.raises(exceptions.DuplicateCredentialArgs) as excinfo:
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         with pytest.warns(DeprecationWarning):
             grpc_helpers_async.create_channel(
                 target,
@@ -643,6 +646,9 @@ def test_create_channel_with_credentials_file(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file
         )
@@ -673,6 +679,9 @@ def test_create_channel_with_credentials_file_and_scopes(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.        
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file, scopes=scopes
         )
@@ -703,6 +712,9 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     composite_creds = composite_creds_call.return_value
 
     with pytest.warns(DeprecationWarning):
+        # The `credentials_file` argument is deprecated by
+        # the Google Cloud Auth library (`google-auth`), which is the
+        # upstream dependency responsible for handling authentication.
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file, default_scopes=default_scopes
         )
