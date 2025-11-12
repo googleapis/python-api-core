@@ -551,7 +551,12 @@ def test_operations_client_client_options_credentials_file(
     if "async" in str(client_class):
         # TODO(): Add support for credentials file to async REST transport.
         with pytest.raises(core_exceptions.AsyncRestUnsupportedParameterError):
-            client_class(client_options=options, transport=transport_name)
+            with pytest.warns(
+                DeprecationWarning,
+                match="argument is deprecated because of a potential security risk",
+            ):
+
+                client_class(client_options=options, transport=transport_name)
     else:
         with mock.patch.object(transport_class, "__init__") as patched:
             patched.return_value = None
