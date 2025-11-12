@@ -543,9 +543,19 @@ def test_operations_client_client_options_credentials_file(
     with pytest.warns(DeprecationWarning):
         options = client_options.ClientOptions(credentials_file="credentials.json")
     if "async" in str(client_class):
-        # TODO(): Add support for credentials file to async REST transport.
-        with pytest.raises(core_exceptions.AsyncRestUnsupportedParameterError):
-            client_class(client_options=options, transport=transport_name)
+        with mock.patch.object(transport_class, "__init__") as patched:
+            patched.return_value = None
+            client = client_class(client_options=options, transport=transport_name)
+            patched.assert_called_once_with(
+                credentials=None,
+                credentials_file="credentials.json",
+                host=client.DEFAULT_ENDPOINT,
+                scopes=None,
+                client_cert_source_for_mtls=None,
+                quota_project_id=None,
+                client_info=transports.base.DEFAULT_CLIENT_INFO,
+                always_use_jwt_access=True,
+            )
     else:
         with mock.patch.object(transport_class, "__init__") as patched:
             patched.return_value = None
