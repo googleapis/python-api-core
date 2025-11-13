@@ -23,6 +23,7 @@ except ImportError:  # pragma: NO COVER
 
 import pytest
 from typing import Any, List
+from ...helpers import warn_deprecated_credentials_file
 
 try:
     import grpc  # noqa: F401
@@ -369,10 +370,7 @@ def test_operations_client_client_options(
         )
 
     # Check the case credentials_file is provided
-    with pytest.warns(
-        DeprecationWarning,
-        match="argument is deprecated because of a potential security risk",
-    ):
+    with warn_deprecated_credentials_file():
         options = client_options.ClientOptions(credentials_file="credentials.json")
     with mock.patch.object(transport_class, "__init__") as patched:
         patched.return_value = None
@@ -543,18 +541,12 @@ def test_operations_client_client_options_credentials_file(
     client_class, transport_class, transport_name
 ):
     # Check the case credentials file is provided.
-    with pytest.warns(
-        DeprecationWarning,
-        match="argument is deprecated because of a potential security risk",
-    ):
+    with warn_deprecated_credentials_file():
         options = client_options.ClientOptions(credentials_file="credentials.json")
     if "async" in str(client_class):
         # TODO(): Add support for credentials file to async REST transport.
         with pytest.raises(core_exceptions.AsyncRestUnsupportedParameterError):
-            with pytest.warns(
-                DeprecationWarning,
-                match="argument is deprecated because of a potential security risk",
-            ):
+            with warn_deprecated_credentials_file():
 
                 client_class(client_options=options, transport=transport_name)
     else:
@@ -584,10 +576,7 @@ def test_operations_client_client_options_credentials_file(
 )
 def test_list_operations_rest(google_auth_default, credentials_file):
     if credentials_file:
-        with pytest.warns(
-            DeprecationWarning,
-            match="argument is deprecated because of a potential security risk",
-        ):
+        with warn_deprecated_credentials_file():
             sync_transport = transports.rest.OperationsRestTransport(
                 credentials_file=credentials_file,
                 http_options=HTTP_OPTIONS,
@@ -1154,10 +1143,7 @@ def test_transport_adc(client_class, transport_class, credentials):
 def test_operations_base_transport_error():
     # Passing both a credentials object and credentials_file should raise an error
     with pytest.raises(core_exceptions.DuplicateCredentialArgs):
-        with pytest.warns(
-            DeprecationWarning,
-            match="argument is deprecated because of a potential security risk",
-        ):
+        with warn_deprecated_credentials_file():
             transports.OperationsTransport(
                 credentials=ga_credentials.AnonymousCredentials(),
                 credentials_file="credentials.json",
@@ -1199,10 +1185,7 @@ def test_operations_base_transport_with_credentials_file():
     ) as Transport:
         Transport.return_value = None
         load_creds.return_value = (ga_credentials.AnonymousCredentials(), None)
-        with pytest.warns(
-            DeprecationWarning,
-            match="argument is deprecated because of a potential security risk",
-        ):
+        with warn_deprecated_credentials_file():
             transports.OperationsTransport(
                 credentials_file="credentials.json",
                 quota_project_id="octopus",

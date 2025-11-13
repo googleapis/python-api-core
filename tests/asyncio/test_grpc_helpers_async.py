@@ -17,6 +17,7 @@ try:
     from unittest.mock import AsyncMock  # pragma: NO COVER  # noqa: F401
 except ImportError:  # pragma: NO COVER
     import mock  # type: ignore
+from ..helpers import warn_deprecated_credentials_file
 import pytest  # noqa: I202
 
 try:
@@ -522,10 +523,7 @@ def test_create_channel_explicit_with_duplicate_credentials():
     target = "example:443"
 
     with pytest.raises(exceptions.DuplicateCredentialArgs) as excinfo:
-        with pytest.warns(
-            DeprecationWarning,
-            match="argument is deprecated because of a potential security risk",
-        ):
+        with warn_deprecated_credentials_file():
             grpc_helpers_async.create_channel(
                 target,
                 credentials_file="credentials.json",
@@ -645,10 +643,7 @@ def test_create_channel_with_credentials_file(
     credentials_file = "/path/to/credentials/file.json"
     composite_creds = composite_creds_call.return_value
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="argument is deprecated because of a potential security risk",
-    ):
+    with warn_deprecated_credentials_file():
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file
         )
@@ -678,10 +673,7 @@ def test_create_channel_with_credentials_file_and_scopes(
     credentials_file = "/path/to/credentials/file.json"
     composite_creds = composite_creds_call.return_value
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="argument is deprecated because of a potential security risk",
-    ):
+    with warn_deprecated_credentials_file():
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file, scopes=scopes
         )
@@ -711,10 +703,7 @@ def test_create_channel_with_credentials_file_and_default_scopes(
     credentials_file = "/path/to/credentials/file.json"
     composite_creds = composite_creds_call.return_value
 
-    with pytest.warns(
-        DeprecationWarning,
-        match="argument is deprecated because of a potential security risk",
-    ):
+    with warn_deprecated_credentials_file():
         channel = grpc_helpers_async.create_channel(
             target, credentials_file=credentials_file, default_scopes=default_scopes
         )
