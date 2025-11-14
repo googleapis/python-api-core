@@ -200,7 +200,7 @@ def test_wrap_method_with_overriding_timeout_as_a_number():
         method, default_retry, default_timeout
     )
 
-    # Using "result = wrapped_method(timeout=22)" fails since wrapped_method 
+    # Using "result = wrapped_method(timeout=22)" fails since wrapped_method
     # does floating point calculations that results in 21.987.. instead of 22
     result = wrapped_method(timeout=timeout.ConstantTimeout(22))
 
