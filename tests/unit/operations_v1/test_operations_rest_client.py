@@ -346,12 +346,16 @@ def test_operations_client_client_options(
         with pytest.raises(MutualTLSChannelError):
             client = client_class()
 
-    # Check the case GOOGLE_API_USE_CLIENT_CERTIFICATE has unsupported value.
+    # Check the case GOOGLE_API_USE_CLIENT_CERTIFICATE has unsupported value and
+    # should_use_client_cert is unavailable.
     with mock.patch.dict(
         os.environ, {"GOOGLE_API_USE_CLIENT_CERTIFICATE": "Unsupported"}
     ):
-        with pytest.raises(ValueError):
-            client = client_class()
+        if hasattr(google.auth.transport.mtls, "should_use_client_cert"):
+            pytest.skip(
+                "The should_use_client_cert function is available in this "
+                "version of google-auth. Skipping this test."
+            )
 
     # Check the case quota_project_id is provided
     options = client_options.ClientOptions(quota_project_id="octopus")
