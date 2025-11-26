@@ -246,7 +246,7 @@ def unit(session, install_grpc_gcp, install_grpc, install_async_rest):
     )
 
 
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def prerelease_deps(session):
     """Run the unit test suite."""
     default(session, prerelease=True)
