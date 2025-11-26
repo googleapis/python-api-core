@@ -261,7 +261,7 @@ def unit_w_async_rest_extra(session):
 def lint_setup_py(session):
     """Verify that setup.py is valid (including RST check)."""
 
-    session.install("docutils", "Pygments")
+    session.install("docutils", "Pygments", "setuptools")
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
 
