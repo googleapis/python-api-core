@@ -355,11 +355,11 @@ def test_operations_client_client_options(
             with pytest.raises(ValueError):
                 client = client_class()
         else:
-             with mock.patch.object(transport_class, "__init__") as patched:
+            with mock.patch.object(transport_class, "__init__") as patched:
                 patched.return_value = None
                 client = client_class(
                     credentials=ga_credentials.AnonymousCredentials(),
-                    transport=transport_name
+                    transport=transport_name,
                 )
 
     # Check the case quota_project_id is provided
