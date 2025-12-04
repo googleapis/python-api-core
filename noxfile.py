@@ -124,7 +124,6 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     session.install(
         "dataclasses",
-
         "pytest",
         "pytest-cov",
         "pytest-mock",
@@ -276,7 +275,6 @@ def mypy(session):
         "types-requests",
         "types-protobuf",
         "types-dataclasses",
-
     )
     session.run("mypy", "google", "tests")
 
