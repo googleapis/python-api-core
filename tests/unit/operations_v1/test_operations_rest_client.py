@@ -35,6 +35,7 @@ from google.auth.transport.requests import AuthorizedSession
 from google.api_core import client_options
 from google.api_core import exceptions as core_exceptions
 from google.api_core import gapic_v1
+from google.api_core import parse_version_to_tuple
 from google.api_core.operations_v1 import AbstractOperationsClient
 
 import google.auth
@@ -42,6 +43,7 @@ from google.api_core.operations_v1 import pagers
 from google.api_core.operations_v1 import pagers_async
 from google.api_core.operations_v1 import transports
 from google.auth import credentials as ga_credentials
+from google.auth import __version__ as auth_version
 from google.auth.exceptions import MutualTLSChannelError
 from google.longrunning import operations_pb2
 from google.oauth2 import service_account
@@ -345,12 +347,30 @@ def test_operations_client_client_options(
         with pytest.raises(MutualTLSChannelError):
             client = client_class()
 
-    # Check the case GOOGLE_API_USE_CLIENT_CERTIFICATE has unsupported value.
+    # Check the case GOOGLE_API_USE_CLIENT_CERTIFICATE has unsupported value
     with mock.patch.dict(
         os.environ, {"GOOGLE_API_USE_CLIENT_CERTIFICATE": "Unsupported"}
     ):
-        with pytest.raises(ValueError):
-            client = client_class()
+        # Test behavior for google.auth versions < 2.43.0.
+        # These versions do not have the updated mtls.should_use_client_cert logic.
+        # Verify that a ValueError is raised when GOOGLE_API_USE_CLIENT_CERTIFICATE
+        # is set to an unsupported value, as expected in these older versions.
+        if parse_version_to_tuple(auth_version) < (2, 43, 0):
+            with pytest.raises(ValueError):
+                client = client_class()
+        # Test behavior for google.auth versions >= 2.43.0.
+        # In these versions, if GOOGLE_API_USE_CLIENT_CERTIFICATE is set to an
+        # unsupported value (e.g., not 'true' or 'false'), the expected behavior
+        # of the internal google.auth.mtls.should_use_client_cert() function
+        # is to return False. Expect should_use_client_cert to return False, so
+        # client creation should proceed without requiring a client certificate.
+        else:
+            with mock.patch.object(transport_class, "__init__") as patched:
+                patched.return_value = None
+                client = client_class(
+                    credentials=ga_credentials.AnonymousCredentials(),
+                    transport=transport_name,
+                )
 
     # Check the case quota_project_id is provided
     options = client_options.ClientOptions(quota_project_id="octopus")
