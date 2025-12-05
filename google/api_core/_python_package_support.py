@@ -37,7 +37,7 @@ DependencyConstraint = namedtuple(
 _PACKAGE_DEPENDENCY_WARNINGS = [
     DependencyConstraint(
         "google.protobuf",
-        minimum_fully_supported_version="4.25.8",
+        minimum_fully_supported_version="5.0.0",
         recommended_version="6.x",
     )
 ]
