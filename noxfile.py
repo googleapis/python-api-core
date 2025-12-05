@@ -236,9 +236,12 @@ def unit(session, install_grpc_gcp, install_grpc, install_async_rest):
 
 
 # TODO: Remove once we stop support for protobuf 4.x.
-@nox.session(python="3.11")
+@nox.session(python=PYTHON_VERSIONS)
 def unit_protobuf_4x(session):
     """Run the unit test suite with protobuf 4.x."""
+    if session.python > "3.11":
+        session.log("Skipping session: protobuf 4.x only runs on Python < 3.12")
+        session.skip()
     # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
     session.install("protobuf>=4.25.8,<5.0.0")
     default(session, install_grpc=True)

@@ -45,6 +45,9 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+        option:
+          - ""
+          - "_protobuf_4x"
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -59,14 +62,14 @@ jobs:
         python -m pip install nox
     - name: Run unit tests
       env:
-        COVERAGE_FILE: .coverage-${{matrix.python }}
+        COVERAGE_FILE: .coverage${{ matrix.option }}-${{matrix.python }}
       run: |
-        nox -s unit-${{ matrix.python }}
+        nox -s unit${{ matrix.option }}-${{ matrix.python }}
     - name: Upload coverage results
       uses: actions/upload-artifact@v4
       with:
         name: coverage-artifact-${{ matrix.python }}
-        path: .coverage-${{ matrix.python }}
+        path: .coverage${{ matrix.option }}-${{ matrix.python }}
         include-hidden-files: true
 
   report-coverage:
