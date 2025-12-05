@@ -239,8 +239,8 @@ def unit(session, install_grpc_gcp, install_grpc, install_async_rest):
 @nox.session(python=PYTHON_VERSIONS)
 def unit_protobuf_4x(session):
     """Run the unit test suite with protobuf 4.x."""
-    if session.python in ["3.9", "3.10", "3.11"]:
-        session.log("Skipping session: protobuf 4.x only runs on Python < 3.12")
+    if session.python not in ["3.9", "3.10", "3.11"]:
+        session.log(f"Skipping session for Python {session.python}")
         session.skip()
     # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
     session.install("protobuf>=4.25.8,<5.0.0")
