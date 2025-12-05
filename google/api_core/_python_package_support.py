@@ -15,7 +15,6 @@
 """Code to check versions of dependencies used by Google Cloud Client Libraries."""
 
 import warnings
-import sys
 from typing import Optional, Tuple
 
 from collections import namedtuple
