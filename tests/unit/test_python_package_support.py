@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import warnings
 from unittest.mock import patch
 
@@ -31,16 +30,9 @@ from google.api_core._python_package_support import (
 @pytest.mark.parametrize("version_string_to_test", ["1.2.3", "1.2.3b1"])
 def test_get_dependency_version(mocker, version_string_to_test):
     """Test get_dependency_version."""
-    if sys.version_info >= (3, 8):
-        mock_importlib = mocker.patch(
-            "importlib.metadata.version", return_value=version_string_to_test
-        )
-    else:
-        # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
-        # `importlib_metadata` once we drop support for Python 3.7
-        mock_importlib = mocker.patch(
-            "importlib_metadata.version", return_value=version_string_to_test
-        )
+    mock_importlib = mocker.patch(
+        "importlib.metadata.version", return_value=version_string_to_test
+    )
     expected = DependencyVersion(
         parse_version_to_tuple(version_string_to_test), version_string_to_test
     )

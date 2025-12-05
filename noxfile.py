@@ -28,7 +28,7 @@ BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
 
-PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 DEFAULT_PYTHON_VERSION = "3.14"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
@@ -40,6 +40,7 @@ nox.options.sessions = [
     "unit_wo_grpc",
     "unit_w_prerelease_deps",
     "unit_w_async_rest_extra",
+    "unit_protobuf_4x",  # TODO: Remove once we stop support for protobuf 4.x
     "cover",
     "pytype",
     "mypy",
@@ -91,7 +92,9 @@ def install_prerelease_dependencies(session, constraints_path):
                 r"^\s*(\S+)(?===\S+)", constraints_text, flags=re.MULTILINE
             )
         ]
-        session.install(*constraints_deps)
+        if constraints_deps:
+            session.install(*constraints_deps)
+
         prerel_deps = [
             "google-auth",
             "googleapis-common-protos",
@@ -107,6 +110,9 @@ def install_prerelease_dependencies(session, constraints_path):
         # Remaining dependencies
         other_deps = [
             "requests",
+            "pyasn1",
+            "cryptography",
+            "cachetools",
         ]
         session.install(*other_deps)
 
@@ -124,7 +130,6 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     session.install(
         "dataclasses",
-        "mock; python_version=='3.7'",
         "pytest",
         "pytest-cov",
         "pytest-mock",
@@ -216,34 +221,33 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
 @nox.session(python=PYTHON_VERSIONS)
 @nox.parametrize(
-    ["install_grpc_gcp", "install_grpc", "install_async_rest"],
+    ["install_grpc", "install_async_rest"],
     [
-        (False, True, False),  # Run unit tests with grpcio installed
-        (True, True, False),  # Run unit tests with grpcio/grpcio-gcp installed
-        (False, False, False),  # Run unit tests without grpcio installed
-        (False, True, True),  # Run unit tests with grpcio and async rest installed
+        (True, False),  # Run unit tests with grpcio installed
+        (False, False),  # Run unit tests without grpcio installed
+        (True, True),  # Run unit tests with grpcio and async rest installed
     ],
 )
-def unit(session, install_grpc_gcp, install_grpc, install_async_rest):
+def unit(session, install_grpc, install_async_rest):
     """Run the unit test suite."""
-
-    # `grpcio-gcp` doesn't support protobuf 4+.
-    # Remove extra `grpcgcp` when protobuf 3.x is dropped.
-    # https://github.com/googleapis/python-api-core/issues/594
-    if install_grpc_gcp:
-        constraints_path = str(
-            CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-        )
-        # Install grpcio-gcp
-        session.install("-e", ".[grpcgcp]", "-c", constraints_path)
-        # Install protobuf < 4.0.0
-        session.install("protobuf<4.0.0")
 
     default(
         session=session,
         install_grpc=install_grpc,
         install_async_rest=install_async_rest,
     )
+
+
+# TODO: Remove once we stop support for protobuf 4.x.
+@nox.session(python=PYTHON_VERSIONS)
+def unit_protobuf_4x(session):
+    """Run the unit test suite with protobuf 4.x."""
+    if session.python not in ["3.9", "3.10", "3.11"]:
+        session.log(f"Skipping session for Python {session.python}")
+        session.skip()
+    # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
+    session.install("protobuf>=4.25.8,<5.0.0")
+    default(session, install_grpc=True)
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
@@ -276,7 +280,6 @@ def mypy(session):
         "types-requests",
         "types-protobuf",
         "types-dataclasses",
-        "types-mock; python_version=='3.7'",
     )
     session.run("mypy", "google", "tests")
 

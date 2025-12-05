@@ -27,25 +27,7 @@ import grpc
 
 from google.api_core import exceptions, general_helpers
 
-PROTOBUF_VERSION = google.protobuf.__version__
-
-# The grpcio-gcp package only has support for protobuf < 4
-if PROTOBUF_VERSION[0:2] == "3.":  # pragma: NO COVER
-    try:
-        import grpc_gcp
-
-        warnings.warn(
-            """Support for grpcio-gcp is deprecated. This feature will be
-            removed from `google-api-core` after January 1, 2024. If you need to
-            continue to use this feature, please pin to a specific version of
-            `google-api-core`.""",
-            DeprecationWarning,
-        )
-        HAS_GRPC_GCP = True
-    except ImportError:
-        HAS_GRPC_GCP = False
-else:
-    HAS_GRPC_GCP = False
+HAS_GRPC_GCP = False
 
 
 # The list of gRPC Callable interfaces that return iterators.
@@ -366,8 +348,7 @@ def create_channel(
               result in `ValueError` as this combination  is not yet supported.
 
         kwargs: Additional key-word args passed to
-            :func:`grpc_gcp.secure_channel` or :func:`grpc.secure_channel`.
-            Note: `grpc_gcp` is only supported in environments with protobuf < 4.0.0.
+            :func:`grpc.secure_channel`.
 
     Returns:
         grpc.Channel: The created channel.
@@ -392,20 +373,6 @@ def create_channel(
         quota_project_id=quota_project_id,
         default_host=default_host,
     )
-
-    # Note that grpcio-gcp is deprecated
-    if HAS_GRPC_GCP:  # pragma: NO COVER
-        if compression is not None and compression != grpc.Compression.NoCompression:
-            warnings.warn(
-                "The `compression` argument is ignored for grpc_gcp.secure_channel creation.",
-                DeprecationWarning,
-            )
-        if attempt_direct_path:
-            warnings.warn(
-                """The `attempt_direct_path` argument is ignored for grpc_gcp.secure_channel creation.""",
-                DeprecationWarning,
-            )
-        return grpc_gcp.secure_channel(target, composite_credentials, **kwargs)
 
     if attempt_direct_path:
         target = _modify_target_for_direct_path(target)
