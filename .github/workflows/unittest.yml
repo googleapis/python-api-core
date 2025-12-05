@@ -68,7 +68,7 @@ jobs:
     - name: Upload coverage results
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-artifact-${{ matrix.python }}
+        name: coverage-artifact-${{ matrix.option }}-${{ matrix.python }}
         path: .coverage${{ matrix.option }}-${{ matrix.python }}
         include-hidden-files: true
 
