@@ -45,7 +45,7 @@ classifiers = [
 ]
 dependencies = [
   "googleapis-common-protos >= 1.56.2, < 2.0.0",
-  "protobuf >= 3.19.5, < 7.0.0, != 3.20.0, != 3.20.1, != 4.21.0, != 4.21.1, != 4.21.2, != 4.21.3, != 4.21.4, != 4.21.5",
+  "protobuf >= 4.25.8, < 7.0.0",
   "proto-plus >= 1.22.3, < 2.0.0",
   "proto-plus >= 1.25.0, < 2.0.0; python_version >= '3.13'",
   "google-auth >= 2.14.1, < 3.0.0",
@@ -67,8 +67,7 @@ grpc = [
   "grpcio-status >= 1.49.1, < 2.0.0; python_version >= '3.11'",
   "grpcio-status >= 1.75.1, < 2.0.0; python_version >= '3.14'",
 ]
-grpcgcp = ["grpcio-gcp >= 0.2.2, < 1.0.0"]
-grpcio-gcp = ["grpcio-gcp >= 0.2.2, < 1.0.0"]
+
 
 [tool.setuptools.dynamic]
 version = { attr = "google.api_core.version.__version__" }
@@ -94,11 +93,7 @@ filterwarnings = [
   # Remove once https://github.com/protocolbuffers/protobuf/issues/12186 is fixed
   "ignore:.*custom tp_new.*in Python 3.14:DeprecationWarning",
 
-  # Remove once support for grpcio-gcp is deprecated
-  # See https://github.com/googleapis/python-api-core/blob/42e8b6e6f426cab749b34906529e8aaf3f133d75/google/api_core/grpc_helpers.py#L39-L45
-  "ignore:.*Support for grpcio-gcp is deprecated:DeprecationWarning",
-  "ignore: The `compression` argument is ignored for grpc_gcp.secure_channel creation:DeprecationWarning",
-  "ignore:The `attempt_direct_path` argument is ignored for grpc_gcp.secure_channel creation:DeprecationWarning",
+
   # Remove once the minimum supported version of googleapis-common-protos is 1.62.0
   "ignore:.*pkg_resources.declare_namespace:DeprecationWarning",
   "ignore:.*pkg_resources is deprecated as an API:DeprecationWarning",
