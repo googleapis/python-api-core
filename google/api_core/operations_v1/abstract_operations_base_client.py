@@ -32,7 +32,7 @@ try:
     )
 
     HAS_ASYNC_REST_DEPENDENCIES = True
-except ImportError as e:
+except ImportError as e:  # pragma: NO COVER
     HAS_ASYNC_REST_DEPENDENCIES = False
     ASYNC_REST_EXCEPTION = e
 
@@ -51,7 +51,7 @@ class AbstractOperationsBaseClientMeta(type):
 
     _transport_registry = OrderedDict()  # type: Dict[str, Type[OperationsTransport]]
     _transport_registry["rest"] = OperationsRestTransport
-    if HAS_ASYNC_REST_DEPENDENCIES:
+    if HAS_ASYNC_REST_DEPENDENCIES:  # pragma: NO COVER
         _transport_registry["rest_asyncio"] = AsyncOperationsRestTransport
 
     def get_transport_class(
