@@ -181,7 +181,7 @@ async def test_unexpected_result(unused_sleep):
 async def test_from_gapic():
     operation_proto = make_operation_proto(done=True)
     operations_client = mock.create_autospec(
-        operations_v1.OperationsClient, instance=True
+        operations_v1.OperationsAsyncClient, instance=True
     )
 
     future = operation_async.from_gapic(
