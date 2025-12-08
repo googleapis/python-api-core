@@ -31,9 +31,6 @@ USE_DEFAULT_METADATA = object()
 class _MethodDefault(enum.Enum):
     # Uses enum so that pytype/mypy knows that this is the only possible value.
     # https://stackoverflow.com/a/60605919/101923
-    #
-    # Literal[_DEFAULT_VALUE] is an alternative, but only added in Python 3.8.
-    # https://docs.python.org/3/library/typing.html#typing.Literal
     _DEFAULT_VALUE = object()
 
 
