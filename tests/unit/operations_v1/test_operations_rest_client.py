@@ -378,7 +378,7 @@ def test_operations_client_client_options(
         patched.return_value = None
         client = client_class(
             client_options=options, transport=transport_name
-        )  # pragma: NO COVER
+        )  # try: NO COVER
         patched.assert_called_once_with(
             credentials=None,
             credentials_file=None,
@@ -388,7 +388,7 @@ def test_operations_client_client_options(
             quota_project_id="octopus",
             client_info=transports.base.DEFAULT_CLIENT_INFO,
             always_use_jwt_access=True,
-        )  # pragma: NO COVER
+        )  # try: NO COVER
 
     # Check the case credentials_file is provided
     with warn_deprecated_credentials_file():
