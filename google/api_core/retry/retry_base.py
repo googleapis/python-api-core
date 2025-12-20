@@ -164,8 +164,10 @@ def build_retry_error(
             src_exc,
         )
     elif exc_list:
-        # return most recent exception encountered
-        return exc_list[-1], None
+        # return most recent exception encountered and its cause
+        final_exc = exc_list[-1]
+        cause = getattr(final_exc, '__cause__', None)
+        return final_exc, cause
     else:
         # no exceptions were given in exc_list. Raise generic RetryError
         return exceptions.RetryError("Unknown error", None), None
