@@ -4,6 +4,22 @@
 
 [1]: https://pypi.org/project/google-api-core/#history
 
+## [2.29.0](https://github.com/googleapis/google-cloud-python/compare/google-api-core-v2.28.1...google-api-core-v2.29.0) (2026-01-08)
+
+
+### Features
+
+* Auto enable mTLS when supported certificates are detected (#869) ([f8bf6f9610f3e0e7580f223794c3906513e1fa73](https://github.com/googleapis/google-cloud-python/commit/f8bf6f9610f3e0e7580f223794c3906513e1fa73))
+* make parse_version_to_tuple public (#864) ([c969186f2b66bde1df5e25bbedc5868e27d136f9](https://github.com/googleapis/google-cloud-python/commit/c969186f2b66bde1df5e25bbedc5868e27d136f9))
+
+
+### Bug Fixes
+
+* flaky tests due to imprecision in floating point calculation and performance test setup (#865) ([93404080f853699b9217e4b76391a13525db4e3e](https://github.com/googleapis/google-cloud-python/commit/93404080f853699b9217e4b76391a13525db4e3e))
+* remove call to importlib.metadata.packages_distributions() for py38/py39 (#859) ([628003e217d9a881d24f3316aecfd48c244a73f0](https://github.com/googleapis/google-cloud-python/commit/628003e217d9a881d24f3316aecfd48c244a73f0))
+* Log version check errors (#858) ([6493118cae2720696c3d0097274edfd7fe2bce67](https://github.com/googleapis/google-cloud-python/commit/6493118cae2720696c3d0097274edfd7fe2bce67))
+* closes tailing streams in bidi classes. (#851) ([c97b3a004044ebf8b35c2a7ba97409d7795e11b0](https://github.com/googleapis/google-cloud-python/commit/c97b3a004044ebf8b35c2a7ba97409d7795e11b0))
+
 ## [2.28.1](https://github.com/googleapis/python-api-core/compare/v2.28.0...v2.28.1) (2025-10-28)
 
 
