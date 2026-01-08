@@ -20,7 +20,7 @@ import shutil
 import unittest
 
 # https://github.com/google/importlab/issues/25
-import nox  # pytype: disable=import-error
+import nox
 
 
 BLACK_VERSION = "black==23.7.0"
@@ -41,7 +41,6 @@ nox.options.sessions = [
     "unit_w_prerelease_deps",
     "unit_w_async_rest_extra",
     "cover",
-    "pytype",
     "mypy",
     "lint",
     "lint_setup_py",
@@ -258,13 +257,6 @@ def lint_setup_py(session):
 
     session.install("docutils", "Pygments", "setuptools")
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
-
-
-@nox.session(python=DEFAULT_PYTHON_VERSION)
-def pytype(session):
-    """Run type-checking."""
-    session.install(".[grpc]", "pytype")
-    session.run("pytype")
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
