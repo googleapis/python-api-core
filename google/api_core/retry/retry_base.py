@@ -166,7 +166,7 @@ def build_retry_error(
     elif exc_list:
         # return most recent exception encountered and its cause
         final_exc = exc_list[-1]
-        cause = getattr(final_exc, '__cause__', None)
+        cause = getattr(final_exc, "__cause__", None)
         return final_exc, cause
     else:
         # no exceptions were given in exc_list. Raise generic RetryError
