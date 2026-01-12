@@ -74,6 +74,26 @@ def test_build_retry_error_empty_list():
     assert src.message == "Unknown error"
 
 
+def test_build_retry_error_preserves_cause():
+    """
+    build_retry_error should preserve __cause__ from chained exceptions.
+    """
+    from google.api_core.retry import build_retry_error
+    from google.api_core.retry import RetryFailureReason
+
+    # Create an exception with explicit cause
+    cause = ValueError("root cause")
+    exc = RuntimeError("wrapper")
+    exc.__cause__ = cause
+
+    src, found_cause = build_retry_error(
+        [exc], RetryFailureReason.NON_RETRYABLE_ERROR, None
+    )
+
+    assert src is exc
+    assert found_cause is cause
+
+
 def test_build_retry_error_timeout_message():
     """
     should provide helpful error message when timeout is reached
