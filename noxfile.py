@@ -100,7 +100,6 @@ def install_prerelease_dependencies(session, constraints_path):
         ]
         session.install(*other_deps)
 
-
 def default(session, install_grpc=True, prerelease=False, install_async_rest=False):
     """Default unit test session.
 
@@ -203,18 +202,32 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
     session.run(*pytest_args)
 
 
-@nox.session(python=PYTHON_VERSIONS)
-@nox.parametrize(
-    ["install_grpc", "install_async_rest"],
-    [
-        (True, False),  # Run unit tests with grpcio installed
-        (False, False),  # Run unit tests without grpcio installed
-        (True, True),  # Run unit tests with grpcio and async rest installed
-    ],
-)
-def unit(session, install_grpc, install_async_rest):
+@nox.session(python=PYTHON_VERSIONS) 
+@nox.parametrize( 
+    ["install_grpc", "install_async_rest", "python_versions", "proto4"], 
+    [ 
+        (True, False, None, False),  # Run unit tests with grpcio installed 
+        (False, False, None, False),  # Run unit tests without grpcio installed 
+        (True, True, None, False),  # Run unit tests with grpcio and async rest installed
+        
+        # TODO: Remove once we stop support for protobuf 4.x.
+        (True, False, ["3.9", "3.10", "3.11"], True),  # Run proto4 tests with grpcio/grpcio-gcp installed 
+    ], 
+) 
+def unit(session, install_grpc, install_async_rest, python_versions=None, proto4=False):
+
     """Run the unit test suite."""
 
+    # TODO: Remove this code and the corresponding parameter once we stop support for protobuf 4.x.
+    if python_versions and session.python not in python_versions:
+        session.log(f"Skipping session for Python {session.python}")
+        session.skip()
+
+    # TODO: Remove this code and the corresponding parameter once we stop support for protobuf 4.x.
+    if proto4:
+        # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
+        session.install("protobuf>=4.25.8,<5.0.0")
+    
     default(
         session=session,
         install_grpc=install_grpc,
