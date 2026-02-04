@@ -218,12 +218,12 @@ def unit(session, install_grpc, install_async_rest, python_versions=None, proto4
 
     """Run the unit test suite."""
 
-    # TODO: Remove this code and the corresponding parameter once we stop support for protobuf 4.x.
+    # TODO: Remove this code and the corresponding parameters once we stop support for protobuf 4.x.
     if python_versions and session.python not in python_versions:
         session.log(f"Skipping session for Python {session.python}")
         session.skip()
 
-    # TODO: Remove this code and the corresponding parameter once we stop support for protobuf 4.x.
+    # TODO: Remove this code and the corresponding parameters once we stop support for protobuf 4.x.
     if proto4:
         # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
         session.install("protobuf>=4.25.8,<5.0.0")
@@ -233,18 +233,6 @@ def unit(session, install_grpc, install_async_rest, python_versions=None, proto4
         install_grpc=install_grpc,
         install_async_rest=install_async_rest,
     )
-
-
-# TODO: Remove once we stop support for protobuf 4.x.
-@nox.session(python=PYTHON_VERSIONS)
-def unit_protobuf_4x(session):
-    """Run the unit test suite with protobuf 4.x."""
-    if session.python not in ["3.9", "3.10", "3.11"]:
-        session.log(f"Skipping session for Python {session.python}")
-        session.skip()
-    # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
-    session.install("protobuf>=4.25.8,<5.0.0")
-    default(session, install_grpc=True)
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
@@ -260,12 +248,6 @@ def lint_setup_py(session):
     session.install("docutils", "Pygments", "setuptools")
     session.run("python", "setup.py", "check", "--restructuredtext", "--strict")
 
-
-@nox.session(python=DEFAULT_PYTHON_VERSION)
-def pytype(session):
-    """Run type-checking."""
-    session.install(".[grpc]", "pytype")
-    session.run("pytype")
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
