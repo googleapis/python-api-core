@@ -262,6 +262,12 @@ def lint_setup_py(session):
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION)
+def pytype(session):
+    """Run type-checking."""
+    session.install(".[grpc]", "pytype")
+    session.run("pytype")
+
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def mypy(session):
     """Run type-checking."""
     session.install(".[grpc,async_rest]", "mypy")
