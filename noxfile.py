@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Helpful notes for local usage:
+#   unset PYENV_VERSION
+#   pyenv local 3.14.1 3.13.10 3.12.11 3.11.4 3.10.12 3.9.17
+#   PIP_INDEX_URL=https://pypi.org/simple nox
+
 from __future__ import absolute_import
 import os
 import pathlib
@@ -100,6 +105,7 @@ def install_prerelease_dependencies(session, constraints_path):
         ]
         session.install(*other_deps)
 
+
 def default(session, install_grpc=True, prerelease=False, install_async_rest=False):
     """Default unit test session.
 
@@ -112,7 +118,6 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
         unittest.skip("The pre-release session cannot be run without grpc")
 
     session.install(
-        "dataclasses",
         "pytest",
         "pytest-cov",
         "pytest-mock",
@@ -202,20 +207,28 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
     session.run(*pytest_args)
 
 
-@nox.session(python=PYTHON_VERSIONS) 
-@nox.parametrize( 
-    ["install_grpc", "install_async_rest", "python_versions", "proto4"], 
-    [ 
-        (True, False, None, False),  # Run unit tests with grpcio installed 
-        (False, False, None, False),  # Run unit tests without grpcio installed 
-        (True, True, None, False),  # Run unit tests with grpcio and async rest installed
-        
+@nox.session(python=PYTHON_VERSIONS)
+@nox.parametrize(
+    ["install_grpc", "install_async_rest", "python_versions", "proto4"],
+    [
+        (True, False, None, False),  # Run unit tests with grpcio installed
+        (False, False, None, False),  # Run unit tests without grpcio installed
+        (
+            True,
+            True,
+            None,
+            False,
+        ),  # Run unit tests with grpcio and async rest installed
         # TODO: Remove once we stop support for protobuf 4.x.
-        (True, False, ["3.9", "3.10", "3.11"], True),  # Run proto4 tests with grpcio/grpcio-gcp installed 
-    ], 
-) 
+        (
+            True,
+            False,
+            ["3.9", "3.10", "3.11"],
+            True,
+        ),  # Run proto4 tests with grpcio/grpcio-gcp installed
+    ],
+)
 def unit(session, install_grpc, install_async_rest, python_versions=None, proto4=False):
-
     """Run the unit test suite."""
 
     # TODO: Remove this code and the corresponding parameters once we stop support for protobuf 4.x.
@@ -227,7 +240,7 @@ def unit(session, install_grpc, install_async_rest, python_versions=None, proto4
     if proto4:
         # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
         session.install("protobuf>=4.25.8,<5.0.0")
-    
+
     default(
         session=session,
         install_grpc=install_grpc,
@@ -257,7 +270,6 @@ def mypy(session):
         "types-setuptools",
         "types-requests",
         "types-protobuf",
-        "types-dataclasses",
     )
     session.run("mypy", "google", "tests")
 
