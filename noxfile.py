@@ -209,37 +209,50 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
 @nox.session(python=PYTHON_VERSIONS)
 @nox.parametrize(
-    ["install_grpc", "install_async_rest", "python_versions", "proto4"],
+    ["install_grpc", "install_async_rest", "python_versions", "legacy_proto"],
     [
-        (True, False, None, False),  # Run unit tests with grpcio installed
-        (False, False, None, False),  # Run unit tests without grpcio installed
+        (True, False, None, None),  # Run unit tests with grpcio installed
+        (False, False, None, None),  # Run unit tests without grpcio installed
         (
             True,
             True,
             None,
-            False,
+            None,
         ),  # Run unit tests with grpcio and async rest installed
         # TODO: Remove once we stop support for protobuf 4.x.
         (
             True,
             False,
             ["3.9", "3.10", "3.11"],
-            True,
+            4,
         ),  # Run proto4 tests with grpcio/grpcio-gcp installed
     ],
 )
-def unit(session, install_grpc, install_async_rest, python_versions=None, proto4=False):
-    """Run the unit test suite."""
+def unit(
+    session, install_grpc, install_async_rest, python_versions=None, legacy_proto=None
+):
+    """Run the unit test suite with the given configuration parameters.
 
-    # TODO: Remove this code and the corresponding parameters once we stop support for protobuf 4.x.
+    If `python_versions` is provided, the test suite only runs when the Python version (xx.yy) is
+    one of the values in `python_versions`.
+
+    If `legacy_proto` is provided, this test suite will explicitly install the proto library at
+    that major version. Only a few values are supported at any one time; the intent is to test
+    deprecated but noyet abandoned versions.
+    """
+
     if python_versions and session.python not in python_versions:
         session.log(f"Skipping session for Python {session.python}")
         session.skip()
 
-    # TODO: Remove this code and the corresponding parameters once we stop support for protobuf 4.x.
-    if proto4:
-        # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
-        session.install("protobuf>=4.25.8,<5.0.0")
+    # TODO: consider making the following a match statement once
+    # we drop Python 3.9 support.
+    if legacy_proto:
+        if legacy_proto == 4:
+            # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
+            session.install("protobuf>=4.25.8,<5.0.0")
+        else:
+            assert False, f"Unknown legacy_proto: {legacy_proto}"
 
     default(
         session=session,
