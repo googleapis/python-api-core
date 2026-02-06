@@ -111,8 +111,7 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     This is intended to be run **without** an interpreter set, so
     that the current ``python`` (on the ``PATH``) or the version of
-    Python corresponding to the ``nox`` binary the ``PATH`` can
-    run the tests.
+    Python corresponding to the ``nox`` binary can run the tests.
     """
     if prerelease and not install_grpc:
         unittest.skip("The pre-release session cannot be run without grpc")
@@ -245,7 +244,7 @@ def unit(
         session.log(f"Skipping session for Python {session.python}")
         session.skip()
 
-    # TODO: consider making the following a match statement once
+    # TODO: consider converting the following into a `match` statement once
     # we drop Python 3.9 support.
     if legacy_proto:
         if legacy_proto == 4:
