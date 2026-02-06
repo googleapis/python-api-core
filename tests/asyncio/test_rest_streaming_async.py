@@ -33,7 +33,7 @@ import proto
 
 try:
     from google.auth.aio.transport import Response
-except ImportError:
+except ImportError:  # pragma: NO COVER
     pytest.skip(
         "google-api-core[async_rest] is required to test asynchronous rest streaming.",
         allow_module_level=True,

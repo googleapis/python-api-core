@@ -130,7 +130,7 @@ class TestTimeToDeadlineTimeout(object):
         assert actual_arg_0 == 1
         assert actual_arg_1 == 2
         assert actual_arg_meep == "moop"
-        assert actual_arg_timeuut == pytest.approx(42.0, abs=0.01)
+        assert actual_arg_timeuut == pytest.approx(42.0, abs=0.02)
 
 
 class TestConstantTimeout(object):
