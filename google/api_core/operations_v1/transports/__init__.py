@@ -32,7 +32,7 @@ try:
     _transport_registry["rest_asyncio"] = cast(
         OperationsTransport, AsyncOperationsRestTransport
     )
-except ImportError:  # pragma: NO COVER
+except ImportError:
     # This import requires the `async_rest` extra.
     # Don't raise an exception if `AsyncOperationsRestTransport` cannot be imported
     # as other transports are still available.
