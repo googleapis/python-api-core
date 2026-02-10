@@ -27,8 +27,6 @@ import grpc
 
 from google.api_core import exceptions, general_helpers
 
-HAS_GRPC_GCP = False
-
 
 # The list of gRPC Callable interfaces that return iterators.
 _STREAM_WRAP_CLASSES = (grpc.UnaryStreamMultiCallable, grpc.StreamStreamMultiCallable)
