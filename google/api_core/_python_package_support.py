@@ -15,7 +15,6 @@
 """Code to check versions of dependencies used by Google Cloud Client Libraries."""
 
 import warnings
-import sys
 from typing import Optional, Tuple
 
 from collections import namedtuple
@@ -25,12 +24,7 @@ from ._python_version_support import (
     _get_distribution_and_import_packages,
 )
 
-if sys.version_info >= (3, 8):
-    from importlib import metadata
-else:
-    # TODO(https://github.com/googleapis/python-api-core/issues/835): Remove
-    # this code path once we drop support for Python 3.7
-    import importlib_metadata as metadata
+from importlib import metadata
 
 ParsedVersion = Tuple[int, ...]
 
@@ -85,8 +79,7 @@ def get_dependency_version(
     """Get the parsed version of an installed package dependency.
 
     This function checks for an installed package and returns its version
-    as a comparable tuple of integers object for safe comparison. It handles
-    both modern (Python 3.8+) and legacy (Python 3.7) environments.
+    as a comparable tuple of integers object for safe comparison.
 
     Args:
         dependency_name: The distribution name of the package (e.g., 'requests').

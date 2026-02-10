@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Helpful notes for local usage:
+#   unset PYENV_VERSION
+#   pyenv local 3.14.1 3.13.10 3.12.11 3.11.4 3.10.12 3.9.17
+#   PIP_INDEX_URL=https://pypi.org/simple nox
+
 from __future__ import absolute_import
 import os
 import pathlib
@@ -28,10 +33,11 @@ BLACK_PATHS = ["docs", "google", "tests", "noxfile.py", "setup.py"]
 # Black and flake8 clash on the syntax for ignoring flake8's F401 in this file.
 BLACK_EXCLUDES = ["--exclude", "^/google/api_core/operations_v1/__init__.py"]
 
-PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 DEFAULT_PYTHON_VERSION = "3.14"
 CURRENT_DIRECTORY = pathlib.Path(__file__).parent.absolute()
+
 
 # Error if a python version is missing
 nox.options.error_on_missing_interpreters = True
@@ -75,7 +81,9 @@ def install_prerelease_dependencies(session, constraints_path):
                 r"^\s*(\S+)(?===\S+)", constraints_text, flags=re.MULTILINE
             )
         ]
-        session.install(*constraints_deps)
+        if constraints_deps:
+            session.install(*constraints_deps)
+
         prerel_deps = [
             "google-auth",
             "googleapis-common-protos",
@@ -91,6 +99,9 @@ def install_prerelease_dependencies(session, constraints_path):
         # Remaining dependencies
         other_deps = [
             "requests",
+            "pyasn1",
+            "cryptography",
+            "cachetools",
         ]
         session.install(*other_deps)
 
@@ -100,15 +111,12 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
     This is intended to be run **without** an interpreter set, so
     that the current ``python`` (on the ``PATH``) or the version of
-    Python corresponding to the ``nox`` binary the ``PATH`` can
-    run the tests.
+    Python corresponding to the ``nox`` binary can run the tests.
     """
     if prerelease and not install_grpc:
         unittest.skip("The pre-release session cannot be run without grpc")
 
     session.install(
-        "dataclasses",
-        "mock; python_version=='3.7'",
         "pytest",
         "pytest-cov",
         "pytest-mock",
@@ -200,28 +208,50 @@ def default(session, install_grpc=True, prerelease=False, install_async_rest=Fal
 
 @nox.session(python=PYTHON_VERSIONS)
 @nox.parametrize(
-    ["install_grpc_gcp", "install_grpc", "install_async_rest"],
+    ["install_grpc", "install_async_rest", "python_versions", "legacy_proto"],
     [
-        (False, True, False),  # Run unit tests with grpcio installed
-        (True, True, False),  # Run unit tests with grpcio/grpcio-gcp installed
-        (False, False, False),  # Run unit tests without grpcio installed
-        (False, True, True),  # Run unit tests with grpcio and async rest installed
+        (True, False, None, None),  # Run unit tests with grpcio installed
+        (False, False, None, None),  # Run unit tests without grpcio installed
+        (
+            True,
+            True,
+            None,
+            None,
+        ),  # Run unit tests with grpcio and async rest installed
+        # TODO: Remove once we stop support for protobuf 4.x.
+        (
+            True,
+            False,
+            ["3.9", "3.10", "3.11"],
+            4,
+        ),  # Run proto4 tests with grpcio/grpcio-gcp installed
     ],
 )
-def unit(session, install_grpc_gcp, install_grpc, install_async_rest):
-    """Run the unit test suite."""
+def unit(
+    session, install_grpc, install_async_rest, python_versions=None, legacy_proto=None
+):
+    """Run the unit test suite with the given configuration parameters.
 
-    # `grpcio-gcp` doesn't support protobuf 4+.
-    # Remove extra `grpcgcp` when protobuf 3.x is dropped.
-    # https://github.com/googleapis/python-api-core/issues/594
-    if install_grpc_gcp:
-        constraints_path = str(
-            CURRENT_DIRECTORY / "testing" / f"constraints-{session.python}.txt"
-        )
-        # Install grpcio-gcp
-        session.install("-e", ".[grpcgcp]", "-c", constraints_path)
-        # Install protobuf < 4.0.0
-        session.install("protobuf<4.0.0")
+    If `python_versions` is provided, the test suite only runs when the Python version (xx.yy) is
+    one of the values in `python_versions`.
+
+    If `legacy_proto` is provided, this test suite will explicitly install the proto library at
+    that major version. Only a few values are supported at any one time; the intent is to test
+    deprecated but noyet abandoned versions.
+    """
+
+    if python_versions and session.python not in python_versions:
+        session.log(f"Skipping session for Python {session.python}")
+        session.skip()
+
+    # TODO: consider converting the following into a `match` statement once
+    # we drop Python 3.9 support.
+    if legacy_proto:
+        if legacy_proto == 4:
+            # Pin protobuf to a 4.x version to ensure coverage for the legacy code path.
+            session.install("protobuf>=4.25.8,<5.0.0")
+        else:
+            assert False, f"Unknown legacy_proto: {legacy_proto}"
 
     default(
         session=session,
@@ -252,7 +282,6 @@ def mypy(session):
         "types-setuptools",
         "types-requests",
         "types-protobuf",
-        "types-dataclasses",
     )
     session.run("mypy", "google", "tests")
 
